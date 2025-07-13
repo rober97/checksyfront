@@ -1,16 +1,24 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import { createPinia } from 'pinia'      // 👉 Agrega Pinia
-import router from './router/index.js'
-import { Quasar } from 'quasar'
-import quasarUserOptions from './quasar-user-options'
+import { createApp } from 'vue';
+import App from './App.vue';
 
-const app = createApp(App)
-  .use(Quasar, quasarUserOptions)
+import { createPinia } from 'pinia';
+import router from './router';
 
-const pinia = createPinia()              // 👉 Crea instancia Pinia
+import { Quasar } from 'quasar';
+import quasarUserOptions from './quasar-user-options';
 
-app.use(pinia)                           // 👉 Usa Pinia en la app
-app.use(router)                          // Mantén el router (igual que antes)
+// 👉 Instancia principal de la app
+const app = createApp(App);
 
-app.mount('#app')
+// 👉 Configuración de Quasar (tema, iconos, etc.)
+app.use(Quasar, quasarUserOptions);
+
+// 👉 Instancia de Pinia (store global)
+const pinia = createPinia();
+app.use(pinia);
+
+// 👉 Router para navegación
+app.use(router);
+
+// 👉 Montar la aplicación
+app.mount('#app');
