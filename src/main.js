@@ -7,6 +7,9 @@ import router from './router';
 import { Quasar } from 'quasar';
 import quasarUserOptions from './quasar-user-options';
 
+import './css/theme.css';
+import './css/base.css';
+
 // 👉 Instancia principal de la app
 const app = createApp(App);
 

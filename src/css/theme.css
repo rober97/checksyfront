@@ -1,0 +1,52 @@
+/* === Estilos Globales para KPI Cards === */
+.theme-kpi-card {
+  border-radius: 16px;
+  min-height: 200px;
+  text-align: center;
+  transition: all 0.3s ease;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  &.light {
+    background: linear-gradient(145deg, #ffffff, #f5f5f5);
+    color: #333;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  &.dark {
+    background: linear-gradient(145deg, #2e2e2e, #3a3a3a);
+    color: #e0e0e0;
+    border: 1px solid #444;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .kpi-icon-wrapper {
+    background: var(--q-primary);
+    color: white;
+    border-radius: 50%;
+    padding: 18px;
+    margin-bottom: 12px;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .kpi-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--q-primary);
+    margin-bottom: 4px;
+  }
+
+  .kpi-title {
+    font-size: 15px;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+}

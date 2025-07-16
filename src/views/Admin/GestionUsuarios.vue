@@ -1,10 +1,22 @@
 <template>
   <q-page class="q-pa-md bg-grey-1">
+    <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5 text-primary">Gestión de Usuarios</div>
-      <q-btn label="Agregar Usuario" color="primary" icon="person_add" @click="abrirDialogoNuevo" />
+      <div class="text-h5 text-primary row items-center">
+        <q-icon name="group" class="q-mr-sm" />
+        Gestión de Usuarios
+      </div>
+      <q-btn
+        label="Agregar Usuario"
+        color="primary"
+        icon="person_add"
+        unelevated
+        class="q-px-md shadow-2 transition-ease"
+        @click="abrirDialogoNuevo"
+      />
     </div>
 
+    <!-- Tabla de Usuarios -->
     <q-table
       :rows="usuarios"
       :columns="columnas"
@@ -12,8 +24,10 @@
       flat
       bordered
       :loading="cargando"
+      class="styled-table"
       no-data-label="No hay usuarios registrados"
     >
+      <!-- Acciones -->
       <template v-slot:body-cell-acciones="props">
         <q-td align="center">
           <q-btn
@@ -28,20 +42,23 @@
       </template>
     </q-table>
 
-    <!-- Diálogo para agregar usuario -->
-    <q-dialog v-model="dialogoNuevo">
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Nuevo Usuario</div>
+    <!-- Diálogo Nuevo Usuario -->
+    <q-dialog v-model="dialogoNuevo" persistent>
+      <q-card class="q-pa-md" style="min-width: 400px; max-width: 95vw">
+        <q-card-section class="text-h6 text-primary row items-center q-pb-none">
+          <q-icon name="person_add" class="q-mr-sm" />
+          Nuevo Usuario
         </q-card-section>
 
-        <q-card-section>
+        <q-card-section class="q-gutter-sm">
           <q-input
             v-model="nuevoUsuario.nombre"
             label="Nombre"
             dense
             outlined
-            class="q-mb-sm"
+            clearable
+            :rules="[val => !!val || 'Requerido']"
+            prefix-icon="person"
           />
           <q-input
             v-model="nuevoUsuario.email"
@@ -49,7 +66,9 @@
             type="email"
             dense
             outlined
-            class="q-mb-sm"
+            clearable
+            :rules="[val => !!val || 'Requerido']"
+            prefix-icon="mail"
           />
           <q-select
             v-model="nuevoUsuario.rol"
@@ -57,18 +76,26 @@
             :options="['admin', 'empresa', 'empleado']"
             dense
             outlined
-            class="q-mb-sm"
+            emit-value
+            map-options
+            :rules="[val => !!val || 'Selecciona un rol']"
           />
         </q-card-section>
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn color="primary" label="Guardar" @click="guardarUsuario" />
+          <q-btn
+            color="primary"
+            label="Guardar"
+            @click="guardarUsuario"
+            unelevated
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
   </q-page>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -124,3 +151,25 @@ function eliminarUsuario(id) {
 }
 onMounted(cargarUsuarios);
 </script>
+<style scoped>
+.styled-table {
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--q-background);
+  color: var(--q-text);
+}
+
+
+.q-table__middle tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.q-btn.shadow-2 {
+  transition: transform 0.2s ease;
+}
+.q-btn.shadow-2:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 123, 255, 0.25);
+}
+
+</style>
