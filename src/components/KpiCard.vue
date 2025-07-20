@@ -1,5 +1,10 @@
 <template>
-  <q-card flat bordered :class="['theme-kpi-card', isDark ? 'dark-card' : 'light-card']">
+  <q-card
+    flat
+    bordered
+    class="theme-kpi-card animate__animated animate__fadeInUp"
+    :class="isDark ? 'dark-card' : 'light-card'"
+  >
     <q-card-section class="column items-center justify-center q-gutter-sm">
       <div class="kpi-icon-wrapper">
         <q-icon :name="icon" class="kpi-icon" />
@@ -26,10 +31,11 @@ defineProps({
 
 <style scoped>
 .theme-kpi-card {
-  border-radius: 18px;
+  border-radius: 20px;
   min-height: 200px;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: default;
 }
 
 .theme-kpi-card:hover {
@@ -38,15 +44,15 @@ defineProps({
 }
 
 .dark-card {
-  background: var(--card-background);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background: #1e1e1e;
+  color: #f4f4f4;
+  border: 1px solid #2a2a2a;
 }
 
 .light-card {
-  background: var(--card-background);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background: #ffffff;
+  color: #1e1e1e;
+  border: 1px solid #e0e0e0;
 }
 
 .kpi-icon-wrapper {
@@ -57,23 +63,34 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 153, 255, 0.3);
+  animation: pulse-glow 2.2s infinite ease-in-out;
 }
 
 .kpi-icon {
-  font-size: 32px;
+  font-size: 36px;
 }
 
 .kpi-value {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: bold;
   color: var(--color-primary);
-  text-shadow: 0 0 4px rgba(0, 153, 255, 0.2);
+  text-shadow: 0 0 6px rgba(0, 153, 255, 0.3);
 }
 
 .kpi-title {
   font-size: 16px;
   font-weight: 500;
   opacity: 0.85;
+}
+
+/* Animación del glow */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(0, 153, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(0, 153, 255, 0.6);
+  }
 }
 </style>

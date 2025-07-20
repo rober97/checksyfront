@@ -3,8 +3,10 @@
     v-model="leftDrawerOpen"
     show-if-above
     bordered
-    :mini="miniState"
+    :mini="props.miniState"
     :class="drawerClass"
+    content-class="q-pa-none"
+    class="q-drawer--standard full-height"
   >
     <q-list padding>
       <q-item-label header>Menu</q-item-label>
@@ -82,36 +84,36 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
-import { useQuasar } from 'quasar';
-import { useRouter } from 'vue-router';
+import { computed, ref } from "vue";
+import { useQuasar } from "quasar";
+import { useRouter } from "vue-router";
 
 const $q = useQuasar();
 const router = useRouter();
 
 // Props y emits para v-model
 const props = defineProps({
-  modelValue: Boolean
+  modelValue: Boolean,
+  miniState: Boolean,
 });
-const emit = defineEmits(['update:modelValue']);
+
+const emit = defineEmits(["update:modelValue"]);
 
 // Drawer state
 const leftDrawerOpen = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: (val) => emit("update:modelValue", val),
 });
-const miniState = ref(false);
-
 // Role dinámico
-const role = localStorage.getItem('role') || 'Empleado';
+const role = localStorage.getItem("role") || "Empleado";
 
 // Clases condicionales
 const drawerClass = computed(() =>
-  $q.dark.isActive ? 'bg-grey-9 text-white' : 'bg-grey-1 text-dark'
+  $q.dark.isActive ? "bg-grey-9 text-white" : "bg-grey-1 text-dark"
 );
 
 function logout() {
   localStorage.clear();
-  router.push('/');
+  router.push("/");
 }
 </script>

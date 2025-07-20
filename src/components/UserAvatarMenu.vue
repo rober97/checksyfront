@@ -54,11 +54,11 @@ function goToPerfil() {
 }
 
 function goToConfig() {
-  router.push('/configuracion');
+  router.push('/user/configuration');
 }
 
 function goToEmpresas() {
-  router.push('/empresas');
+  router.push('/admin/companies');
 }
 
 function logout() {

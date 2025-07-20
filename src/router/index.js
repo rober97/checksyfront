@@ -49,7 +49,11 @@ const routes = [
     component: Register,
     meta: { public: true }
   },
-
+  {
+    path: '/configuration',
+    component: () => import('@/views/Usuarios/Configuration.vue'),
+    meta: { requiresAuth: true } // si tu app requiere login
+  },
   // 🛠 Admin Routes
   {
     path: '/admin',
@@ -65,6 +69,14 @@ const routes = [
       { path: 'company/:id', name: 'CompanyDetailAdmin', component: CompanyDetail },
     ],
     meta: { role: 'Administrador' }
+  },
+
+  {
+    path: '/user',
+    component: AdminLayout,
+    children: [
+      { path: 'configuration', name: 'Configuration', component: () => import('@/views/Usuarios/Configuration.vue') },
+    ]
   },
 
   // 🏢 Company Routes

@@ -1,13 +1,12 @@
 <template>
-  <q-page class="q-pa-md bg-grey-1">
+  <q-page class="q-pa-md" :class="pageBgClass">
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5 text-primary row items-center">
+      <div class="text-h5 row items-center" :class="headerTextClass">
         <q-icon name="group" class="q-mr-sm" />
         Gestión de Usuarios
       </div>
       <q-btn
-        label="Agregar Usuario"
         color="primary"
         icon="person_add"
         unelevated
@@ -26,8 +25,8 @@
       :loading="cargando"
       class="styled-table"
       no-data-label="No hay usuarios registrados"
+      :class="tableClass"
     >
-      <!-- Acciones -->
       <template v-slot:body-cell-acciones="props">
         <q-td align="center">
           <q-btn
@@ -37,106 +36,79 @@
             flat
             round
             @click="eliminarUsuario(props.row.id)"
+            title="Eliminar"
           />
         </q-td>
       </template>
     </q-table>
 
     <!-- Diálogo Nuevo Usuario -->
-    <q-dialog v-model="dialogoNuevo" persistent>
-      <q-card class="q-pa-md" style="min-width: 400px; max-width: 95vw">
-        <q-card-section class="text-h6 text-primary row items-center q-pb-none">
-          <q-icon name="person_add" class="q-mr-sm" />
-          Nuevo Usuario
-        </q-card-section>
-
-        <q-card-section class="q-gutter-sm">
-          <q-input
-            v-model="nuevoUsuario.nombre"
-            label="Nombre"
-            dense
-            outlined
-            clearable
-            :rules="[val => !!val || 'Requerido']"
-            prefix-icon="person"
-          />
-          <q-input
-            v-model="nuevoUsuario.email"
-            label="Correo electrónico"
-            type="email"
-            dense
-            outlined
-            clearable
-            :rules="[val => !!val || 'Requerido']"
-            prefix-icon="mail"
-          />
-          <q-select
-            v-model="nuevoUsuario.rol"
-            label="Rol"
-            :options="['admin', 'empresa', 'empleado']"
-            dense
-            outlined
-            emit-value
-            map-options
-            :rules="[val => !!val || 'Selecciona un rol']"
-          />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn
-            color="primary"
-            label="Guardar"
-            @click="guardarUsuario"
-            unelevated
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <UserCreation
+      v-model="dialogoNuevo"
+      :empresas="empresas"
+      :horarios="horarios"
+      @guardar="guardarUsuario"
+    />
   </q-page>
 </template>
 
-
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from "vue";
+import { useQuasar } from "quasar";
+import UserCreation from "@/components/UserCreation.vue";
 
+const $q = useQuasar();
 const usuarios = ref([]);
 const cargando = ref(false);
 const dialogoNuevo = ref(false);
 
 const nuevoUsuario = ref({
-  nombre: '',
-  email: '',
-  rol: ''
+  nombre: "",
+  email: "",
+  rol: "",
 });
 
 const columnas = [
-  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left' },
-  { name: 'email', label: 'Correo', field: 'email', align: 'left' },
-  { name: 'rol', label: 'Rol', field: 'rol', align: 'left' },
-  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' },
+  { name: "nombre", label: "Nombre", field: "nombre", align: "left" },
+  { name: "email", label: "Correo", field: "email", align: "left" },
+  { name: "rol", label: "Rol", field: "rol", align: "left" },
+  { name: "acciones", label: "Acciones", field: "acciones", align: "center" },
 ];
 
 function cargarUsuarios() {
   cargando.value = true;
-  // Simulación de carga
   setTimeout(() => {
     usuarios.value = [
-      { id: 1, nombre: 'Juan Pérez', email: 'juan@example.com', rol: 'empresa' },
-      { id: 2, nombre: 'Laura Gómez', email: 'laura@example.com', rol: 'admin' },
+      {
+        id: 1,
+        nombre: "Juan Pérez",
+        email: "juan@example.com",
+        rol: "empresa",
+      },
+      {
+        id: 2,
+        nombre: "Laura Gómez",
+        email: "laura@example.com",
+        rol: "admin",
+      },
     ];
     cargando.value = false;
   }, 800);
 }
 
 function abrirDialogoNuevo() {
-  nuevoUsuario.value = { nombre: '', email: '', rol: '' };
+  nuevoUsuario.value = { nombre: "", email: "", rol: "" };
   dialogoNuevo.value = true;
 }
 
 function guardarUsuario() {
-  if (!nuevoUsuario.value.nombre || !nuevoUsuario.value.email || !nuevoUsuario.value.rol) {
-    return alert('Completa todos los campos');
+  if (
+    !nuevoUsuario.value.nombre ||
+    !nuevoUsuario.value.email ||
+    !nuevoUsuario.value.rol
+  ) {
+    $q.notify({ type: "warning", message: "Completa todos los campos" });
+    return;
   }
 
   usuarios.value.push({
@@ -147,21 +119,37 @@ function guardarUsuario() {
 }
 
 function eliminarUsuario(id) {
-  usuarios.value = usuarios.value.filter(u => u.id !== id);
+  usuarios.value = usuarios.value.filter((u) => u.id !== id);
+  $q.notify({ type: "positive", message: "Usuario eliminado correctamente" });
 }
+
+// 🎯 Computed para detectar modo oscuro
+const isDark = computed(() => $q.dark.isActive);
+const pageBgClass = computed(() =>
+  isDark.value ? "bg-grey-10 text-white" : "bg-grey-1"
+);
+const tableClass = computed(() =>
+  isDark.value ? "bg-grey-9 text-white" : "bg-white text-dark"
+);
+const dialogClass = computed(() =>
+  isDark.value ? "bg-grey-10 text-white" : "bg-white text-dark"
+);
+const headerTextClass = computed(() =>
+  isDark.value ? "text-white" : "text-primary"
+);
+
 onMounted(cargarUsuarios);
 </script>
+
 <style scoped>
 .styled-table {
   border-radius: 12px;
   overflow: hidden;
-  background-color: var(--q-background);
-  color: var(--q-text);
+  transition: background-color 0.3s, color 0.3s;
 }
 
-
 .q-table__middle tbody tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: rgba(0, 0, 0, 0.025);
 }
 
 .q-btn.shadow-2 {
@@ -171,5 +159,4 @@ onMounted(cargarUsuarios);
   transform: translateY(-2px);
   box-shadow: 0 4px 14px rgba(0, 123, 255, 0.25);
 }
-
 </style>
