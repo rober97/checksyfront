@@ -3,7 +3,7 @@
     <q-card class="q-pa-lg shadow-4" style="width: 100%; max-width: 500px">
       <q-card-section class="text-center">
         <div class="text-h5 text-primary">Crear cuenta</div>
-        <div class="text-subtitle2 text-grey">Registra tu empresa y comienza con Checksy</div>
+        <div class="text-subtitle2 text-grey">Registra tu empresa y comienza con Recksy</div>
       </q-card-section>
 
       <q-form @submit.prevent="handleRegister" class="q-gutter-md">

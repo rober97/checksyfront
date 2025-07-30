@@ -1,6 +1,6 @@
+// src/stores/auth.js
 import { defineStore } from 'pinia'
-import axios from 'axios'
-import { API_URL } from '@/utils/api'
+import secureAxios from '@/utils/secureRequest'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -17,12 +17,13 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login({ email, password }) {
       try {
-        const res = await axios.post(`${API_URL}/auth/login`, { email, password })
+        const res = await secureAxios.post('/auth/login', { email, password })
         if (res.data.success) {
           this.user = res.data.user
           this.token = res.data.token
           localStorage.setItem('token', res.data.token)
-          localStorage.setItem('role', 'Administrador')
+          localStorage.setItem('role', 'Administrador') // Puedes reemplazar con el rol real si está disponible
+          this.error = null
         } else {
           this.error = res.data.message || 'Login fallido'
         }
@@ -37,11 +38,12 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       this.error = null
       localStorage.removeItem('token')
+      localStorage.removeItem('role')
     },
 
     async newUser(userData) {
       try {
-        const res = await axios.post(`${API_URL}/users/new`, userData)
+        const res = await secureAxios.post('/users/new', userData)
         if (!res.data.success) {
           this.error = res.data.message || 'Error al crear usuario'
           throw new Error(this.error)

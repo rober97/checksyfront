@@ -5,11 +5,14 @@ export const useCompaniesStore = defineStore('companies', {
   state: () => ({
     companies: [],
     selectedCompany: null,
+    workSchedules: [],
     error: null,
     loading: false
   }),
 
   actions: {
+    // === COMPANIES ===
+
     async fetchCompanies() {
       try {
         this.loading = true
@@ -30,12 +33,10 @@ export const useCompaniesStore = defineStore('companies', {
     async createCompany(companyData) {
       try {
         const res = await secureAxios.post('/companies', companyData)
-
         if (!res.data.success) {
           this.error = res.data.message || 'Failed to create company'
           throw new Error(this.error)
         }
-        // Optional: push new company to state
         this.companies.push(res.data.company)
         return res.data.company
       } catch (err) {
@@ -67,7 +68,6 @@ export const useCompaniesStore = defineStore('companies', {
           this.error = res.data.message || 'Failed to update company'
           throw new Error(this.error)
         }
-        // Actualiza el estado local si la empresa estaba en el array
         const idx = this.companies.findIndex((c) => c._id === id)
         if (idx !== -1) {
           this.companies[idx] = { ...this.companies[idx], ...companyData }
@@ -92,6 +92,41 @@ export const useCompaniesStore = defineStore('companies', {
       } catch (err) {
         console.error('deleteCompany error:', err)
         this.error = 'Could not delete company'
+        throw err
+      }
+    },
+
+    // === WORK SCHEDULES ===
+
+    async fetchWorkSchedulesByCompany(companyId) {
+      try {
+        this.loading = true
+        const res = await secureAxios.get(`/work-schedules/company/${companyId}`)
+        if (res.data.success) {
+          this.workSchedules = res.data.data
+        } else {
+          this.error = res.data.message
+        }
+      } catch (err) {
+        console.error('fetchWorkSchedulesByCompany error:', err)
+        this.error = 'Error fetching work schedules'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async createWorkSchedule(scheduleData) {
+      try {
+        const res = await secureAxios.post('/work-schedules', scheduleData)
+        if (!res.data.success) {
+          this.error = res.data.message || 'Failed to create schedule'
+          throw new Error(this.error)
+        }
+        this.workSchedules.push(res.data.data)
+        return res.data.data
+      } catch (err) {
+        console.error('createWorkSchedule error:', err)
+        this.error = 'Could not create work schedule'
         throw err
       }
     }

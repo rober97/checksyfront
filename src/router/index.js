@@ -16,7 +16,8 @@ import Dashboard from '@/views/Dashboard.vue';
 // Admin views
 import Permissions from '@/views/Admin/Permisos.vue';
 import UserManagement from '@/views/Admin/GestionUsuarios.vue';
-
+import GestionHorarios from '@/views/Admin/GestionHorarios.vue' // 👈 importa la vista
+import AsistenciaPorEmpleado from '@/views/Admin/AsistenciasPorEmpleado.vue'
 // Company views
 import CompanyList from '@/views/Empresa/EmpresaList.vue';
 import CompanyForm from '@/views/Empresa/EmpresaForm.vue';
@@ -39,6 +40,11 @@ const routes = [
   // 🌐 Public Routes
   {
     path: '/',
+    component: () => import('@/views/HomePublic.vue'),
+    meta: { public: true }
+  },
+  {
+    path: '/login',
     name: 'Login',
     component: Login,
     meta: { public: true }
@@ -62,7 +68,8 @@ const routes = [
       { path: 'dashboard', name: 'AdminDashboard', component: Dashboard },
       { path: 'users', name: 'UserManagement', component: UserManagement },
       { path: 'permissions', name: 'Permissions', component: Permissions },
-
+      { path: 'horarios', name: 'HorariosList', component: GestionHorarios },
+      { path: 'attendance', name: 'AsistenciaList', component: AsistenciaPorEmpleado },
       // Company management
       { path: 'companies', name: 'CompanyListAdmin', component: CompanyList },
       { path: 'company/new', name: 'CompanyFormAdmin', component: CompanyForm },

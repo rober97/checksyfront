@@ -3,7 +3,7 @@
     <q-card class="q-pa-lg shadow-4" style="width: 100%; max-width: 400px">
       <q-card-section class="text-center">
         <div class="text-h5 text-primary">Iniciar sesión</div>
-        <div class="text-subtitle2 text-grey">Bienvenido a Checksy</div>
+        <div class="text-subtitle2 text-grey">Bienvenido a Recksy</div>
       </q-card-section>
 
       <q-form @submit.prevent="handleLogin" class="q-gutter-md">
@@ -86,6 +86,6 @@ async function handleLogin() {
 
 
 function soporte() {
-  window.open('mailto:soporte@checksy.cl', '_blank');
+  window.open('mailto:soporte@Recksy.cl', '_blank');
 }
 </script>

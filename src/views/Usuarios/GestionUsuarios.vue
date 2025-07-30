@@ -51,7 +51,7 @@ const columns = [
 
 onMounted(() => {
   usuarios.value = [
-    { id: 1, nombre: 'Admin General', email: 'admin@checksy.com', rol: 'Administrador', empresa: '-' },
+    { id: 1, nombre: 'Admin General', email: 'admin@Recksy.com', rol: 'Administrador', empresa: '-' },
     { id: 2, nombre: 'María Soto', email: 'maria@empresa1.com', rol: 'Empresa', empresa: 'Empresa 1' },
     { id: 3, nombre: 'Carlos Rivas', email: 'carlos@empresa1.com', rol: 'Empleado', empresa: 'Empresa 1' },
   ];

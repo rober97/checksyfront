@@ -13,7 +13,7 @@
 
       <!-- Título -->
       <q-toolbar-title class="text-weight-bold text-uppercase"
-        >Checksy</q-toolbar-title
+        >Recksy</q-toolbar-title
       >
 
       <!-- Empresa seleccionada (abreviación) -->

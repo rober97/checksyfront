@@ -28,9 +28,23 @@
           <q-item-section>Permissions</q-item-section>
         </q-item>
 
+        <q-item clickable to="/admin/attendance">
+          <q-item-section avatar><q-icon name="apartment" /></q-item-section>
+          <q-item-section>Asistencias</q-item-section>
+        </q-item>
+
         <q-item clickable to="/admin/companies">
           <q-item-section avatar><q-icon name="apartment" /></q-item-section>
           <q-item-section>Companies</q-item-section>
+        </q-item>
+
+        <q-item clickable to="/admin/horarios" exact>
+          <q-item-section avatar>
+            <q-icon name="schedule" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Horarios</q-item-label>
+          </q-item-section>
         </q-item>
       </template>
 
@@ -78,6 +92,8 @@
           <q-item-section avatar><q-icon name="post_add" /></q-item-section>
           <q-item-section>New Request</q-item-section>
         </q-item>
+
+        
       </template>
     </q-list>
   </q-drawer>

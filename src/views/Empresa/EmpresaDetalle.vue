@@ -118,16 +118,16 @@ onMounted(() => {
   // Simula datos
   empresa.value = {
     id,
-    nombre: 'Checksy Demo S.A.',
+    nombre: 'Recksy Demo S.A.',
     rut: '76.123.456-7',
-    email: 'contacto@checksy.cl',
+    email: 'contacto@Recksy.cl',
     telefono: '+56 2 1234 5678',
     direccion: 'Av. del Trabajo 123',
   };
 
   empleados.value = [
-    { id: 1, nombre: 'Juan Pérez', correo: 'juan@checksy.cl', cargo: 'Analista' },
-    { id: 2, nombre: 'María López', correo: 'maria@checksy.cl', cargo: 'Contadora' },
+    { id: 1, nombre: 'Juan Pérez', correo: 'juan@Recksy.cl', cargo: 'Analista' },
+    { id: 2, nombre: 'María López', correo: 'maria@Recksy.cl', cargo: 'Contadora' },
   ];
 });
 </script>
