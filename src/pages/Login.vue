@@ -63,6 +63,7 @@ async function handleLogin() {
 
   try {
     loading.value = true;
+    debugger
     await authStore.login({ email: email.value, password: password.value });
 
     const role = localStorage.getItem('role'); // o authStore.user.role si lo tienes ahí

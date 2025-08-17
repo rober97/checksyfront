@@ -1,7 +1,7 @@
 // src/stores/auth.js
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
-
+import publicAxios from '@/utils/publicRequest'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
@@ -17,7 +17,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login({ email, password }) {
       try {
-        const res = await secureAxios.post('/auth/login', { email, password })
+        const res = await publicAxios.post('/auth/login', { email, password })
         if (res.data.success) {
           this.user = res.data.user
           this.token = res.data.token

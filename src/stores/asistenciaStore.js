@@ -30,10 +30,31 @@ export const useAsistenciaStore = defineStore('asistencia', {
       }
     },
 
+    async fetchHistorialEmpleado({ employeeId, from = null, to = null }) {
+      try {
+        const res = await secureAxios.get(`/attendance/history/${employeeId}`, {
+          params: {
+            ...(from && { from }),
+            ...(to && { to })
+          }
+        })
+
+        if (res.data.success) {
+          return res.data.data // { _id, nombre, rut, asistencias }
+        } else {
+          throw new Error(res.data.message || 'Error al obtener historial de asistencias')
+        }
+      } catch (err) {
+        console.error('fetchHistorialEmpleado error:', err)
+        throw err
+      }
+    },
+
+
     async fetchRecordsByEmployee() {
       try {
-        const res = await secureAxios.get('/attendance/by-employee')
         debugger
+        const res = await secureAxios.get('/attendance/by-employee')
         if (res.data.success) {
           this.employeeRecords = res.data.data
         } else {

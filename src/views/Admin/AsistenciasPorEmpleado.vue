@@ -50,7 +50,7 @@
 
     <!-- Modal de historial -->
     <q-dialog v-model="modalHistorial" persistent>
-      <q-card style="min-width: 500px; max-width: 95vw;">
+      <q-card style="min-width: 500px; max-width: 95vw">
         <q-card-section>
           <div class="text-h6">
             📅 Historial de: {{ historialEmpleado?.nombre }}
@@ -64,8 +64,20 @@
 
         <q-card-section>
           <div class="row q-col-gutter-md q-mb-md">
-            <q-input filled v-model="rangoDesde" label="Desde" type="date" dense />
-            <q-input filled v-model="rangoHasta" label="Hasta" type="date" dense />
+            <q-input
+              filled
+              v-model="rangoDesde"
+              label="Desde"
+              type="date"
+              dense
+            />
+            <q-input
+              filled
+              v-model="rangoHasta"
+              label="Hasta"
+              type="date"
+              dense
+            />
           </div>
 
           <q-btn
@@ -74,10 +86,19 @@
             label="Limpiar rango"
             icon="clear"
             class="q-mb-md"
-            @click="() => { rangoDesde = ''; rangoHasta = '' }"
+            @click="
+              () => {
+                rangoDesde = '';
+                rangoHasta = '';
+              }
+            "
           />
 
-          <q-timeline color="primary" layout="dense" v-if="historialFiltrado.length">
+          <q-timeline
+            color="primary"
+            layout="dense"
+            v-if="historialFiltrado.length"
+          >
             <q-timeline-entry
               v-for="(a, i) in historialFiltrado"
               :key="i"
@@ -111,88 +132,141 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import { useAsistenciaStore } from '@/stores/asistenciaStore'
+import { ref, computed, onMounted, watch } from "vue";
+import { useQuasar } from "quasar";
+import { useAsistenciaStore } from "@/stores/asistenciaStore";
 
-const $q = useQuasar()
-const asistenciaStore = useAsistenciaStore()
+const $q = useQuasar();
+const asistenciaStore = useAsistenciaStore();
 
-const search = ref('')
-const modalHistorial = ref(false)
-const historialEmpleado = ref(null)
-const rangoDesde = ref('')
-const rangoHasta = ref('')
+const search = ref("");
+const modalHistorial = ref(false);
+const historialEmpleado = ref(null);
+const rangoDesde = ref("");
+const rangoHasta = ref("");
+const loading = ref(true);
 
 // Cargar asistencias al montar
 onMounted(async () => {
-  await asistenciaStore.fetchRecordsByEmployee()
-})
+  loading.value = true;
+  try {
+    await asistenciaStore.fetchRecordsByEmployee();
+  } catch (error) {
+    $q.notify({ type: "negative", message: "Error al cargar asistencias" });
+  } finally {
+    loading.value = false;
+  }
+});
+
+watch([rangoDesde, rangoHasta], () => {
+  if (historialEmpleado.value?._id) {
+    recargarHistorialConRango();
+  }
+});
 
 const columns = [
-  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left' },
-  { name: 'rut', label: 'RUT', field: 'rut', align: 'left' },
-  { name: 'total', label: 'Asistencias', field: 'total', align: 'center' },
-  { name: 'actions', label: 'Acciones', field: 'actions', align: 'center' }
-]
+  { name: "nombre", label: "Nombre", field: "nombre", align: "left" },
+  { name: "rut", label: "RUT", field: "rut", align: "left" },
+  { name: "total", label: "Asistencias", field: "total", align: "center" },
+  { name: "actions", label: "Acciones", field: "actions", align: "center" },
+];
 
 const filtrados = computed(() => {
-  const term = search.value.toLowerCase()
-  return asistenciaStore?.asistenciasEmpleado?.filter(
-    e =>
-      e.nombre.toLowerCase().includes(term) ||
-      e.rut.toLowerCase().includes(term)
-  )
-})
+  if (loading.value || !asistenciaStore.employeeRecords) return [];
 
-const verHistorial = (empleado) => {
-  historialEmpleado.value = empleado
-  rangoDesde.value = ''
-  rangoHasta.value = ''
-  modalHistorial.value = true
-}
+  const term = search.value.toLowerCase();
+  return asistenciaStore.employeeRecords.filter(
+    (e) =>
+      e.nombre?.toLowerCase().includes(term) ||
+      e.rut?.toLowerCase().includes(term)
+  );
+});
+
+const verHistorial = async (empleado) => {
+  try {
+    rangoDesde.value = "";
+    rangoHasta.value = "";
+    loading.value = true;
+
+    const data = await asistenciaStore.fetchHistorialEmpleado({
+      employeeId: empleado._id,
+    });
+    historialEmpleado.value = data;
+    modalHistorial.value = true;
+  } catch (error) {
+    $q.notify({ type: "negative", message: "No se pudo cargar el historial" });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const recargarHistorialConRango = async () => {
+  try {
+    loading.value = true;
+    const data = await asistenciaStore.fetchHistorialEmpleado({
+      employeeId: historialEmpleado.value._id,
+      from: rangoDesde.value || null,
+      to: rangoHasta.value || null,
+    });
+    historialEmpleado.value = data;
+  } catch (err) {
+    $q.notify({ type: "negative", message: "Error al filtrar por rango" });
+  } finally {
+    loading.value = false;
+  }
+};
 
 const historialFiltrado = computed(() => {
-  if (!historialEmpleado.value) return []
+  if (!historialEmpleado.value?.asistencias) return [];
 
   return historialEmpleado.value.asistencias.filter((a) => {
-    if (!rangoDesde.value && !rangoHasta.value) return true
-    const fecha = new Date(a.fecha)
-    const desde = rangoDesde.value ? new Date(rangoDesde.value) : null
-    const hasta = rangoHasta.value ? new Date(rangoHasta.value) : null
-    return (!desde || fecha >= desde) && (!hasta || fecha <= hasta)
-  })
-})
+    if (!rangoDesde.value && !rangoHasta.value) return true;
+    const fecha = new Date(a.fecha);
+    const desde = rangoDesde.value ? new Date(rangoDesde.value) : null;
+    const hasta = rangoHasta.value ? new Date(rangoHasta.value) : null;
+    return (!desde || fecha >= desde) && (!hasta || fecha <= hasta);
+  });
+});
 
 const estadoColor = (estado) => {
-  switch (estado.toLowerCase()) {
-    case 'presente': return 'green'
-    case 'ausente': return 'red'
-    case 'justificado': return 'orange'
-    default: return 'grey'
+  switch (estado?.toLowerCase()) {
+    case "presente":
+      return "green";
+    case "ausente":
+      return "red";
+    case "justificado":
+      return "orange";
+    default:
+      return "grey";
   }
-}
+};
 
 const estadoIcono = (estado) => {
-  switch (estado.toLowerCase()) {
-    case 'presente': return 'check_circle'
-    case 'ausente': return 'cancel'
-    case 'justificado': return 'gavel'
-    default: return 'help'
+  switch (estado?.toLowerCase()) {
+    case "presente":
+      return "check_circle";
+    case "ausente":
+      return "cancel";
+    case "justificado":
+      return "gavel";
+    default:
+      return "help";
   }
-}
+};
 
 const exportarExcel = async () => {
+  if (!historialEmpleado.value?._id) return;
+
   try {
-    await asistenciaStore.exportarExcelEmpleado({
-      empleadoId: historialEmpleado.value._id,
-      desde: rangoDesde.value || null,
-      hasta: rangoHasta.value || null
-    })
+    await asistenciaStore.exportEmployeeExcel({
+      employeeId: historialEmpleado.value._id,
+      from: rangoDesde.value || null,
+      to: rangoHasta.value || null,
+    });
   } catch {
-    $q.notify({ type: 'negative', message: 'Error al exportar asistencia' })
+    $q.notify({ type: "negative", message: "Error al exportar asistencia" });
   }
-}
+};
 </script>
 
 <style scoped>
