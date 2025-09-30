@@ -2,7 +2,7 @@
   <q-page class="flex flex-center bg-grey-2">
     <q-card class="q-pa-lg shadow-4" style="width: 100%; max-width: 420px">
       <q-card-section class="text-center">
-        <div class="text-h5 text-primary">Iniciar sesión</div>
+        <div class="text-h5 text-primary">Iniciar sesiónn</div>
         <div class="text-subtitle2 text-grey-7">Bienvenido a Recksy</div>
       </q-card-section>
 
