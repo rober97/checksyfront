@@ -25,7 +25,7 @@
 
         <q-item clickable to="/admin/permissions">
           <q-item-section avatar><q-icon name="lock" /></q-item-section>
-          <q-item-section>Permissions</q-item-section>
+          <q-item-section>Permisos</q-item-section>
         </q-item>
 
         <q-item clickable to="/admin/attendance">
@@ -35,7 +35,7 @@
 
         <q-item clickable to="/admin/companies">
           <q-item-section avatar><q-icon name="apartment" /></q-item-section>
-          <q-item-section>Companies</q-item-section>
+          <q-item-section>Empresas</q-item-section>
         </q-item>
 
         <q-item clickable to="/admin/horarios" exact>

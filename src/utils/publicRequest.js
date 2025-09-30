@@ -8,7 +8,8 @@ const publicAxios = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  timeout: 10000
+  timeout: 10000,
+  withCredentials: true
 })
 
 export default publicAxios

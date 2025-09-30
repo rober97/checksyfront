@@ -4,7 +4,8 @@ import App from './App.vue'
 import { createPinia } from 'pinia'
 import router from './router'
 
-import { Quasar } from 'quasar'
+// ⬇️ Registra Quasar + Dialog/Notify aquí
+import { Quasar, Dialog, Notify } from 'quasar'
 import quasarUserOptions from './quasar-user-options'
 
 import Toast, { POSITION } from 'vue-toastification'
@@ -17,7 +18,18 @@ import './css/base.css'
 const app = createApp(App)
 
 // 👉 Plugins
-app.use(Quasar, quasarUserOptions)
+app.use(Quasar, {
+  // Mantenemos lo que ya tengas en quasar-user-options
+  ...quasarUserOptions,
+  // Aseguramos que Dialog y Notify queden registrados
+  plugins: { ...(quasarUserOptions.plugins || {}), Dialog, Notify },
+  // (Opcional) Config global del Notify
+  config: {
+    ...(quasarUserOptions.config || {}),
+    notify: { position: 'top-right', timeout: 2500 }
+  }
+})
+
 app.use(Toast, {
   position: POSITION.TOP_RIGHT,
   timeout: 4000,

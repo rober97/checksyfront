@@ -11,9 +11,22 @@
     <!-- KPIs -->
     <div class="kpi-grid-wrapper">
       <div class="q-gutter-md row q-col-gutter-md q-mb-md kpi-grid">
-        <KpiCard title="Días Vacaciones" :value="vacaciones" icon="beach_access" />
-        <KpiCard title="Asistencias" :value="asistencias" icon="event_available" />
-        <KpiCard title="Solicitudes Pendientes" :value="solicitudes" icon="hourglass_empty" />
+        <KpiCard
+          v-if="role === 'Empleado'"
+          title="Días Vacaciones"
+          :value="vacaciones"
+          icon="beach_access"
+        />
+        <KpiCard
+          title="Asistencias"
+          :value="asistencias"
+          icon="event_available"
+        />
+        <KpiCard
+          title="Solicitudes Pendientes"
+          :value="solicitudes"
+          icon="hourglass_empty"
+        />
 
         <KpiCard
           v-if="role === 'Administrador'"
@@ -53,7 +66,13 @@
       <q-icon name="admin_panel_settings" color="blue" class="q-mr-sm" />
       Puedes gestionar <strong>usuarios</strong>, <strong>permisos</strong> y
       <strong>empresas</strong> desde el menú lateral.
-      <q-btn flat color="white" label="Ir a Gestión" class="q-ml-sm" to="/admin/users" />
+      <q-btn
+        flat
+        color="white"
+        label="Ir a Gestión"
+        class="q-ml-sm"
+        to="/admin/users"
+      />
     </q-banner>
 
     <q-banner
@@ -65,7 +84,13 @@
       <q-icon name="business" color="green" class="q-mr-sm" />
       Desde aquí puedes revisar <strong>reportes</strong> y administrar a tus
       <strong>empleados</strong>.
-      <q-btn flat color="white" label="Ver empleados" class="q-ml-sm" to="/company/employees" />
+      <q-btn
+        flat
+        color="white"
+        label="Ver empleados"
+        class="q-ml-sm"
+        to="/company/employees"
+      />
     </q-banner>
 
     <q-banner
@@ -75,46 +100,69 @@
       rounded
     >
       <q-icon name="badge" color="orange" class="q-mr-sm" />
-      Recuerda <strong>marcar asistencia</strong> cada día y revisar tu historial de solicitudes.
-      <q-btn flat color="white" label="Marcar Asistencia" class="q-ml-sm" to="/employee/attendance" />
+      Recuerda <strong>marcar asistencia</strong> cada día y revisar tu
+      historial de solicitudes.
+      <q-btn
+        flat
+        color="white"
+        label="Marcar Asistencia"
+        class="q-ml-sm"
+        to="/employee/attendance"
+      />
     </q-banner>
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import KpiCard from "@/components/KpiCard.vue";
 import { useThemeClasses } from "@/utils/themeClasses";
+import { useKpiStore } from "@/stores/kpiStore";
 
 const {
   isDark,
-  cardClass,
   pageContainerClass,
   bannerAdminClass,
   bannerCompanyClass,
-  bannerEmployeeClass
+  bannerEmployeeClass,
 } = useThemeClasses();
 
 const role = ref(localStorage.getItem("role") || "Empleado");
+const companyId = localStorage.getItem("companyId") || undefined;
+const userId = localStorage.getItem("userId") || undefined;
 
-const nombreRol = computed(() => {
-  return {
-    Administrador: "Administrador",
-    Empresa: "Empresa",
-    Empleado: "Empleado"
-  }[role.value] || "Usuario";
-});
+const nombreRol = computed(
+  () =>
+    ({
+      Administrador: "Administrador",
+      Empresa: "Empresa",
+      Empleado: "Empleado",
+    }[role.value] || "Usuario")
+);
 
-// KPI simulados
-const vacaciones = ref(15.5);
-const asistencias = ref(120);
-const solicitudes = ref(3);
-const usuariosActivos = ref(42);
-const empresas = ref(8);
-const diasAdmin = ref(2);
-const ultimoCheck = ref("10/10/2025 08:55");
+const kpi = useKpiStore();
+
+function cargarKpis() {
+  kpi.fetchKpis({
+    role: role.value,
+    companyId,
+    userId,
+    // puedes pasar from/to si agregas filtros de fecha
+  });
+}
+
+onMounted(cargarKpis);
+watch(() => role.value, cargarKpis);
+
+// Computed para bindear en el template
+const vacaciones = computed(() => kpi.vacaciones);
+const asistencias = computed(() => kpi.asistencias);
+const solicitudes = computed(() => kpi.solicitudes);
+const usuariosActivos = computed(() => kpi.usuariosActivos);
+const empresas = computed(() => kpi.empresas);
+const diasAdmin = computed(() => kpi.diasAdmin);
+const ultimoCheck = computed(() => kpi.ultimoCheck);
 </script>
-
 
 <style scoped>
 .kpi-grid-wrapper {
@@ -137,4 +185,3 @@ const ultimoCheck = ref("10/10/2025 08:55");
   transition: all 0.3s ease;
 }
 </style>
-

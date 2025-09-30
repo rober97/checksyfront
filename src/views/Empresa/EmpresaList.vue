@@ -164,11 +164,11 @@ const nuevaEmpresa = ref({
 
 // Navegación
 function verEmpresa(empresa) {
-  router.push(`/admin/empresas/${empresa._id}`)
+  router.push(`/admin/company/${empresa._id}`)
 }
 
 function editarEmpresa(empresa) {
-  router.push(`/admin/empresas/${empresa._id}/editar`)
+  router.push(`/admin/company/${empresa._id}/edit`)
 }
 
 function eliminarEmpresa(empresa) {

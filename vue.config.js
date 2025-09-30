@@ -4,6 +4,9 @@ const { defineConfig } = require('@vue/cli-service');
 module.exports = defineConfig({
   transpileDependencies: ['quasar'],
 
+  // 👇 clave: base pública para chunks, toma del .env
+  publicPath: process.env.VUE_APP_PUBLIC_PATH || '/',
+
   configureWebpack: {
     resolve: {
       alias: {
@@ -13,18 +16,14 @@ module.exports = defineConfig({
   },
 
   pluginOptions: {
-    quasar: {
-      importStrategy: 'kebab',
-      rtlSupport: false,
-    },
+    quasar: { importStrategy: 'kebab', rtlSupport: false },
   },
 
-  // Opcional: genera mapas de código en producción
   productionSourceMap: false,
 
-  // Opcional: configuración para dev server
   devServer: {
     port: 8080,
     open: true,
+    historyApiFallback: true, // SPA
   },
 });
