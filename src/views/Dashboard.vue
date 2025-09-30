@@ -29,13 +29,13 @@
         />
 
         <KpiCard
-          v-if="role === 'Administrador'"
+          v-if="role === 'admin'"
           title="Usuarios Activos"
           :value="usuariosActivos"
           icon="people"
         />
         <KpiCard
-          v-if="role === 'Administrador'"
+          v-if="role === 'admin'"
           title="Empresas Registradas"
           :value="empresas"
           icon="apartment"
@@ -58,7 +58,7 @@
 
     <!-- Banner por rol -->
     <q-banner
-      v-if="role === 'Administrador'"
+      v-if="role === 'admin'"
       class="q-pa-md q-mb-md animate__animated animate__fadeIn"
       :class="bannerAdminClass"
       rounded
@@ -134,7 +134,7 @@ const userId = localStorage.getItem("userId") || undefined;
 const nombreRol = computed(
   () =>
     ({
-      Administrador: "Administrador",
+      Administrador: "admin",
       Empresa: "Empresa",
       Empleado: "Empleado",
     }[role.value] || "Usuario")

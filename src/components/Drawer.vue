@@ -12,7 +12,7 @@
       <q-item-label header>Menu</q-item-label>
 
       <!-- 🔐 Admin -->
-      <template v-if="role === 'Administrador'">
+      <template v-if="role === 'admin'">
         <q-item clickable to="/admin/dashboard" exact>
           <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
           <q-item-section>Dashboard</q-item-section>

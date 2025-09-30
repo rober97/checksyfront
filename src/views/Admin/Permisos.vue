@@ -39,7 +39,7 @@
                 narrow-indicator
                 class="custom-tabs"
               >
-                <q-tab name="admin" label="Administrador" />
+                <q-tab name="admin" label="admin" />
                 <q-tab name="empresa" label="Empresa" />
                 <q-tab name="empleado" label="Empleado" />
               </q-tabs>

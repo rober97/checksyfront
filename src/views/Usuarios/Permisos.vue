@@ -73,7 +73,7 @@ const usuarios = ref([
   {
     id: 1,
     nombre: 'Admin General',
-    rol: 'Administrador',
+    rol: 'admin',
     permisos: ['crear_empresa', 'ver_reportes', 'editar_usuarios'],
   },
   {
@@ -84,7 +84,7 @@ const usuarios = ref([
   },
 ]);
 
-const roles = ['Administrador', 'Empresa', 'Empleado', 'Supervisor'];
+const roles = ['admin', 'Empresa', 'Empleado', 'Supervisor'];
 
 const todosLosPermisos = [
   { label: 'Crear Empresa', value: 'crear_empresa' },
