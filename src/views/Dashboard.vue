@@ -134,7 +134,7 @@ const userId = localStorage.getItem("userId") || undefined;
 const nombreRol = computed(
   () =>
     ({
-      Administrador: "admin",
+      admin: "Administrador",
       Empresa: "Empresa",
       Empleado: "Empleado",
     }[role.value] || "Usuario")

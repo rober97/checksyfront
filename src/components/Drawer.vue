@@ -1,135 +1,177 @@
 <template>
   <q-drawer
-    v-model="leftDrawerOpen"
+    v-model="isOpen"
     show-if-above
     bordered
-    :mini="props.miniState"
-    :class="drawerClass"
-    content-class="q-pa-none"
+    :mini="mini"
+    :width="260"
     class="q-drawer--standard full-height"
+    :content-class="
+      $q.dark.isActive ? 'bg-grey-10 text-white' : 'bg-grey-1 text-dark'
+    "
   >
-    <q-list padding>
-      <q-item-label header>Menu</q-item-label>
+    <!-- Header de usuario -->
+    <div
+      class="q-pa-md flex items-center"
+      :class="mini ? 'justify-center' : 'justify-between'"
+    >
+      <q-avatar size="40px" color="primary" text-color="white">
+        {{ initials }}
+      </q-avatar>
 
-      <!-- 🔐 Admin -->
-      <template v-if="role === 'admin'">
-        <q-item clickable to="/admin/dashboard" exact>
-          <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
-          <q-item-section>Dashboard</q-item-section>
-        </q-item>
+      <div v-if="!mini" class="q-ml-sm col">
+        <div class="text-subtitle2 ellipsis">{{ user?.name || "Usuario" }}</div>
+        <div class="text-caption text-grey">
+          {{ role || "—" }}
+        </div>
+      </div>
 
-        <q-item clickable to="/admin/users">
-          <q-item-section avatar><q-icon name="people" /></q-item-section>
-          <q-item-section>Users</q-item-section>
-        </q-item>
+      <q-btn
+        v-if="!mini"
+        flat
+        round
+        dense
+        :icon="$q.dark.isActive ? 'dark_mode' : 'light_mode'"
+        @click="toggleDark"
+        :aria-label="$q.dark.isActive ? 'Activar claro' : 'Activar oscuro'"
+      />
+    </div>
 
-        <q-item clickable to="/admin/permissions">
-          <q-item-section avatar><q-icon name="lock" /></q-item-section>
-          <q-item-section>Permisos</q-item-section>
-        </q-item>
+    <q-separator />
 
-        <q-item clickable to="/admin/attendance">
-          <q-item-section avatar><q-icon name="apartment" /></q-item-section>
-          <q-item-section>Asistencias</q-item-section>
-        </q-item>
+    <!-- Lista de navegación -->
+    <q-scroll-area class="fit">
+      <q-list padding>
+        <template v-for="(group, gi) in visibleMenu" :key="gi">
+          <q-expansion-item
+            v-if="group.children?.length"
+            :label="group.label"
+            :icon="group.icon"
+            expand-separator
+            header-class="text-weight-medium"
+            default-open
+            :dense="mini"
+          >
+            <template #header>
+              <q-item-section avatar v-if="group.icon">
+                <q-icon :name="group.icon" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ group.label }}</q-item-label>
+              </q-item-section>
+            </template>
 
-        <q-item clickable to="/admin/companies">
-          <q-item-section avatar><q-icon name="apartment" /></q-item-section>
-          <q-item-section>Empresas</q-item-section>
-        </q-item>
+            <q-item
+              v-for="(it, ii) in group.children"
+              :key="`${gi}-${ii}`"
+              clickable
+              :to="it.to"
+              :exact="it.exact"
+              :active-class="'bg-primary text-white'"
+              class="rounded-borders q-mx-sm"
+            >
+              <q-item-section avatar v-if="it.icon">
+                <q-icon :name="it.icon" />
+              </q-item-section>
 
-        <q-item clickable to="/admin/horarios" exact>
-          <q-item-section avatar>
-            <q-icon name="schedule" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Horarios</q-item-label>
-          </q-item-section>
-        </q-item>
-      </template>
+              <q-item-section>
+                <q-item-label>{{ it.label }}</q-item-label>
+              </q-item-section>
 
-      <!-- 🏢 Empresa -->
-      <template v-if="role === 'Empresa'">
-        <q-item clickable to="/company/dashboard">
-          <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
-          <q-item-section>Dashboard</q-item-section>
-        </q-item>
+              <q-item-section side v-if="it.badge">
+                <q-badge :label="`${it.badge}`" />
+              </q-item-section>
 
-        <q-item clickable to="/company/employees">
-          <q-item-section avatar><q-icon name="badge" /></q-item-section>
-          <q-item-section>Employees</q-item-section>
-        </q-item>
+              <q-tooltip v-if="mini" anchor="center right" self="center left">
+                {{ it.label }}
+              </q-tooltip>
+            </q-item>
+          </q-expansion-item>
 
-        <q-item clickable to="/company/report">
-          <q-item-section avatar><q-icon name="bar_chart" /></q-item-section>
-          <q-item-section>Report</q-item-section>
-        </q-item>
+          <q-separator class="q-my-sm" />
+        </template>
+      </q-list>
+    </q-scroll-area>
 
-        <q-item clickable to="/company/requests">
-          <q-item-section avatar><q-icon name="assignment" /></q-item-section>
-          <q-item-section>Requests</q-item-section>
-        </q-item>
-      </template>
-
-      <!-- 👤 Empleado -->
-      <template v-if="role === 'Empleado'">
-        <q-item clickable to="/employee/dashboard">
-          <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
-          <q-item-section>Dashboard</q-item-section>
-        </q-item>
-
-        <q-item clickable to="/employee/attendance">
-          <q-item-section avatar><q-icon name="access_time" /></q-item-section>
-          <q-item-section>Mark Attendance</q-item-section>
-        </q-item>
-
-        <q-item clickable to="/employee/history">
-          <q-item-section avatar><q-icon name="history" /></q-item-section>
-          <q-item-section>My History</q-item-section>
-        </q-item>
-
-        <q-item clickable to="/employee/request">
-          <q-item-section avatar><q-icon name="post_add" /></q-item-section>
-          <q-item-section>New Request</q-item-section>
-        </q-item>
-
-        
-      </template>
-    </q-list>
+    <!-- Footer acciones -->
+    <div class="q-pa-md q-gutter-sm">
+      <q-btn
+        flat
+        no-caps
+        class="full-width justify-start"
+        icon="logout"
+        label="Cerrar sesión"
+        @click="onLogout"
+      />
+    </div>
   </q-drawer>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useQuasar } from "quasar";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/authStore";
+import { useAccess } from "../composables/useAccess";
+import { MENU } from "../navigation/menu";
+
+const props = defineProps({
+  modelValue: { type: Boolean, default: false },
+  miniState: { type: Boolean, default: false },
+});
+const emit = defineEmits(["update:modelValue"]);
 
 const $q = useQuasar();
 const router = useRouter();
+const auth = useAuthStore();
+const { role, can } = useAccess();
 
-// Props y emits para v-model
-const props = defineProps({
-  modelValue: Boolean,
-  miniState: Boolean,
-});
-
-const emit = defineEmits(["update:modelValue"]);
-
-// Drawer state
-const leftDrawerOpen = computed({
+// v-model del drawer
+const isOpen = computed({
   get: () => props.modelValue,
-  set: (val) => emit("update:modelValue", val),
+  set: (v) => emit("update:modelValue", v),
 });
-// Role dinámico
-const role = localStorage.getItem("role") || "Empleado";
+const mini = computed(() => !!props.miniState);
 
-// Clases condicionales
-const drawerClass = computed(() =>
-  $q.dark.isActive ? "bg-grey-9 text-white" : "bg-grey-1 text-dark"
-);
+// Usuario / iniciales
+const user = computed(() => auth.user);
+const initials = computed(() => {
+  const n = auth.user?.name || auth.user?.email || "";
+  return n
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((s) => (s[0] || "").toUpperCase())
+    .join("");
+});
 
-function logout() {
-  localStorage.clear();
+// Menú filtrado por acceso
+const visibleMenu = computed(() => {
+  return MENU.filter((g) => can(g.access))
+    .map((g) => ({
+      ...g,
+      children: (g.children || []).filter((it) => can(it.access)),
+    }))
+    .filter((g) => (g.children && g.children.length) > 0);
+});
+
+function toggleDark() {
+  $q.dark.set(!$q.dark.isActive);
+}
+
+async function onLogout() {
+  await auth.logout(true);
   router.push("/");
 }
 </script>
+
+<style scoped>
+.rounded-borders {
+  border-radius: 10px;
+}
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

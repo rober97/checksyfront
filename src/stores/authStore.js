@@ -30,7 +30,6 @@ export const useAuthStore = defineStore('auth', {
         // Recomendado: el backend setea refresh-token en cookie httpOnly (SameSite=Lax/Strict, Secure)
         const res = await publicAxios.post('/auth/login', { email, password })
         if (!res.data?.success) throw new Error(res.data?.message || 'Login fallido')
-
         const { accessToken, user } = res.data
         if (!accessToken || !user) throw new Error('Respuesta de login inválida')
 
