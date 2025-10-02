@@ -183,7 +183,7 @@
                                 </q-badge>
                               </q-item-label>
                               <q-item-label caption>
-                                ID: {{ m._id }}
+                                Comentario: {{ m.note }}
                                 <span v-if="m.ubicacion?.lat && m.ubicacion?.lng">
                                   • Ubicación:
                                   <a href="" @click.prevent="openInMaps(m)" class="text-primary">
@@ -439,16 +439,30 @@ const historialFiltradoYTipado = computed(() => {
 /* ===== Agrupación por día ===== */
 const gruposPorDia = computed(() => {
   const map = new Map();
+
   for (const m of historialFiltradoYTipado.value) {
     const clave = date.formatDate(m.timestamp, "YYYY-MM-DD");
-    if (!map.has(clave)) map.set(clave, []);
-    map.get(clave).push(m);
+
+    if (!map.has(clave)) {
+      const fecha = new Date(m.timestamp);
+      const fechaLarga = new Intl.DateTimeFormat("es-ES", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "2-digit",
+      }).format(fecha);
+
+      map.set(clave, {
+        fechaClave: clave,
+        fechaLarga, // ej: "jueves, 02 de octubre de 2025"
+        items: []
+      });
+    }
+
+    map.get(clave).items.push(m);
   }
-  return Array.from(map.entries()).map(([clave, items]) => ({
-    fechaClave: clave,
-    fechaLarga: date.formatDate(clave, "dddd, DD [de] MMMM YYYY"),
-    items,
-  }));
+
+  return Array.from(map.values());
 });
 
 /* ===== Conteos ===== */
@@ -725,6 +739,11 @@ const imprimirHistorial = () => {
   .glassy-card :deep(.q-expansion-item) {
     margin: 6px 0;
   }
+}
+
+.q-tab-panels{
+  overflow-y: auto;
+  background: transparent;
 }
 
 </style>
