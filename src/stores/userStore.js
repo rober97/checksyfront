@@ -9,6 +9,7 @@ export const useUserStore = defineStore('user', {
     token: localStorage.getItem('token') || null,
     error: null,
     loading: false,
+    currentUser: null,
   }),
 
   getters: {
@@ -24,7 +25,26 @@ export const useUserStore = defineStore('user', {
 
         const res = await secureAxios.get(`${API_URL}/users`)
         if (res.data) {
-          this.users = res.data || []
+          this.users = res.data.items || []
+        } else {
+          this.error = res.data.message || 'Error al cargar usuarios'
+        }
+      } catch (err) {
+        console.error('[fetchUsers] Error:', err)
+        this.error = 'No se pudieron obtener los usuarios'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchUserById(id) {
+      try {
+        this.loading = true
+        this.error = null
+        const res = await secureAxios.get(`${API_URL}/users/${id}`)
+        debugger
+        if (res.data) {
+          this.currentUser = res.data
         } else {
           this.error = res.data.message || 'Error al cargar usuarios'
         }
@@ -41,7 +61,7 @@ export const useUserStore = defineStore('user', {
         this.loading = true
         this.error = null
 
-        const res = await secureAxios.post(`${API_URL}/users/new`, userData)
+        const res = await secureAxios.post(`${API_URL}/users`, userData)
         if (!res.data.success) {
           this.error = res.data.message || 'Error al crear el usuario'
           throw new Error(this.error)
@@ -66,7 +86,7 @@ export const useUserStore = defineStore('user', {
           status: 'inactive'
         })
 
-        if (!res.data.success) {
+        if (!res.status) {
           this.error = res.data.message || 'Error al eliminar el usuario'
           throw new Error(this.error)
         }
