@@ -77,6 +77,41 @@ export const useUserStore = defineStore('user', {
       }
     },
 
+    // en src/stores/userStore.js (o donde tengas el store)
+    async updateUser({ id, patch }) {
+      try {
+        this.loading = true;
+        this.error = null;
+
+        // PUT /users/:id con el patch directamente
+        const res = await secureAxios.put(`${API_URL}/users/${id}`, patch);
+        const updatedUser = res.data; // el back retorna el usuario "plain"
+
+        // Mantén el estado coherente si estás mostrando currentUser
+        if (this.currentUser && this.currentUser._id === updatedUser._id) {
+          this.currentUser = updatedUser;
+        }
+
+        return updatedUser;
+      } catch (err) {
+        // Mensajes alineados a tu back: 404, 409 (duplicado), 400/422 validaciones, y 500 genérico
+        const status = err?.response?.status;
+        const msg =
+          err?.response?.data?.message ||
+          (status === 404 && 'Usuario no encontrado') ||
+          (status === 409 && 'Ya existe un registro con ese dato (duplicado)') ||
+          (status >= 400 && status < 500 && 'Datos inválidos para actualizar') ||
+          'Error actualizando usuario';
+
+        console.error('[updateUser] Error:', err);
+        this.error = msg;
+        throw new Error(msg);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+
     async deleteUser(id) {
       try {
         this.loading = true

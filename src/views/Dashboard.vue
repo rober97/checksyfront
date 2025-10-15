@@ -118,7 +118,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import KpiCard from "@/components/KpiCard.vue";
 import { useThemeClasses } from "@/utils/themeClasses";
 import { useKpiStore } from "@/stores/kpiStore";
-
+debugger
 const {
   isDark,
   pageContainerClass,

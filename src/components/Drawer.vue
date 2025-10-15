@@ -49,7 +49,7 @@
             :icon="group.icon"
             expand-separator
             header-class="text-weight-medium"
-            default-open
+            default-opened
             :dense="mini"
           >
             <template #header>

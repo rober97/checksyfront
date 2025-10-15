@@ -14,11 +14,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import Drawer from '@/components/Drawer.vue';
-import Header from '@/components/Header.vue';
-import UserAvatarMenu from '@/components/UserAvatarMenu.vue';
-
+import { ref } from "vue";
+import Drawer from "@/components/Drawer.vue";
+import Header from "@/components/Header.vue";
+import UserAvatarMenu from "@/components/UserAvatarMenu.vue";
+import { useThemeClasses } from "@/utils/themeClasses";
 const drawerOpen = ref(true);
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value;

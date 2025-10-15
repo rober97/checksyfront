@@ -31,7 +31,7 @@ export const MENU = [
   {
     label: 'Mi espacio',
     icon: 'person',
-    access: { roles: ['Empleado'] },
+    access: { roles: ['employee'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/employee/dashboard' },
       { label: 'Marcar asistencia', icon: 'access_time', to: '/employee/attendance' },

@@ -1,6 +1,5 @@
 <template>
   <div class="row q-col-gutter-sm rk-form">
-
     <!-- NOMBRE -->
     <div class="col-12 col-sm-6">
       <q-input
@@ -62,13 +61,8 @@
     <!-- TIPO DE USUARIO (cards) -->
     <div class="col-12">
       <div class="rk-label q-mb-xs">Tipo de usuario</div>
-
       <div class="row q-col-gutter-sm">
-        <div
-          v-for="r in rolesCards"
-          :key="r.value"
-          class="col-12 col-sm-4"
-        >
+        <div v-for="r in rolesCards" :key="r.value" class="col-12 col-sm-4">
           <q-card
             flat
             bordered
@@ -77,23 +71,18 @@
             @click="selectRole(r.value)"
             role="radio"
             :aria-checked="local.tipo === r.value"
-            :tabindex="0"
+            tabindex="0"
             @keyup.enter.space="selectRole(r.value)"
           >
-            <q-card-section class="flex items-center no-wrap">
+            <q-card-section class="rk-role">
               <div class="rk-role-icon">
                 <q-icon :name="r.icon" size="28px" />
               </div>
-              <div class="q-ml-sm">
+              <div class="rk-role-text">
                 <div class="text-subtitle2">{{ r.label }}</div>
                 <div class="text-caption text-grey-7">{{ r.desc }}</div>
               </div>
-              <q-space />
-              <q-icon
-                name="check_circle"
-                size="22px"
-                class="rk-check"
-              />
+              <q-icon name="check_circle" size="22px" class="rk-check" />
             </q-card-section>
           </q-card>
         </div>
@@ -122,13 +111,15 @@
       >
         <template #prepend><q-icon name="business" /></template>
         <template #no-option>
-          <q-item><q-item-section class="text-grey">Sin resultados</q-item-section></q-item>
+          <q-item>
+            <q-item-section class="text-grey">Sin resultados</q-item-section>
+          </q-item>
         </template>
       </q-select>
     </div>
 
-    <!-- RUT (empleado) -->
-    <div class="col-12 col-sm-6" >
+    <!-- RUT -->
+    <div class="col-12 col-sm-6">
       <q-input
         v-model="local.rut"
         label="RUT (sin puntos, con guión)"
@@ -172,7 +163,9 @@
       >
         <template #prepend><q-icon name="schedule" /></template>
         <template #no-option>
-          <q-item><q-item-section class="text-grey">Sin resultados</q-item-section></q-item>
+          <q-item>
+            <q-item-section class="text-grey">Sin resultados</q-item-section>
+          </q-item>
         </template>
       </q-select>
     </div>
@@ -198,11 +191,7 @@
             @click="showPass = !showPass"
             :aria-label="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'"
           />
-          <q-btn
-            flat dense round icon="auto_fix_high"
-            @click="generatePassword"
-            aria-label="Generar contraseña segura"
-          >
+          <q-btn flat dense round icon="auto_fix_high" @click="generatePassword" aria-label="Generar contraseña segura">
             <q-tooltip class="rk-tooltip">Generar segura</q-tooltip>
           </q-btn>
         </template>
@@ -210,12 +199,7 @@
       </q-input>
 
       <div class="q-mt-xs">
-        <q-linear-progress
-          :value="passwordStrength.value"
-          :color="passwordStrength.color"
-          rounded
-          track-color="grey-3"
-        />
+        <q-linear-progress :value="passwordStrength.value" :color="passwordStrength.color" rounded track-color="grey-3" />
         <div class="text-caption q-mt-xs text-grey-7">
           Fortaleza: {{ passwordStrength.label }}
         </div>
@@ -261,6 +245,7 @@ const rolesCards = [
   { label: "Empleado", value: "empleado", icon: "badge",     desc: "Marca asistencia y solicita" },
 ];
 
+// Estado local alineado con el padre (usa 'empresa', NO 'company')
 const local = reactive({
   firstName: "",
   lastName: "",
@@ -274,20 +259,33 @@ const local = reactive({
   ...props.modelValue,
 });
 
+// --- Sync robusto padre -> hijo (primera carga incluida) ---
+const syncing = ref(false);
 watch(
   () => props.modelValue,
-  (v) => Object.assign(local, v || {}),
-  { deep: false }
+  (v) => {
+    syncing.value = true;
+    Object.assign(local, v || {});
+    // Evita eco durante el mismo tick
+    queueMicrotask(() => { syncing.value = false; });
+  },
+  { deep: true, immediate: true }
 );
-watch(local, (v) => emit("update:modelValue", { ...v }), { deep: true });
+
+// --- Emit hijo -> padre, pero no mientras sincroniza ---
+watch(
+  local,
+  (v) => { if (!syncing.value) emit("update:modelValue", { ...v }); },
+  { deep: true }
+);
 
 const showPass = ref(false);
 
-// RUT rule (usa tu validador si existe; si no, pasa)
+// RUT rule
 const rutRule = (v) => {
   if (!v) return true;
   try { return validarRUT ? validarRUT(v) || "RUT inválido" : true; }
-  catch (e) { return true; }
+  catch { return true; }
 };
 
 // Confirm password rule
@@ -305,7 +303,7 @@ function onFilterEmpresasDebounced (val, update) {
 // Autoformateo de RUT
 function formatRut () {
   if (!local.rut) return;
-  try { local.rut = formatearRUT ? formatearRUT(local.rut) : local.rut; } catch (e) {}
+  try { local.rut = formatearRUT ? formatearRUT(local.rut) : local.rut; } catch {}
 }
 
 // Generador de contraseña
@@ -348,8 +346,7 @@ function selectRole(val) {
 </script>
 
 <style scoped>
-/* ===== Estilos con prefijo rk- para evitar colisiones ===== */
-
+/* ===== Estilos modernos con prefijo rk- ===== */
 .rk-form :deep(.q-field__messages) { font-size: 12px; }
 .rk-tooltip { font-size: 12px; line-height: 1.2; }
 .rk-chip { margin-left: 8px; }
@@ -358,28 +355,38 @@ function selectRole(val) {
 .rk-label {
   font-size: 12px;
   color: var(--q-grey-7);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: .3px;
   text-transform: uppercase;
 }
 
-/* Cards de rol */
+/* Role cards */
 .rk-role-card {
-  border-radius: 14px;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  border-radius: 16px;
   border: 1px solid var(--q-grey-4);
   background: var(--q-grey-1);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  will-change: transform;
 }
-.rk-role-card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+.rk-role-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.08); }
 .rk-role-card.is-active {
   border-color: var(--q-primary);
-  background: rgba(0, 120, 255, .06);
-  box-shadow: 0 8px 24px rgba(0, 120, 255, .12);
+  background: color-mix(in srgb, var(--q-primary) 6%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--q-primary) 18%, transparent);
 }
+
+.rk-role {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
 .rk-role-icon {
   display: grid; place-items: center;
-  width: 40px; height: 40px;
-  border-radius: 12px;
+  width: 44px; height: 44px;
+  border-radius: 14px;
   background: var(--q-grey-3);
   color: var(--q-dark);
 }
@@ -387,9 +394,28 @@ function selectRole(val) {
   background: var(--q-primary);
   color: white;
 }
+
+.rk-role-text .text-subtitle2 {
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
 .rk-role-card .rk-check {
   opacity: 0; color: var(--q-primary);
   transition: opacity .12s ease;
 }
 .rk-role-card.is-active .rk-check { opacity: 1; }
+
+/* Dark mode afinado */
+:root {
+  --rk-surface: #fff;
+  --rk-surface-2: #f7f8fa;
+}
+.body--dark {
+  --rk-surface: #14161a;
+  --rk-surface-2: #1b1e24;
+}
+.rk-form :deep(.q-field--outlined .q-field__control) {
+  border-radius: 12px;
+}
 </style>

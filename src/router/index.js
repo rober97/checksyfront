@@ -74,10 +74,11 @@ const safeRedirectOf = (to) => {
 
 const roleHome = (role) => {
   console.log('ROL', role)
+  debugger
   switch (normalizeRole(role)) {
     case 'admin':    return '/admin/dashboard'
     case 'empresa':  return '/company/dashboard'
-    case 'empleado': return '/employee/dashboard'
+    case 'employee': return '/employee/dashboard'
     default:         return '/'
   }
 }
@@ -136,7 +137,7 @@ const routes = [
   {
     path: '/employee',
     component: EmployeeLayout,
-    meta: { requiresAuth: true, roles: ['empleado'] },
+    meta: { requiresAuth: true, roles: ['employee'] },
     children: [
       { path: '',              redirect: { name: 'EmployeeDashboard' } },
       { path: 'dashboard',     name: 'EmployeeDashboard', component: Dashboard,   meta: { title: 'Panel • Empleado' } },
@@ -180,7 +181,7 @@ router.beforeEach(async (to, from, next) => {
   const isPublic   = to.matched.some(r => r.meta?.public)
   const onlyGuests = to.matched.some(r => r.meta?.onlyGuests)
   const needsAuth  = to.matched.some(r => r.meta?.requiresAuth)
-
+  debugger
   // 1) Si está logueado y cae en páginas solo para invitados (login/register) → a destino seguro
   if (onlyGuests && auth.isAuthenticated) {
     debugger

@@ -89,6 +89,73 @@ export const useAsistenciaStore = defineStore('asistencia', {
         console.error('exportEmployeeExcel error:', err)
         throw err
       }
-    }
+    },
+    // Crea una asistencia: POST /attendance/new
+    async crearAsistencia({
+      userId,
+      tipo,          // 'entrada' | 'salida'
+      mood,          // 'bien' | 'excelente' | 'normal' | 'cansado' | 'mal'
+      note = '',     // string opcional
+      ubicacion = null,   // { lat, lng } opcional
+      timestamp = Date.now(), // opcional (ms)
+      client = null        // opcional { platform, appVersion }
+    }) {
+      if (!userId || !tipo || !mood) {
+        throw new Error('Faltan campos obligatorios (userId, tipo, mood)');
+      }
+
+      // Info de cliente por defecto si no viene
+      const clientInfo = client || {
+        platform: (navigator?.userAgentData?.platform || navigator?.platform || 'web'),
+        appVersion: (import.meta?.env?.VITE_APP_VERSION || 'web')
+      };
+
+      // Normaliza ubicación
+      const ubic = ubicacion && typeof ubicacion === 'object'
+        ? { lat: Number(ubicacion.lat), lng: Number(ubicacion.lng) }
+        : null;
+
+      try {
+        this.loading = true;
+        this.error = null;
+
+        const payload = {
+          userId,
+          tipo,
+          mood,
+          note: note ?? '',
+          ubicacion: ubic,
+          timestamp,
+          client: clientInfo
+        };
+
+        const res = await secureAxios.post('/attendance/new', payload);
+
+        // Tu backend responde { success:true, asistencia }
+        if (res?.data?.success) {
+          const saved = res.data.asistencia;
+
+          // Opcional: actualiza cache local para feedback inmediato
+          // (quita esto si prefieres recargar desde backend)
+          this.records = [saved, ...this.records];
+
+          return saved;
+        }
+
+        // Si el backend devuelve error sin success=true
+        const msg = res?.data?.message || 'No se pudo crear la asistencia';
+        this.error = msg;
+        throw new Error(msg);
+      } catch (err) {
+        // Mensaje claro de backend si viene en response
+        const backendMsg = err?.response?.data || err?.message || 'Error al crear asistencia';
+        console.error('[crearAsistencia] Error:', backendMsg);
+        this.error = typeof backendMsg === 'string' ? backendMsg : 'Error al crear asistencia';
+        throw new Error(this.error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
   }
 })

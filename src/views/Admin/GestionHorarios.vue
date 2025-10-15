@@ -156,6 +156,7 @@ async function loadSchedulesForSelectedCompany() {
 }
 
 onMounted(async () => {
+  debugger
   await loadCompanyOptions()
   await loadSchedulesForSelectedCompany()
 })
