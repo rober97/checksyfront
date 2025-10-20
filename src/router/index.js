@@ -74,7 +74,6 @@ const safeRedirectOf = (to) => {
 
 const roleHome = (role) => {
   console.log('ROL', role)
-  debugger
   switch (normalizeRole(role)) {
     case 'admin':    return '/admin/dashboard'
     case 'empresa':  return '/company/dashboard'
@@ -181,16 +180,13 @@ router.beforeEach(async (to, from, next) => {
   const isPublic   = to.matched.some(r => r.meta?.public)
   const onlyGuests = to.matched.some(r => r.meta?.onlyGuests)
   const needsAuth  = to.matched.some(r => r.meta?.requiresAuth)
-  debugger
   // 1) Si está logueado y cae en páginas solo para invitados (login/register) → a destino seguro
   if (onlyGuests && auth.isAuthenticated) {
-    debugger
     const safe = safeRedirectOf(to) || roleHome(auth.role)
     return next(safe)
   }
   // 2) Si está logueado y entra al Home público → llévalo a su panel
   if (auth.isAuthenticated && to.name === 'Home') {
-    debugger
     const dest = roleHome(auth.role)
     if (to.fullPath !== dest) return next(dest)
   }
@@ -207,7 +203,6 @@ router.beforeEach(async (to, from, next) => {
   // 5) Roles requeridos
   const requiredRoles = to.matched.flatMap(r => r.meta?.roles || [])
   if (requiredRoles.length && !hasRequiredRole(auth.role, requiredRoles)) {
-    debugger
     return next({ name: 'NotFound' }) // o tu página 403 si la tienes
   }
 
@@ -215,7 +210,6 @@ router.beforeEach(async (to, from, next) => {
   const permMode = to.matched.find(r => r.meta?.permMode)?.meta?.permMode || DEFAULT_PERMS_MODE
   const requiredPerms = to.matched.flatMap(r => r.meta?.permissions || [])
   if (requiredPerms.length && !hasPermissions(auth, requiredPerms, permMode)) {
-    debugger
     return next({ name: 'NotFound' })
   }
 

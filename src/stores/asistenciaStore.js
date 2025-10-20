@@ -1,16 +1,44 @@
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
 
+const UI_MOOD = new Set(['great', 'good', 'ok', 'tired', 'bad'])
+
+function normalizeMood (mood) {
+  if (!mood) return ''
+  const m = String(mood).toLowerCase().trim()
+  if (UI_MOOD.has(m)) return m
+  const map = {
+    'excelente': 'great',
+    'bien': 'good',
+    'normal': 'ok',
+    'cansado': 'tired',
+    'mal': 'bad'
+  }
+  return map[m] || m
+}
+
+function toQuery (obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+  )
+}
+
 export const useAsistenciaStore = defineStore('asistencia', {
   state: () => ({
     records: [],               // todas las asistencias
     loading: false,
     employeeRecords: [],       // asistencias por empleado
     error: null,
+
+    // caches opcionales
+    _kpiCache: {},             // por userId
+    _settingsCache: {},        // por userId
+    _goalCache: {},            // por userId
   }),
 
   actions: {
-    async fetchAllRecords() {
+    // ==================== TUS ACCIONES ORIGINALES ====================
+    async fetchAllRecords () {
       this.loading = true
       try {
         const res = await secureAxios.get('/attendance')
@@ -30,7 +58,7 @@ export const useAsistenciaStore = defineStore('asistencia', {
       }
     },
 
-    async fetchHistorialEmpleado({ employeeId, from = null, to = null }) {
+    async fetchHistorialEmpleado ({ employeeId, from = null, to = null }) {
       try {
         const res = await secureAxios.get(`/attendance/history/${employeeId}`, {
           params: {
@@ -50,10 +78,8 @@ export const useAsistenciaStore = defineStore('asistencia', {
       }
     },
 
-
-    async fetchRecordsByEmployee() {
+    async fetchRecordsByEmployee () {
       try {
-        debugger
         const res = await secureAxios.get('/attendance/by-employee')
         if (res.data.success) {
           this.employeeRecords = res.data.data
@@ -66,7 +92,7 @@ export const useAsistenciaStore = defineStore('asistencia', {
       }
     },
 
-    async exportEmployeeExcel({ employeeId, from, to }) {
+    async exportEmployeeExcel ({ employeeId, from, to }) {
       try {
         const res = await secureAxios.post(
           '/attendance/export',
@@ -90,72 +116,201 @@ export const useAsistenciaStore = defineStore('asistencia', {
         throw err
       }
     },
-    // Crea una asistencia: POST /attendance/new
-    async crearAsistencia({
+
+    async crearAsistencia ({
       userId,
-      tipo,          // 'entrada' | 'salida'
-      mood,          // 'bien' | 'excelente' | 'normal' | 'cansado' | 'mal'
-      note = '',     // string opcional
-      ubicacion = null,   // { lat, lng } opcional
-      timestamp = Date.now(), // opcional (ms)
-      client = null        // opcional { platform, appVersion }
+      tipo,            // 'entrada' | 'salida'
+      mood,            // 'great' | 'good' | 'ok' | 'tired' | 'bad' (o ES -> se normaliza)
+      note = '',
+      ubicacion = null,     // { lat, lng }
+      timestamp = Date.now(),
+      client = null
     }) {
       if (!userId || !tipo || !mood) {
-        throw new Error('Faltan campos obligatorios (userId, tipo, mood)');
+        throw new Error('Faltan campos obligatorios (userId, tipo, mood)')
       }
 
-      // Info de cliente por defecto si no viene
       const clientInfo = client || {
         platform: (navigator?.userAgentData?.platform || navigator?.platform || 'web'),
         appVersion: (import.meta?.env?.VITE_APP_VERSION || 'web')
-      };
+      }
 
-      // Normaliza ubicación
-      const ubic = ubicacion && typeof ubicacion === 'object'
+      const ubic = (ubicacion && typeof ubicacion === 'object')
         ? { lat: Number(ubicacion.lat), lng: Number(ubicacion.lng) }
-        : null;
+        : null
 
       try {
-        this.loading = true;
-        this.error = null;
+        this.loading = true
+        this.error = null
 
         const payload = {
           userId,
           tipo,
-          mood,
+          mood: normalizeMood(mood),
           note: note ?? '',
           ubicacion: ubic,
           timestamp,
           client: clientInfo
-        };
-
-        const res = await secureAxios.post('/attendance/new', payload);
-
-        // Tu backend responde { success:true, asistencia }
-        if (res?.data?.success) {
-          const saved = res.data.asistencia;
-
-          // Opcional: actualiza cache local para feedback inmediato
-          // (quita esto si prefieres recargar desde backend)
-          this.records = [saved, ...this.records];
-
-          return saved;
         }
 
-        // Si el backend devuelve error sin success=true
-        const msg = res?.data?.message || 'No se pudo crear la asistencia';
-        this.error = msg;
-        throw new Error(msg);
+        const res = await secureAxios.post('/attendance/new', payload)
+
+        if (res?.data?.success) {
+          const saved = res.data.asistencia
+          this.records = [saved, ...this.records]
+          return saved
+        }
+
+        const msg = res?.data?.message || 'No se pudo crear la asistencia'
+        this.error = msg
+        throw new Error(msg)
       } catch (err) {
-        // Mensaje claro de backend si viene en response
-        const backendMsg = err?.response?.data || err?.message || 'Error al crear asistencia';
-        console.error('[crearAsistencia] Error:', backendMsg);
-        this.error = typeof backendMsg === 'string' ? backendMsg : 'Error al crear asistencia';
-        throw new Error(this.error);
+        const backendMsg = err?.response?.data?.message || err?.message || 'Error al crear asistencia'
+        console.error('[crearAsistencia] Error:', backendMsg)
+        this.error = typeof backendMsg === 'string' ? backendMsg : 'Error al crear asistencia'
+        throw new Error(this.error)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
+    // ==================== NUEVAS PARA EL COMPONENTE ====================
+
+    async fetchKPIs ({ userId }) {
+      if (!userId) throw new Error('userId requerido')
+      try {
+        const res = await secureAxios.get('/attendance/kpis', { params: { userId } })
+        const data = res?.data?.data || res?.data?.kpis || res?.data || {}
+        this._kpiCache[userId] = data
+        return {
+          asistenciasMes: data.asistenciasMes ?? null,
+          horasMes: data.horasMes ?? null,
+          puntualidad: data.puntualidad ?? null,
+          vacaciones: data.vacaciones ?? null,
+          primerCheck: data.primerCheck ?? null,
+          ultimoCheck: data.ultimoCheck ?? null,
+          horasHoy: data.horasHoy ?? null
+        }
+      } catch (err) {
+        console.error('fetchKPIs error:', err)
+        if (this._kpiCache[userId]) return this._kpiCache[userId] // fallback cache
+        throw err
+      }
+    },
+
+    async fetchActivity ({ userId, limit = 20 }) {
+      if (!userId) throw new Error('userId requerido')
+      try {
+        const res = await secureAxios.get('/attendance/activity', {
+          params: toQuery({ userId, limit })
+        })
+        return res?.data?.data || res?.data?.activity || []
+      } catch (err) {
+        console.error('fetchActivity error:', err)
+        return [] // UI tolerante
+      }
+    },
+
+    async fetchStreak ({ userId, days = 14 }) {
+      if (!userId) throw new Error('userId requerido')
+      try {
+        const res = await secureAxios.get('/attendance/streak', {
+          params: toQuery({ userId, days })
+        })
+        return res?.data?.data || res?.data?.streak || []
+      } catch (err) {
+        console.error('fetchStreak error:', err)
+        return []
+      }
+    },
+
+    async getWorkHoursGoal ({ userId }) {
+      if (!userId) throw new Error('userId requerido')
+      try {
+        const res = await secureAxios.get('/attendance/work-goal', { params: { userId } })
+        const hoursRaw = (res?.data?.data && res.data.data.hours != null)
+          ? res.data.data.hours
+          : (res?.data?.hours != null ? res.data.hours : res?.data)
+
+        const hours = Number(hoursRaw)
+        if (!Number.isNaN(hours)) {
+          this._goalCache[userId] = hours
+          return hours
+        }
+        return this._goalCache[userId] ?? 9
+      } catch (err) {
+        console.error('getWorkHoursGoal error:', err)
+        return this._goalCache[userId] ?? 9
+      }
+    },
+
+    async saveWorkHoursGoal ({ userId, hours }) {
+      if (!userId) throw new Error('userId requerido')
+      try {
+        await secureAxios.post('/attendance/work-goal', { userId, hours })
+        this._goalCache[userId] = Number(hours) || 0
+        return true
+      } catch (err) {
+        console.error('saveWorkHoursGoal error:', err)
+        throw err
+      }
+    },
+
+    async getSettings ({ userId }) {
+      try {
+        if (!userId) throw new Error('userId requerido')
+        const res = await secureAxios.get('/attendance/settings', { params: { userId } })
+        const s = res?.data?.data || res?.data?.settings || {}
+        this._settingsCache[userId] = s
+        return s
+      } catch (err) {
+        console.error('getSettings error:', err)
+        return userId && this._settingsCache[userId]
+          ? this._settingsCache[userId]
+          : { autoLocation: true, offlineMode: true, soundEffects: true, haptics: true }
+      }
+    },
+
+    async saveSettings ({ userId, settings }) {
+      if (!userId) throw new Error('userId requerido')
+      try {
+        await secureAxios.post('/attendance/settings', { userId, settings })
+        this._settingsCache[userId] = settings
+        return true
+      } catch (err) {
+        console.error('saveSettings error:', err)
+        throw err
+      }
+    },
+
+    /**
+     * Sincroniza pendientes locales.
+     * 1) Intenta endpoint masivo POST /attendance/bulk
+     * 2) Si falla/no existe, envía uno a uno con crearAsistencia()
+     */
+    async syncPending (pendientes) {
+      if (!Array.isArray(pendientes) || pendientes.length === 0) return { ok: 0, fail: 0 }
+      const payload = pendientes.map(p => ({ ...p, mood: normalizeMood(p.mood) }))
+
+      // 1) Intento bulk
+      try {
+        const bulkRes = await secureAxios.post('/attendance/bulk', { items: payload })
+        if (bulkRes?.data?.success) {
+          return {
+            ok: bulkRes.data.ok ?? payload.length,
+            fail: bulkRes.data.fail ?? 0
+          }
+        }
+      } catch (e) {
+        // sigue al fallback
+      }
+
+      // 2) Fallback uno a uno
+      let ok = 0; let fail = 0
+      for (const item of payload) {
+        try { await this.crearAsistencia(item); ok++ } catch { fail++ }
+      }
+      return { ok, fail }
+    }
   }
 })

@@ -36,7 +36,7 @@ export const MENU = [
       { label: 'Dashboard', icon: 'dashboard', to: '/employee/dashboard' },
       { label: 'Marcar asistencia', icon: 'access_time', to: '/employee/attendance' },
       { label: 'Mi historial', icon: 'history', to: '/employee/history' },
-      { label: 'Nueva solicitud', icon: 'post_add', to: '/employee/request' },
+      { label: 'Nueva solicitud', icon: 'post_add', to: '/employee/create-request' },
     ]
   },
 ]
