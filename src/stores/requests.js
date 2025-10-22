@@ -1,21 +1,9 @@
-// src/stores/requests.js
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
 import { API_URL } from '@/utils/api'
 
-/**
- * Convenciones de API asumidas (ajusta si difieren):
- * - Crear:           POST   /requests
- * - Mis solicitudes: GET    /requests/me        (fallback: /requests?mine=1)
- * - Listado admin:   GET    /requests
- * - Cancelar:        PATCH  /requests/:id/cancel
- * - Balance vac.:    GET    /requests/vacation/balance
- * - Feriados:        GET    /holidays           (fallback: /companies/:id/holidays en companiesStore)
- *
- * Los archivos se envían como FormData (campo "attachments").
- */
-
-function toQuery(params = {}) {
+/* ---------------- utils ---------------- */
+function toQuery (params = {}) {
   const q = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null || v === '') return
@@ -25,75 +13,92 @@ function toQuery(params = {}) {
   return q.toString()
 }
 
+// Normaliza un request del backend (puede venir en { ok, data } o plano)
+function normalizeRequest(r) {
+  const o = r?.data ? r.data : r
+  if (!o) return null
+  // Asegura minimos que usa el front
+  return {
+    _id: o._id || o.id,
+    id: o.id || o._id,
+    userId: o.userId,
+    companyId: o.companyId,
+    type: o.type,                 // 'VACATION' | 'ADMIN_DAY' | ...
+    status: o.status,             // 'PENDING' | 'APPROVED' | ...
+    startDate: o.startDate,
+    endDate: o.endDate,
+    reason: o.reason || '',
+    approverId: o.approverId || null,
+    approvedAt: o.approvedAt || null,
+    createdAt: o.createdAt,
+    updatedAt: o.updatedAt
+  }
+}
+
+/* ---------------------------------------------------------- */
+
 export const useRequestsStore = defineStore('requests', {
   state: () => ({
-    // colección del usuario autenticado
+    // colecciones
     myRequests: [],
     myPagination: { page: 1, limit: 20, total: 0 },
-    // colección general (admin/supervisor)
+
     list: [],
     listPagination: { page: 1, limit: 20, total: 0 },
 
-    // catálogos / auxiliares
-    holidays: [],               // ['YYYY-MM-DD', ...]
-    vacationBalance: null,      // { daysAvailable: number } o número directo
+    // saldos y feriados
+    balances: null,              // { VACATION, ADMIN_DAY, COMP_DAY, holds: [...] }
+    holidays: [],                // ['YYYY-MM-DD', ...]
 
     // flags
     loading: false,
     sending: false,
     error: null,
 
-    // caches ligeros
-    _holidaysFetchedAt: null,
+    // cache
+    _holidaysFetchedAt: null
   }),
 
   getters: {
-    myPending: (s) => s.myRequests.filter(r => r.status === 'pending').length,
-    myApproved: (s) => s.myRequests.filter(r => r.status === 'approved').length,
-    myRejected: (s) => s.myRequests.filter(r => r.status === 'rejected').length,
+    // contadores del usuario autenticado
+    myPending: (s)   => s.myRequests.filter(r => r.status === 'PENDING').length,
+    myApproved: (s)  => s.myRequests.filter(r => r.status === 'APPROVED').length,
+    myRejected: (s)  => s.myRequests.filter(r => r.status === 'REJECTED').length,
+
+    // accesos rápidos a saldos
+    vacationDays: (s)   => Number(s.balances?.VACATION ?? 0),
+    adminDays: (s)      => Number(s.balances?.ADMIN_DAY ?? 0),
+    compDays: (s)       => Number(s.balances?.COMP_DAY ?? 0),
   },
 
   actions: {
-    _setError(msg) {
-      this.error = msg || 'Error desconocido'
-    },
+    _setError (msg) { this.error = msg || 'Error desconocido' },
 
     /* ===========================
      * Mis solicitudes (empleado)
      * =========================== */
-    async fetchMyRequests(params = {}) {
-      // params: { page, limit, status, type, from, to, sortBy, descending }
+    async fetchMyRequests (params = {}) {
+      // Con tu backend, GET /solicitudes sin filtros ya usa req.user por defecto
       try {
         this.loading = true
         this.error = null
 
-        // 1) intenta /requests/me ; 2) fallback /requests?mine=1
-        const baseUrl = `${API_URL}/requests`
-        const preferMe = `${API_URL}/requests/me`
-        let res
+        const q = toQuery(params)
+        const url = q ? `${API_URL}/solicitudes?${q}` : `${API_URL}/requests`
+        const res = await secureAxios.get(url)
 
-        try {
-          const q = toQuery(params)
-          res = await secureAxios.get(q ? `${preferMe}?${q}` : preferMe)
-        } catch {
-          const p = { ...params, mine: 1 }
-          const q2 = toQuery(p)
-          res = await secureAxios.get(q2 ? `${baseUrl}?${q2}` : baseUrl)
-        }
+        // tus controladores devuelven { ok, total, page, limit, data }
+        const payload = res?.data || {}
+        const items = Array.isArray(payload) ? payload : (payload.data || [])
+        const total = Number(payload.total ?? items.length)
+        const page  = Number(payload.page  ?? params.page  ?? 1)
+        const limit = Number(payload.limit ?? params.limit ?? 20)
 
-        const data = res?.data
-        const items = data?.items || data || []
-        const total = Number(data?.total ?? items.length)
-
-        this.myRequests = items
-        this.myPagination = {
-          page: Number(params.page || 1),
-          limit: Number(params.limit || 20),
-          total
-        }
-        return items
+        this.myRequests = items.map(normalizeRequest).filter(Boolean)
+        this.myPagination = { page, limit, total }
+        return this.myRequests
       } catch (err) {
-        console.error('[requests.fetchMyRequests] Error:', err)
+        console.error('[requests.fetchMyRequests] ', err)
         this._setError(err?.response?.data?.message || 'No se pudieron cargar tus solicitudes')
         throw err
       } finally {
@@ -104,26 +109,27 @@ export const useRequestsStore = defineStore('requests', {
     /* ==================================================
      * Listado general (admin/supervisor) con filtros
      * ================================================== */
-    async fetchRequests(params = {}) {
+    async fetchRequests (params = {}) {
+      // mismos filtros que tu controlador listRequests
       try {
         this.loading = true
         this.error = null
 
         const q = toQuery(params)
-        const res = await secureAxios.get(q ? `${API_URL}/requests?${q}` : `${API_URL}/requests`)
-        const data = res?.data
-        const items = data?.items || data || []
-        const total = Number(data?.total ?? items.length)
+        const url = q ? `${API_URL}/solicitudes?${q}` : `${API_URL}/solicitudes`
+        const res = await secureAxios.get(url)
 
-        this.list = items
-        this.listPagination = {
-          page: Number(params.page || 1),
-          limit: Number(params.limit || 20),
-          total
-        }
-        return items
+        const payload = res?.data || {}
+        const items = Array.isArray(payload) ? payload : (payload.data || [])
+        const total = Number(payload.total ?? items.length)
+        const page  = Number(payload.page  ?? params.page  ?? 1)
+        const limit = Number(payload.limit ?? params.limit ?? 20)
+
+        this.list = items.map(normalizeRequest).filter(Boolean)
+        this.listPagination = { page, limit, total }
+        return this.list
       } catch (err) {
-        console.error('[requests.fetchRequests] Error:', err)
+        console.error('[requests.fetchRequests] ', err)
         this._setError(err?.response?.data?.message || 'No se pudo cargar el listado de solicitudes')
         throw err
       } finally {
@@ -132,35 +138,32 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ===============================
-     * Crear solicitud (con adjuntos)
+     * Crear solicitud (JSON o FormData)
      * =============================== */
-    async createRequest(payload) {
-      // payload puede ser JSON o FormData
+    async createRequest (payload) {
       try {
         this.sending = true
         this.error = null
 
-        const isFormData = (typeof FormData !== 'undefined') && (payload instanceof FormData)
-        const cfg = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined
+        const isFD = (typeof FormData !== 'undefined') && (payload instanceof FormData)
+        const cfg = isFD ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined
 
-        const res = await secureAxios.post(`${API_URL}/requests`, payload, cfg)
-        const created = res?.data?.request || res?.data
+        const res = await secureAxios.post(`${API_URL}/solicitudes`, payload, cfg)
+        const created = normalizeRequest(res?.data?.data || res?.data)
 
-        // Optimista: si es “mío”, lo empujamos a myRequests
         if (created) {
-          // si el backend no incluye el "owner", asumimos que pertenece al usuario actual
+          // optimista en "míos"
           this.myRequests = [created, ...this.myRequests]
           this.myPagination.total = (this.myPagination.total || 0) + 1
         }
-
         return created
       } catch (err) {
-        console.error('[requests.createRequest] Error:', err)
+        console.error('[requests.createRequest] ', err)
         const status = err?.response?.status
         const msg =
           err?.response?.data?.message ||
           (status === 413 && 'Adjuntos demasiado pesados') ||
-          (status === 422 && 'Datos inválidos en la solicitud') ||
+          (status === 422 && 'Datos inválidos') ||
           'No se pudo crear la solicitud'
         this._setError(msg)
         throw new Error(msg)
@@ -170,23 +173,20 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ======================
-     * Cancelar mi solicitud
+     * Cancelar (owner/admin)
      * ====================== */
-    async cancelRequest(id) {
+    async cancelRequest (id) {
       try {
         this.loading = true
         this.error = null
+        const res = await secureAxios.patch(`${API_URL}/solicitudes/${id}/cancelar`)
+        const updated = normalizeRequest(res?.data?.data || res?.data)
 
-        const res = await secureAxios.patch(`${API_URL}/requests/${id}/cancel`)
-        const updated = res?.data?.request || res?.data
-
-        // Refresca en estado local (myRequests y list)
-        this.myRequests = this.myRequests.map(r => (r._id === id ? updated : r))
-        this.list = this.list.map(r => (r._id === id ? updated : r))
-
+        this.myRequests = this.myRequests.map(r => (String(r._id) === String(id) ? updated : r))
+        this.list       = this.list.map(r => (String(r._id) === String(id) ? updated : r))
         return updated
       } catch (err) {
-        console.error('[requests.cancelRequest] Error:', err)
+        console.error('[requests.cancelRequest] ', err)
         this._setError(err?.response?.data?.message || 'No se pudo cancelar la solicitud')
         throw err
       } finally {
@@ -194,78 +194,66 @@ export const useRequestsStore = defineStore('requests', {
       }
     },
 
-    /* ======================
-     * Subir adjunto suelto
-     * ====================== */
-    async uploadAttachment(requestId, file) {
-      try {
-        if (!file) throw new Error('Archivo requerido')
-        const fd = new FormData()
-        fd.append('attachment', file, file.name || 'archivo')
-
-        const res = await secureAxios.post(`${API_URL}/requests/${requestId}/attachments`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
-
-        const updated = res?.data?.request || res?.data
-        this.myRequests = this.myRequests.map(r => (r._id === requestId ? updated : r))
-        this.list = this.list.map(r => (r._id === requestId ? updated : r))
-        return updated
-      } catch (err) {
-        console.error('[requests.uploadAttachment] Error:', err)
-        this._setError(err?.response?.data?.message || 'No se pudo subir el adjunto')
-        throw err
-      }
-    },
-
-    /* =====================
-     * Saldo de vacaciones
-     * ===================== */
-    async fetchVacationBalance() {
+    /* ===================================================
+     * Admin/Supervisor: aprobar/rechazar/cancelar
+     * =================================================== */
+    async setStatus (id, status /* 'APPROVED'|'REJECTED'|'CANCELLED' */) {
       try {
         this.loading = true
         this.error = null
+        const res = await secureAxios.patch(`${API_URL}/solicitudes/${id}`, { status })
+        const updated = normalizeRequest(res?.data?.data || res?.data)
 
-        const res = await secureAxios.get(`${API_URL}/requests/vacation/balance`)
-        // Puede venir { success, daysAvailable } o un número
-        const data = res?.data
-        const daysAvailable = Number(
-          data?.daysAvailable ??
-          data?.diasDisponibles ??
-          data // si es número directo
-        )
-
-        this.vacationBalance = isNaN(daysAvailable) ? null : { daysAvailable }
-        return this.vacationBalance
+        this.myRequests = this.myRequests.map(r => (String(r._id) === String(id) ? updated : r))
+        this.list       = this.list.map(r => (String(r._id) === String(id) ? updated : r))
+        return updated
       } catch (err) {
-        console.error('[requests.fetchVacationBalance] Error:', err)
-        this._setError(err?.response?.data?.message || 'No se pudo obtener el saldo de vacaciones')
+        console.error('[requests.setStatus] ', err)
+        this._setError(err?.response?.data?.message || 'No se pudo actualizar el estado')
         throw err
       } finally {
         this.loading = false
       }
     },
 
-    /* ==========
-     * Feriados
-     * ========== */
-    async fetchHolidays(params = {}) {
-      // Si tu API de feriados es global: GET /holidays
-      // Si depende de empresa, podrías usar el companiesStore (ya lo integramos en la página)
+    /* ========== Balances (nuevo modelo) ========== */
+    async fetchBalances () {
       try {
         this.loading = true
         this.error = null
+        // ruta nueva preferida
+        const res = await secureAxios.get(`${API_URL}/balances/me`)
+        // fallback por compatibilidad si hicieras otro endpoint
+        const data = res?.data?.data ?? res?.data
+        // Estructura esperada: { VACATION, ADMIN_DAY, COMP_DAY, holds: [...] }
+        this.balances = data || { VACATION: 0, ADMIN_DAY: 0, COMP_DAY: 0, holds: [] }
+        return this.balances
+      } catch (err) {
+        console.error('[requests.fetchBalances] ', err)
+        this._setError(err?.response?.data?.message || 'No se pudieron obtener los saldos')
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
 
+    /* ========== Feriados ========== */
+    async fetchHolidays (params = {}) {
+      try {
+        this.loading = true
+        this.error = null
         const q = toQuery(params)
-        const res = await secureAxios.get(q ? `${API_URL}/holidays?${q}` : `${API_URL}/holidays`)
+        const url = q ? `${API_URL}/holidays?${q}` : `${API_URL}/holidays`
+        const res = await secureAxios.get(url)
         const list = Array.isArray(res?.data) ? res.data
           : (res?.data?.items || res?.data?.holidays || [])
-        // normaliza a 'YYYY-MM-DD'
-        this.holidays = list.map(d => typeof d === 'string' ? d : (d.date || d.day || d.fecha)).filter(Boolean)
+        this.holidays = list
+          .map(d => typeof d === 'string' ? d : (d.date || d.day || d.fecha))
+          .filter(Boolean)
         this._holidaysFetchedAt = Date.now()
         return this.holidays
       } catch (err) {
-        console.error('[requests.fetchHolidays] Error:', err)
+        console.error('[requests.fetchHolidays] ', err)
         this._setError(err?.response?.data?.message || 'No se pudieron cargar los feriados')
         throw err
       } finally {
@@ -273,38 +261,43 @@ export const useRequestsStore = defineStore('requests', {
       }
     },
 
-    /* ===================================================
-     * Admin/Supervisor: aprobar o rechazar solicitudes
-     * =================================================== */
-    async updateStatus(id, action, payload = {}) {
-      // action: 'approve' | 'reject'
+    /* ========== KPIs / Summary ========== */
+    async fetchSummary (params = {}) {
       try {
         this.loading = true
         this.error = null
-
-        const res = await secureAxios.patch(`${API_URL}/requests/${id}/${action}`, payload)
-        const updated = res?.data?.request || res?.data
-
-        // reflejar en colecciones
-        this.myRequests = this.myRequests.map(r => (r._id === id ? updated : r))
-        this.list = this.list.map(r => (r._id === id ? updated : r))
-        return updated
+        // tienes dos routers posibles: /requests/summary y /summary
+        const q = toQuery(params)
+        const try1 = () => secureAxios.get(q ? `${API_URL}/requests/summary?${q}` : `${API_URL}/requests/summary`)
+        const try2 = () => secureAxios.get(q ? `${API_URL}/summary?${q}` : `${API_URL}/summary`)
+        let res
+        try { res = await try1() } catch { res = await try2() }
+        return res?.data?.data ?? res?.data
       } catch (err) {
-        console.error('[requests.updateStatus] Error:', err)
-        const msg = err?.response?.data?.message ||
-          (action === 'approve' ? 'No se pudo aprobar' : 'No se pudo rechazar')
-        this._setError(msg)
+        console.error('[requests.fetchSummary] ', err)
+        this._setError(err?.response?.data?.message || 'No se pudo obtener el resumen')
         throw err
       } finally {
         this.loading = false
       }
     },
 
-    /* ============================
-     * Utilidades “client-side”
-     * ============================ */
-    // Detecta traslape simple con una nueva solicitud { startDate, endDate }
-    overlapsWithMine({ startDate, endDate }) {
+    /* ========== Export XLSX ========== */
+    async exportXlsx (params = {}) {
+      try {
+        const q = toQuery(params)
+        const url = q ? `${API_URL}/solicitudes/export/xlsx?${q}` : `${API_URL}/solicitudes/export/xlsx`
+        const res = await secureAxios.get(url, { responseType: 'blob' })
+        return res.data // blob → tú decides descargar en el componente
+      } catch (err) {
+        console.error('[requests.exportXlsx] ', err)
+        this._setError(err?.response?.data?.message || 'No se pudo exportar')
+        throw err
+      }
+    },
+
+    /* ========== Utilidad: traslape local ========== */
+    overlapsWithMine ({ startDate, endDate }) {
       const s = new Date(startDate)
       const e = new Date(endDate || startDate)
       return this.myRequests.some(r => {
@@ -312,6 +305,6 @@ export const useRequestsStore = defineStore('requests', {
         const re = new Date(r.endDate || r.startDate)
         return !(re < s || rs > e)
       })
-    },
+    }
   }
 })
