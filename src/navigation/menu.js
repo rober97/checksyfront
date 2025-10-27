@@ -10,20 +10,6 @@ export const MENU = [
       { label: 'Permisos', icon: 'lock', to: '/admin/permissions' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance' },
       { label: 'Empresas', icon: 'apartment', to: '/admin/companies' },
-      { label: 'Horarios', icon: 'schedule', to: '/admin/horarios', exact: true },
-    ]
-  },
-
-  // ===== EMPRESA
-  {
-    label: 'Empresa',
-    icon: 'business',
-    access: { roles: ['Empresa'] },
-    children: [
-      { label: 'Dashboard', icon: 'dashboard', to: '/company/dashboard' },
-      { label: 'Employees', icon: 'badge', to: '/company/employees' },
-      { label: 'Report', icon: 'bar_chart', to: '/company/report' },
-      { label: 'Requests', icon: 'assignment', to: '/company/requests' },
     ]
   },
 
@@ -37,6 +23,7 @@ export const MENU = [
       { label: 'Marcar asistencia', icon: 'access_time', to: '/employee/attendance' },
       { label: 'Mi historial', icon: 'history', to: '/employee/history' },
       { label: 'Nueva solicitud', icon: 'post_add', to: '/employee/create-request' },
+      { label: 'Mis documentos', icon: 'post_add', to: '/employee/documents' },
     ]
   },
 ]

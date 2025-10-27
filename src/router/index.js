@@ -111,26 +111,26 @@ const routes = [
   },
 
   // Company
-  {
-    path: '/company',
-    component: CompanyLayout,
-    meta: { requiresAuth: true, roles: ['empresa'] },
-    children: [
-      { path: '',               redirect: { name: 'CompanyDashboard' } },
-      { path: 'dashboard',      name: 'CompanyDashboard',   component: Dashboard,     meta: { title: 'Panel • Empresa' } },
-      { path: 'companies',      name: 'CompanyList',        component: CompanyList,   meta: { permissions: ['companies:read'],   title: 'Empresas' } },
-      { path: 'company/new',    name: 'CompanyForm',        component: CompanyForm,   meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
-      { path: 'company/:id',    name: 'CompanyDetail',      component: CompanyDetail, props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
-      { path: 'employees',      name: 'EmployeeList',       component: EmployeeList,  meta: { permissions: ['employees:read'],   title: 'Empleados' } },
-      { path: 'employee/new',   name: 'EmployeeForm',       component: EmployeeForm,  meta: { permissions: ['employees:create'], title: 'Nuevo empleado' } },
-      { path: 'employee/:id',   name: 'EmployeeDetail',     component: EmployeeDetail,props: true, meta: { permissions: ['employees:read'],  title: 'Detalle empleado' } },
-      { path: 'documents/:id',  name: 'EmployeeDocuments',  component: EmployeeDocs,  props: true, meta: { permissions: ['documents:read'],  title: 'Documentos' } },
-      { path: 'upload-document/:id', name: 'UploadDocument',component: UploadDocument,props: true, meta: { permissions: ['documents:create'],title: 'Subir documento' } },
-      { path: 'report',         name: 'CompanyReport',      component: CompanyReport, meta: { permissions: ['reports:read'],     title: 'Reporte' } },
-      { path: 'requests',       name: 'RequestList',        component: RequestList,   meta: { permissions: ['requests:read'],    title: 'Solicitudes' } },
-      { path: 'approve-requests', name: 'ApproveRequests',  component: ApproveRequests, meta: { permissions: ['requests:approve'], title: 'Aprobar solicitudes' } },
-    ]
-  },
+  // {
+  //   path: '/company',
+  //   component: CompanyLayout,
+  //   meta: { requiresAuth: true, roles: ['empresa'] },
+  //   children: [
+  //     { path: '',               redirect: { name: 'CompanyDashboard' } },
+  //     { path: 'dashboard',      name: 'CompanyDashboard',   component: Dashboard,     meta: { title: 'Panel • Empresa' } },
+  //     { path: 'companies',      name: 'CompanyList',        component: CompanyList,   meta: { permissions: ['companies:read'],   title: 'Empresas' } },
+  //     { path: 'company/new',    name: 'CompanyForm',        component: CompanyForm,   meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
+  //     { path: 'company/:id',    name: 'CompanyDetail',      component: CompanyDetail, props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
+  //     { path: 'employees',      name: 'EmployeeList',       component: EmployeeList,  meta: { permissions: ['employees:read'],   title: 'Empleados' } },
+  //     { path: 'employee/new',   name: 'EmployeeForm',       component: EmployeeForm,  meta: { permissions: ['employees:create'], title: 'Nuevo empleado' } },
+  //     { path: 'employee/:id',   name: 'EmployeeDetail',     component: EmployeeDetail,props: true, meta: { permissions: ['employees:read'],  title: 'Detalle empleado' } },
+  //     { path: 'documents/:id',  name: 'EmployeeDocuments',  component: EmployeeDocs,  props: true, meta: { permissions: ['documents:read'],  title: 'Documentos' } },
+  //     { path: 'upload-document/:id', name: 'UploadDocument',component: UploadDocument,props: true, meta: { permissions: ['documents:create'],title: 'Subir documento' } },
+  //     { path: 'report',         name: 'CompanyReport',      component: CompanyReport, meta: { permissions: ['reports:read'],     title: 'Reporte' } },
+  //     { path: 'requests',       name: 'RequestList',        component: RequestList,   meta: { permissions: ['requests:read'],    title: 'Solicitudes' } },
+  //     { path: 'approve-requests', name: 'ApproveRequests',  component: ApproveRequests, meta: { permissions: ['requests:approve'], title: 'Aprobar solicitudes' } },
+  //   ]
+  // },
 
   // Employee
   {
@@ -143,6 +143,7 @@ const routes = [
       { path: 'attendance',    name: 'Attendance',        component: Attendance,  meta: { title: 'Marcar asistencia' } },
       { path: 'history',       name: 'History',           component: History,     meta: { title: 'Historial' } },
       { path: 'create-request',name: 'CreateRequest',     component: CreateRequest, meta: { title: 'Nueva solicitud' } },
+      { path: 'documents',name: 'Documents',     component: EmployeeDocs, meta: { title: 'Documents' } },
     ]
   },
 
