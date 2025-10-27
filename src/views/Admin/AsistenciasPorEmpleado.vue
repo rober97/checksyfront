@@ -1,11 +1,20 @@
 <template>
-  <q-page padding class="asistencias-empleado-page">
-    <q-card flat bordered class="q-pa-md">
-      <q-card-section>
-        <div class="text-h5 text-primary q-mb-md">
-          📋 Asistencias por Empleado
+  <q-page padding class="q-pa-md">
+    <!-- Header -->
+    <div class="row items-center justify-between q-mb-md">
+      <div class="row items-center">
+        <q-icon name="business" size="28px" class="q-mr-sm" color="primary" />
+        <div class="column">
+          <div class="text-h6 page-title" :class="titleClass">
+            Historial de asistencias
+          </div>
+          <div class="text-caption text-grey-7">lorem</div>
         </div>
+      </div>
+    </div>
 
+    <q-card flat bordered class="fit column">
+      <q-card-section>
         <q-input
           filled
           v-model="search"
@@ -70,17 +79,35 @@
           <div class="row items-center justify-between">
             <div class="col-auto">
               <div class="text-h6">
-                📅 Historial de: {{ historialEmpleado?.nombre || '—' }}
+                📅 Historial de: {{ historialEmpleado?.nombre || "—" }}
               </div>
               <div class="text-subtitle2 text-grey-7">
-                RUT: {{ historialEmpleado?.rut || '—' }}
+                RUT: {{ historialEmpleado?.rut || "—" }}
               </div>
             </div>
 
             <div class="col-auto row items-center q-gutter-sm">
-              <q-chip outline color="primary" clickable @click="setQuickRange('hoy')">Hoy</q-chip>
-              <q-chip outline color="primary" clickable @click="setQuickRange('semana')">Esta semana</q-chip>
-              <q-chip outline color="primary" clickable @click="setQuickRange('mes')">Este mes</q-chip>
+              <q-chip
+                outline
+                color="primary"
+                clickable
+                @click="setQuickRange('hoy')"
+                >Hoy</q-chip
+              >
+              <q-chip
+                outline
+                color="primary"
+                clickable
+                @click="setQuickRange('semana')"
+                >Esta semana</q-chip
+              >
+              <q-chip
+                outline
+                color="primary"
+                clickable
+                @click="setQuickRange('mes')"
+                >Este mes</q-chip
+              >
               <q-btn flat round icon="close" v-close-popup />
             </div>
           </div>
@@ -92,10 +119,22 @@
         <q-card-section class="q-pt-md q-pb-sm">
           <div class="row q-col-gutter-md items-end">
             <div class="col-12 col-sm-4">
-              <q-input filled v-model="rangoDesde" label="Desde" type="date" dense />
+              <q-input
+                filled
+                v-model="rangoDesde"
+                label="Desde"
+                type="date"
+                dense
+              />
             </div>
             <div class="col-12 col-sm-4">
-              <q-input filled v-model="rangoHasta" label="Hasta" type="date" dense />
+              <q-input
+                filled
+                v-model="rangoHasta"
+                label="Hasta"
+                type="date"
+                dense
+              />
             </div>
             <div class="col-12 col-sm-4">
               <q-select
@@ -115,10 +154,20 @@
           </div>
 
           <div class="row q-mt-sm items-center q-gutter-sm">
-            <q-btn outline color="warning" label="Limpiar rango" icon="clear" @click="limpiarRango" />
+            <q-btn
+              outline
+              color="warning"
+              label="Limpiar rango"
+              icon="clear"
+              @click="limpiarRango"
+            />
             <q-space />
             <q-badge color="primary" align="middle" class="q-pa-sm">
-              Total: {{ (historialFiltradoYTipado && historialFiltradoYTipado.length) || 0 }}
+              Total:
+              {{
+                (historialFiltradoYTipado && historialFiltradoYTipado.length) ||
+                0
+              }}
             </q-badge>
             <q-badge color="positive" class="q-pa-sm">
               Entradas: {{ conteos.entradas }}
@@ -133,7 +182,13 @@
 
         <!-- Tabs -->
         <q-card-section class="q-pt-none">
-          <q-tabs v-model="tab" dense class="text-primary" align="left" narrow-indicator>
+          <q-tabs
+            v-model="tab"
+            dense
+            class="text-primary"
+            align="left"
+            narrow-indicator
+          >
             <q-tab name="timeline" icon="timeline" label="Línea de tiempo" />
             <q-tab name="tabla" icon="table_chart" label="Tabla" />
           </q-tabs>
@@ -142,11 +197,22 @@
         <q-separator />
 
         <!-- Contenido -->
-        <q-card-section style="overflow: hidden; flex: 1; display: flex; flex-direction: column;">
-          <q-tab-panels v-model="tab" animated style="flex:1;">
+        <q-card-section
+          style="
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          "
+        >
+          <q-tab-panels v-model="tab" animated style="flex: 1">
             <!-- TIMELINE -->
-            <q-tab-panel name="timeline" style="height:100%; padding:0;">
-              <div v-if="isFetching" class="column flex flex-center" style="height:100%;">
+            <q-tab-panel name="timeline" style="height: 100%; padding: 0">
+              <div
+                v-if="isFetching"
+                class="column flex flex-center"
+                style="height: 100%"
+              >
                 <q-spinner size="lg" color="primary" />
                 <div class="text-grey q-mt-sm">Cargando historial…</div>
               </div>
@@ -156,7 +222,7 @@
                   <q-virtual-scroll
                     :items="gruposPorDia"
                     separator
-                    style="height: 100%;"
+                    style="height: 100%"
                     :virtual-scroll-item-size="64"
                   >
                     <template #default="{ item }">
@@ -172,21 +238,35 @@
                         <q-list bordered class="rounded-borders">
                           <q-item v-for="m in item.items" :key="m._id">
                             <q-item-section avatar>
-                              <q-avatar :color="estadoColor(m.tipo)" text-color="white" icon="access_time" />
+                              <q-avatar
+                                :color="estadoColor(m.tipo)"
+                                text-color="white"
+                                icon="access_time"
+                              />
                             </q-item-section>
 
                             <q-item-section>
                               <q-item-label class="text-weight-medium">
-                                {{ capitalizar(m.tipo || '—') }}
-                                <q-badge outline class="q-ml-sm" :color="estadoColor(m.tipo)">
+                                {{ capitalizar(m.tipo || "—") }}
+                                <q-badge
+                                  outline
+                                  class="q-ml-sm"
+                                  :color="estadoColor(m.tipo)"
+                                >
                                   {{ horaBonita(m.timestamp) }}
                                 </q-badge>
                               </q-item-label>
                               <q-item-label caption>
                                 Comentario: {{ m.note }}
-                                <span v-if="m.ubicacion?.lat && m.ubicacion?.lng">
+                                <span
+                                  v-if="m.ubicacion?.lat && m.ubicacion?.lng"
+                                >
                                   • Ubicación:
-                                  <a href="" @click.prevent="openInMaps(m)" class="text-primary">
+                                  <a
+                                    href=""
+                                    @click.prevent="openInMaps(m)"
+                                    class="text-primary"
+                                  >
                                     {{ m.ubicacion.lat }}, {{ m.ubicacion.lng }}
                                   </a>
                                 </span>
@@ -194,7 +274,11 @@
                             </q-item-section>
 
                             <q-item-section side>
-                              <q-icon :name="estadoIcono(m.tipo)" :color="estadoColor(m.tipo)" size="md" />
+                              <q-icon
+                                :name="estadoIcono(m.tipo)"
+                                :color="estadoColor(m.tipo)"
+                                size="md"
+                              />
                             </q-item-section>
                           </q-item>
                         </q-list>
@@ -210,7 +294,7 @@
             </q-tab-panel>
 
             <!-- TABLA -->
-            <q-tab-panel name="tabla" style="height:100%; padding:0;">
+            <q-tab-panel name="tabla" style="height: 100%; padding: 0">
               <q-table
                 flat
                 bordered
@@ -237,7 +321,9 @@
                 <template #body-cell-ubicacion="props">
                   <q-td :props="props">
                     <q-btn
-                      v-if="props.row.ubicacion?.lat && props.row.ubicacion?.lng"
+                      v-if="
+                        props.row.ubicacion?.lat && props.row.ubicacion?.lng
+                      "
                       dense
                       size="sm"
                       outline
@@ -259,11 +345,26 @@
         <!-- Acciones -->
         <q-card-actions align="between">
           <div class="text-caption text-grey">
-            Mostrando {{ conteos.total }} marcas ({{ conteos.entradas }} entradas, {{ conteos.salidas }} salidas)
+            Mostrando {{ conteos.total }} marcas ({{
+              conteos.entradas
+            }}
+            entradas, {{ conteos.salidas }} salidas)
           </div>
           <div class="row q-gutter-sm">
-            <q-btn flat color="secondary" icon="print" label="Imprimir" @click="imprimirHistorial" />
-            <q-btn flat color="green" icon="file_download" label="Exportar Excel" @click="exportarExcel" />
+            <q-btn
+              flat
+              color="secondary"
+              icon="print"
+              label="Imprimir"
+              @click="imprimirHistorial"
+            />
+            <q-btn
+              flat
+              color="green"
+              icon="file_download"
+              label="Exportar Excel"
+              @click="exportarExcel"
+            />
             <q-btn flat label="Cerrar" color="primary" v-close-popup />
           </div>
         </q-card-actions>
@@ -288,12 +389,13 @@ const rangoDesde = ref("");
 const rangoHasta = ref("");
 const filtroTipo = ref(""); // '', 'entrada', 'salida'
 
-const loading = ref(true);          // carga de la tabla principal
-const isFetching = ref(false);      // carga del historial dentro del diálogo
+const loading = ref(true); // carga de la tabla principal
+const isFetching = ref(false); // carga del historial dentro del diálogo
 const tab = ref("timeline");
 
 /* ===== Helpers generales ===== */
-const getAsistCount = (row) => Array.isArray(row?.asistencias) ? row.asistencias.length : (row?.total || 0);
+const getAsistCount = (row) =>
+  Array.isArray(row?.asistencias) ? row.asistencias.length : row?.total || 0;
 
 /* ===== Carga inicial ===== */
 onMounted(async () => {
@@ -402,7 +504,7 @@ const setQuickRange = (tipo) => {
 
 /* ===== Filtrado de historial (cliente) ===== */
 const historialFiltrado = computed(() => {
-  const asistencias = (historialEmpleado.value?.asistencias) || [];
+  const asistencias = historialEmpleado.value?.asistencias || [];
   if (!asistencias.length) return [];
 
   return asistencias.filter((a) => {
@@ -429,7 +531,9 @@ const historialFiltradoYTipado = computed(() => {
   const arr = historialFiltrado.value;
   if (!arr.length) return [];
   if (!filtroTipo.value) {
-    return [...arr].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return [...arr].sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+    );
   }
   return arr
     .filter((a) => a.tipo === filtroTipo.value)
@@ -455,7 +559,7 @@ const gruposPorDia = computed(() => {
       map.set(clave, {
         fechaClave: clave,
         fechaLarga, // ej: "jueves, 02 de octubre de 2025"
-        items: []
+        items: [],
       });
     }
 
@@ -478,7 +582,12 @@ const conteos = computed(() => {
 
 /* ===== Tabla del historial (tab 2) ===== */
 const columnsHistorial = [
-  { name: "fecha", label: "Fecha", field: (r) => date.formatDate(r.timestamp, "YYYY-MM-DD"), align: "left" },
+  {
+    name: "fecha",
+    label: "Fecha",
+    field: (r) => date.formatDate(r.timestamp, "YYYY-MM-DD"),
+    align: "left",
+  },
   { name: "hora", label: "Hora", field: "hora", align: "left" },
   { name: "tipo", label: "Tipo", field: "tipo", align: "left" },
   { name: "ubicacion", label: "Ubicación", field: "ubicacion", align: "left" },
@@ -522,13 +631,6 @@ const imprimirHistorial = () => {
 </script>
 
 <style scoped>
-/* ========= Layout general ========= */
-.asistencias-empleado-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-bottom: 24px;
-}
-
 /* ========= Card del diálogo “glassy” ========= */
 .glassy-card {
   --card-bg: rgba(255, 255, 255, 0.88);
@@ -575,11 +677,11 @@ const imprimirHistorial = () => {
   border-radius: 999px;
   font-weight: 600;
   padding: 0 10px;
-  transition: transform .08s ease, box-shadow .15s ease;
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
 }
 .glassy-card :deep(.q-chip.q-chip--clickable:hover) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0,0,0,.06);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
 /* ========= Inputs y selects ========= */
@@ -595,7 +697,7 @@ const imprimirHistorial = () => {
   border-radius: 10px;
   font-weight: 700;
   letter-spacing: 0.2px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* ========= Tabs ========= */
@@ -606,7 +708,7 @@ const imprimirHistorial = () => {
 .glassy-card :deep(.q-tab) {
   text-transform: none;
   font-weight: 700;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
 }
 .glassy-card :deep(.q-tab__indicator) {
   height: 3px;
@@ -622,10 +724,10 @@ const imprimirHistorial = () => {
   border: 1px solid var(--card-border);
   border-radius: 12px;
   overflow: hidden;
-  transition: box-shadow .15s ease, transform .06s ease;
+  transition: box-shadow 0.15s ease, transform 0.06s ease;
 }
 .glassy-card :deep(.q-expansion-item:hover) {
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
   transform: translateY(-1px);
 }
 .glassy-card :deep(.q-expansion-item .q-item) {
@@ -643,7 +745,7 @@ const imprimirHistorial = () => {
   border-radius: 12px;
 }
 .glassy-card :deep(.q-list .q-item) {
-  border-bottom: 1px dashed rgba(127,127,127,.2);
+  border-bottom: 1px dashed rgba(127, 127, 127, 0.2);
 }
 .glassy-card :deep(.q-list .q-item:last-child) {
   border-bottom: none;
@@ -654,10 +756,10 @@ const imprimirHistorial = () => {
 
 /* Avatares de estado con glow */
 .glassy-card :deep(.q-avatar.bg-positive) {
-  box-shadow: 0 0 0 3px rgba(46,204,113,.15);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
 }
 .glassy-card :deep(.q-avatar.bg-negative) {
-  box-shadow: 0 0 0 3px rgba(231,76,60,.15);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
 }
 
 /* Badge de hora */
@@ -685,13 +787,13 @@ const imprimirHistorial = () => {
 }
 .glassy-card :deep(.q-table thead th) {
   font-weight: 800;
-  letter-spacing: .3px;
+  letter-spacing: 0.3px;
 }
 .glassy-card :deep(.q-table__body .q-tr:nth-child(even)) {
-  background: rgba(125,125,125,.06);
+  background: rgba(125, 125, 125, 0.06);
 }
 .body--dark .glassy-card :deep(.q-table__body .q-tr:nth-child(even)) {
-  background: rgba(255,255,255,.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ========= Scrollbar sutil ========= */
@@ -700,28 +802,28 @@ const imprimirHistorial = () => {
   width: 10px;
 }
 .glassy-card :deep(*::-webkit-scrollbar-thumb) {
-  background: rgba(127,127,127,.35);
+  background: rgba(127, 127, 127, 0.35);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 .glassy-card :deep(*::-webkit-scrollbar-thumb:hover) {
-  background: rgba(127,127,127,.55);
+  background: rgba(127, 127, 127, 0.55);
 }
 
 /* ========= Links a mapas ========= */
 .glassy-card :deep(a.text-primary) {
   text-decoration: none;
   border-bottom: 1px dotted currentColor;
-  transition: opacity .15s ease;
+  transition: opacity 0.15s ease;
 }
 .glassy-card :deep(a.text-primary:hover) {
-  opacity: .85;
+  opacity: 0.85;
 }
 
 /* ========= Micro-animaciones ========= */
 .glassy-card :deep(.q-icon) {
-  transition: transform .12s ease;
+  transition: transform 0.12s ease;
 }
 .glassy-card :deep(.q-item:hover .q-icon) {
   transform: scale(1.05);
@@ -741,9 +843,8 @@ const imprimirHistorial = () => {
   }
 }
 
-.q-tab-panels{
+.q-tab-panels {
   overflow-y: auto;
   background: transparent;
 }
-
 </style>

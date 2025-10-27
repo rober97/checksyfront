@@ -9,7 +9,6 @@
       <q-btn
         color="primary"
         icon="person_add"
-        label="Nuevo"
         unelevated
         class="q-px-sm shadow-2"
         @click="abrirDialogoNuevo"
@@ -313,13 +312,18 @@ async function eliminarUsuario (id) {
   catch { toast.error('No se pudo eliminar el usuario') }
 }
 
-/* Catálogos/UI helpers */
 const roleOptions = [
   { label: 'Admin', value: 'admin' },
-  { label: 'Empresa', value: 'company' },
   { label: 'Empleado', value: 'employee' },
-  { label: 'Supervisor', value: 'supervisor' }
 ]
+
+/* Catálogos/UI helpers */
+// const roleOptions = [
+//   { label: 'Admin', value: 'admin' },
+//   { label: 'Empresa', value: 'company' },
+//   { label: 'Empleado', value: 'employee' },
+//   { label: 'Supervisor', value: 'supervisor' }
+// ]
 function roleNice (r) { return ({ admin:'Admin', company:'Empresa', employee:'Empleado', supervisor:'Supervisor', empresa:'Empresa', empleado:'Empleado' }[r] || r) }
 function roleColor (r) { const rr = r==='empresa'?'company': r==='empleado'?'employee': r; return rr==='admin'?'deep-purple-5': rr==='company'?'indigo-6': rr==='employee'?'teal-6':'grey-6' }
 function statusNice (s) { return ({ active:'Activo', inactive:'Inactivo', suspended:'Suspendido' }[s] || s || '—') }
@@ -361,7 +365,7 @@ onMounted(async () => {
 
 <style scoped>
 .rk-toolbar{
-  background: var(--rk-card, #fff);
+  transition: background-color .3s, color .3s;
   border: 1px solid var(--rk-border, rgba(0,0,0,.06));
   border-radius: 10px;
   padding: 8px;

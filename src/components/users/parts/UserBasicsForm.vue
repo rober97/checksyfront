@@ -241,7 +241,6 @@ const emit = defineEmits(["update:modelValue", "filter-empresas", "tipo-change"]
 
 const rolesCards = [
   { label: "Admin",    value: "admin",    icon: "security",  desc: "Control total del sistema" },
-  { label: "Empresa",  value: "empresa",  icon: "domain",    desc: "Gestiona su organización" },
   { label: "Empleado", value: "empleado", icon: "badge",     desc: "Marca asistencia y solicita" },
 ];
 
