@@ -1,63 +1,89 @@
+<!-- src/views/Attendance/AttendanceHistoryPage.vue -->
 <template>
-  <q-page padding class="q-pa-md">
-    <!-- Header -->
-    <div class="row items-center justify-between q-mb-md">
-      <div class="row items-center">
-        <q-icon name="business" size="28px" class="q-mr-sm" color="primary" />
-        <div class="column">
-          <div class="text-h6 page-title" :class="titleClass">
-            Historial de asistencias
+  <q-page class="q-pa-md" :class="pageBg">
+    <!-- ===== Header unificado ===== -->
+    <PageHeader
+      icon="group"
+      title="Historial de asistencias"
+      help-text="AYUDA"
+      :help-to="{ name: 'help.users' }"
+    >
+      <template #subtitle> Registros por colaborador </template>
+    </PageHeader>
+
+    <!-- ===== Card + Tabla principal ===== -->
+    <q-card
+      flat
+      bordered
+      class="rk-card soft-card fit column"
+      :class="cardTone"
+    >
+      <DynamicDataTable
+        :rows="rowsMain"
+        :columns="columns"
+        row-key="_id"
+        :pagination="mainPagination"
+        :rows-per-page-options="[10, 20, 50]"
+        :loading="loading"
+        loading-label="Cargando asistencias…"
+        no-data-label="No hay registros"
+        :filter="search"
+        :table-class="tableClass"
+        :binary-state-sort="true"
+        :flat="true"
+        :bordered="true"
+        :wrap-cells="false"
+        selection="none"
+      >
+        <!-- Buscador en top-right -->
+        <template #top-right>
+          <div class="row items-center q-gutter-sm">
+            <q-input
+              v-model="search"
+              dense
+              outlined
+              clearable
+              debounce="250"
+              placeholder="Buscar por nombre o RUT…"
+              class="rk-pill rk-search"
+            >
+              <template #prepend><q-icon name="search" /></template>
+            </q-input>
           </div>
-          <div class="text-caption text-grey-7">lorem</div>
-        </div>
-      </div>
-    </div>
+        </template>
 
-    <q-card flat bordered class="fit column">
-      <q-card-section>
-        <q-input
-          filled
-          v-model="search"
-          label="🔎 Buscar por nombre o RUT"
-          dense
-          debounce="300"
-          class="q-mb-md"
-          clearable
-        />
+        <!-- Columna: total -->
+        <template #body-cell-total="props">
+          <q-td :props="props">
+            <q-badge color="positive">{{ props.row.total }} días</q-badge>
+          </q-td>
+        </template>
 
-        <q-table
-          :rows="filtrados"
-          :columns="columns"
-          row-key="_id"
-          flat
-          bordered
-          separator="horizontal"
-          :pagination="{ rowsPerPage: 10 }"
-        >
-          <template #body-cell-total="props">
-            <q-td>
-              <q-badge color="positive">
-                {{ getAsistCount(props.row) }} días
-              </q-badge>
-            </q-td>
-          </template>
+        <!-- Acciones -->
+        <template #body-cell-actions="props">
+          <q-td :props="props" align="center">
+            <q-btn
+              size="sm"
+              color="primary"
+              label="Ver Historial"
+              icon="timeline"
+              @click="verHistorial(props.row)"
+            />
+          </q-td>
+        </template>
 
-          <template #body-cell-actions="props">
-            <q-td align="center">
-              <q-btn
-                size="sm"
-                color="primary"
-                label="Ver Historial"
-                icon="history"
-                @click="verHistorial(props.row)"
-              />
-            </q-td>
-          </template>
-        </q-table>
-      </q-card-section>
+        <!-- No data -->
+        <template #no-data>
+          <div class="full-width column items-center q-pa-lg text-grey-7">
+            <q-icon name="event_busy" size="48px" class="q-mb-sm" />
+            <div class="text-subtitle1 q-mb-xs">Sin registros</div>
+            <div class="text-caption">Aún no hay asistencias cargadas.</div>
+          </div>
+        </template>
+      </DynamicDataTable>
     </q-card>
 
-    <!-- Dialogo PRO -->
+    <!-- ===== Dialogo PRO ===== -->
     <q-dialog
       v-model="modalHistorial"
       persistent
@@ -163,11 +189,7 @@
             />
             <q-space />
             <q-badge color="primary" align="middle" class="q-pa-sm">
-              Total:
-              {{
-                (historialFiltradoYTipado && historialFiltradoYTipado.length) ||
-                0
-              }}
+              Total: {{ conteos.total }}
             </q-badge>
             <q-badge color="positive" class="q-pa-sm">
               Entradas: {{ conteos.entradas }}
@@ -244,7 +266,6 @@
                                 icon="access_time"
                               />
                             </q-item-section>
-
                             <q-item-section>
                               <q-item-label class="text-weight-medium">
                                 {{ capitalizar(m.tipo || "—") }}
@@ -257,7 +278,7 @@
                                 </q-badge>
                               </q-item-label>
                               <q-item-label caption>
-                                Comentario: {{ m.note }}
+                                Comentario: {{ m.note || "—" }}
                                 <span
                                   v-if="m.ubicacion?.lat && m.ubicacion?.lng"
                                 >
@@ -272,7 +293,6 @@
                                 </span>
                               </q-item-label>
                             </q-item-section>
-
                             <q-item-section side>
                               <q-icon
                                 :name="estadoIcono(m.tipo)"
@@ -286,7 +306,6 @@
                     </template>
                   </q-virtual-scroll>
                 </template>
-
                 <div v-else class="text-grey text-center q-mt-md">
                   No hay asistencias registradas para este rango.
                 </div>
@@ -295,14 +314,27 @@
 
             <!-- TABLA -->
             <q-tab-panel name="tabla" style="height: 100%; padding: 0">
-              <q-table
-                flat
-                bordered
+              <DynamicDataTable
                 :rows="historialFiltradoYTipado"
                 :columns="columnsHistorial"
                 row-key="_id"
-                :pagination="{ rowsPerPage: 15 }"
-                class="fit"
+                :pagination="{
+                  page: 1,
+                  rowsPerPage: 15,
+                  sortBy: 'fecha',
+                  descending: true,
+                }"
+                :rows-per-page-options="[10, 15, 30]"
+                :loading="isFetching"
+                loading-label="Cargando historial…"
+                no-data-label="Sin marcas"
+                :filter="''"
+                :table-class="tableClass"
+                :binary-state-sort="true"
+                :flat="true"
+                :bordered="true"
+                :wrap-cells="false"
+                selection="none"
               >
                 <template #body-cell-tipo="props">
                   <q-td :props="props">
@@ -335,7 +367,7 @@
                     <span v-else class="text-grey">—</span>
                   </q-td>
                 </template>
-              </q-table>
+              </DynamicDataTable>
             </q-tab-panel>
           </q-tab-panels>
         </q-card-section>
@@ -376,88 +408,127 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useQuasar, date } from "quasar";
+import DynamicDataTable from "@/components/shared/DynamicDataTable.vue";
 import { useAsistenciaStore } from "@/stores/asistenciaStore";
+import PageHeader from "@/components/shared/PageHeader.vue";
 
 const $q = useQuasar();
 const asistenciaStore = useAsistenciaStore();
 
+/* ===== Tema ===== */
+const isDark = computed(() => $q.dark.isActive);
+const pageBg = computed(() =>
+  isDark.value ? "bg-grey-10 text-white" : "bg-grey-1"
+);
+const cardTone = computed(() =>
+  isDark.value ? "bg-grey-9  text-white" : "bg-white"
+);
+const titleClass = "text-primary";
+const tableClass = computed(() => [
+  "rk-scrollable",
+  "rk-compact",
+  isDark.value ? "bg-grey-9 text-white" : "bg-white text-dark",
+]);
+
+/* ===== Estado ===== */
 const search = ref("");
-const modalHistorial = ref(false);
-const historialEmpleado = ref(null);
+const loading = ref(true);
+const mainPagination = ref({
+  page: 1,
+  rowsPerPage: 10,
+  sortBy: "nombre",
+  descending: false,
+});
 
-const rangoDesde = ref("");
-const rangoHasta = ref("");
-const filtroTipo = ref(""); // '', 'entrada', 'salida'
-
-const loading = ref(true); // carga de la tabla principal
-const isFetching = ref(false); // carga del historial dentro del diálogo
-const tab = ref("timeline");
-
-/* ===== Helpers generales ===== */
+/* ===== Datos listado principal ===== */
+const rawEmployees = computed(() =>
+  Array.isArray(asistenciaStore.employeeRecords)
+    ? asistenciaStore.employeeRecords
+    : []
+);
 const getAsistCount = (row) =>
   Array.isArray(row?.asistencias) ? row.asistencias.length : row?.total || 0;
+const rowsMain = computed(() =>
+  rawEmployees.value.map((e) => ({
+    ...e,
+    total: getAsistCount(e),
+  }))
+);
+
+const columns = [
+  {
+    name: "nombre",
+    label: "Nombre",
+    field: "nombre",
+    align: "left",
+    sortable: true,
+  },
+  { name: "rut", label: "RUT", field: "rut", align: "left", sortable: true },
+  {
+    name: "total",
+    label: "Asistencias",
+    field: "total",
+    align: "center",
+    sortable: true,
+  },
+  {
+    name: "actions",
+    label: "Acciones",
+    field: "__actions",
+    align: "center",
+    sortable: false,
+  },
+];
 
 /* ===== Carga inicial ===== */
 onMounted(async () => {
   loading.value = true;
   try {
     await asistenciaStore.fetchRecordsByEmployee();
-  } catch (error) {
+  } catch {
     $q.notify({ type: "negative", message: "Error al cargar asistencias" });
   } finally {
     loading.value = false;
   }
 });
 
-/* ===== Refetch por rango (servidor) ===== */
-watch([rangoDesde, rangoHasta], () => {
-  if (historialEmpleado.value?._id) {
-    recargarHistorialConRango();
-  }
-});
+/* ===== Modal / Historial por empleado ===== */
+const modalHistorial = ref(false);
+const historialEmpleado = ref(null);
+const isFetching = ref(false);
+const rangoDesde = ref("");
+const rangoHasta = ref("");
+const filtroTipo = ref(""); // '', 'entrada', 'salida'
+const tab = ref("timeline");
 
-/* ===== Tabla principal ===== */
-const columns = [
-  { name: "nombre", label: "Nombre", field: "nombre", align: "left" },
-  { name: "rut", label: "RUT", field: "rut", align: "left" },
-  { name: "total", label: "Asistencias", field: "total", align: "center" },
-  { name: "actions", label: "Acciones", field: "actions", align: "center" },
-];
-
-const filtrados = computed(() => {
-  if (loading.value || !asistenciaStore.employeeRecords) return [];
-  const term = (search.value || "").toLowerCase();
-  const rows = asistenciaStore.employeeRecords || [];
-  if (!term) return rows;
-
-  return rows.filter(
-    (e) =>
-      e?.nombre?.toLowerCase?.().includes(term) ||
-      e?.rut?.toLowerCase?.().includes(term)
-  );
-});
-
-/* ===== Acciones ===== */
 const verHistorial = async (empleado) => {
   try {
     rangoDesde.value = "";
     rangoHasta.value = "";
     filtroTipo.value = "";
     tab.value = "timeline";
-
     isFetching.value = true;
-
     const data = await asistenciaStore.fetchHistorialEmpleado({
       employeeId: empleado._id,
     });
-    historialEmpleado.value = data || { asistencias: [] };
+    historialEmpleado.value = data || {
+      asistencias: [],
+      nombre: empleado?.nombre,
+      rut: empleado?.rut,
+      _id: empleado?._id,
+    };
     modalHistorial.value = true;
-  } catch (error) {
+  } catch (e) {
     $q.notify({ type: "negative", message: "No se pudo cargar el historial" });
   } finally {
     isFetching.value = false;
   }
 };
+
+/* Refetch por rango */
+watch([rangoDesde, rangoHasta], () => {
+  if (historialEmpleado.value?._id) recargarHistorialConRango();
+});
 
 const recargarHistorialConRango = async () => {
   try {
@@ -467,86 +538,74 @@ const recargarHistorialConRango = async () => {
       from: rangoDesde.value || null,
       to: rangoHasta.value || null,
     });
-    historialEmpleado.value = data || { asistencias: [] };
-  } catch (err) {
+    // preserva nombre/rut
+    historialEmpleado.value = {
+      ...(data || { asistencias: [] }),
+      nombre: historialEmpleado.value?.nombre,
+      rut: historialEmpleado.value?.rut,
+      _id: historialEmpleado.value?._id,
+    };
+  } catch {
     $q.notify({ type: "negative", message: "Error al filtrar por rango" });
   } finally {
     isFetching.value = false;
   }
 };
 
-/* ===== Rango rápido y limpiar ===== */
+/* Rango rápido / limpiar */
 const limpiarRango = () => {
   rangoDesde.value = "";
   rangoHasta.value = "";
 };
-
 const setQuickRange = (tipo) => {
   const hoy = new Date();
   const fmt = (d) => date.formatDate(d, "YYYY-MM-DD");
-
   if (tipo === "hoy") {
     const d = fmt(hoy);
     rangoDesde.value = d;
     rangoHasta.value = d;
   } else if (tipo === "semana") {
-    const start = date.startOfDate(hoy, "week");
-    const end = date.endOfDate(hoy, "week");
-    rangoDesde.value = fmt(start);
-    rangoHasta.value = fmt(end);
+    rangoDesde.value = fmt(date.startOfDate(hoy, "week"));
+    rangoHasta.value = fmt(date.endOfDate(hoy, "week"));
   } else if (tipo === "mes") {
-    const start = date.startOfDate(hoy, "month");
-    const end = date.endOfDate(hoy, "month");
-    rangoDesde.value = fmt(start);
-    rangoHasta.value = fmt(end);
+    rangoDesde.value = fmt(date.startOfDate(hoy, "month"));
+    rangoHasta.value = fmt(date.endOfDate(hoy, "month"));
   }
 };
 
-/* ===== Filtrado de historial (cliente) ===== */
+/* Historial filtrado (cliente) */
 const historialFiltrado = computed(() => {
   const asistencias = historialEmpleado.value?.asistencias || [];
   if (!asistencias.length) return [];
-
   return asistencias.filter((a) => {
-    // Rango por día completo
     if (rangoDesde.value || rangoHasta.value) {
       const f = new Date(a.timestamp);
       f.setHours(0, 0, 0, 0);
-
       const d = rangoDesde.value ? new Date(rangoDesde.value) : null;
       if (d) d.setHours(0, 0, 0, 0);
-
       const h = rangoHasta.value ? new Date(rangoHasta.value) : null;
       if (h) h.setHours(23, 59, 59, 999);
-
       if ((d && f < d) || (h && f > h)) return false;
     }
-
     return true;
   });
 });
 
-/* ===== Filtro por tipo y orden ===== */
+/* Filtro por tipo + orden desc */
 const historialFiltradoYTipado = computed(() => {
   const arr = historialFiltrado.value;
   if (!arr.length) return [];
-  if (!filtroTipo.value) {
-    return [...arr].sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-    );
-  }
-  return arr
-    .filter((a) => a.tipo === filtroTipo.value)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const base = filtroTipo.value
+    ? arr.filter((a) => a.tipo === filtroTipo.value)
+    : arr;
+  return base.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 });
 
-/* ===== Agrupación por día ===== */
+/* Agrupación por día */
 const gruposPorDia = computed(() => {
   const map = new Map();
-
   for (const m of historialFiltradoYTipado.value) {
     const clave = date.formatDate(m.timestamp, "YYYY-MM-DD");
-
     if (!map.has(clave)) {
       const fecha = new Date(m.timestamp);
       const fechaLarga = new Intl.DateTimeFormat("es-ES", {
@@ -555,24 +614,17 @@ const gruposPorDia = computed(() => {
         month: "long",
         day: "2-digit",
       }).format(fecha);
-
-      map.set(clave, {
-        fechaClave: clave,
-        fechaLarga, // ej: "jueves, 02 de octubre de 2025"
-        items: [],
-      });
+      map.set(clave, { fechaClave: clave, fechaLarga, items: [] });
     }
-
     map.get(clave).items.push(m);
   }
-
   return Array.from(map.values());
 });
 
-/* ===== Conteos ===== */
+/* Conteos */
 const conteos = computed(() => {
-  let entradas = 0;
-  let salidas = 0;
+  let entradas = 0,
+    salidas = 0;
   for (const m of historialFiltradoYTipado.value) {
     if (m.tipo === "entrada") entradas++;
     else if (m.tipo === "salida") salidas++;
@@ -580,37 +632,47 @@ const conteos = computed(() => {
   return { entradas, salidas, total: historialFiltradoYTipado.value.length };
 });
 
-/* ===== Tabla del historial (tab 2) ===== */
+/* Tabla del historial (tab) */
 const columnsHistorial = [
   {
     name: "fecha",
     label: "Fecha",
     field: (r) => date.formatDate(r.timestamp, "YYYY-MM-DD"),
     align: "left",
+    sortable: true,
   },
-  { name: "hora", label: "Hora", field: "hora", align: "left" },
-  { name: "tipo", label: "Tipo", field: "tipo", align: "left" },
-  { name: "ubicacion", label: "Ubicación", field: "ubicacion", align: "left" },
+  {
+    name: "hora",
+    label: "Hora",
+    field: "hora",
+    align: "left",
+    sortable: false,
+  },
+  { name: "tipo", label: "Tipo", field: "tipo", align: "left", sortable: true },
+  {
+    name: "ubicacion",
+    label: "Ubicación",
+    field: "ubicacion",
+    align: "left",
+    sortable: false,
+  },
 ];
 
-/* ===== Helpers de UI ===== */
-const estadoColor = (tipo) =>
-  tipo === "entrada" ? "positive" : tipo === "salida" ? "negative" : "grey";
-const estadoIcono = (tipo) =>
-  tipo === "entrada" ? "login" : tipo === "salida" ? "logout" : "help";
+/* UI helpers */
+const estadoColor = (t) =>
+  t === "entrada" ? "positive" : t === "salida" ? "negative" : "grey";
+const estadoIcono = (t) =>
+  t === "entrada" ? "login" : t === "salida" ? "logout" : "help";
 const capitalizar = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const horaBonita = (ts) => date.formatDate(ts, "HH:mm");
-
 const openInMaps = (m) => {
-  const lat = m?.ubicacion?.lat;
-  const lng = m?.ubicacion?.lng;
-  if (lat && lng) {
-    const url = `https://www.google.com/maps?q=${lat},${lng}`;
-    window.open(url, "_blank");
-  }
+  const lat = m?.ubicacion?.lat,
+    lng = m?.ubicacion?.lng;
+  if (lat && lng)
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank");
 };
 
-/* ===== Export / Imprimir ===== */
+/* Export / imprimir */
 const exportarExcel = async () => {
   if (!historialEmpleado.value?._id) return;
   try {
@@ -624,34 +686,99 @@ const exportarExcel = async () => {
     $q.notify({ type: "negative", message: "Error al exportar asistencia" });
   }
 };
-
-const imprimirHistorial = () => {
-  window.print();
-};
+const imprimirHistorial = () => window.print();
 </script>
 
 <style scoped>
-/* ========= Card del diálogo “glassy” ========= */
+/* ===== Tokens ===== */
+:root {
+  --rk-border: rgba(0, 0, 0, 0.08);
+  --rk-card: #ffffff;
+  --rk-muted: #667085;
+  --rk-soft: #f5f7fb;
+}
+.body--dark {
+  --rk-border: rgba(255, 255, 255, 0.1);
+  --rk-card: #101318;
+  --rk-muted: #9aa3b2;
+  --rk-soft: #0f1216;
+}
+
+/* ===== Head ===== */
+.rk-head {
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(33, 150, 243, 0.1),
+    rgba(33, 150, 243, 0.03)
+  );
+  border: 1px solid var(--rk-border);
+  backdrop-filter: blur(8px) saturate(1.1);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+}
+.body--dark .rk-head {
+  background: linear-gradient(
+    180deg,
+    rgba(33, 150, 243, 0.14),
+    rgba(33, 150, 243, 0.06)
+  );
+}
+.rk-head__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: var(--q-primary);
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(33, 150, 243, 0.35),
+    rgba(33, 150, 243, 0) 70%
+  );
+  border: 1px solid rgba(33, 150, 243, 0.28);
+  box-shadow: inset 0 0 16px rgba(33, 150, 243, 0.18);
+}
+.rk-title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.rk-sub {
+  margin-top: -2px;
+  color: var(--rk-muted);
+}
+
+/* ===== Card contenedora ===== */
+.rk-card {
+  border-radius: 16px;
+  border: 1px solid var(--rk-border);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Pills / inputs ===== */
+.rk-pill :deep(.q-field__control) {
+  border-radius: 12px !important;
+  background: color-mix(in oklab, var(--rk-soft) 82%, transparent);
+}
+.rk-search {
+  min-width: 260px;
+}
+
+/* ===== Dialog “glassy” ===== */
 .glassy-card {
   --card-bg: rgba(255, 255, 255, 0.88);
   --card-border: rgba(60, 60, 67, 0.25);
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   --radius: 16px;
-
   backdrop-filter: saturate(1.25) blur(10px);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
-
 .body--dark .glassy-card {
   --card-bg: rgba(18, 19, 22, 0.82);
   --card-border: rgba(255, 255, 255, 0.07);
   --shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
 }
-
-/* Separadores y secciones más “aire” */
 .glassy-card :deep(.q-separator) {
   opacity: 0.7;
 }
@@ -659,8 +786,6 @@ const imprimirHistorial = () => {
   padding-top: 14px;
   padding-bottom: 14px;
 }
-
-/* ========= Encabezado del diálogo ========= */
 .glassy-card :deep(.text-h6) {
   display: inline-flex;
   align-items: center;
@@ -668,54 +793,18 @@ const imprimirHistorial = () => {
   font-weight: 700;
   letter-spacing: 0.2px;
 }
-.glassy-card :deep(.text-subtitle2) {
-  margin-top: 2px;
-}
-
-/* Chips de rango rápido */
 .glassy-card :deep(.q-chip) {
   border-radius: 999px;
   font-weight: 600;
   padding: 0 10px;
-  transition: transform 0.08s ease, box-shadow 0.15s ease;
+  transition: transform 0.08s, box-shadow 0.15s;
 }
 .glassy-card :deep(.q-chip.q-chip--clickable:hover) {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
-/* ========= Inputs y selects ========= */
-.glassy-card :deep(.q-field--filled .q-field__control) {
-  border-radius: 12px;
-}
-.glassy-card :deep(.q-field__native) {
-  font-weight: 500;
-}
-
-/* ========= Badges métricos (Total/Entradas/Salidas) ========= */
-.glassy-card :deep(.q-badge) {
-  border-radius: 10px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-/* ========= Tabs ========= */
-.glassy-card :deep(.q-tabs) {
-  padding-left: 2px;
-  padding-right: 2px;
-}
-.glassy-card :deep(.q-tab) {
-  text-transform: none;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-}
-.glassy-card :deep(.q-tab__indicator) {
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-}
-
-/* ========= Virtual scroll / panel de contenido ========= */
+/* Virtual / expansion */
 .glassy-card :deep(.q-virtual-scroll) {
   padding-bottom: 8px;
 }
@@ -724,7 +813,7 @@ const imprimirHistorial = () => {
   border: 1px solid var(--card-border);
   border-radius: 12px;
   overflow: hidden;
-  transition: box-shadow 0.15s ease, transform 0.06s ease;
+  transition: box-shadow 0.15s, transform 0.06s;
 }
 .glassy-card :deep(.q-expansion-item:hover) {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
@@ -733,14 +822,10 @@ const imprimirHistorial = () => {
 .glassy-card :deep(.q-expansion-item .q-item) {
   background: transparent !important;
 }
-
-/* Encabezado de cada día */
 .glassy-card :deep(.q-expansion-item__container > .q-item) {
   backdrop-filter: saturate(1.1);
   font-weight: 700;
 }
-
-/* Lista de marcas */
 .rounded-borders {
   border-radius: 12px;
 }
@@ -754,7 +839,7 @@ const imprimirHistorial = () => {
   margin-top: 2px;
 }
 
-/* Avatares de estado con glow */
+/* Avatares glow */
 .glassy-card :deep(.q-avatar.bg-positive) {
   box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
 }
@@ -762,22 +847,19 @@ const imprimirHistorial = () => {
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
 }
 
-/* Badge de hora */
+/* Badges */
+.glassy-card :deep(.q-badge) {
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
 .glassy-card :deep(.q-badge[outline]) {
   border-width: 2px;
   font-weight: 800;
 }
 
-/* Botones del footer */
-.glassy-card :deep(.q-card__actions) {
-  border-top: 1px solid var(--card-border);
-}
-.glassy-card :deep(.q-card__actions .q-btn) {
-  border-radius: 10px;
-  font-weight: 700;
-}
-
-/* ========= Tabla (tab 2) ========= */
+/* Tabla del panel */
 .glassy-card :deep(.q-table) {
   border-radius: 12px;
   overflow: hidden;
@@ -796,7 +878,7 @@ const imprimirHistorial = () => {
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* ========= Scrollbar sutil ========= */
+/* Scrollbar sutil */
 .glassy-card :deep(*::-webkit-scrollbar) {
   height: 10px;
   width: 10px;
@@ -810,39 +892,21 @@ const imprimirHistorial = () => {
 .glassy-card :deep(*::-webkit-scrollbar-thumb:hover) {
   background: rgba(127, 127, 127, 0.55);
 }
-
-/* ========= Links a mapas ========= */
 .glassy-card :deep(a.text-primary) {
   text-decoration: none;
   border-bottom: 1px dotted currentColor;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s;
 }
 .glassy-card :deep(a.text-primary:hover) {
   opacity: 0.85;
 }
-
-/* ========= Micro-animaciones ========= */
-.glassy-card :deep(.q-icon) {
-  transition: transform 0.12s ease;
+.glassy-card :deep(.q-card__actions) {
+  border-top: 1px solid var(--card-border);
 }
-.glassy-card :deep(.q-item:hover .q-icon) {
-  transform: scale(1.05);
+.glassy-card :deep(.q-card__actions .q-btn) {
+  border-radius: 10px;
+  font-weight: 700;
 }
-
-/* ========= Responsive tweaks ========= */
-@media (max-width: 768px) {
-  .glassy-card {
-    border-radius: 12px;
-  }
-  .glassy-card :deep(.q-card__section) {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-  .glassy-card :deep(.q-expansion-item) {
-    margin: 6px 0;
-  }
-}
-
 .q-tab-panels {
   overflow-y: auto;
   background: transparent;

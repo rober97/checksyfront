@@ -21,10 +21,6 @@
           <span class="text-weight-bold">Recksy</span>
         </q-btn>
 
-        <!-- Selector de empresa (compacto) -->
-        <div class="rk-company">
-          <BusinessSelector dense class="rk-company-trigger" @click.stop />
-        </div>
       </div>
 
       <!-- CENTRO: breadcrumbs (se ocultan en móvil) -->
@@ -210,7 +206,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Dark, useQuasar } from "quasar";
 import UserAvatarMenu from "@/components/UserAvatarMenu.vue";
-import BusinessSelector from "@/components/BusinessSelector.vue";
 import { useThemeStore } from "@/stores/themeStore";
 
 defineEmits(["toggle-drawer"]);

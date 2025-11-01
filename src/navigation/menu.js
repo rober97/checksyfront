@@ -6,7 +6,7 @@ export const MENU = [
     access: { roles: ['admin'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/admin/dashboard', exact: true },
-      { label: 'Users', icon: 'people', to: '/admin/users' },
+      { label: 'Usuarios', icon: 'people', to: '/admin/users' },
       { label: 'Permisos', icon: 'lock', to: '/admin/permissions' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance' },
       { label: 'Empresas', icon: 'apartment', to: '/admin/companies' },

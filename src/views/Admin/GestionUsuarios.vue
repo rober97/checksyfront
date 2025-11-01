@@ -1,104 +1,147 @@
+<!-- src/views/Admin/UsersPage.vue -->
 <template>
   <q-page class="q-pa-md" :class="pageBgClass">
-    <!-- Header -->
-    <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5 row items-center" :class="headerTextClass">
-        <q-icon name="group" class="q-mr-sm" />
-        Gestión de Usuarios
+    <!-- ===== Header unificado ===== -->
+    <PageHeader
+      icon="group"
+      title="Gestión de Usuarios"
+      help-text="AYUDA"
+      :help-to="{ name: 'help.users' }"
+    >
+      <template #subtitle>
+        Administre cuentas, <b>roles</b> y <b>estados</b>. Busque, filtre y
+        exporte.
+      </template>
+    </PageHeader>
+
+    <!-- ===== Toolbar (sticky) ===== -->
+    <div ref="toolbarSentinel" class="rk-sentinel" />
+    <div
+      ref="toolbarRef"
+      class="rk-toolbar q-mb-md"
+      :class="{ 'is-sticky': stickyToolbar }"
+    >
+      <div class="row items-center q-col-gutter-sm full-width">
+        <!-- Filtros -->
+        <q-input
+          v-model="filters.q"
+          dense
+          outlined
+          clearable
+          debounce="250"
+          placeholder="Buscar por nombre, correo o RUT…"
+          class="rk-pill col-12 col-md-4"
+          @update:model-value="onFilterInput"
+        >
+          <template #prepend><q-icon name="search" /></template>
+        </q-input>
+
+        <q-select
+          v-model="filters.role"
+          :options="roleOptions"
+          dense
+          outlined
+          clearable
+          emit-value
+          map-options
+          label="Rol"
+          class="rk-pill col-6 col-md-2"
+          @update:model-value="onFilterInput"
+        >
+          <template #prepend><q-icon name="verified_user" /></template>
+        </q-select>
+
+        <q-select
+          v-model="filters.company"
+          :options="empresas"
+          option-value="id"
+          option-label="name"
+          dense
+          outlined
+          clearable
+          emit-value
+          map-options
+          label="Empresa"
+          class="rk-pill col-6 col-md-3"
+          @update:model-value="onFilterInput"
+        >
+          <template #prepend><q-icon name="business" /></template>
+        </q-select>
+
+        <q-space />
+
+        <!-- Acciones a la derecha -->
+        <div class="rk-actions row items-center q-gutter-sm">
+          <q-btn
+            color="green"
+            icon="file_download"
+            class="rk-cta"
+            @click="exportExcel"
+          />
+          <q-btn
+            icon="delete_sweep"
+            unelevated
+            color="negative"
+            :disable="!selected.length"
+            class="rk-cta"
+            @click="confirmBulkDelete"
+          />
+          <q-btn
+            color="primary"
+            icon="person_add"
+            no-caps
+            unelevated
+            class="rk-cta"
+            @click="abrirDialogoNuevo"
+          />
+        </div>
       </div>
-      <q-btn
-        color="primary"
-        icon="person_add"
-        unelevated
-        class="q-px-sm shadow-2"
-        @click="abrirDialogoNuevo"
-      />
     </div>
 
-    <!-- Toolbar -->
-    <div class="rk-toolbar row items-center q-gutter-sm q-mb-sm">
-      <q-input
-        v-model="filters.q"
-        dense outlined clearable
-        placeholder="Buscar por nombre, correo o RUT…"
-        class="col-12 col-md-4"
-        debounce="200"
-        @update:model-value="reload"
-      >
-        <template #prepend><q-icon name="search" /></template>
-      </q-input>
-
-      <q-select
-        v-model="filters.role"
-        :options="roleOptions"
-        dense outlined clearable
-        label="Rol"
-        class="col-6 col-md-2"
-        emit-value map-options
-        @update:model-value="reload"
-      >
-        <template #prepend><q-icon name="verified_user" /></template>
-      </q-select>
-
-      <q-select
-        v-model="filters.company"
-        :options="empresas"
-        option-value="id" option-label="name"
-        dense outlined clearable
-        label="Empresa"
-        class="col-6 col-md-3"
-        emit-value map-options
-        @update:model-value="reload"
-      >
-        <template #prepend><q-icon name="business" /></template>
-      </q-select>
-
-      <q-space />
-
-      <q-btn flat dense icon="download" label="Exportar CSV" @click="exportCsv" />
-      <q-btn
-        flat dense icon="delete_sweep" color="negative"
-        :disable="!selected.length"
-        label="Borrar seleccionados"
-        @click="confirmBulkDelete"
-      />
-    </div>
-
-    <!-- Tabla -->
-    <q-table
-      class="rk-table"
+    <!-- ===== Tabla ===== -->
+    <DynamicDataTable
       :rows="rows"
       :columns="columns"
       row-key="_id"
       :loading="loading"
+      :pagination="pagination"
+      :rows-per-page-options="[10, 20, 50, 100]"
+      :binary-state-sort="true"
+      :flat="true"
+      :bordered="true"
+      :wrap-cells="false"
+      no-data-label="No hay usuarios"
+      :table-class="tableClass"
       selection="multiple"
       v-model:selected="selected"
-      :pagination="pagination"
       @request="onRequest"
-      binary-state-sort
-      flat bordered
-      :wrap-cells="false"
-      :rows-per-page-options="[10,20,50,100]"
-      no-data-label="No hay usuarios"
-      :class="tableClass"
-      @row-dblclick="editar"
+      @row-dblclick="onRowDblClick"
     >
       <template #top-right>
-        <div class="text-caption text-grey-7 q-pr-sm">{{ total }} resultado(s)</div>
+        <div class="text-caption rk-muted q-pr-sm">
+          {{ total }} resultado(s)
+        </div>
       </template>
 
       <!-- Usuario -->
       <template #body-cell-name="p">
         <q-td :props="p">
           <div class="row items-center no-wrap">
-            <q-avatar color="primary" text-color="white" size="28px" class="q-mr-sm">
+            <q-avatar
+              color="primary"
+              text-color="white"
+              size="28px"
+              class="q-mr-sm"
+            >
               {{ initials(p.row.firstName, p.row.lastName) }}
             </q-avatar>
             <div class="col">
               <div class="text-body2 text-weight-medium ellipsis">
                 {{ p.row.firstName }} {{ p.row.lastName }}
               </div>
-              <div class="text-caption text-grey-7 ellipsis">{{ p.row.email }}</div>
+              <div class="text-caption rk-muted ellipsis">
+                {{ p.row.email }}
+              </div>
             </div>
           </div>
         </q-td>
@@ -143,26 +186,65 @@
       <!-- Acciones -->
       <template #body-cell-actions="p">
         <q-td :props="p" class="q-gutter-xs">
-          <q-btn dense flat round icon="visibility" @click="ver(p.row)" title="Ver" />
-          <q-btn dense flat round icon="edit" color="primary" @click="editar(p.row)" title="Editar" />
-          <q-btn dense flat round icon="delete" color="negative" @click="confirmDelete(p.row)" title="Eliminar" />
+          <q-btn
+            dense
+            flat
+            round
+            icon="visibility"
+            @click="ver(p.row)"
+            title="Ver"
+          />
+          <q-btn
+            dense
+            flat
+            round
+            icon="edit"
+            color="primary"
+            @click="editar(p.row)"
+            title="Editar"
+          />
+          <q-btn
+            dense
+            flat
+            round
+            icon="delete"
+            color="negative"
+            @click="confirmDelete(p.row)"
+            title="Eliminar"
+          />
         </q-td>
       </template>
+    </DynamicDataTable>
 
-      <template #loading>
-        <q-inner-loading showing><q-spinner size="32px" /></q-inner-loading>
-      </template>
-    </q-table>
+    <!-- ===== Bottom bar ===== -->
+    <div class="rk-bottombar">
+      <div class="row items-center justify-between q-gutter-sm">
+        <div class="text-caption rk-muted">
+          Mostrando <b>{{ showingStart }}</b
+          >–<b>{{ showingEnd }}</b> de <b>{{ total }}</b>
+          <span v-if="selected.length">
+            • {{ selected.length }} seleccionados</span
+          >
+        </div>
+        <q-pagination
+          v-model="pagination.page"
+          :max="maxPages"
+          max-pages="6"
+          boundary-numbers
+          direction-links
+          size="sm"
+          @update:model-value="reload"
+        />
+      </div>
+    </div>
 
-    <!-- Diálogo Crear -->
+    <!-- ===== Dialogs ===== -->
     <UserCreation
       v-model="dialogoNuevo"
       :empresas="empresas"
       :horarios="horarios"
       @guardar="guardarUsuario"
     />
-
-    <!-- Diálogo Editar -->
     <EditUserDialog
       v-model="dialogoEditar"
       :user-id="userIdEditar"
@@ -173,215 +255,438 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import { useToast } from 'vue-toastification'
-import { useUserStore } from '@/stores/userStore'
-import { useCompaniesStore } from '@/stores/companies'
-import UserCreation from '@/components/UserCreation.vue'
-import EditUserDialog from '@/components/EditUserDialog.vue'
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useQuasar } from "quasar";
+import { useUserStore } from "@/stores/userStore";
+import { useCompaniesStore } from "@/stores/companies";
+import DynamicDataTable from "@/components/shared/DynamicDataTable.vue";
+import UserCreation from "@/components/UserCreation.vue";
+import EditUserDialog from "@/components/EditUserDialog.vue";
+import PageHeader from "@/components/shared/PageHeader.vue";
 
-const $q = useQuasar()
-const toast = useToast()
-const userStore = useUserStore()
-const companiesStore = useCompaniesStore()
+const $q = useQuasar();
+const userStore = useUserStore();
+const companiesStore = useCompaniesStore();
+
+/* Debounce simple */
+let _t = null;
+const debounce =
+  (fn, ms = 250) =>
+  (...args) => {
+    clearTimeout(_t);
+    _t = setTimeout(() => fn(...args), ms);
+  };
 
 /* Filtros y paginación */
-const filters = ref({ q: '', role: null, company: null })
-const pagination = ref({ page: 1, rowsPerPage: 20, sortBy: 'createdAt', descending: true })
-const total = ref(0)
-const loading = ref(false)
-const rows = ref([])
-const selected = ref([])
+const filters = ref({ q: "", role: null, company: null });
+const pagination = ref({
+  page: 1,
+  rowsPerPage: 20,
+  sortBy: "createdAt",
+  descending: true,
+});
+const total = ref(0);
+const loading = ref(false);
+const rows = ref([]);
+const selected = ref([]);
 
 /* Columnas */
 const columns = [
-  { name: 'name', label: 'Usuario', field: 'firstName', align: 'left', sortable: true },
-  { name: 'company', label: 'Empresa', field: r => r.company?.name, align: 'left', sortable: true },
-  { name: 'role', label: 'Rol', field: r => r.role || r.tipo, align: 'left', sortable: true },
-  { name: 'status', label: 'Estado', field: 'status', align: 'left', sortable: true },
-  { name: 'lastLogin', label: 'Último acceso', field: 'lastLogin', align: 'left', sortable: true },
-  { name: 'actions', label: 'Acciones', field: 'actions', align: 'center' }
-]
+  {
+    name: "name",
+    label: "Usuario",
+    field: "firstName",
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "company",
+    label: "Empresa",
+    field: (r) => r.company?.name,
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "role",
+    label: "Rol",
+    field: (r) => r.role || r.tipo,
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "status",
+    label: "Estado",
+    field: "status",
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "lastLogin",
+    label: "Último acceso",
+    field: "lastLogin",
+    align: "left",
+    sortable: true,
+  },
+  { name: "actions", label: "Acciones", field: "actions", align: "center" },
+];
 
-/* Empresas/Horarios (para el diálogo de crear) */
-const dialogoNuevo = ref(false)
-const empresas = ref([])
-const horarios = ref([])
-
-async function loadEmpresas () {
-  await companiesStore.fetchCompanies()
-  empresas.value = (companiesStore.companies || []).map(e => ({ id: e._id, name: e.name }))
-}
-async function loadHorariosAll () {
-  horarios.value = []
+/* Empresas/Horarios para crear */
+const dialogoNuevo = ref(false);
+const empresas = ref([]);
+const horarios = ref([]);
+const loadEmpresas = async () => {
+  await companiesStore.fetchCompanies();
+  empresas.value = (companiesStore.companies || []).map((e) => ({
+    id: e._id,
+    name: e.name,
+  }));
+};
+const loadHorariosAll = async () => {
+  horarios.value = [];
   for (const e of empresas.value) {
-    await companiesStore.fetchWorkSchedulesByCompany(e.id)
-    const hs = (companiesStore.workSchedules || []).map(h => ({ id: h._id, name: h.name }))
-    horarios.value.push(...hs)
+    await companiesStore.fetchWorkSchedulesByCompany?.(e.id);
+    const hs = (companiesStore.workSchedules || []).map((h) => ({
+      id: h._id,
+      name: h.name,
+    }));
+    horarios.value.push(...hs);
   }
-}
+};
 
-/* Carga de tabla (server-ready) */
-async function onRequest ({ pagination: p }) {
-  const { page, rowsPerPage, sortBy, descending } = p
-  loading.value = true
+/* Utilidad filtros */
+const applyFilters = (list, { q, role, company }) => {
+  const term = (q || "").toLowerCase().trim();
+  let out = Array.isArray(list) ? list : [];
+  if (term) {
+    out = out.filter((u) =>
+      [u.firstName, u.lastName, u.email, u.rut]
+        .filter(Boolean)
+        .some((s) => String(s).toLowerCase().includes(term))
+    );
+  }
+  if (role) out = out.filter((u) => u.role === role || u.tipo === role);
+  if (company) out = out.filter((u) => u.company?._id === company);
+  return out;
+};
+
+/* Request servidor (simulado con store local) */
+const onRequest = async ({ pagination: p }) => {
+  const { page, rowsPerPage, sortBy, descending } = p;
+  loading.value = true;
   try {
-    // Si tu API soporta filtros/paginación, usa:
-    // await userStore.fetchUsers({ page, limit: rowsPerPage, sortBy, descending, ...filters.value })
-    await userStore.fetchUsers() // fallback local
+    await userStore.fetchUsers();
+    const all = (userStore.users || []).map((x) => ({
+      ...x,
+      role: x.role || x.tipo,
+    }));
+    const filtered = applyFilters(all, filters.value);
 
-    const all = (userStore.users || []).map(x => ({ ...x, role: x.role || x.tipo }))
+    const getVal = (obj) => {
+      if (sortBy === "createdAt") return new Date(obj.createdAt || 0);
+      const col = columns.find((c) => c.name === sortBy);
+      if (col && typeof col.field === "function") {
+        try {
+          return col.field(obj) ?? "";
+        } catch {
+          return "";
+        }
+      }
+      return obj?.[sortBy];
+    };
 
-    // filtros locales
-    const q = (filters.value.q || '').toLowerCase()
-    const byQ = !q ? all : all.filter(u =>
-      [u.firstName, u.lastName, u.email, u.rut].filter(Boolean)
-        .some(s => String(s).toLowerCase().includes(q))
-    )
-    const byRole = filters.value.role ? byQ.filter(u => (u.role === filters.value.role || u.tipo === filters.value.role)) : byQ
-    const byCompany = filters.value.company ? byRole.filter(u => u.company?._id === filters.value.company) : byRole
+    const sorted = [...filtered].sort((a, b) => {
+      const dir = descending ? -1 : 1;
+      const av = getVal(a);
+      const bv = getVal(b);
+      return (av > bv ? 1 : av < bv ? -1 : 0) * dir;
+    });
 
-    // ordenar
-    const sorted = [...byCompany].sort((a, b) => {
-      const dir = descending ? -1 : 1
-      const av = sortBy === 'createdAt' ? new Date(a.createdAt) : a[sortBy]
-      const bv = sortBy === 'createdAt' ? new Date(b.createdAt) : b[sortBy]
-      return (av > bv ? 1 : av < bv ? -1 : 0) * dir
-    })
+    total.value = sorted.length;
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    rows.value = rowsPerPage === 0 ? sorted : sorted.slice(start, end);
 
-    total.value = sorted.length
-    const start = (page - 1) * rowsPerPage
-    const end = start + rowsPerPage
-    rows.value = rowsPerPage === 0 ? sorted : sorted.slice(start, end)
-
-    pagination.value = { page, rowsPerPage, sortBy, descending }
+    pagination.value = { page, rowsPerPage, sortBy, descending };
   } catch (e) {
-    toast.error('Error al cargar usuarios')
+    $q.notify({ type: "negative", message: "Error al cargar usuarios" });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
+const reload = () => onRequest({ pagination: pagination.value });
+const onFilterInput = debounce(() => {
+  pagination.value.page = 1;
+  reload();
+}, 250);
 
-function reload () { onRequest({ pagination: pagination.value }) }
+/* Dblclick -> editar */
+const dialogoEditar = ref(false);
+const userIdEditar = ref(null);
+const onRowDblClick = (_evt, row) => editar(row);
+const editar = (row) => {
+  const id = row?._id;
+  if (!id) return;
+  userIdEditar.value = id;
+  dialogoEditar.value = true;
+};
 
 /* Acciones */
-function abrirDialogoNuevo () { dialogoNuevo.value = true }
-async function guardarUsuario () { dialogoNuevo.value = false; reload() }
+const exportExcel = () => {
+  try {
+    const all = (userStore.users || []).map((x) => ({
+      ...x,
+      role: x.role || x.tipo,
+    }));
+    const filtered = applyFilters(all, filters.value);
 
-function ver (row) {
-  $q.notify({ message: `Usuario: ${row.firstName} ${row.lastName}`, color: 'info' })
-}
+    const data = filtered.map((u) => ({
+      Nombre: (u.firstName || "") + " " + (u.lastName || ""),
+      Email: u.email || "",
+      RUT: u.rut || "",
+      Rol: roleNice(u.role || u.tipo),
+      Estado: statusNice(u.status),
+      Empresa: u.company?.name || "",
+      "Último acceso": u.lastLogin ? new Date(u.lastLogin) : "",
+    }));
 
-/* Edición integrada */
-const dialogoEditar = ref(false)
-const userIdEditar = ref(null)
+    const ws = XLSX.utils.json_to_sheet(data, { cellDates: true });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Usuarios");
+    XLSX.writeFile(
+      wb,
+      `usuarios_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  } catch {
+    $q.notify({ type: "negative", message: "No se pudo exportar a Excel" });
+  }
+};
 
-function editar (row) {
-  const r = row?._id ? row : row?.row // soporte @row-dblclick (pasa {row,...})
-  const id = r?._id
-  if (!id) return
-  userIdEditar.value = id
-  dialogoEditar.value = true
-}
+const abrirDialogoNuevo = () => {
+  dialogoNuevo.value = true;
+};
+const guardarUsuario = async () => {
+  dialogoNuevo.value = false;
+  reload();
+};
+const ver = (row) => {
+  $q.notify({
+    message: `Usuario: ${row.firstName} ${row.lastName}`,
+    color: "info",
+  });
+};
 
-function confirmDelete (row) {
+const confirmDelete = (row) => {
   $q.dialog({
-    title: 'Eliminar usuario',
+    title: "Eliminar usuario",
     message: `¿Eliminar a ${row.firstName} ${row.lastName}?`,
-    ok: { label: 'Eliminar', color: 'negative' },
-    cancel: { label: 'Cancelar' }
-  }).onOk(async () => { await eliminarUsuario(row._id) })
-}
-
-function confirmBulkDelete () {
-  $q.dialog({
-    title: 'Eliminar usuarios',
-    message: `¿Eliminar ${selected.value.length} usuario(s) seleccionados?`,
-    ok: { label: 'Eliminar', color: 'negative' },
-    cancel: { label: 'Cancelar' }
+    ok: { label: "Eliminar", color: "negative" },
+    cancel: { label: "Cancelar" },
   }).onOk(async () => {
-    for (const r of selected.value) await eliminarUsuario(r._id)
-    selected.value = []
-    reload()
-  })
-}
+    await eliminarUsuario(row._id);
+  });
+};
+const confirmBulkDelete = () => {
+  $q.dialog({
+    title: "Eliminar usuarios",
+    message: `¿Eliminar ${selected.value.length} usuario(s) seleccionados?`,
+    ok: { label: "Eliminar", color: "negative" },
+    cancel: { label: "Cancelar" },
+  }).onOk(async () => {
+    for (const r of selected.value) await eliminarUsuario(r._id);
+    selected.value = [];
+    reload();
+  });
+};
+const eliminarUsuario = async (id) => {
+  try {
+    await userStore.deleteUser(id);
+    $q.notify({ type: "positive", message: "Usuario eliminado" });
+    reload();
+  } catch {
+    $q.notify({ type: "negative", message: "No se pudo eliminar el usuario" });
+  }
+};
 
-async function eliminarUsuario (id) {
-  try { await userStore.deleteUser(id); toast.success('Usuario eliminado'); reload() }
-  catch { toast.error('No se pudo eliminar el usuario') }
-}
-
+/* UI helpers */
 const roleOptions = [
-  { label: 'Admin', value: 'admin' },
-  { label: 'Empleado', value: 'employee' },
-]
+  { label: "Admin", value: "admin" },
+  { label: "Empleado", value: "employee" },
+  { label: "Supervisor", value: "supervisor" },
+  { label: "Empresa", value: "company" },
+];
+const roleNice = (r) =>
+  ({
+    admin: "Admin",
+    company: "Empresa",
+    employee: "Empleado",
+    supervisor: "Supervisor",
+    empresa: "Empresa",
+    empleado: "Empleado",
+  }[r] || r);
+const roleColor = (r) => {
+  const rr = r === "empresa" ? "company" : r === "empleado" ? "employee" : r;
+  return rr === "admin"
+    ? "deep-purple-5"
+    : rr === "company"
+    ? "indigo-6"
+    : rr === "employee"
+    ? "teal-6"
+    : "grey-6";
+};
+const statusNice = (s) =>
+  ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido" }[s] ||
+  s ||
+  "—");
+const statusColor = (s) =>
+  s === "active" ? "positive" : s === "inactive" ? "grey" : "warning";
+const initials = (fn = "", ln = "") =>
+  ((fn?.[0] || "") + (ln?.[0] || "") || "U").toUpperCase();
+const formatDate = (d) => {
+  try {
+    return new Intl.DateTimeFormat("es-CL", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(d));
+  } catch {
+    return "—";
+  }
+};
 
-/* Catálogos/UI helpers */
-// const roleOptions = [
-//   { label: 'Admin', value: 'admin' },
-//   { label: 'Empresa', value: 'company' },
-//   { label: 'Empleado', value: 'employee' },
-//   { label: 'Supervisor', value: 'supervisor' }
-// ]
-function roleNice (r) { return ({ admin:'Admin', company:'Empresa', employee:'Empleado', supervisor:'Supervisor', empresa:'Empresa', empleado:'Empleado' }[r] || r) }
-function roleColor (r) { const rr = r==='empresa'?'company': r==='empleado'?'employee': r; return rr==='admin'?'deep-purple-5': rr==='company'?'indigo-6': rr==='employee'?'teal-6':'grey-6' }
-function statusNice (s) { return ({ active:'Activo', inactive:'Inactivo', suspended:'Suspendido' }[s] || s || '—') }
-function statusColor (s) { return s==='active'?'positive': s==='inactive'?'grey':'warning' }
-function initials (fn='', ln='') { return ((fn?.[0]||'') + (ln?.[0]||'') || 'U').toUpperCase() }
-function formatDate (d) { try { return new Intl.DateTimeFormat('es-CL',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)) } catch { return '—' } }
+/* Tema & sticky */
+const isDark = computed(() => $q.dark.isActive);
+const pageBgClass = computed(() =>
+  isDark.value ? "bg-grey-10 text-white" : "bg-grey-1"
+);
+const tableClass = computed(() =>
+  isDark.value ? "bg-grey-9 text-white" : "bg-white text-dark"
+);
 
-/* Tema */
-const isDark = computed(() => $q.dark.isActive)
-const pageBgClass = computed(() => isDark.value ? 'bg-grey-10 text-white' : 'bg-grey-1')
-const tableClass = computed(() => isDark.value ? 'bg-grey-9 text-white' : 'bg-white text-dark')
-const headerTextClass = computed(() => isDark.value ? 'text-white' : 'text-primary')
+const showingStart = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage + 1;
+  return total.value ? Math.min(start, total.value) : 0;
+});
+const showingEnd = computed(() =>
+  Math.min(pagination.value.page * pagination.value.rowsPerPage, total.value)
+);
+const maxPages = computed(() =>
+  Math.max(
+    1,
+    Math.ceil(total.value / Math.max(1, pagination.value.rowsPerPage || 1))
+  )
+);
 
-/* Export CSV */
-function exportCsv () {
-  const header = ['Nombre','Apellido','Correo','Rol','Empresa','Estado','Último acceso']
-  const lines = rows.value.map(r => [
-    r.firstName||'', r.lastName||'', r.email||'',
-    roleNice(r.role || r.tipo), r.company?.name||'', statusNice(r.status),
-    r.lastLogin ? new Date(r.lastLogin).toISOString() : ''
-  ])
-  const csv = [header, ...lines].map(a => a.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `usuarios_${Date.now()}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-}
+const toolbarRef = ref(null);
+const toolbarSentinel = ref(null);
+const stickyToolbar = ref(false);
+let observer;
 
-/* Lifecycle */
 onMounted(async () => {
-  await loadEmpresas()
-  await loadHorariosAll()
-  reload()
-})
+  await loadEmpresas();
+  await loadHorariosAll();
+  reload();
+  observer = new IntersectionObserver(
+    (entries) => {
+      stickyToolbar.value = !entries[0].isIntersecting;
+    },
+    { root: null, threshold: 0 }
+  );
+  if (toolbarSentinel.value) observer.observe(toolbarSentinel.value);
+});
+onBeforeUnmount(() => {
+  if (observer && toolbarSentinel.value)
+    observer.unobserve(toolbarSentinel.value);
+});
 </script>
 
 <style scoped>
-.rk-toolbar{
-  transition: background-color .3s, color .3s;
-  border: 1px solid var(--rk-border, rgba(0,0,0,.06));
-  border-radius: 10px;
-  padding: 8px;
+/* ===== Tokens mínimos ===== */
+:root {
+  --rk-border: rgba(0, 0, 0, 0.08);
+  --rk-card: #fff;
+  --rk-soft: #f5f7fb;
+  --rk-muted: #667085;
 }
-.rk-table{
-  border-radius: 12px;
-  overflow: hidden;
-  transition: background-color .3s, color .3s;
+.body--dark {
+  --rk-border: rgba(255, 255, 255, 0.08);
+  --rk-card: #101318;
+  --rk-soft: #0f1216;
+  --rk-muted: #9aa3b2;
 }
-.q-table__middle tbody tr:nth-child(even){
-  background-color: rgba(0,0,0,.02);
+.rk-muted {
+  color: var(--rk-muted);
 }
-.q-btn.shadow-2{ transition: transform .2s ease; }
-.q-btn.shadow-2:hover{ transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,123,255,.25); }
 
-/* tokens tema */
-:root{ --rk-border: rgba(0,0,0,.06); --rk-card:#fff; }
-.body--dark{ --rk-border: rgba(255,255,255,.08); --rk-card:#111317; }
+/* ===== Toolbar sticky ===== */
+.rk-sentinel {
+  height: 1px;
+}
+.rk-toolbar {
+  border: 1px solid var(--rk-border);
+  border-radius: 14px;
+  padding: 12px;
+  background: radial-gradient(
+      120% 120% at 0% 0%,
+      color-mix(in oklab, var(--q-primary) 8%, transparent),
+      transparent 60%
+    ),
+    var(--rk-card);
+  backdrop-filter: saturate(1.1) blur(6px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s;
+}
+.rk-toolbar.is-sticky {
+  position: sticky;
+  top: 56px;
+  z-index: 5;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+}
+
+/* Inputs redondeados */
+.rk-pill :deep(.q-field__control) {
+  border-radius: 12px !important;
+  background: color-mix(in oklab, var(--rk-soft) 80%, transparent);
+}
+.rk-pill :deep(.q-field__native),
+.rk-pill :deep(.q-field__label) {
+  font-size: 13px;
+}
+
+/* Acciones derechas */
+.rk-actions .rk-btn {
+  border: 1px solid var(--rk-border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--rk-card) 88%, transparent);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.rk-actions .rk-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+.rk-cta {
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 10px 22px color-mix(in oklab, var(--q-primary) 22%, transparent);
+}
+
+/* Bottom bar */
+.rk-bottombar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--rk-border);
+  border-radius: 12px;
+  background: var(--rk-card);
+  backdrop-filter: saturate(1.1) blur(4px);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.08);
+}
+
+/* Fondo sutil página */
+.q-page {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--rk-soft) 95%, transparent),
+    transparent 320px
+  );
+}
 </style>
