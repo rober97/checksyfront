@@ -201,7 +201,7 @@ export const useRequestsStore = defineStore('requests', {
       try {
         this.loading = true
         this.error = null
-        const res = await secureAxios.patch(`${API_URL}/solicitudes/${id}`, { status })
+        const res = await secureAxios.patch(`${API_URL}/requests/${id}`, { status })
         const updated = normalizeRequest(res?.data?.data || res?.data)
 
         this.myRequests = this.myRequests.map(r => (String(r._id) === String(id) ? updated : r))
@@ -305,18 +305,6 @@ export const useRequestsStore = defineStore('requests', {
         const re = new Date(r.endDate || r.startDate)
         return !(re < s || rs > e)
       })
-    },
-
-    async approveRequest(id) {
-      await secureAxios.post(`/requests/${id}/approve`)
-      const it = this.items.find(r => r._id === id)
-      if (it) it.estado = 'Aprobado'
-    },
-
-    async rejectRequest(id) {
-      await secureAxios.post(`/requests/${id}/reject`)
-      const it = this.items.find(r => r._id === id)
-      if (it) it.estado = 'Rechazado'
     },
 
     async bulkUpdate(ids, estado) {

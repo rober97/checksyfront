@@ -288,9 +288,9 @@
           <!-- Columna: Tipo -->
           <template #body-cell-tipo="p">
             <q-td :props="p">
-              <q-badge :color="tipoColor(p.row.tipo)" class="rk-type-badge">
-                <q-icon :name="tipoIcon(p.row.tipo)" class="q-mr-xs" size="14px" />
-                {{ p.row.tipo }}
+              <q-badge :color="tipoColor(p.row.type)" class="rk-type-badge">
+                <q-icon :name="tipoIcon(p.row.type)" class="q-mr-xs" size="14px" />
+                {{ p.row.type }}
               </q-badge>
             </q-td>
           </template>
@@ -299,8 +299,8 @@
           <template #body-cell-fechaInicio="p">
             <q-td :props="p">
               <div class="column">
-                <div class="text-weight-medium">{{ formatDate(p.row.fechaInicio) }}</div>
-                <div class="text-caption text-grey-6">{{ formatDateDistance(p.row.fechaInicio) }}</div>
+                <div class="text-weight-medium">{{ formatDate(p.row.startDate) }}</div>
+                <div class="text-caption text-grey-6">{{ formatDateDistance(p.row.startDate) }}</div>
               </div>
             </q-td>
           </template>
@@ -308,8 +308,8 @@
           <template #body-cell-fechaFin="p">
             <q-td :props="p">
               <div class="column">
-                <div class="text-weight-medium">{{ formatDate(p.row.fechaFin) }}</div>
-                <div class="text-caption text-grey-6">{{ formatDuration(p.row.fechaInicio, p.row.fechaFin) }}</div>
+                <div class="text-weight-medium">{{ formatDate(p.row.endDate) }}</div>
+                <div class="text-caption text-grey-6">{{ formatDuration(p.row.startDate, p.row.endDate) }}</div>
               </div>
             </q-td>
           </template>
@@ -318,12 +318,12 @@
           <template #body-cell-estado="p">
             <q-td :props="p">
               <q-badge 
-                :color="estadoColor(p.row.estado)" 
+                :color="estadoColor(p.row.status)" 
                 class="rk-status-badge"
-                :class="`rk-status-${p.row.estado.toLowerCase()}`"
+                :class="`rk-status-${p?.row?.status?.toLowerCase()}`"
               >
-                <q-icon :name="estadoIcon(p.row.estado)" class="q-mr-xs" size="12px" />
-                {{ p.row.estado }}
+                <q-icon :name="estadoIcon(p.row.status)" class="q-mr-xs" size="12px" />
+                {{ p.row.status }}
               </q-badge>
             </q-td>
           </template>
@@ -343,7 +343,7 @@
             <q-td :props="p" class="text-right">
               <div class="row justify-end q-gutter-xs">
                 <q-btn
-                  v-if="p.row.estado === 'Pendiente'"
+                  v-if="p.row.status === 'PENDING'"
                   round
                   dense
                   flat
@@ -357,7 +357,7 @@
                 </q-btn>
                 
                 <q-btn
-                  v-if="p.row.estado === 'Pendiente'"
+                  v-if="p.row.status === 'PENDING'"
                   round
                   dense
                   flat
@@ -457,7 +457,7 @@ const selection = ref([]);
 const pagination = ref({
   page: 1,
   rowsPerPage: 10,
-  sortBy: "fechaInicio",
+  sortBy: "startDate",
   descending: false,
 });
 
@@ -490,15 +490,15 @@ const dateRangeLabel = computed(() => {
 });
 
 /* Métricas Visuales */
-const totalCount = computed(() => store.items?.length || 0);
+const totalCount = computed(() => store.list?.length || 0);
 const pendingCount = computed(() => 
-  store.items?.filter(r => r.estado === "Pendiente").length || 0
+  store.list?.filter(r => r.status === "PENDING").length || 0
 );
 const approvedCount = computed(() => 
-  store.items?.filter(r => r.estado === "Aprobado").length || 0
+  store.list?.filter(r => r.status === "APROVED").length || 0
 );
 const rejectedCount = computed(() => 
-  store.items?.filter(r => r.estado === "Rechazado").length || 0
+  store.list?.filter(r => r.status === "REJECTED").length || 0
 );
 
 const metrics = computed(() => [
@@ -537,7 +537,7 @@ const metrics = computed(() => [
 ]);
 
 /* Filtrado */
-const rawRows = computed(() => store.items || []);
+const rawRows = computed(() => store.list || []);
 const rowsView = computed(() => {
   const st = estadoFilter.value || "all";
   const tipo = tipoFilter.value;
@@ -545,10 +545,10 @@ const rowsView = computed(() => {
   const d2 = hasta.value;
 
   return rawRows.value.filter((r) => {
-    if (st !== "all" && (r.estado || "") !== st) return false;
-    if (tipo && (r.tipo || "") !== tipo) return false;
-    if (d1 && (r.fechaInicio || "") < d1) return false;
-    if (d2 && (r.fechaFin || "") > d2) return false;
+    if (st !== "all" && (r.status || "") !== st) return false;
+    if (tipo && (r.type || "") !== tipo) return false;
+    if (d1 && (r.startDate || "") < d1) return false;
+    if (d2 && (r.endDate || "") > d2) return false;
     return true;
   });
 });
@@ -574,7 +574,7 @@ const columns = [
   {
     name: "fechaInicio",
     label: "Inicio",
-    field: "fechaInicio",
+    field: "startDate",
     align: "left",
     sortable: true,
     width: "140px"
@@ -582,7 +582,7 @@ const columns = [
   {
     name: "fechaFin",
     label: "Fin",
-    field: "fechaFin",
+    field: "endDate",
     align: "left",
     sortable: true,
     width: "140px"
@@ -693,7 +693,7 @@ const approveRow = async (row) => {
     }
   }).onOk(async () => {
     try {
-      await store.approveRequest(row._id);
+      await store.setStatus(row._id,'APPROVED');
       $q.notify({ 
         type: "positive", 
         message: "Solicitud aprobada",
@@ -729,7 +729,7 @@ const rejectRow = async (row) => {
     }
   }).onOk(async () => {
     try {
-      await store.rejectRequest(row._id);
+      await store.setStatus(row._id, 'REJECTED');
       $q.notify({ 
         type: "positive", 
         message: "Solicitud rechazada",
@@ -755,21 +755,21 @@ const verDetalle = (row) => {
         <div class="row">
           <div class="col-4"><strong>Tipo:</strong></div>
           <div class="col-8">
-            <q-badge color="${tipoColor(row.tipo)}">${row.tipo}</q-badge>
+            <q-badge color="${tipoColor(row.type)}">${row.type}</q-badge>
           </div>
         </div>
         <div class="row">
           <div class="col-4"><strong>Período:</strong></div>
-          <div class="col-8">${formatDate(row.fechaInicio)} - ${formatDate(row.fechaFin)}</div>
+          <div class="col-8">${formatDate(row.startDate)} - ${formatDate(row.endDate)}</div>
         </div>
         <div class="row">
           <div class="col-4"><strong>Duración:</strong></div>
-          <div class="col-8">${formatDuration(row.fechaInicio, row.fechaFin)}</div>
+          <div class="col-8">${formatDuration(row.startDate, row.endDate)}</div>
         </div>
         <div class="row">
           <div class="col-4"><strong>Estado:</strong></div>
           <div class="col-8">
-            <q-badge color="${estadoColor(row.estado)}">${row.estado}</q-badge>
+            <q-badge color="${estadoColor(row.status)}">${row.status}</q-badge>
           </div>
         </div>
         ${row.notas ? `

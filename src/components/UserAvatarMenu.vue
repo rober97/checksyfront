@@ -190,13 +190,13 @@ function onHide() {
 
 /* Navegación */
 function goToPerfil() {
-  router.push({ path: "/configuration", query: { tab: "profile" } });
+  //router.push({ path: "/configuration", query: { tab: "profile" } });
 }
 function goToConfig() {
-  router.push({ path: "/configuration", query: { tab: "preferences" } });
+  //router.push({ path: "/configuration", query: { tab: "preferences" } });
 }
 function goToEmpresas() {
-  router.push("/admin/companies");
+ router.push("/admin/companies");
 }
 
 /* Logout */

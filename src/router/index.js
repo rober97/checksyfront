@@ -105,7 +105,7 @@ const routes = [
       { path: 'companies',   name: 'CompanyListAdmin',    component: CompanyList,    meta: { permissions: ['companies:read'],   title: 'Empresas' } },
       { path: 'company/new', name: 'CompanyFormAdmin',    component: CompanyForm,    meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
       { path: 'company/:id', name: 'CompanyDetailAdmin',  component: CompanyDetail,  props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
-      { path: 'requests', name: 'Requests',  component: RequestList,  props: true, meta: { permissions: ['companies:read'], title: 'Requests' } },
+      { path: 'requests', name: 'RequestsAdmin',  component: RequestList,  props: true, meta: { permissions: ['companies:read'], title: 'Requests' } },
     ]
   },
 

@@ -257,20 +257,20 @@ function goHome() {
 
 /* Notificaciones (demo) */
 const notifications = ref([
-  {
-    id: 1,
-    title: "Liquidación disponible",
-    body: "Tu liquidación de septiembre está lista.",
-    icon: "receipt_long",
-    read: false,
-  },
-  {
-    id: 2,
-    title: "Documento firmado",
-    body: "Contrato anexo firmado.",
-    icon: "edit_document",
-    read: true,
-  },
+  // {
+  //   id: 1,
+  //   title: "Liquidación disponible",
+  //   body: "Tu liquidación de septiembre está lista.",
+  //   icon: "receipt_long",
+  //   read: false,
+  // },
+  // {
+  //   id: 2,
+  //   title: "Documento firmado",
+  //   body: "Contrato anexo firmado.",
+  //   icon: "edit_document",
+  //   read: true,
+  // },
 ]);
 const unreadCount = computed(
   () => notifications.value.filter((n) => !n.read).length
@@ -320,9 +320,9 @@ const results = computed(() => {
   );
 });
 function openCommand() {
-  commandOpen.value = true;
-  query.value = "";
-  hi.value = 0;
+  // commandOpen.value = true;
+  // query.value = "";
+  // hi.value = 0;
 }
 function move(dir) {
   const len = results.value.length;
