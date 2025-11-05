@@ -3,7 +3,7 @@ import secureAxios from '@/utils/secureRequest'
 import { API_URL } from '@/utils/api'
 
 /* ---------------- utils ---------------- */
-function toQuery (params = {}) {
+function toQuery(params = {}) {
   const q = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null || v === '') return
@@ -61,23 +61,23 @@ export const useRequestsStore = defineStore('requests', {
 
   getters: {
     // contadores del usuario autenticado
-    myPending: (s)   => s.myRequests.filter(r => r.status === 'PENDING').length,
-    myApproved: (s)  => s.myRequests.filter(r => r.status === 'APPROVED').length,
-    myRejected: (s)  => s.myRequests.filter(r => r.status === 'REJECTED').length,
+    myPending: (s) => s.myRequests.filter(r => r.status === 'PENDING').length,
+    myApproved: (s) => s.myRequests.filter(r => r.status === 'APPROVED').length,
+    myRejected: (s) => s.myRequests.filter(r => r.status === 'REJECTED').length,
 
     // accesos rápidos a saldos
-    vacationDays: (s)   => Number(s.balances?.VACATION ?? 0),
-    adminDays: (s)      => Number(s.balances?.ADMIN_DAY ?? 0),
-    compDays: (s)       => Number(s.balances?.COMP_DAY ?? 0),
+    vacationDays: (s) => Number(s.balances?.VACATION ?? 0),
+    adminDays: (s) => Number(s.balances?.ADMIN_DAY ?? 0),
+    compDays: (s) => Number(s.balances?.COMP_DAY ?? 0),
   },
 
   actions: {
-    _setError (msg) { this.error = msg || 'Error desconocido' },
+    _setError(msg) { this.error = msg || 'Error desconocido' },
 
     /* ===========================
      * Mis solicitudes (empleado)
      * =========================== */
-    async fetchMyRequests (params = {}) {
+    async fetchMyRequests(params = {}) {
       // Con tu backend, GET /solicitudes sin filtros ya usa req.user por defecto
       try {
         this.loading = true
@@ -91,7 +91,7 @@ export const useRequestsStore = defineStore('requests', {
         const payload = res?.data || {}
         const items = Array.isArray(payload) ? payload : (payload.data || [])
         const total = Number(payload.total ?? items.length)
-        const page  = Number(payload.page  ?? params.page  ?? 1)
+        const page = Number(payload.page ?? params.page ?? 1)
         const limit = Number(payload.limit ?? params.limit ?? 20)
 
         this.myRequests = items.map(normalizeRequest).filter(Boolean)
@@ -109,20 +109,20 @@ export const useRequestsStore = defineStore('requests', {
     /* ==================================================
      * Listado general (admin/supervisor) con filtros
      * ================================================== */
-    async fetchRequests (params = {}) {
+    async fetchRequests(params = {}) {
       // mismos filtros que tu controlador listRequests
       try {
         this.loading = true
         this.error = null
 
         const q = toQuery(params)
-        const url = q ? `${API_URL}/solicitudes?${q}` : `${API_URL}/solicitudes`
+        const url = q ? `${API_URL}/requests?${q}` : `${API_URL}/requests`
         const res = await secureAxios.get(url)
 
         const payload = res?.data || {}
         const items = Array.isArray(payload) ? payload : (payload.data || [])
         const total = Number(payload.total ?? items.length)
-        const page  = Number(payload.page  ?? params.page  ?? 1)
+        const page = Number(payload.page ?? params.page ?? 1)
         const limit = Number(payload.limit ?? params.limit ?? 20)
 
         this.list = items.map(normalizeRequest).filter(Boolean)
@@ -140,7 +140,7 @@ export const useRequestsStore = defineStore('requests', {
     /* ===============================
      * Crear solicitud (JSON o FormData)
      * =============================== */
-    async createRequest (payload) {
+    async createRequest(payload) {
       try {
         this.sending = true
         this.error = null
@@ -148,7 +148,7 @@ export const useRequestsStore = defineStore('requests', {
         const isFD = (typeof FormData !== 'undefined') && (payload instanceof FormData)
         const cfg = isFD ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined
 
-        const res = await secureAxios.post(`${API_URL}/solicitudes`, payload, cfg)
+        const res = await secureAxios.post(`${API_URL}/requests`, payload, cfg)
         const created = normalizeRequest(res?.data?.data || res?.data)
 
         if (created) {
@@ -175,7 +175,7 @@ export const useRequestsStore = defineStore('requests', {
     /* ======================
      * Cancelar (owner/admin)
      * ====================== */
-    async cancelRequest (id) {
+    async cancelRequest(id) {
       try {
         this.loading = true
         this.error = null
@@ -183,7 +183,7 @@ export const useRequestsStore = defineStore('requests', {
         const updated = normalizeRequest(res?.data?.data || res?.data)
 
         this.myRequests = this.myRequests.map(r => (String(r._id) === String(id) ? updated : r))
-        this.list       = this.list.map(r => (String(r._id) === String(id) ? updated : r))
+        this.list = this.list.map(r => (String(r._id) === String(id) ? updated : r))
         return updated
       } catch (err) {
         console.error('[requests.cancelRequest] ', err)
@@ -197,7 +197,7 @@ export const useRequestsStore = defineStore('requests', {
     /* ===================================================
      * Admin/Supervisor: aprobar/rechazar/cancelar
      * =================================================== */
-    async setStatus (id, status /* 'APPROVED'|'REJECTED'|'CANCELLED' */) {
+    async setStatus(id, status /* 'APPROVED'|'REJECTED'|'CANCELLED' */) {
       try {
         this.loading = true
         this.error = null
@@ -205,7 +205,7 @@ export const useRequestsStore = defineStore('requests', {
         const updated = normalizeRequest(res?.data?.data || res?.data)
 
         this.myRequests = this.myRequests.map(r => (String(r._id) === String(id) ? updated : r))
-        this.list       = this.list.map(r => (String(r._id) === String(id) ? updated : r))
+        this.list = this.list.map(r => (String(r._id) === String(id) ? updated : r))
         return updated
       } catch (err) {
         console.error('[requests.setStatus] ', err)
@@ -217,7 +217,7 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ========== Balances (nuevo modelo) ========== */
-    async fetchBalances () {
+    async fetchBalances() {
       try {
         this.loading = true
         this.error = null
@@ -238,7 +238,7 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ========== Feriados ========== */
-    async fetchHolidays (params = {}) {
+    async fetchHolidays(params = {}) {
       try {
         this.loading = true
         this.error = null
@@ -262,7 +262,7 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ========== KPIs / Summary ========== */
-    async fetchSummary (params = {}) {
+    async fetchSummary(params = {}) {
       try {
         this.loading = true
         this.error = null
@@ -283,7 +283,7 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ========== Export XLSX ========== */
-    async exportXlsx (params = {}) {
+    async exportXlsx(params = {}) {
       try {
         const q = toQuery(params)
         const url = q ? `${API_URL}/solicitudes/export/xlsx?${q}` : `${API_URL}/solicitudes/export/xlsx`
@@ -297,7 +297,7 @@ export const useRequestsStore = defineStore('requests', {
     },
 
     /* ========== Utilidad: traslape local ========== */
-    overlapsWithMine ({ startDate, endDate }) {
+    overlapsWithMine({ startDate, endDate }) {
       const s = new Date(startDate)
       const e = new Date(endDate || startDate)
       return this.myRequests.some(r => {
@@ -305,6 +305,32 @@ export const useRequestsStore = defineStore('requests', {
         const re = new Date(r.endDate || r.startDate)
         return !(re < s || rs > e)
       })
-    }
+    },
+
+    async approveRequest(id) {
+      await secureAxios.post(`/requests/${id}/approve`)
+      const it = this.items.find(r => r._id === id)
+      if (it) it.estado = 'Aprobado'
+    },
+
+    async rejectRequest(id) {
+      await secureAxios.post(`/requests/${id}/reject`)
+      const it = this.items.find(r => r._id === id)
+      if (it) it.estado = 'Rechazado'
+    },
+
+    async bulkUpdate(ids, estado) {
+      await secureAxios.patch(`/requests/bulk`, { ids, estado })
+      this.items = this.items.map(r => ids.includes(r._id) ? { ...r, estado } : r)
+    },
+
+    async exportCSV(params = {}) {
+      // Ajusta a tu export real (CSV/Excel)
+      const { data } = await secureAxios.get('/requests/export', {
+        params: { ...this.lastQuery, ...params },
+        responseType: 'blob'
+      })
+      return data // Blob
+    },
   }
 })

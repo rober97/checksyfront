@@ -62,7 +62,7 @@ export const useUserStore = defineStore('user', {
         this.error = null
 
         const res = await secureAxios.post(`${API_URL}/users`, userData)
-        if (!res.data.success) {
+        if (!res.data) {
           this.error = res.data.message || 'Error al crear el usuario'
           throw new Error(this.error)
         }

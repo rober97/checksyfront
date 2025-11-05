@@ -23,103 +23,122 @@
     </PageHeader>
 
     <!-- ===== Banner de estado + Acciones ===== -->
-    <q-card flat bordered :class="cardTone" class="rk-banner q-pa-sm">
-      <div class="row items-center q-col-gutter-sm">
-        <q-btn-toggle
-          v-model="mode"
-          :options="modeOpts"
-          unelevated
-          toggle-color="primary"
-          size="sm"
-          class="rk-modes"
-          @update:model-value="onModeChange"
-        />
+    <q-card
+      flat
+      bordered
+      :class="['rk-banner', 'rk-bar', cardTone]"
+      class="q-pa-sm q-px-md q-py-sm"
+    >
+      <div class="rk-row">
+        <!-- IZQUIERDA -->
+        <div class="rk-group">
+          <q-btn-toggle
+            v-model="mode"
+            :options="modeOpts"
+            unelevated
+            rounded
+            toggle-color="primary"
+            size="sm"
+            class="rk-modes rk-item"
+            content-class="rk-center"
+            @update:model-value="onModeChange"
+          />
 
-        <div class="rk-divider"></div>
+          <div class="rk-divider"></div>
 
-        <!-- Objetivo seleccionado + Resumen -->
-        <template v-if="mode === 'user'">
-          <q-chip
-            v-if="selectedUser"
-            square
-            color="primary"
-            text-color="white"
-            class="rk-tight"
-          >
-            <q-icon name="person" class="q-mr-xs" /> Usuario:
-            {{ currentUserLabel || "—" }}
-          </q-chip>
-          <q-chip v-else square outline class="rk-tight"
-            >Seleccione un usuario en la columna izquierda.</q-chip
-          >
-        </template>
-        <template v-else>
-          <q-chip
-            v-if="selectedProfileId"
-            square
-            color="deep-purple"
-            text-color="white"
-            class="rk-tight"
-          >
-            <q-icon name="label" class="q-mr-xs" /> Perfil:
-            {{ currentProfileName || "—" }}
-          </q-chip>
-          <q-chip v-else square outline class="rk-tight"
-            >Seleccione un perfil o cree uno nuevo en la columna
-            izquierda.</q-chip
-          >
+          <template v-if="mode === 'user'">
+            <q-chip
+              v-if="selectedUser"
+              color="primary"
+              text-color="white"
+              class="rk-chip rk-item"
+            >
+              <q-icon name="person" class="q-mr-xs" /> Usuario:
+              {{ currentUserLabel || "—" }}
+            </q-chip>
+            <q-chip v-else outline class="rk-chip rk-chip-empty rk-item">
+              <q-icon name="warning" class="q-mr-xs" /> Seleccione un usuario en
+              la columna izquierda.
+            </q-chip>
+          </template>
 
-          <!-- Renombrado inline del perfil -->
-          <div
-            v-if="selectedProfileId"
-            class="row items-center q-gutter-xs q-ml-sm"
-          >
-            <q-input
-              v-model="inlineProfileName"
-              dense
-              outlined
-              standout="bg-transparent"
-              class="rk-inline-name"
-              :label="`Renombrar perfil`"
-            />
-            <q-btn
-              dense
-              flat
-              icon="save"
-              :disable="!canSaveInline"
-              @click="saveInlineProfileName"
-            />
-          </div>
-        </template>
+          <template v-else>
+            <q-chip
+              v-if="selectedProfileId"
+              color="deep-purple"
+              text-color="white"
+              class="rk-chip rk-item"
+            >
+              <q-icon name="label" class="q-mr-xs" /> Perfil:
+              {{ currentProfileName || "—" }}
+            </q-chip>
+            <q-chip v-else outline class="rk-chip rk-chip-empty rk-item">
+              <q-icon name="add_circle_outline" class="q-mr-xs" /> Seleccione o
+              cree un perfil.
+            </q-chip>
 
-        <q-space />
-
-        <!-- Leyenda compacta -->
-        <div class="rk-legend row items-center q-gutter-xs">
-          <q-badge outline color="info">Diferencia</q-badge>
-          <q-badge outline color="negative">Conflicto</q-badge>
-          <q-badge outline color="orange">Modificado</q-badge>
-          <q-badge outline color="amber">Favorito</q-badge>
+            <div v-if="selectedProfileId" class="rk-inline rk-item">
+              <q-input
+                v-model="inlineProfileName"
+                dense
+                outlined
+                standout
+                color="deep-purple"
+                class="rk-inline-name"
+                :label="`Renombrar perfil`"
+              />
+              <q-btn
+                dense
+                flat
+                round
+                icon="save"
+                color="deep-purple"
+                :disable="!canSaveInline"
+                @click="saveInlineProfileName"
+                class="rk-btn-save-inline"
+                content-class="rk-center"
+              />
+            </div>
+          </template>
         </div>
 
-        <q-separator vertical class="q-mx-sm" />
+        <!-- DERECHA -->
+        <div class="rk-group">
+          <div class="rk-legend rk-item">
+            <q-badge outline color="info" class="rk-badge">Diferencia</q-badge>
+            <q-badge outline color="negative" class="rk-badge"
+              >Conflicto</q-badge
+            >
+            <q-badge outline color="orange" class="rk-badge"
+              >Modificado</q-badge
+            >
+            <q-badge outline color="amber" class="rk-badge">Favorito</q-badge>
+          </div>
 
-        <!-- Acciones globales -->
-        <q-btn
-          flat
-          label="Descartar"
-          :disable="!dirty || saving"
-          class="rk-ghost"
-          @click="onDiscard"
-        />
-        <q-btn
-          color="primary"
-          :loading="saving"
-          icon="save"
-          label="Guardar"
-          :disable="!dirty || !hasTarget"
-          @click="onSave"
-        />
+          <q-separator vertical class="rk-sep" />
+
+          <q-btn
+            flat
+            label="Descartar"
+            :disable="!dirty || saving"
+            class="rk-btn rk-item"
+            icon="close"
+            @click="onDiscard"
+            content-class="rk-center"
+          />
+          <q-btn
+            unelevated
+            color="primary"
+            :loading="saving"
+            icon="save"
+            rounded
+            label="Guardar"
+            :disable="!dirty || !hasTarget"
+            class="rk-btn rk-btn-main rk-item"
+            @click="onSave"
+            content-class="rk-center"
+          />
+        </div>
       </div>
     </q-card>
 
@@ -718,4 +737,69 @@ const onModeChange = () => {
     rgba(33, 150, 243, 0.04)
   );
 }
+
+/* ===== CONFIG DE ALTURA UNIFORME ===== */
+.rk-bar { --rk-h: 40px; }               /* alto total de la barra */
+.rk-bar .rk-row {
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+.rk-bar .rk-group { display:flex; align-items:center; gap:12px; }
+.rk-divider { width:1px; height:24px; background:rgba(255,255,255,.15); border-radius:1px; }
+
+/* ===== Forzar altura y centrado en TODO ===== */
+.rk-bar :deep(.rk-item),
+.rk-bar :deep(.q-btn),
+.rk-bar :deep(.q-btn-toggle),
+.rk-bar :deep(.q-chip),
+.rk-bar :deep(.q-input),
+.rk-bar :deep(.q-field),
+.rk-bar :deep(.q-field__control) {
+  height: var(--rk-h) !important;
+  min-height: var(--rk-h) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+/* Contenido interno realmente centrado */
+.rk-bar :deep(.q-btn__content,
+              .q-btn-toggle__content,
+              .q-chip__content,
+              .q-field__native,
+              .q-field__control,
+              .q-icon,
+              .rk-center) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+/* Botón Guardar: elimina el “bajón” por min-height en em */
+.rk-bar :deep(.q-btn.q-btn--rectangle) { min-height: var(--rk-h) !important; }
+.rk-bar :deep(.rk-btn-main) { padding-inline:18px; transform: translateY(0) !important; }
+
+/* ===== Badges (que se veían bajos) ===== */
+.rk-bar :deep(.rk-legend) { display:flex; gap:8px; }
+.rk-bar :deep(.rk-badge) {
+  height: var(--rk-h) !important;      /* mismos 40px para alinear baseline */
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 12px !important;
+  line-height:1 !important;
+  border-radius:999px !important;
+}
+
+/* Separador vertical al centro */
+.rk-bar :deep(.rk-sep) { align-self:center; height: var(--rk-h) !important; opacity:.35; }
+
+/* Renombrado inline */
+.rk-inline { display:flex; align-items:center; gap:8px; }
+.rk-inline .q-input { width: 190px; }
+
 </style>

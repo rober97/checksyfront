@@ -10,6 +10,7 @@ export const MENU = [
       { label: 'Permisos', icon: 'lock', to: '/admin/permissions' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance' },
       { label: 'Empresas', icon: 'apartment', to: '/admin/companies' },
+      { label: 'Solicitudes', icon: 'apartment', to: '/admin/requests' },
     ]
   },
 
@@ -24,6 +25,7 @@ export const MENU = [
       { label: 'Mi historial', icon: 'history', to: '/employee/history' },
       { label: 'Nueva solicitud', icon: 'post_add', to: '/employee/create-request' },
       { label: 'Mis documentos', icon: 'post_add', to: '/employee/documents' },
+      { label: 'Mis solicitudes', icon: 'apartment', to: '/employee/requests' },
     ]
   },
 ]
