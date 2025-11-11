@@ -1,0 +1,410 @@
+<template>
+  <div class="rk-ws">
+    <div class="rk-label q-mb-xs">Horario laboral</div>
+
+    <!-- MODO -->
+    <q-option-group
+      v-model="mode"
+      type="radio"
+      :options="modeOpts"
+      inline
+      class="q-mb-sm rk-modes"
+    />
+
+    <!-- DEFAULT EMPRESA -->
+    <q-banner
+      v-if="mode === 'companyDefault'"
+      class="rk-section rk-banner row items-center justify-between q-mb-sm"
+    >
+      <div class="text-caption">
+        Usar horario por defecto de <b>{{ company?.name || 'la empresa' }}</b>.
+        <span v-if="!companyDefaultId" class="text-negative">(no definido)</span>
+      </div>
+      <q-btn
+        dense flat color="primary"
+        icon="visibility" label="Ver detalle"
+        :disable="!companyDefaultId"
+        @click="preview(companyDefaultId)"
+      />
+    </q-banner>
+
+    <!-- PICK TEMPLATE -->
+    <div v-if="mode === 'pickTemplate'" class="row q-col-gutter-sm q-mb-sm">
+      <div class="col-12 col-sm-8">
+        <q-select
+          v-model="selectedId"
+          :disable="!companyId"
+          label="Seleccionar plantilla"
+          :options="options"
+          option-value="_id"
+          option-label="name"
+          dense outlined clearable
+          use-input fill-input emit-value map-options
+          :loading="loading"
+          :input-debounce="250"
+          @filter="onFilter"
+          @popup-hide="clearQuery"
+        >
+          <template #prepend><q-icon name="schedule" /></template>
+
+          <template #option="s">
+            <q-item v-bind="s.itemProps">
+              <q-item-section>
+                <q-item-label class="text-weight-medium">
+                  {{ s.opt.name }}
+                </q-item-label>
+                <q-item-label caption class="rk-mono">
+                  {{ s.opt.type || 'weekly' }} · {{ s.opt.timezone || 'America/Santiago' }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+
+          <template #no-option>
+            <div class="q-pa-xs column q-gutter-xs">
+              <div class="text-caption text-grey-7">
+                {{ !companyId
+                  ? 'Selecciona una empresa para ver horarios.'
+                  : hasQuery
+                    ? `Sin resultados para «${qDisplay}»`
+                    : `Escribe para buscar horarios…` }}
+              </div>
+
+              <!-- Crear rápido desde picker -->
+              <q-item
+                v-if="companyId && (hasQuery || !options.length)"
+                clickable
+                class="rk-create-item"
+                @click.stop="openQuickFromQuery()"
+              >
+                <q-item-section avatar>
+                  <q-avatar square size="24px" class="rk-create-avatar">
+                    <q-icon name="add_alarm" />
+                  </q-avatar>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-primary text-weight-bold">
+                    Crear «{{ qDisplay || 'Nuevo horario' }}»
+                  </q-item-label>
+                  <q-item-label caption>Se asignará a la empresa seleccionada</q-item-label>
+                </q-item-section>
+              </q-item>
+            </div>
+          </template>
+        </q-select>
+      </div>
+
+      <div class="col-12 col-sm-4">
+        <q-btn
+          outline class="full-width" color="primary"
+          icon="visibility" label="Vista previa"
+          :disable="!selectedId"
+          @click="preview(selectedId)"
+        />
+      </div>
+    </div>
+
+    <!-- CREAR RÁPIDO -->
+    <q-banner
+      v-if="mode === 'createQuick'"
+      class="rk-section rk-banner row items-center justify-between q-mb-sm"
+    >
+      <div class="text-caption">
+        Crea una plantilla rápida (L–V 09:00–18:00 con 1h colación — editable).
+      </div>
+      <q-btn
+        color="primary" dense icon="add"
+        label="Configurar y crear"
+        @click="openQuick()" :disable="!companyId"
+      />
+    </q-banner>
+
+    <!-- DIALOG -->
+    <q-dialog v-model="quickOpen" persistent>
+      <q-card class="rk-dialog">
+        <q-card-section class="row items-center">
+          <q-icon name="bolt" class="q-mr-sm" />
+          <div class="text-subtitle1 text-weight-bold">Nuevo horario rápido</div>
+          <q-space /><q-btn dense flat round icon="close" v-close-popup />
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section>
+          <div class="row q-col-gutter-sm">
+            <q-input v-model="quick.name" class="col-12" label="Nombre" dense outlined />
+
+            <q-input v-model="quick.start"      class="col-6" label="Entrada (HH:mm)"        dense outlined :rules="[hhmm]" />
+            <q-input v-model="quick.lunchStart" class="col-6" label="Inicio colación (HH:mm)" dense outlined :rules="[hhmmOpt]" />
+            <q-input v-model="quick.lunchEnd"   class="col-6" label="Fin colación (HH:mm)"    dense outlined :rules="[hhmmOpt]" />
+            <q-input v-model="quick.end"        class="col-6" label="Salida (HH:mm)"          dense outlined :rules="[hhmm]" />
+
+            <q-toggle v-model="quick.saturday" label="Trabaja sábado" class="col-6" />
+            <q-toggle v-model="quick.sunday"  label="Trabaja domingo" class="col-6" />
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat label="Cancelar" v-close-popup />
+          <q-btn
+            color="primary"
+            label="Crear y asignar"
+            :loading="savingQuick"
+            :disable="!companyId"
+            @click="createQuick"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue'
+import secureAxios from '@/utils/secureRequest'
+
+/* ===== props / emits ===== */
+const props = defineProps({
+  companyId: { type: String, default: null },
+  company:   { type: Object, default: null },
+  modelValue: {
+    type: Object,
+    default: () => ({ mode: 'companyDefault', scheduleId: null })
+  }
+})
+const emit = defineEmits(['update:modelValue', 'preview', 'created'])
+
+/* ===== anti-eco simple ===== */
+const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+
+/* ===== v-model (obj) ===== */
+const state = ref({ ...props.modelValue })
+watch(() => props.modelValue, v => {
+  if (!isEqual(v, state.value)) state.value = { ...v }
+}, { deep: true })
+watch(state, v => {
+  if (!isEqual(v, props.modelValue)) emit('update:modelValue', v)
+}, { deep: true })
+
+const mode = computed({
+  get: () => state.value.mode || 'companyDefault',
+  set: (v) => state.value.mode = v
+})
+const selectedId = computed({
+  get: () => state.value.scheduleId || null,
+  set: (v) => state.value.scheduleId = v
+})
+
+/* ===== opciones de modo ===== */
+const modeOpts = [
+  { label: 'Usar horario por defecto de la empresa', value: 'companyDefault' },
+  { label: 'Elegir de plantillas existentes', value: 'pickTemplate' },
+  { label: 'Crear horario rápido', value: 'createQuick' }
+]
+const companyDefaultId = computed(() => props.company?.defaultWorkScheduleId || null)
+
+/* ===== select de plantillas (async search) ===== */
+const options = ref([])
+const loading = ref(false)
+const query = ref('')
+
+const hasQuery = computed(() => (query.value || '').trim().length > 0)
+const qDisplay = computed(() => (query.value || '').trim())
+
+// cache y cancelación
+const cache = new Map() // key `${companyId}::${q}`
+let controller = null
+const lastKey = ref('')
+
+// QSelect @filter signature: (val, update, abort)
+function onFilter(val, update, abort) {
+  if (!props.companyId) { abort(); return }
+
+  const q = String(val || '').trim()
+  query.value = q
+  const key = `${props.companyId}::${q}`
+
+  // Cache hit
+  if (cache.has(key)) {
+    const list = cache.get(key)
+    update(() => { options.value = list })
+    return
+  }
+
+  // Cancel anterior request
+  if (controller) controller.abort()
+  controller = new AbortController()
+  lastKey.value = key
+  loading.value = true
+
+  secureAxios.get('/work-schedule', {
+    params: { companyId: props.companyId, q, limit: 12, active: true },
+    signal: controller.signal
+  })
+  .then(({ data }) => {
+    if (lastKey.value !== key) return
+    const list = Array.isArray(data?.items) ? data.items : []
+    cache.set(key, list)
+    update(() => { options.value = list })
+  })
+  .catch(() => {
+    update(() => { options.value = [] })
+  })
+  .finally(() => {
+    if (lastKey.value === key) {
+      loading.value = false
+      controller = null
+    }
+  })
+}
+
+function clearQuery () { query.value = '' }
+
+watch(() => props.companyId, () => {
+  // reset al cambiar de empresa
+  options.value = []
+  query.value = ''
+  if (controller) controller.abort()
+  if (mode.value === 'pickTemplate') selectedId.value = null
+})
+
+/* ===== preview ===== */
+function preview (id) { if (id) emit('preview', id) }
+
+/* ===== quick create (dialog) ===== */
+const quickOpen = ref(false)
+const savingQuick = ref(false)
+const quick = ref({
+  name: 'Horario L–V 09–18',
+  start: '09:00',
+  lunchStart: '13:00',
+  lunchEnd: '14:00',
+  end: '18:00',
+  saturday: false,
+  sunday: false,
+})
+
+const hhmm = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||'')) || 'Formato HH:mm'
+const hhmmOpt = (v) => !v || hhmm(v) || 'Formato HH:mm'
+
+function openQuick () { quickOpen.value = true }
+function openQuickFromQuery () {
+  if (qDisplay.value) quick.value.name = qDisplay.value
+  quickOpen.value = true
+}
+
+function buildWeekly (q) {
+  const seg = (a,b) => (a && b ? [{ start: a, end: b }] : [])
+  const col = (a,b) => (a && b ? [{ start: a, end: b }] : [])
+  return {
+    mon: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
+    tue: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
+    wed: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
+    thu: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
+    fri: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
+    sat: q.saturday ? seg(q.start, q.end) : [],
+    sun: q.sunday  ? seg(q.start, q.end) : [],
+  }
+}
+
+async function createQuick () {
+  if (!props.companyId) return
+
+  const baseOk = hhmm(quick.value.start) === true && hhmm(quick.value.end) === true
+  const lunchOk = hhmmOpt(quick.value.lunchStart) === true && hhmmOpt(quick.value.lunchEnd) === true
+  if (!baseOk || !lunchOk) return
+
+  savingQuick.value = true
+  try {
+    const payload = {
+      companyId: props.companyId,
+      name: String(quick.value.name || 'Horario nuevo').trim(),
+      type: 'weekly',
+      weekly: buildWeekly(quick.value)
+    }
+    const { data } = await secureAxios.post('/work-schedule', payload)
+    const item = data?.item || data?.schedule || data
+    if (item?._id) {
+      // Cambia modo, selecciona y actualiza lista/cache
+      mode.value = 'pickTemplate'
+      selectedId.value = item._id
+
+      const key = `${props.companyId}::${qDisplay.value}`
+      const list = (options.value || []).slice()
+      const idx = list.findIndex(x => x._id === item._id)
+      if (idx >= 0) list.splice(idx, 1, item); else list.unshift(item)
+      options.value = list
+      cache.set(key, list)
+
+      emit('created', item)
+      quickOpen.value = false
+    }
+  } finally {
+    savingQuick.value = false
+  }
+}
+</script>
+
+<style scoped>
+/* ========= Layout sólido (sin transparencias) ========= */
+.rk-ws {
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.rk-label {
+  font-size: 12px;
+  color: var(--rk-muted);
+  font-weight: 800;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.rk-section {
+  background: var(--rk-soft);
+  border: 1px solid var(--rk-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.rk-banner { min-height: 44px; }
+.rk-modes :deep(.q-option-group) { gap: 8px; }
+
+/* Quick-create item dentro del select */
+.rk-create-item {
+  border: 1px solid #c9defa;
+  border-radius: 10px;
+  background: #eaf3ff;
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+}
+.rk-create-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(33,150,243,.18);
+  background: #e2eeff;
+}
+.rk-create-avatar { background: #d6e8ff; color: #1976d2; }
+.rk-mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+/* Dialog */
+.rk-dialog { min-width: 560px; max-width: 96vw; border-radius: 12px; }
+@media (max-width: 640px) { .rk-dialog { min-width: calc(100vw - 32px); } }
+
+/* Tokens */
+:root {
+  --rk-border: rgba(0,0,0,.08);
+  --rk-surface: #fff;
+  --rk-soft: #f5f7fb;
+  --rk-muted: #667085;
+}
+.body--dark {
+  --rk-border: rgba(255,255,255,.08);
+  --rk-surface: #101318;
+  --rk-soft: #0f1216;
+  --rk-muted: #9aa3b2;
+}
+
+.body--dark .rk-create-item { border-color: #2a3b56; background: #172034; }
+.body--dark .rk-create-item:hover { background: #1b2740; }
+.body--dark .rk-create-avatar { background: #12243f; color: #8ab6ff; }
+</style>

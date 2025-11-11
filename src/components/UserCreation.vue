@@ -64,17 +64,15 @@
                 >
                   <q-tab-panel name="basicos" class="q-pt-sm">
                     <UserBasicsForm
-                      v-model="form"
-                      :empresas="empresas"
-                      :empresas-raw="empresasRaw"
+                      :model-value="form"
+                      @update:model-value="onBasicsPatch"
                       :horarios="horarios"
-                      :loading-empresas="loadingEmpresas"
                       :loading-horarios="loadingHorarios"
-                      @filter-empresas="filterEmpresas"
                       @tipo-change="onTipoChange"
                     />
-                    <!-- Fuerza + Generar -->
-                    <div class="col-12">
+
+                    <!-- Password helper compacto -->
+                    <div class="rk-passcard q-mt-md">
                       <div class="row items-center justify-between q-gutter-sm">
                         <div class="row items-center q-gutter-sm no-wrap">
                           <span class="text-caption text-grey-7">Fuerza</span>
@@ -85,9 +83,11 @@
                             rounded
                             class="rk-passbar"
                           />
-                          <span class="text-caption text-grey-7">{{
-                            passwordLabel
-                          }}</span>
+                          <span
+                            class="text-caption"
+                            :class="passwordTextColor"
+                            >{{ passwordLabel }}</span
+                          >
                         </div>
                         <q-btn
                           dense
@@ -124,7 +124,6 @@
             </div>
           </template>
 
-          <!-- Summary -->
           <template #after>
             <UserSummary
               class="rk-summary q-pa-md"
@@ -141,12 +140,12 @@
       <!-- Footer -->
       <div class="rk-footer row items-center">
         <q-space />
-        <q-btn flat label="Cancelar" @click="cancelar" />
+        <q-btn flat label="Cancelar" @click="cancelar" class="rk-btn" />
         <q-btn
           color="primary"
           :label="saving ? 'Guardando…' : 'Guardar'"
           :loading="saving"
-          class="q-ml-sm"
+          class="q-ml-sm rk-btn rk-btn--primary"
           @click="submitForm"
           unelevated
         />
@@ -154,7 +153,7 @@
           color="primary"
           outline
           :disable="saving"
-          class="q-ml-sm"
+          class="q-ml-sm rk-btn"
           label="Guardar y crear otro"
           @click="submitAndReset"
         />
@@ -183,8 +182,8 @@ import UserContactForm from "./users/parts/UserContactForm.vue";
 import UserPermissionsForm from "./users/parts/UserPermissionsForm.vue";
 import UserSummary from "./users/parts/UserSummary.vue";
 
-import { validarRUT, emailRule } from "@/utils/validators";
-import { normalizeMoney, normalizeDecimal, formatMoney } from "@/utils/format";
+import { validarRUT } from "@/utils/validators";
+import { normalizeMoney, normalizeDecimal } from "@/utils/format";
 
 const $q = useQuasar();
 const toast = useToast();
@@ -205,62 +204,43 @@ const split = ref(70);
 const saving = ref(false);
 const invitar = ref(true);
 
-const empresas = ref([]);
-const empresasRaw = ref([]);
 const horarios = ref([]);
-const loadingEmpresas = ref(false);
 const loadingHorarios = ref(false);
+const empresasRaw = ref([]);
 
 const form = ref(getEmptyForm());
 
+// Abrir dialog -> reset una sola vez
 watch(
   () => props.modelValue,
   async (val) => {
-    if (val) {
-      tab.value = "basicos";
-      split.value = 70;
-      form.value = getEmptyForm();
-      await loadEmpresas();
-    }
-  }
+    if (!val) return;
+    tab.value = "basicos";
+    split.value = 70;
+    form.value = getEmptyForm();
+    await loadEmpresasRaw();
+  },
+  { immediate: true }
 );
 
-async function loadEmpresas() {
+// PATCH (merge) desde el hijo, evita reemplazar objeto => no recursión
+function onBasicsPatch(patch) {
+  if (!patch || typeof patch !== "object") return;
+  Object.assign(form.value, patch);
+}
+
+async function loadEmpresasRaw() {
   try {
-    loadingEmpresas.value = true;
     await companiesStore.fetchCompanies();
     empresasRaw.value = (companiesStore.companies || []).map((c) => ({
       id: c._id,
       name: c.name,
     }));
-    empresas.value = empresasRaw.value.slice(0, 50);
-  } catch (e) {
-    toast.error("Error al cargar empresas");
-  } finally {
-    loadingEmpresas.value = false;
+  } catch {
+    /* noop */
   }
-}
-function filterEmpresas(val, update) {
-  const v = (val || "").toLowerCase();
-  update(() => {
-    empresas.value = v
-      ? empresasRaw.value
-          .filter((e) => e.name.toLowerCase().includes(v))
-          .slice(0, 50)
-      : empresasRaw.value.slice(0, 50);
-  });
 }
 
-watch(
-  () => form.value.empresa,
-  async (empresaId) => {
-    if (form.value.tipo === "empleado" && empresaId) {
-      await loadHorarios(empresaId);
-    } else {
-      horarios.value = [];
-    }
-  }
-);
 async function loadHorarios(empresaId) {
   try {
     loadingHorarios.value = true;
@@ -269,13 +249,13 @@ async function loadHorarios(empresaId) {
       id: h._id,
       name: h.name,
     }));
-  } catch (e) {
+  } catch {
     horarios.value = [];
-    toast.error("No se pudieron cargar los horarios.");
   } finally {
     loadingHorarios.value = false;
   }
 }
+
 function onTipoChange(val) {
   if (val !== "empleado") {
     form.value.horarioLaboralId = null;
@@ -285,52 +265,73 @@ function onTipoChange(val) {
   }
 }
 
-// Password strength
+/* ===== Password meter ===== */
 const passwordScore = computed(() => {
   const p = form.value.password || "";
+  if (!p) return 0;
   let s = 0;
   if (p.length >= 6) s += 0.25;
-  if (/[A-Z]/.test(p)) s += 0.25;
-  if (/\d/.test(p)) s += 0.25;
-  if (/[^A-Za-z0-9]/.test(p)) s += 0.25;
-  return s;
+  if (p.length >= 10) s += 0.25;
+  if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s += 0.25;
+  if (/\d/.test(p)) s += 0.15;
+  if (/[^A-Za-z0-9]/.test(p)) s += 0.1;
+  return Math.min(s, 1);
 });
 const passwordColor = computed(() =>
-  passwordScore.value < 0.5
+  passwordScore.value < 0.4
     ? "negative"
-    : passwordScore.value < 0.75
+    : passwordScore.value < 0.7
     ? "warning"
     : "positive"
 );
+const passwordTextColor = computed(() =>
+  passwordScore.value < 0.4
+    ? "text-negative"
+    : passwordScore.value < 0.7
+    ? "text-warning"
+    : "text-positive"
+);
 const passwordLabel = computed(() =>
-  passwordScore.value < 0.5
+  passwordScore.value < 0.4
     ? "Débil"
-    : passwordScore.value < 0.75
+    : passwordScore.value < 0.7
     ? "Media"
     : "Fuerte"
 );
+
 function generarPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@$%*";
-  let pass = "";
-  for (let i = 0; i < 10; i++)
-    pass += chars.charAt(Math.floor(Math.random() * chars.length));
-  form.value.password = pass;
+  let out = "";
+  for (let i = 0; i < 12; i++)
+    out += chars.charAt(Math.floor(Math.random() * chars.length));
+  form.value.password = out;
+}
+
+/* ===== Validación & submit ===== */
+async function validateForm() {
+  try {
+    const r = await formRef.value?.validate();
+    return r === true || r === undefined;
+  } catch {
+    return false;
+  }
 }
 
 async function submitForm() {
-  const ok = await formRef.value?.validate();
+  const ok = await validateForm();
   if (!ok) {
     toast.error("Revisa los campos requeridos.");
     return;
   }
-  // reglas extra
+
   if (form.value.tipo !== "admin" && !form.value.empresa) {
     toast.error("Debes seleccionar una empresa.");
     tab.value = "basicos";
     return;
   }
+
   if (form.value.tipo === "empleado") {
-    if (!form.value.horarioLaboralId) {
+    if (!form.value.workScheduleChoice.scheduleId) {
       toast.error("Selecciona un horario laboral.");
       tab.value = "basicos";
       return;
@@ -341,6 +342,7 @@ async function submitForm() {
       return;
     }
   }
+
   const payload = mapPayload(form.value, { invitar: invitar.value });
   try {
     saving.value = true;
@@ -348,7 +350,7 @@ async function submitForm() {
     toast.success("Usuario creado correctamente.");
     emit("created");
     dialogVisible.value = false;
-  } catch (e) {
+  } catch {
     toast.error(userStore.error || "No se pudo crear el usuario.");
   } finally {
     saving.value = false;
@@ -356,11 +358,12 @@ async function submitForm() {
 }
 
 async function submitAndReset() {
-  const ok = await formRef.value?.validate();
+  const ok = await validateForm();
   if (!ok) {
     toast.error("Revisa los campos requeridos.");
     return;
   }
+
   const payload = mapPayload(form.value, { invitar: invitar.value });
   try {
     saving.value = true;
@@ -369,7 +372,7 @@ async function submitAndReset() {
     emit("created");
     form.value = getEmptyForm();
     await nextTick();
-  } catch (e) {
+  } catch {
     toast.error(userStore.error || "No se pudo crear el usuario.");
   } finally {
     saving.value = false;
@@ -380,43 +383,44 @@ function cancelar() {
   dialogVisible.value = false;
 }
 
+/* ===== Helpers ===== */
 function mapPayload(f, extra) {
   return {
-    firstName: f.firstName,
-    lastName: f.lastName,
-    email: f.email,
-    password: f.password,
+    firstName: f.firstName?.trim() || "",
+    lastName: f.lastName?.trim() || "",
+    email: f.email?.trim().toLowerCase() || "",
+    password: f.password || "",
     rut: f.tipo === "empleado" ? f.rut : null,
     role: f.tipo,
     company: f.tipo !== "admin" ? f.empresa : null,
     workSchedule: f.tipo === "empleado" ? f.horarioLaboralId : null,
-    phone: f.phone || null,
-    emergencyContact: f.emergencyContact || null,
+    phone: f.phone?.trim() || null,
+    emergencyContact: f.emergencyContact?.trim() || null,
     address: {
-      line1: f.address.line1 || "",
-      commune: f.address.commune || "",
-      city: f.address.city || "",
-      region: f.address.region || "",
+      line1: f.address?.line1?.trim() || "",
+      commune: f.address?.commune?.trim() || "",
+      city: f.address?.city?.trim() || "",
+      region: f.address?.region?.trim() || "",
     },
     permissions: f.permissions || [],
     payroll: {
-      baseSalary: normalizeMoney(f.payroll.baseSalary),
-      contractType: f.payroll.contractType,
-      jornada: f.payroll.jornada,
-      startDate: f.payroll.startDate || null,
-      afp: f.payroll.afp,
-      saludSistema: f.payroll.saludSistema,
-      isaprePlan: f.payroll.isaprePlan || null,
-      isapreUf: Number(normalizeDecimal(f.payroll.isapreUf || 0)),
-      apv: normalizeMoney(f.payroll.apv || 0),
-      cargasFamiliares: Number(f.payroll.cargasFamiliares || 0),
-      banco: f.payroll.banco || null,
-      tipoCuenta: f.payroll.tipoCuenta || null,
-      numeroCuenta: f.payroll.numeroCuenta || null,
-      gratificacion: normalizeMoney(f.payroll.gratificacion || 0),
-      bonoColacion: normalizeMoney(f.payroll.bonoColacion || 0),
-      bonoMovilizacion: normalizeMoney(f.payroll.bonoMovilizacion || 0),
-      descuentoPrestamo: normalizeMoney(f.payroll.descuentoPrestamo || 0),
+      baseSalary: normalizeMoney(f.payroll?.baseSalary || 0),
+      contractType: f.payroll?.contractType || "",
+      jornada: f.payroll?.jornada || "",
+      startDate: f.payroll?.startDate || null,
+      afp: f.payroll?.afp || "",
+      saludSistema: f.payroll?.saludSistema || "",
+      isaprePlan: f.payroll?.isaprePlan || null,
+      isapreUf: Number(normalizeDecimal(f.payroll?.isapreUf || 0)),
+      apv: normalizeMoney(f.payroll?.apv || 0),
+      cargasFamiliares: Number(f.payroll?.cargasFamiliares || 0),
+      banco: f.payroll?.banco || "",
+      tipoCuenta: f.payroll?.tipoCuenta || "",
+      numeroCuenta: f.payroll?.numeroCuenta || "",
+      gratificacion: normalizeMoney(f.payroll?.gratificacion || 0),
+      bonoColacion: normalizeMoney(f.payroll?.bonoColacion || 0),
+      bonoMovilizacion: normalizeMoney(f.payroll?.bonoMovilizacion || 0),
+      descuentoPrestamo: normalizeMoney(f.payroll?.descuentoPrestamo || 0),
     },
     invite: !!extra?.invitar,
   };
@@ -458,92 +462,180 @@ function getEmptyForm() {
   };
 }
 
-// Hotkeys opcionales
+/* Hotkeys */
 function hotkeys(e) {
   if (!dialogVisible.value) return;
-  if (e.key === "Escape") cancelar();
-  if (e.key === "Enter" && e.ctrlKey) submitForm();
-  if (e.key === "Enter" && e.altKey) submitAndReset();
+  if (e.key === "Escape") {
+    e.preventDefault();
+    cancelar();
+  }
+  if (e.key === "Enter" && e.ctrlKey) {
+    e.preventDefault();
+    submitForm();
+  }
+  if (e.key === "Enter" && e.altKey) {
+    e.preventDefault();
+    submitAndReset();
+  }
 }
 onMounted(() => window.addEventListener("keydown", hotkeys));
 onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 </script>
 
 <style scoped>
+/* ===== Fondos sólidos y contraste consistente ===== */
 .rk-user-dialog {
-  min-width: 820px;
+  min-width: 860px;
   max-width: 96vw;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
 }
+.body--dark .rk-user-dialog {
+  background: #0f1216;
+}
+
 .rk-header {
-  padding: 10px 14px;
+  padding: 14px 20px;
+  background: #f5f7fb;
+  border-bottom: 1px solid #e5e7eb;
 }
+.body--dark .rk-header {
+  background: #15181f;
+  border-bottom-color: #2a2f39;
+}
+.rk-header .text-subtitle1 {
+  font-weight: 700;
+  color: #1a1d23;
+}
+.body--dark .rk-header .text-subtitle1 {
+  color: #ffffff;
+}
+
 .rk-body {
-  max-height: calc(80vh - 48px - 56px);
+  max-height: calc(80vh - 60px - 64px);
   overflow: auto;
+  background: #ffffff;
+}
+.body--dark .rk-body {
+  background: #0f1216;
 }
 .rk-splitter {
   height: 100%;
 }
-.rk-tabs :deep(.q-tabs__content) {
-  min-height: 34px;
+
+.rk-tabs {
+  background: #ffffff;
 }
-.rk-tabs :deep(.q-tab__label) {
-  font-size: 12.5px;
+.body--dark .rk-tabs {
+  background: #0f1216;
 }
+.rk-tabs :deep(.q-tab) {
+  border-radius: 10px 10px 0 0;
+  padding: 8px 16px;
+  margin: 0 2px;
+}
+.rk-tabs :deep(.q-tab--active) {
+  background: #e8f1fe; /* sólido claro */
+}
+.body--dark .rk-tabs :deep(.q-tab--active) {
+  background: #172034; /* sólido dark */
+}
+
 .rk-form :deep(.q-field--dense) .q-field__control {
-  min-height: 34px;
+  min-height: 42px;
+  border-radius: 10px;
 }
 .rk-form :deep(.q-field) {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
+.rk-form :deep(.q-field--outlined .q-field__control) {
+  border-radius: 10px;
+}
+
+.rk-passcard {
+  background: #f0f2f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+}
+.body--dark .rk-passcard {
+  background: #1a1f2a;
+  border-color: #2a2f39;
+}
+.rk-passbar {
+  width: 140px;
+  border-radius: 3px;
+}
+.rk-generate-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.rk-summary {
+  border-left: 1px solid #e5e7eb;
+  height: 100%;
+  overflow: auto;
+  background: #fafbfe;
+}
+.body--dark .rk-summary {
+  border-left-color: #2a2f39;
+  background: #10141c;
+}
+
 .rk-footer {
   position: sticky;
   bottom: 0;
-  background: var(--rk-card);
-  padding: 8px 12px;
-  border-top: 1px solid var(--rk-border);
+  background: #ffffff;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
   z-index: 2;
 }
-:root {
-  --rk-border: rgba(0, 0, 0, 0.06);
-  --rk-card: #fff;
-  --rk-summary-light: #f7f8fa;
-  --rk-summary-dark: #1f2126;
-  --rk-text-dim: #5f6470;
+.body--dark .rk-footer {
+  background: #0f1216;
+  border-top-color: #2a2f39;
 }
-.body--dark {
-  --rk-border: rgba(255, 255, 255, 0.08);
-  --rk-card: #111317;
-  --rk-text-dim: #b6bbc6;
+
+.rk-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+  min-height: 42px;
+  padding: 0 20px;
 }
-.rk-summary {
-  border-left: 1px solid var(--rk-border);
-  height: 100%;
-  overflow: auto;
+.rk-btn--primary {
+  box-shadow: 0 4px 14px rgba(33, 150, 243, 0.25);
 }
-.rk-summary--light {
-  background: var(--rk-summary-light);
-}
-.rk-summary--dark {
-  background: var(--rk-summary-dark);
-}
-.rk-passbar {
-  width: 160px;
-}
-.rk-generate-btn {
-  min-height: 34px;
-}
+
 @media (max-width: 1023px) {
   .rk-user-dialog {
     min-width: 96vw;
+    margin: 16px;
   }
   .rk-summary {
     display: none;
   }
-  .rk-passbar {
-    width: 120px;
+}
+@media (max-width: 600px) {
+  .rk-user-dialog {
+    min-width: calc(100vw - 32px);
+    margin: 8px;
+  }
+  .rk-header {
+    padding: 12px 16px;
+  }
+  .rk-body {
+    max-height: calc(90vh - 56px - 60px);
+  }
+  .rk-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .rk-footer .q-btn {
+    width: 100%;
+    margin-left: 0 !important;
   }
 }
 </style>

@@ -419,15 +419,16 @@ async function submit() {
   try {
     saving.value = true;
     const payload = { ...form.value };
+    let res;
     if (logoFile.value) payload._logoFile = logoFile.value; // tu store decide multipart
     if (isEdit.value) {
-      await companies.updateCompany(props.editData._id, payload);
+      res = await companies.updateCompany(props.editData._id, payload);
       $q.notify({ type: "positive", message: "Cambios guardados" });
     } else {
-      await companies.createCompany(payload);
+      res = await companies.createCompany(payload);
       $q.notify({ type: "positive", message: "Empresa creada" });
     }
-    emit("saved");
+    emit("saved", res);
     visible.value = false;
   } catch (e) {
     $q.notify({
