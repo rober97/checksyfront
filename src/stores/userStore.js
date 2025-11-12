@@ -57,25 +57,53 @@ export const useUserStore = defineStore('user', {
     },
 
     async createUser(userData) {
-      try {
-        this.loading = true
-        this.error = null
+      this.loading = true
+      this.error = null
 
+      try {
         const res = await secureAxios.post(`${API_URL}/users`, userData)
-        if (!res.data) {
-          this.error = res.data.message || 'Error al crear el usuario'
-          throw new Error(this.error)
+        const data = res?.data
+
+        // Define qué consideras "OK"
+        const ok = data
+
+        if (!ok) {
+          const msg = data?.message || data?.error || 'Error al crear el usuario'
+          this.error = msg
+          throw new Error(msg)
         }
 
-        return res.data.user
+        // Ajusta según tu backend: data.user o data directamente
+        return data.user || data
       } catch (err) {
         console.error('[createUser] Error:', err)
-        this.error = 'No se pudo crear el usuario'
-        throw err
+
+        let msg = this.error // por si ya fue seteado arriba
+
+        if (!msg) {
+          if (err.response) {
+            // Errores HTTP (4xx, 5xx) con payload del backend
+            const { data, status, statusText } = err.response
+
+            const text = data?.message + data?.error 
+            msg = text
+          } else if (err.request) {
+            // No hubo respuesta del servidor
+            msg = 'No se pudo contactar al servidor. Revisa tu conexión o inténtalo nuevamente.'
+          } else {
+            // Error al construir/enviar la petición
+            msg = err.message || 'No se pudo crear el usuario'
+          }
+        }
+
+        this.error = msg
+        // relanzamos un Error limpio con el mensaje útil para el front
+        throw new Error(msg)
       } finally {
         this.loading = false
       }
     },
+
 
     // en src/stores/userStore.js (o donde tengas el store)
     async updateUser({ id, patch }) {

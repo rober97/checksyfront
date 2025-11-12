@@ -49,6 +49,50 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    /* =========================
+       REGISTER (público)
+       payload: { firstName, lastName?, email, password, inviteCode? }
+       opts: { autoLogin = true }  ← inicia sesión tras registrar
+    ========================= */
+    async register(payload, opts = {}) {
+      const { autoLogin = true } = opts
+      this.loading = true
+      this.error = null
+      try {
+        // Si tu backend expone otra ruta, cámbiala aquí:
+        // - si seguiste lo que armamos: POST /users/register (pública)
+        // - en otros setups: POST /auth/register
+        const { data } = await publicAxios.post('/users/register', payload)
+
+        // 409 (duplicado) o mensajes custom
+        if (data?.success === false) {
+          const msg = data?.message || 'No se pudo crear la cuenta'
+          this.error = msg
+          throw new Error(msg)
+        }
+
+        // Autologin opcional con las mismas credenciales
+        if (autoLogin) {
+          await this.login({ email: payload.email, password: payload.password })
+        }
+
+        return data
+      } catch (err) {
+        const status = err?.response?.status
+        const msg =
+          err?.response?.data?.message ||
+          (status === 409 ? 'El correo ya está registrado' : null) ||
+          err?.message ||
+          'Error creando la cuenta'
+        this.error = msg
+        throw new Error(msg)
+      } finally {
+        this.loading = false
+      }
+    },
+
+
+
     // Obtiene el perfil actual desde el backend usando el access token
     async fetchMe() {
       try {

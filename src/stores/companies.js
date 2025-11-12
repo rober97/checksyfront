@@ -49,11 +49,11 @@ export const useCompaniesStore = defineStore('companies', {
 
   getters: {
     // Aliases para no romper el componente ni código viejo
-    items:      (s) => s.companies,   // ← el componente usa companies.items
-    list:       (s) => s.companies,
-    empresas:   (s) => s.companies,
-    getById:    (s) => (id) => s.companies.find(c => c._id === id),
-    isLoading:  (s) => s.loading,
+    items: (s) => s.companies,   // ← el componente usa companies.items
+    list: (s) => s.companies,
+    empresas: (s) => s.companies,
+    getById: (s) => (id) => s.companies.find(c => c._id === id),
+    isLoading: (s) => s.loading,
   },
 
   actions: {
@@ -84,23 +84,49 @@ export const useCompaniesStore = defineStore('companies', {
       this.error = null
       try {
         const res = await secureAxios.post('/companies', companyData)
+
         const ok = res?.data?.success ?? !!res?.data
         if (!ok) {
           this.error = res?.data?.message || 'Failed to create company'
           throw new Error(this.error)
         }
+
         const created = normalizeCompany(extractCompany(res?.data))
+
         // Inserta o reemplaza si ya existe
         const idx = this.companies.findIndex(c => c._id === created._id)
         if (idx === -1) this.companies.unshift(created)
         else this.companies.splice(idx, 1, created)
+
         return created
       } catch (err) {
         console.error('[companies.createCompany] error:', err)
-        this.error = this.error || 'Could not create company'
-        throw err
+
+        let msg = this.error // por si ya lo seteaste arriba
+
+        if (!msg) {
+          if (err.response) {
+            // Errores HTTP (4xx, 5xx) con payload del backend
+            const { data, status, statusText } = err.response
+            msg =
+              data?.message ||              // ej: "Missing required fields: email"
+              data?.error ||
+              `Error ${status}: ${statusText || 'Request failed'}`
+          } else if (err.request) {
+            // No hubo respuesta del servidor
+            msg = 'No se pudo contactar al servidor. Intenta nuevamente.'
+          } else {
+            // Error al construir/enviar la petición
+            msg = err.message || 'Could not create company'
+          }
+        }
+
+        this.error = msg
+        // re-lanzamos un Error limpio con el mensaje que quieres mostrar
+        throw new Error(msg)
       }
     },
+
 
     async getCompanyById(id) {
       this.error = null

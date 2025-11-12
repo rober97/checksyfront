@@ -175,8 +175,11 @@ const EMPTY = () => ({
   password: '',
   passwordConfirm: ''
 })
+
 const clean = (v = {}) => {
-  const x = EMPTY(), s = v || {}, w = s.workScheduleChoice || {}
+  const x = EMPTY()
+  const s = v || {}
+  const w = s.workScheduleChoice || {}
   x.firstName = s.firstName ?? ''
   x.lastName  = s.lastName  ?? ''
   x.email     = s.email     ?? ''
@@ -184,11 +187,15 @@ const clean = (v = {}) => {
   x.empresa   = s.empresa   ?? null
   x.rut       = s.rut       ?? ''
   x.horarioLaboralId = s.horarioLaboralId ?? null
-  x.workScheduleChoice = { mode: w.mode ?? 'companyDefault', scheduleId: w.scheduleId ?? null }
+  x.workScheduleChoice = {
+    mode: w.mode ?? 'companyDefault',
+    scheduleId: w.scheduleId ?? null
+  }
   x.password  = s.password  ?? ''
   x.passwordConfirm = s.passwordConfirm ?? ''
   return x
 }
+
 const stableStringify = (o) => JSON.stringify(o)
 const isEqualClean = (a, b) => stableStringify(clean(a)) === stableStringify(clean(b))
 
@@ -213,29 +220,59 @@ const rutRules = computed(() =>
 )
 
 /* Sincronización Padre -> Hijo */
-watch(() => props.modelValue, (v) => {
-  const src = clean(v)
-  if (!isEqualClean(src, local)) {
-    syncing = true
-    Object.assign(local, src)
-    queueMicrotask(() => { syncing = false })
-  }
-}, { deep: true, immediate: true })
+watch(
+  () => props.modelValue,
+  (v) => {
+    const src = clean(v)
+    if (!isEqualClean(src, local)) {
+      syncing = true
+      Object.assign(local, src)
+      queueMicrotask(() => { syncing = false })
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 /* Sincronización Hijo -> Padre */
-watch(local, (v) => {
-  if (syncing) return
-  const out = clean(v)
-  if (!isEqualClean(out, props.modelValue)) {
-    emit('update:modelValue', structuredClone(out))
-  }
-}, { deep: true })
+watch(
+  local,
+  (v) => {
+    if (syncing) return
+    const out = clean(v)
+    if (!isEqualClean(out, props.modelValue)) {
+      emit('update:modelValue', structuredClone(out))
+    }
+  },
+  { deep: true }
+)
 
-/* Emitir cambios de tipo */
-watch(() => local.tipo, (nv, ov) => {
-  if (syncing) return
-  if (nv !== ov) emit('tipo-change', nv)
-})
+/* Emitir cambios de tipo y limpiar cuando es admin */
+watch(
+  () => local.tipo,
+  (nv, ov) => {
+    if (syncing) return
+    if (nv === ov) return
+    emit('tipo-change', nv)
+
+    if (nv === 'admin') {
+      // Para admin no queremos empresa ni horario
+      local.empresa = null
+      local.workScheduleChoice = { mode: 'companyDefault', scheduleId: null }
+    }
+  }
+)
+
+/* Reset de horario cuando cambia de empresa */
+watch(
+  () => local.empresa,
+  (nv, ov) => {
+    if (syncing) return
+    if (nv !== ov) {
+      // Nueva empresa -> limpiamos elección de horario
+      local.workScheduleChoice = { mode: 'companyDefault', scheduleId: null }
+    }
+  }
+)
 
 /* Utilidades */
 const matchPasswordRule = (v) => v === local.password || 'Las contraseñas no coinciden'
@@ -262,16 +299,16 @@ function togglePass () { showPass.value = !showPass.value }
 const passScore = computed(() => {
   const p = String(local.password || '')
   let s = 0
-  if (p.length >= 8) s += .25
-  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s += .25
-  if (/\d/.test(p)) s += .25
-  if (/[^A-Za-z0-9]/.test(p)) s += .25
+  if (p.length >= 8) s += 0.25
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s += 0.25
+  if (/\d/.test(p)) s += 0.25
+  if (/[^A-Za-z0-9]/.test(p)) s += 0.25
   return Math.min(1, s)
 })
 const passLabel = computed(() => {
   const v = passScore.value
-  if (v >= .9) return 'Fuerte'
-  if (v >= .6) return 'Media'
+  if (v >= 0.9) return 'Fuerte'
+  if (v >= 0.6) return 'Media'
   if (v > 0)   return 'Débil'
   return '—'
 })
