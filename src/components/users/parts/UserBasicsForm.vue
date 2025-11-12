@@ -1,98 +1,145 @@
 <template>
-  <div class="rk-form-grid">
-    <!-- Nombre -->
-    <q-input
-      v-model="local.firstName"
-      label="Nombre"
-      dense outlined clearable
-      :rules="[req]"
-    />
+  <div class="rk-user-card">
+    <!-- Encabezado -->
+    <div class="rk-user-header row items-center q-mb-sm">
+      <q-icon name="person_add" size="22px" class="q-mr-sm" />
+      <div class="text-subtitle1 text-weight-medium">Datos del usuario</div>
+      <q-space />
+      <q-chip square dense class="rk-user-chip">
+        {{ local.tipo === 'admin' ? 'Rol: Admin' : 'Rol: Empleado' }}
+      </q-chip>
+    </div>
 
-    <!-- Apellido -->
-    <q-input
-      v-model="local.lastName"
-      label="Apellido"
-      dense outlined clearable
-      :rules="[req]"
-    />
+    <q-banner class="rk-user-help q-mb-md">
+      <q-icon name="info" class="q-mr-sm" />
+      Completa los datos. Los campos marcados son obligatorios. Puedes generar la contraseña automáticamente.
+    </q-banner>
 
-    <!-- Email -->
-    <q-input
-      v-model="local.email"
-      label="Correo electrónico"
-      type="email"
-      dense outlined clearable
-      :rules="[req, emailRule]"
-      @blur="local.email = (local.email || '').trim().toLowerCase()"
-    />
+    <!-- GRID -->
+    <div class="rk-user-grid">
+      <!-- ===== Identidad ===== -->
+      <div class="rk-section-title rk-span-2">Identidad</div>
 
-    <!-- Rol -->
-    <q-option-group
-      v-model="local.tipo"
-      :options="roleOpts"
-      inline
-      class="rk-roles"
-    />
+      <q-input
+        v-model="local.firstName"
+        label="Nombre"
+        dense outlined clearable
+        :rules="[req]"
+        autocomplete="given-name"
+      />
+      <q-input
+        v-model="local.lastName"
+        label="Apellido"
+        dense outlined clearable
+        :rules="[req]"
+        autocomplete="family-name"
+      />
 
-    <!-- Empresa -->
-    <CompanySearchSelect
-      v-if="local.tipo !== 'admin'"
-      v-model="local.empresa"
-      :rules="[req]"
-      label="Empresa"
-      @created="onCompanyCreated"
-    />
+      <!-- RUT y correo lado a lado en Identidad -->
+      <q-input
+        v-model="local.rut"
+        label="RUT (sin puntos, con guion)"
+        dense outlined clearable
+        :rules="rutRules"
+        placeholder="11111111-1"
+        @blur="formatRut"
+      >
+        <template #append>
+          <q-icon name="badge" />
+          <q-tooltip class="rk-tip-pop">Ej.: 11111111-1</q-tooltip>
+        </template>
+      </q-input>
 
-    <!-- RUT -->
-    <q-input
-      v-if="local.tipo === 'empleado'"
-      v-model="local.rut"
-      label="RUT (sin puntos, con guión)"
-      dense outlined clearable
-      :rules="[req, rutRule]"
-      @blur="formatRut"
-      placeholder="11111111-1"
-    />
+      <q-input
+        v-model="local.email"
+        label="Correo electrónico"
+        type="email"
+        dense outlined clearable
+        :rules="[req, emailRule]"
+        autocomplete="email"
+        @blur="local.email = (local.email || '').trim().toLowerCase()"
+      />
 
-    <!-- Horario laboral -->
-    <SchedulePicker
-      v-if="local.tipo === 'empleado'"
-      v-model="local.workScheduleChoice"
-      :company-id="local.empresa"
-      :company="companyObj"
-      @preview="onPreviewSchedule"
-      @created="onScheduleCreated"
-    />
-
-    <!-- Contraseña -->
-    <q-input
-      v-model="local.password"
-      :type="showPass ? 'text' : 'password'"
-      label="Contraseña"
-      dense outlined clearable
-      :rules="[passMin]"
-    >
-      <template #append>
-        <q-btn
-          flat dense round
-          :icon="showPass ? 'visibility' : 'visibility_off'"
-          @click="showPass = !showPass"
+      <!-- ===== Rol ===== -->
+      <div class="rk-section-title rk-span-2">Rol</div>
+      <div class="rk-span-2">
+        <q-option-group
+          v-model="local.tipo"
+          :options="roleOpts"
+          inline
+          class="rk-roles"
         />
-        <q-btn
-          flat dense round icon="auto_fix_high"
-          @click="generatePassword"
-        />
-      </template>
-    </q-input>
+        <q-banner v-if="local.tipo === 'admin'" class="rk-tip q-mt-sm">
+          <q-icon name="admin_panel_settings" class="q-mr-xs" />
+          Para administradores, el RUT no es obligatorio y no se requiere empresa ni horario.
+        </q-banner>
+      </div>
 
-    <!-- Confirmación -->
-    <q-input
-      v-model="local.passwordConfirm"
-      :type="showPass ? 'text' : 'password'"
-      label="Confirmar contraseña"
-      dense outlined clearable
-      :rules="[matchPasswordRule]"
-    />
+      <!-- ===== Vinculación (solo empleados) ===== -->
+      <div v-if="local.tipo !== 'admin'" class="rk-section-title rk-span-2">Vinculación</div>
+
+      <CompanySearchSelect
+        v-if="local.tipo !== 'admin'"
+        v-model="local.empresa"
+        class="rk-span-2"
+        :rules="[req]"
+        label="Empresa"
+        @created="onCompanyCreated"
+      />
+
+      <SchedulePicker
+        v-if="local.tipo === 'empleado'"
+        class="rk-span-2"
+        v-model="local.workScheduleChoice"
+        :company-id="local.empresa"
+        :company="companyObj"
+        :disable="!local.empresa"
+        @preview="onPreviewSchedule"
+        @created="onScheduleCreated"
+      />
+
+      <!-- ===== Acceso ===== -->
+      <div class="rk-section-title rk-span-2">Acceso</div>
+
+      <q-input
+        v-model="local.password"
+        :type="showPass ? 'text' : 'password'"
+        label="Contraseña"
+        dense outlined clearable
+        :rules="[passMin]"
+        autocomplete="new-password"
+      >
+        <template #append>
+          <q-btn flat dense round :icon="showPass ? 'visibility' : 'visibility_off'" @click="togglePass" />
+          <q-btn flat dense round icon="auto_fix_high" @click="generatePassword" />
+          <q-btn flat dense round icon="content_copy" @click="copyPassword" />
+        </template>
+        <template #hint>
+          <div class="row items-center no-wrap">
+            <q-linear-progress :value="passScore" size="6px" rounded class="col q-mr-sm" />
+            <span class="text-caption">{{ passLabel }}</span>
+          </div>
+        </template>
+      </q-input>
+
+      <q-input
+        v-model="local.passwordConfirm"
+        :type="showPass ? 'text' : 'password'"
+        label="Confirmar contraseña"
+        dense outlined clearable
+        :rules="[matchPasswordRule]"
+        autocomplete="new-password"
+      >
+        <template #append>
+          <q-btn flat dense round :icon="showPass ? 'visibility' : 'visibility_off'" @click="togglePass" />
+        </template>
+      </q-input>
+
+      <q-banner v-if="local.password && !passwordsMatch" class="rk-warn rk-span-2 q-mt-xs">
+        <q-icon name="warning" class="q-mr-sm" />
+        Las contraseñas no coinciden.
+      </q-banner>
+    </div>
   </div>
 </template>
 
@@ -108,19 +155,14 @@ import {
 import CompanySearchSelect from '@/components/companies/CompanySearchSelect.vue'
 import SchedulePicker from '@/components/users/SchedulePicker.vue'
 
-/* =========================
-   Props / Emits
-========================= */
+/* Props / Emits */
 const props = defineProps({
   modelValue: { type: Object, required: true },
-  // opcional: lista cruda para mostrar nombre de empresa
   empresasRaw: { type: Array, default: () => [] }
 })
 const emit = defineEmits(['update:modelValue', 'tipo-change', 'preview-schedule'])
 
-/* =========================
-   Campos que sí nos importan
-========================= */
+/* Estado base */
 const EMPTY = () => ({
   firstName: '',
   lastName: '',
@@ -133,95 +175,76 @@ const EMPTY = () => ({
   password: '',
   passwordConfirm: ''
 })
-
-// extraemos SOLO estos campos y en orden estable
-function clean(v = {}) {
-  const x = EMPTY()
-  const src = v || {}
-  x.firstName = src.firstName ?? ''
-  x.lastName = src.lastName ?? ''
-  x.email = src.email ?? ''
-  x.tipo = src.tipo ?? 'empleado'
-  x.empresa = src.empresa ?? null
-  x.rut = src.rut ?? ''
-  x.horarioLaboralId = src.horarioLaboralId ?? null
-  const w = src.workScheduleChoice || {}
-  x.workScheduleChoice = {
-    mode: w.mode ?? 'companyDefault',
-    scheduleId: w.scheduleId ?? null
-  }
-  x.password = src.password ?? ''
-  x.passwordConfirm = src.passwordConfirm ?? ''
+const clean = (v = {}) => {
+  const x = EMPTY(), s = v || {}, w = s.workScheduleChoice || {}
+  x.firstName = s.firstName ?? ''
+  x.lastName  = s.lastName  ?? ''
+  x.email     = s.email     ?? ''
+  x.tipo      = s.tipo      ?? 'empleado'
+  x.empresa   = s.empresa   ?? null
+  x.rut       = s.rut       ?? ''
+  x.horarioLaboralId = s.horarioLaboralId ?? null
+  x.workScheduleChoice = { mode: w.mode ?? 'companyDefault', scheduleId: w.scheduleId ?? null }
+  x.password  = s.password  ?? ''
+  x.passwordConfirm = s.passwordConfirm ?? ''
   return x
 }
-
-const stableStringify = (o) => JSON.stringify(o) // ya viene en orden fijo por clean()
-
+const stableStringify = (o) => JSON.stringify(o)
 const isEqualClean = (a, b) => stableStringify(clean(a)) === stableStringify(clean(b))
 
-/* =========================
-   Estado local
-========================= */
+/* Estado local */
 const local = reactive(clean(props.modelValue))
 const showPass = ref(false)
 const roleOpts = [
   { label: 'Empleado', value: 'empleado' },
   { label: 'Admin',    value: 'admin' }
 ]
-
 let syncing = false
 
-// Padre -> Hijo (solo si cambió el payload limpio)
-watch(
-  () => props.modelValue,
-  (v) => {
-    const src = clean(v)
-    if (!isEqualClean(src, local)) {
-      syncing = true
-      Object.assign(local, src)
-      // microtask para evitar que el watcher de salida dispare en el mismo tick
-      queueMicrotask(() => { syncing = false })
-    }
-  },
-  { deep: true, immediate: true }
-)
-
-// Hijo -> Padre (solo si cambió el payload limpio)
-watch(
-  local,
-  (v) => {
-    if (syncing) return
-    const out = clean(v)
-    if (!isEqualClean(out, props.modelValue)) {
-      emit('update:modelValue', structuredClone(out))
-    }
-  },
-  { deep: true }
-)
-
-// Emitir tipo-change SOLO cuando cambia 'tipo'
-watch(
-  () => local.tipo,
-  (nv, ov) => {
-    if (syncing) return
-    if (nv !== ov) emit('tipo-change', nv)
-  }
-)
-
-/* =========================
-   Reglas y utilidades
-========================= */
+/* Reglas RUT dinámicas: obligatorio solo para empleado */
 const rutRule = (value) => {
   if (!value) return true
   try { return validarRUT(value) || 'RUT inválido' } catch { return true }
 }
+const rutRules = computed(() =>
+  local.tipo === 'empleado'
+    ? [req, rutRule]
+    : [rutRule] // opcional para admin
+)
+
+/* Sincronización Padre -> Hijo */
+watch(() => props.modelValue, (v) => {
+  const src = clean(v)
+  if (!isEqualClean(src, local)) {
+    syncing = true
+    Object.assign(local, src)
+    queueMicrotask(() => { syncing = false })
+  }
+}, { deep: true, immediate: true })
+
+/* Sincronización Hijo -> Padre */
+watch(local, (v) => {
+  if (syncing) return
+  const out = clean(v)
+  if (!isEqualClean(out, props.modelValue)) {
+    emit('update:modelValue', structuredClone(out))
+  }
+}, { deep: true })
+
+/* Emitir cambios de tipo */
+watch(() => local.tipo, (nv, ov) => {
+  if (syncing) return
+  if (nv !== ov) emit('tipo-change', nv)
+})
+
+/* Utilidades */
 const matchPasswordRule = (v) => v === local.password || 'Las contraseñas no coinciden'
+const passwordsMatch = computed(() => !local.password || local.passwordConfirm === local.password)
 
 function formatRut () {
   if (!local.rut) return
   try { local.rut = formatearRUT(local.rut) } catch {}
 }
-
 function generatePassword () {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*_-'
   let out = ''
@@ -229,10 +252,31 @@ function generatePassword () {
   local.password = out
   local.passwordConfirm = ''
 }
+function copyPassword () {
+  if (!local.password) return
+  navigator?.clipboard?.writeText?.(local.password).catch(() => {})
+}
+function togglePass () { showPass.value = !showPass.value }
 
-/* =========================
-   Empresa (obj opcional)
-========================= */
+/* Indicador simple de fortaleza */
+const passScore = computed(() => {
+  const p = String(local.password || '')
+  let s = 0
+  if (p.length >= 8) s += .25
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s += .25
+  if (/\d/.test(p)) s += .25
+  if (/[^A-Za-z0-9]/.test(p)) s += .25
+  return Math.min(1, s)
+})
+const passLabel = computed(() => {
+  const v = passScore.value
+  if (v >= .9) return 'Fuerte'
+  if (v >= .6) return 'Media'
+  if (v > 0)   return 'Débil'
+  return '—'
+})
+
+/* Datos de empresa (opcional) */
 const companyObj = computed(() => {
   const id = String(local.empresa || '')
   if (!id) return null
@@ -240,36 +284,91 @@ const companyObj = computed(() => {
   return arr.find(e => String(e.id || e._id) === id) || null
 })
 
-/* =========================
-   Child events
-========================= */
-function onCompanyCreated (company) {
-  if (company?._id) local.empresa = company._id
-}
-function onPreviewSchedule (id) {
-  if (id) emit('preview-schedule', id)
-}
-function onScheduleCreated () {
-  // opcional: toast/notificación
-}
+/* Eventos hijos */
+function onCompanyCreated (company) { if (company?._id) local.empresa = company._id }
+function onPreviewSchedule (id)    { if (id) emit('preview-schedule', id) }
+function onScheduleCreated ()      { /* opcional */ }
 </script>
 
 <style scoped>
-.rk-form-grid {
+/* Tarjeta */
+.rk-user-card {
+  border-radius: 14px;
+  border: 1px solid var(--rk-user-border, rgba(0,0,0,.08));
+  background:
+    linear-gradient(180deg, rgba(2,6,23,.02), transparent 60%),
+    var(--rk-user-bg, #fff);
+  padding: 14px;
+}
+
+/* Encabezado */
+.rk-user-chip {
+  background: rgba(59,130,246,.12);
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+/* Ayudas y avisos */
+.rk-user-help {
+  border-radius: 10px;
+  background: var(--rk-user-help-bg, #f3f5f7);
+  color: var(--rk-user-help-fg, #1f2937);
+  padding: 10px 12px;
+}
+.rk-tip {
+  border-left: 4px solid #10b981;
+  background: rgba(16,185,129,.10);
+  color: #065f46;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.rk-warn {
+  border-left: 4px solid #f59e0b;
+  background: rgba(245,158,11,.10);
+  color: #7c4a00;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.rk-tip-pop { max-width: 220px; }
+
+/* Títulos de sección */
+.rk-section-title {
+  font-weight: 600;
+  color: var(--rk-user-title, #111827);
+  margin: 2px 0 2px;
+}
+
+/* Grid */
+.rk-user-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 12px;
-  background: #ffffff;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px 14px;
 }
-.body--dark .rk-form-grid {
-  background: #15181f;
-  border-color: #2a2f39;
+.rk-span-2 { grid-column: 1 / -1; }
+
+/* Roles */
+.rk-roles { padding: 2px 0 0; }
+
+/* Modo oscuro */
+.body--dark .rk-user-card {
+  --rk-user-bg: #0b1220;
+  --rk-user-border: rgba(255,255,255,.08);
 }
-.rk-roles {
-  grid-column: 1 / -1;
-  padding: 4px 0 8px;
+.body--dark .rk-user-help {
+  --rk-user-help-bg: rgba(255,255,255,.06);
+  --rk-user-help-fg: #e5e7eb;
+}
+.body--dark .rk-tip {
+  background: rgba(16,185,129,.18);
+  color: #a7f3d0;
+}
+.body--dark .rk-warn {
+  background: rgba(245,158,11,.18);
+  color: #ffd28a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rk-user-grid { grid-template-columns: 1fr; }
 }
 </style>

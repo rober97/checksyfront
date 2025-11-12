@@ -2,7 +2,7 @@
   <div class="rk-ws">
     <div class="rk-label q-mb-xs">Horario laboral</div>
 
-    <!-- MODO -->
+    <!-- MODOS -->
     <q-option-group
       v-model="mode"
       type="radio"
@@ -28,10 +28,11 @@
       />
     </q-banner>
 
-    <!-- PICK TEMPLATE -->
+    <!-- ELEGIR PLANTILLA -->
     <div v-if="mode === 'pickTemplate'" class="row q-col-gutter-sm q-mb-sm">
       <div class="col-12 col-sm-8">
         <q-select
+          ref="selRef"
           v-model="selectedId"
           :disable="!companyId"
           label="Seleccionar plantilla"
@@ -39,11 +40,14 @@
           option-value="_id"
           option-label="name"
           dense outlined clearable
-          use-input fill-input emit-value map-options
+          use-input
+          emit-value map-options
           :loading="loading"
-          :input-debounce="250"
+          :input-debounce="200"
+          :display-value="displayValue"
           @filter="onFilter"
-          @popup-hide="clearQuery"
+          @popup-show="onMenuOpen"
+          @popup-hide="onMenuHide"
         >
           <template #prepend><q-icon name="schedule" /></template>
 
@@ -60,17 +64,18 @@
             </q-item>
           </template>
 
+          <!-- Sin resultados / aún sin escribir -->
           <template #no-option>
             <div class="q-pa-xs column q-gutter-xs">
               <div class="text-caption text-grey-7">
                 {{ !companyId
-                  ? 'Selecciona una empresa para ver horarios.'
-                  : hasQuery
-                    ? `Sin resultados para «${qDisplay}»`
-                    : `Escribe para buscar horarios…` }}
+                    ? 'Selecciona una empresa para ver horarios.'
+                    : hasQuery
+                      ? `Sin resultados para «${qDisplay}»`
+                      : 'Escribe para buscar horarios…' }}
               </div>
 
-              <!-- Crear rápido desde picker -->
+              <!-- Crear rápido desde lo escrito -->
               <q-item
                 v-if="companyId && (hasQuery || !options.length)"
                 clickable
@@ -110,16 +115,17 @@
       class="rk-section rk-banner row items-center justify-between q-mb-sm"
     >
       <div class="text-caption">
-        Crea una plantilla rápida (L–V 09:00–18:00 con 1h colación — editable).
+        Crea una plantilla rápida (L–V 09:00–18:00 con 1h de colación — editable).
       </div>
       <q-btn
         color="primary" dense icon="add"
         label="Configurar y crear"
-        @click="openQuick()" :disable="!companyId"
+        :disable="!companyId"
+        @click="openQuick()"
       />
     </q-banner>
 
-    <!-- DIALOG -->
+    <!-- DIALOGO CREAR -->
     <q-dialog v-model="quickOpen" persistent>
       <q-card class="rk-dialog">
         <q-card-section class="row items-center">
@@ -134,13 +140,13 @@
           <div class="row q-col-gutter-sm">
             <q-input v-model="quick.name" class="col-12" label="Nombre" dense outlined />
 
-            <q-input v-model="quick.start"      class="col-6" label="Entrada (HH:mm)"        dense outlined :rules="[hhmm]" />
-            <q-input v-model="quick.lunchStart" class="col-6" label="Inicio colación (HH:mm)" dense outlined :rules="[hhmmOpt]" />
-            <q-input v-model="quick.lunchEnd"   class="col-6" label="Fin colación (HH:mm)"    dense outlined :rules="[hhmmOpt]" />
-            <q-input v-model="quick.end"        class="col-6" label="Salida (HH:mm)"          dense outlined :rules="[hhmm]" />
+            <q-input v-model="quick.start"      class="col-6" label="Entrada (HH:mm)"         dense outlined :rules="[hhmm]" />
+            <q-input v-model="quick.lunchStart" class="col-6" label="Inicio colación (HH:mm)"  dense outlined :rules="[hhmmOpt]" />
+            <q-input v-model="quick.lunchEnd"   class="col-6" label="Fin colación (HH:mm)"     dense outlined :rules="[hhmmOpt]" />
+            <q-input v-model="quick.end"        class="col-6" label="Salida (HH:mm)"           dense outlined :rules="[hhmm]" />
 
             <q-toggle v-model="quick.saturday" label="Trabaja sábado" class="col-6" />
-            <q-toggle v-model="quick.sunday"  label="Trabaja domingo" class="col-6" />
+            <q-toggle v-model="quick.sunday"   label="Trabaja domingo" class="col-6" />
           </div>
         </q-card-section>
 
@@ -176,10 +182,10 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'preview', 'created'])
 
-/* ===== anti-eco simple ===== */
+/* ===== util ===== */
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
-/* ===== v-model (obj) ===== */
+/* ===== state v-model ===== */
 const state = ref({ ...props.modelValue })
 watch(() => props.modelValue, v => {
   if (!isEqual(v, state.value)) state.value = { ...v }
@@ -190,91 +196,98 @@ watch(state, v => {
 
 const mode = computed({
   get: () => state.value.mode || 'companyDefault',
-  set: (v) => state.value.mode = v
+  set: v   => (state.value.mode = v)
 })
 const selectedId = computed({
   get: () => state.value.scheduleId || null,
-  set: (v) => state.value.scheduleId = v
+  set: v   => (state.value.scheduleId = v)
 })
-
-/* ===== opciones de modo ===== */
-const modeOpts = [
-  { label: 'Usar horario por defecto de la empresa', value: 'companyDefault' },
-  { label: 'Elegir de plantillas existentes', value: 'pickTemplate' },
-  { label: 'Crear horario rápido', value: 'createQuick' }
-]
 const companyDefaultId = computed(() => props.company?.defaultWorkScheduleId || null)
 
-/* ===== select de plantillas (async search) ===== */
+/* ===== select + búsqueda ===== */
+const selRef = ref(null)
 const options = ref([])
 const loading = ref(false)
 const query = ref('')
+const menuOpen = ref(false)
 
-const hasQuery = computed(() => (query.value || '').trim().length > 0)
-const qDisplay = computed(() => (query.value || '').trim())
+const hasQuery   = computed(() => (query.value || '').trim().length > 0)
+const qDisplay   = computed(() => (query.value || '').trim())
 
-// cache y cancelación
-const cache = new Map() // key `${companyId}::${q}`
-let controller = null
+// Cache por texto y por id (para display value consistente)
+const cacheByKey = new Map()     // key: `${companyId}::${q}` -> [items]
+const cacheById  = new Map()     // key: scheduleId -> item
+
+// Texto que se muestra cuando NO estás filtrando ni con menú abierto
+const selectedLabel = computed(() => {
+  const id = selectedId.value
+  if (!id) return ''
+  const fromList  = (options.value || []).find(x => x?._id === id)
+  if (fromList) { cacheById.set(id, fromList); return fromList.name || '' }
+  const fromCache = cacheById.get(id)
+  return fromCache?.name || ''
+})
+const displayValue = computed(() => (menuOpen.value || hasQuery.value) ? null : (selectedLabel.value || null))
+
+function onMenuOpen () { menuOpen.value = true }
+function onMenuHide () {
+  menuOpen.value = false
+  query.value = ''   // limpiamos para que 'displayValue' vuelva a aplicarse
+}
+
+/* QSelect @filter: (val, update, abort) */
 const lastKey = ref('')
-
-// QSelect @filter signature: (val, update, abort)
-function onFilter(val, update, abort) {
+let controller = null
+async function onFilter (val, update, abort) {
   if (!props.companyId) { abort(); return }
-
   const q = String(val || '').trim()
   query.value = q
-  const key = `${props.companyId}::${q}`
 
-  // Cache hit
-  if (cache.has(key)) {
-    const list = cache.get(key)
+  const key = `${props.companyId}::${q}`
+  if (cacheByKey.has(key)) {
+    const list = cacheByKey.get(key)
     update(() => { options.value = list })
     return
   }
 
-  // Cancel anterior request
   if (controller) controller.abort()
   controller = new AbortController()
   lastKey.value = key
   loading.value = true
 
-  secureAxios.get('/work-schedule', {
-    params: { companyId: props.companyId, q, limit: 12, active: true },
-    signal: controller.signal
-  })
-  .then(({ data }) => {
+  try {
+    const { data } = await secureAxios.get('/work-schedule', {
+      params: { companyId: props.companyId, q, limit: 12, active: true },
+      signal: controller.signal
+    })
     if (lastKey.value !== key) return
     const list = Array.isArray(data?.items) ? data.items : []
-    cache.set(key, list)
+    list.forEach(it => { if (it?._id) cacheById.set(it._id, it) })
+    cacheByKey.set(key, list)
     update(() => { options.value = list })
-  })
-  .catch(() => {
+  } catch (e) {
     update(() => { options.value = [] })
-  })
-  .finally(() => {
+  } finally {
     if (lastKey.value === key) {
       loading.value = false
       controller = null
     }
-  })
+  }
 }
 
-function clearQuery () { query.value = '' }
-
+// reset al cambiar empresa
 watch(() => props.companyId, () => {
-  // reset al cambiar de empresa
   options.value = []
   query.value = ''
   if (controller) controller.abort()
   if (mode.value === 'pickTemplate') selectedId.value = null
 })
 
-/* ===== preview ===== */
+/* preview */
 function preview (id) { if (id) emit('preview', id) }
 
-/* ===== quick create (dialog) ===== */
-const quickOpen = ref(false)
+/* ===== quick create ===== */
+const quickOpen   = ref(false)
 const savingQuick = ref(false)
 const quick = ref({
   name: 'Horario L–V 09–18',
@@ -285,11 +298,10 @@ const quick = ref({
   saturday: false,
   sunday: false,
 })
+const hhmm    = v => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||'')) || 'Formato HH:mm'
+const hhmmOpt = v => !v || hhmm(v) || 'Formato HH:mm'
 
-const hhmm = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||'')) || 'Formato HH:mm'
-const hhmmOpt = (v) => !v || hhmm(v) || 'Formato HH:mm'
-
-function openQuick () { quickOpen.value = true }
+function openQuick     () { quickOpen.value = true }
 function openQuickFromQuery () {
   if (qDisplay.value) quick.value.name = qDisplay.value
   quickOpen.value = true
@@ -305,14 +317,14 @@ function buildWeekly (q) {
     thu: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
     fri: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
     sat: q.saturday ? seg(q.start, q.end) : [],
-    sun: q.sunday  ? seg(q.start, q.end) : [],
+    sun: q.sunday   ? seg(q.start, q.end) : [],
   }
 }
 
 async function createQuick () {
   if (!props.companyId) return
 
-  const baseOk = hhmm(quick.value.start) === true && hhmm(quick.value.end) === true
+  const baseOk  = hhmm(quick.value.start) === true && hhmm(quick.value.end) === true
   const lunchOk = hhmmOpt(quick.value.lunchStart) === true && hhmmOpt(quick.value.lunchEnd) === true
   if (!baseOk || !lunchOk) return
 
@@ -327,16 +339,19 @@ async function createQuick () {
     const { data } = await secureAxios.post('/work-schedule', payload)
     const item = data?.item || data?.schedule || data
     if (item?._id) {
-      // Cambia modo, selecciona y actualiza lista/cache
       mode.value = 'pickTemplate'
       selectedId.value = item._id
 
+      // Asegura que el nombre del seleccionado esté disponible para display-value
+      cacheById.set(item._id, item)
+
+      // insertar/actualizar lista y cache de búsqueda actual
       const key = `${props.companyId}::${qDisplay.value}`
       const list = (options.value || []).slice()
       const idx = list.findIndex(x => x._id === item._id)
       if (idx >= 0) list.splice(idx, 1, item); else list.unshift(item)
       options.value = list
-      cache.set(key, list)
+      cacheByKey.set(key, list)
 
       emit('created', item)
       quickOpen.value = false
@@ -348,7 +363,7 @@ async function createQuick () {
 </script>
 
 <style scoped>
-/* ========= Layout sólido (sin transparencias) ========= */
+/* ========= Layout ========= */
 .rk-ws {
   background: var(--rk-surface);
   border: 1px solid var(--rk-border);
@@ -371,7 +386,7 @@ async function createQuick () {
 .rk-banner { min-height: 44px; }
 .rk-modes :deep(.q-option-group) { gap: 8px; }
 
-/* Quick-create item dentro del select */
+/* Opción "crear" en el menú */
 .rk-create-item {
   border: 1px solid #c9defa;
   border-radius: 10px;
@@ -386,7 +401,7 @@ async function createQuick () {
 .rk-create-avatar { background: #d6e8ff; color: #1976d2; }
 .rk-mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
 
-/* Dialog */
+/* Diálogo */
 .rk-dialog { min-width: 560px; max-width: 96vw; border-radius: 12px; }
 @media (max-width: 640px) { .rk-dialog { min-width: calc(100vw - 32px); } }
 
@@ -403,7 +418,6 @@ async function createQuick () {
   --rk-soft: #0f1216;
   --rk-muted: #9aa3b2;
 }
-
 .body--dark .rk-create-item { border-color: #2a3b56; background: #172034; }
 .body--dark .rk-create-item:hover { background: #1b2740; }
 .body--dark .rk-create-avatar { background: #12243f; color: #8ab6ff; }
