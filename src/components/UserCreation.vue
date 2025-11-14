@@ -346,9 +346,10 @@ async function submitForm() {
   const payload = mapPayload(form.value, { invitar: invitar.value });
   try {
     saving.value = true;
-    await userStore.createUser(payload);
+    const data = await userStore.createUser(payload);
     toast.success("Usuario creado correctamente.");
     emit("created");
+    emit('saved', data) // o emit('guardar', data) si mantienes el nombre
     dialogVisible.value = false;
   } catch {
     toast.error(userStore.error || "No se pudo crear el usuario.");

@@ -244,6 +244,7 @@
       :empresas="empresas"
       :horarios="horarios"
       @guardar="guardarUsuario"
+      @saved="onUserSaved"
     />
     <EditUserDialog
       v-model="dialogoEditar"
@@ -334,24 +335,6 @@ const columns = [
 const dialogoNuevo = ref(false);
 const empresas = ref([]);
 const horarios = ref([]);
-const loadEmpresas = async () => {
-  await companiesStore.fetchCompanies();
-  empresas.value = (companiesStore.companies || []).map((e) => ({
-    id: e._id,
-    name: e.name,
-  }));
-};
-const loadHorariosAll = async () => {
-  horarios.value = [];
-  for (const e of empresas.value) {
-    await companiesStore.fetchWorkSchedulesByCompany?.(e.id);
-    const hs = (companiesStore.workSchedules || []).map((h) => ({
-      id: h._id,
-      name: h.name,
-    }));
-    horarios.value.push(...hs);
-  }
-};
 
 /* Utilidad filtros */
 const applyFilters = (list, { q, role, company }) => {
@@ -575,14 +558,25 @@ const maxPages = computed(() =>
   )
 );
 
+// UsersPage.vue
+const lastCreatedId = ref(null);
+
+const onUserSaved = async (u) => {
+  dialogoNuevo.value = false;
+  userStore.upsertUser(u); // 👈 aparece al tiro sin esperar GET
+  lastCreatedId.value = u._id; // (opcional) para resaltar fila
+  // y además haz un refresh “real” para quedar 100% consistente:
+  await userStore.fetchUsers();
+  pagination.value.page = 1;
+  reload();
+};
+
 const toolbarRef = ref(null);
 const toolbarSentinel = ref(null);
 const stickyToolbar = ref(false);
 let observer;
 
 onMounted(async () => {
-  await loadEmpresas();
-  await loadHorariosAll();
   reload();
   observer = new IntersectionObserver(
     (entries) => {

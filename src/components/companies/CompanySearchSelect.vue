@@ -1,5 +1,6 @@
 <template>
   <q-select
+    v-bind="$attrs"
     ref="selRef"
     v-model="innerValue"
     :label="label"
@@ -35,14 +36,26 @@
         <q-item-section avatar>
           <q-avatar square size="32px" class="rk-company-search__logo">
             <img v-if="scope.opt.logo" :src="scope.opt.logo" alt="logo" />
-            <q-icon v-else name="apartment" class="rk-company-search__logo-icon" />
+            <q-icon
+              v-else
+              name="apartment"
+              class="rk-company-search__logo-icon"
+            />
           </q-avatar>
         </q-item-section>
         <q-item-section>
-          <q-item-label class="rk-company-search__name">{{ scope.opt.name }}</q-item-label>
-          <q-item-label caption class="rk-company-search__rut">{{ scope.opt.rut || "—" }}</q-item-label>
+          <q-item-label class="rk-company-search__name">{{
+            scope.opt.name
+          }}</q-item-label>
+          <q-item-label caption class="rk-company-search__rut">{{
+            scope.opt.rut || "—"
+          }}</q-item-label>
         </q-item-section>
-        <q-item-section side v-if="scope.opt.status === 'active'" class="rk-company-search__status">
+        <q-item-section
+          side
+          v-if="scope.opt.status === 'active'"
+          class="rk-company-search__status"
+        >
           <q-badge outline color="positive" label="Activa" />
         </q-item-section>
       </q-item>
@@ -52,10 +65,10 @@
     <template #no-option>
       <div class="rk-company-search__empty">
         <div class="rk-company-search__empty-content">
-          <q-icon 
-            name="search_off" 
-            size="32px" 
-            class="rk-company-search__empty-icon" 
+          <q-icon
+            name="search_off"
+            size="32px"
+            class="rk-company-search__empty-icon"
           />
           <div class="rk-company-search__empty-text">
             <div class="text-grey-7">
@@ -89,10 +102,10 @@
   </q-select>
 
   <!-- Diálogo de creación -->
-  <CompanyDialog 
-    v-model="dlgOpen" 
-    :editData="prefill" 
-    @saved="onCreated" 
+  <CompanyDialog
+    v-model="dlgOpen"
+    :editData="prefill"
+    @saved="onCreated"
     @error="onCreationError"
   />
 </template>
@@ -102,6 +115,8 @@ import { ref, watch, computed, nextTick } from "vue";
 import { useQuasar } from "quasar";
 import secureAxios from "@/utils/secureRequest";
 import CompanyDialog from "@/components/companies/CompanyDialog.vue";
+
+defineOptions({ inheritAttrs: false }); // ⬅️ clave
 
 /* props */
 const props = defineProps({
@@ -217,9 +232,9 @@ const prefill = ref(null);
 const creating = ref(false);
 
 function openCreate(name) {
-  prefill.value = { 
+  prefill.value = {
     name: (name || "").trim(),
-    status: "active"
+    status: "active",
   };
   dlgOpen.value = true;
   creating.value = true;
@@ -247,7 +262,7 @@ async function onCreated(payload) {
   const company = normalizeCompany(payload);
   dlgOpen.value = false;
   creating.value = false;
-  
+
   if (!company) {
     $q.notify({
       type: "negative",
@@ -260,23 +275,23 @@ async function onCreated(payload) {
 
   // A) agregar/actualizar en lista
   upsertOption(company);
-  
+
   // B) seleccionar automáticamente si está habilitado
   if (props.autoSelectCreated) {
     // Usar nextTick para asegurar que el DOM esté actualizado
     await nextTick();
     innerValue.value = company._id;
-    
+
     // Notificar al padre
     emit("created", company);
-    
+
     // C) cerrar popup para feedback inmediato
     try {
       selRef.value?.hidePopup?.();
     } catch (err) {
       console.warn("No se pudo cerrar el popup:", err);
     }
-    
+
     // Feedback visual
     $q.notify({
       type: "positive",
@@ -413,7 +428,8 @@ function onCreationError(error) {
   gap: 16px;
   padding: 16px 20px;
   border-radius: 12px;
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     color-mix(in srgb, var(--q-grey-2) 60%, transparent),
     color-mix(in srgb, var(--q-grey-1) 40%, transparent)
   );
@@ -440,8 +456,9 @@ function onCreationError(error) {
 
 /* Botón de creación - DISEÑO SUPERIOR */
 .rk-company-search__create-btn {
-  background: linear-gradient(135deg, 
-    var(--q-primary), 
+  background: linear-gradient(
+    135deg,
+    var(--q-primary),
     color-mix(in srgb, var(--q-primary) 70%, #3a7bd5)
   );
   color: white !important;
@@ -450,8 +467,7 @@ function onCreationError(error) {
   font-size: 0.82rem;
   text-transform: none;
   letter-spacing: 0.4px;
-  box-shadow: 
-    0 4px 14px color-mix(in srgb, var(--q-primary) 35%, transparent),
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--q-primary) 35%, transparent),
     0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
@@ -461,13 +477,14 @@ function onCreationError(error) {
 }
 
 .rk-company-search__create-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     transparent,
     rgba(255, 255, 255, 0.2),
     transparent
@@ -477,8 +494,7 @@ function onCreationError(error) {
 
 .rk-company-search__create-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 
-    0 8px 25px color-mix(in srgb, var(--q-primary) 45%, transparent),
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--q-primary) 45%, transparent),
     0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -488,8 +504,7 @@ function onCreationError(error) {
 
 .rk-company-search__create-btn:active {
   transform: translateY(0);
-  box-shadow: 
-    0 2px 8px color-mix(in srgb, var(--q-primary) 30%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--q-primary) 30%, transparent);
 }
 
 .rk-company-search__create-btn :deep(.q-btn__content) {
@@ -510,7 +525,8 @@ function onCreationError(error) {
 
 /* Mejoras para modo oscuro */
 .body--dark .rk-company-search__empty-content {
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     color-mix(in srgb, var(--q-grey-9) 40%, transparent),
     color-mix(in srgb, var(--q-grey-8) 30%, transparent)
   );
@@ -547,13 +563,13 @@ function onCreationError(error) {
     gap: 12px;
     padding: 20px 16px;
   }
-  
+
   .rk-company-search__create-btn {
     width: 100%;
     justify-content: center;
     margin-top: 8px;
   }
-  
+
   .rk-company-search :deep(.q-menu) {
     min-width: calc(100vw - 32px) !important;
     max-width: calc(100vw - 32px) !important;

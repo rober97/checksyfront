@@ -85,7 +85,7 @@ export const useUserStore = defineStore('user', {
             // Errores HTTP (4xx, 5xx) con payload del backend
             const { data, status, statusText } = err.response
 
-            const text = data?.message + data?.error 
+            const text = data?.message + data?.error
             msg = text
           } else if (err.request) {
             // No hubo respuesta del servidor
@@ -192,6 +192,15 @@ export const useUserStore = defineStore('user', {
       this.token = null
       this.user = null
       localStorage.removeItem('token')
+    },
+    // store: añade una acción utilitaria
+    // src/stores/userStore.js
+    upsertUser(user) {
+      if (!user || !user._id) return
+      const idx = this.users.findIndex(u => u._id === user._id)
+      if (idx >= 0) this.users.splice(idx, 1, user)
+      else this.users.unshift(user) // visible arriba
     }
+
   }
 })
