@@ -20,14 +20,12 @@
 
       <!-- CONTROLES -->
       <div class="row items-center header-actions q-gutter-sm">
-        <!-- Presets bonitos (tu SegmentControl) -->
         <SegmentControl
           v-model="rangePreset"
           :options="presetOptions"
           @update:model-value="onPresetChange"
         />
 
-        <!-- Custom range (solo activo cuando 'custom') -->
         <q-input
           dense
           standout="bg"
@@ -116,7 +114,7 @@
       >
     </div>
 
-    <!-- FILTROS SECUNDARIOS -->
+    <!-- FILTROS -->
     <div class="row items-center q-gutter-sm q-mb-sm">
       <q-input
         dense
@@ -188,7 +186,7 @@
       <q-btn flat dense label="Reintentar" class="q-ml-sm" @click="reload" />
     </q-banner>
 
-    <!-- TABLA AGRUPADA POR DÍA -->
+    <!-- TABLA AGRUPADA -->
     <q-card flat bordered>
       <q-card-section>
         <div
@@ -225,6 +223,7 @@
                 <div class="text-weight-bold">
                   {{ formatDateHuman(item.dateISO) }}
                 </div>
+
                 <q-chip
                   dense
                   outline
@@ -245,7 +244,25 @@
                     item.rows.length === 1 ? "" : "s"
                   }}
                 </q-chip>
+
+                <!-- ✅ GALERÍA PRO -->
+                <q-btn
+                  v-if="item.photosCount > 0"
+                  flat
+                  dense
+                  icon="photo_library"
+                  class="q-ml-sm"
+                  @click="openDayGallery(item)"
+                >
+                  <span class="q-ml-xs text-caption"
+                    >{{ item.photosCount }} foto{{
+                      item.photosCount === 1 ? "" : "s"
+                    }}</span
+                  >
+                  <q-tooltip>Ver fotos del día</q-tooltip>
+                </q-btn>
               </div>
+
               <div class="row items-center q-gutter-xs">
                 <q-btn flat dense icon="content_copy" @click="copyDay(item)"
                   >Copiar</q-btn
@@ -345,6 +362,48 @@
                   <span v-else class="text-grey-6">—</span>
                 </q-td>
               </template>
+
+              <!-- ✅ FOTO: UX pro (botón + preview) -->
+              <template #body-cell-photo="props">
+                <q-td :props="props" class="text-center">
+                  <div
+                    v-if="props.row.photo"
+                    class="row items-center justify-center no-wrap q-gutter-xs"
+                  >
+                    <q-avatar
+                      size="34px"
+                      rounded
+                      class="rk-thumb cursor-pointer"
+                      @click="openFromRow(props.row, props.row.__dayKey)"
+                    >
+                      <q-img
+                        :src="thumbSrc(props.row)"
+                        :ratio="1"
+                        fit="cover"
+                        no-spinner
+                        @error="onThumbError(props.row)"
+                      />
+                    </q-avatar>
+
+                    <q-btn
+                      dense
+                      flat
+                      size="sm"
+                      icon="open_in_full"
+                      @click="openFromRow(props.row, props.row.__dayKey)"
+                    >
+                      <q-tooltip>Ver foto</q-tooltip>
+                    </q-btn>
+                  </div>
+
+                  <q-icon
+                    v-else
+                    name="image_not_supported"
+                    color="grey-5"
+                    size="20px"
+                  />
+                </q-td>
+              </template>
             </q-table>
           </template>
         </q-virtual-scroll>
@@ -354,15 +413,131 @@
         </q-inner-loading>
       </q-card-section>
     </q-card>
+
+    <!-- ✅ VISOR PRO (Lightbox) -->
+    <q-dialog
+      v-model="viewer.open"
+      maximized
+      transition-show="slide-up"
+      transition-hide="slide-down"
+    >
+      <q-card class="rk-viewer">
+        <!-- Topbar -->
+        <div
+          class="rk-viewer__top row items-center justify-between q-px-md q-py-sm"
+        >
+          <div class="min-w-0">
+            <div class="text-subtitle1 ellipsis">{{ viewerTitle }}</div>
+            <div class="text-caption text-grey-6">{{ viewerSubtitle }}</div>
+          </div>
+
+          <div class="row items-center q-gutter-xs">
+            <q-btn dense flat round icon="content_copy" @click="copyViewerLink">
+              <q-tooltip>Copiar link</q-tooltip>
+            </q-btn>
+            <q-btn dense flat round icon="open_in_new" @click="openInNewTab">
+              <q-tooltip>Abrir</q-tooltip>
+            </q-btn>
+            <q-btn dense flat round icon="close" @click="closeViewer">
+              <q-tooltip>Cerrar</q-tooltip>
+            </q-btn>
+          </div>
+        </div>
+
+        <!-- Stage -->
+        <div class="rk-viewer__body">
+          <q-btn
+            v-if="viewer.list.length > 1"
+            class="rk-nav rk-nav--left"
+            round
+            flat
+            icon="chevron_left"
+            @click="prevPhoto"
+          />
+          <q-btn
+            v-if="viewer.list.length > 1"
+            class="rk-nav rk-nav--right"
+            round
+            flat
+            icon="chevron_right"
+            @click="nextPhoto"
+          />
+
+          <div class="rk-stage">
+            <q-inner-loading :showing="viewer.loading">
+              <q-spinner size="42px" />
+            </q-inner-loading>
+
+            <q-img
+              v-if="viewer.src && !viewer.error"
+              :src="viewer.src"
+              fit="contain"
+              class="rk-img"
+              no-spinner
+              @error="onViewerError"
+            />
+
+            <div
+              v-else-if="viewer.error"
+              class="rk-error column items-center justify-center"
+            >
+              <q-icon name="broken_image" size="46px" color="negative" />
+              <div class="q-mt-sm text-body2">{{ viewer.error }}</div>
+              <q-btn
+                class="q-mt-md"
+                outline
+                icon="refresh"
+                label="Reintentar"
+                @click="loadCurrentPhoto"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Filmstrip -->
+        <div
+          v-if="viewer.list.length > 1"
+          class="rk-viewer__strip q-px-md q-pb-md"
+        >
+          <div class="rk-strip">
+            <button
+              v-for="(r, i) in viewer.list"
+              :key="r.__id"
+              type="button"
+              class="rk-strip__item"
+              :class="{ active: i === viewer.index }"
+              @click="jumpTo(i)"
+              :title="`${cap(r.tipo)} · ${formatTime(r.timestamp)}`"
+            >
+              <q-img :src="thumbSrc(r)" :ratio="1" fit="cover" no-spinner />
+            </button>
+          </div>
+        </div>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import SegmentControl from "@/components/SegmentControl.vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useAsistenciaStore } from "@/stores/asistenciaStore";
+import { API_URL } from "@/utils/api";
+/**
+ * ✅ CONFIG FOTO
+ * Ajusta SOLO estas rutas si tu API usa otras:
+ *
+ * - PHOTO_STREAM_ENDPOINT: endpoint que entrega la imagen (recommended)
+ *   Ej: GET /api/attendance/photo?bucket=...&key=...
+ *
+ * - PHOTO_SIGNED_ENDPOINT: endpoint que devuelve { url } (optional)
+ *   Ej: GET /api/attendance/photo-url?bucket=...&key=...
+ */
+const API_BASE = API_URL.replace(/\/$/, "");
+const PHOTO_STREAM_ENDPOINT = `${API_BASE}/attendance/photo`; // 👈 base para armar /:id/photo
+const PHOTO_SIGNED_ENDPOINT = `${API_BASE}/attendance/photo-url`;
 
 /* ===== UI / THEME ===== */
 const $q = useQuasar();
@@ -373,7 +548,7 @@ const offline = computed(() => !navigator.onLine);
 const auth = useAuthStore();
 const asistenciaStore = useAsistenciaStore();
 
-/* ===== RANGE + PRESETS (usa tu SegmentControl) ===== */
+/* ===== RANGE + PRESETS ===== */
 const rangePreset = ref(localStorage.getItem("hist.preset") || "7d");
 const range = ref({ from: null, to: null });
 
@@ -428,14 +603,6 @@ function applyCustom() {
   reload();
 }
 
-const periodLabel = computed(() => {
-  if (rangePreset.value === "7d") return "Últimos 7 días";
-  if (rangePreset.value === "30d") return "Últimos 30 días";
-  if (rangePreset.value === "ytd") return "Año en curso";
-  if (rangePreset.value === "all") return "Todo";
-  if (rangePreset.value === "custom") return dateRangeLabel.value;
-  return "—";
-});
 const dateRangeLabel = computed(() => {
   if (rangePreset.value !== "custom") return "Rango personalizado";
   const f = range.value?.from,
@@ -443,6 +610,14 @@ const dateRangeLabel = computed(() => {
   if (!f && !t) return "Seleccionar rango";
   const fmt = (d) => d?.split("-").reverse().join("/") || "—";
   return `${fmt(f)} → ${fmt(t)}`;
+});
+const periodLabel = computed(() => {
+  if (rangePreset.value === "7d") return "Últimos 7 días";
+  if (rangePreset.value === "30d") return "Últimos 30 días";
+  if (rangePreset.value === "ytd") return "Año en curso";
+  if (rangePreset.value === "all") return "Todo";
+  if (rangePreset.value === "custom") return dateRangeLabel.value;
+  return "—";
 });
 
 /* ===== FILTERS ===== */
@@ -472,7 +647,7 @@ const loading = ref(false);
 const error = ref(null);
 const exporting = ref(false);
 
-/* ===== COLUMNS & VISIBILITY ===== */
+/* ===== COLUMNS ===== */
 const allColumns = [
   {
     name: "fecha",
@@ -485,11 +660,17 @@ const allColumns = [
   { name: "mood", label: "Ánimo", align: "left", field: "mood" },
   { name: "note", label: "Nota", align: "left", field: "note" },
   { name: "ubicacion", label: "Ubicación", align: "left", field: "ubicacion" },
+  { name: "photo", label: "Foto", align: "center", field: "photo" }, // ✅
 ];
+
 const visible = ref(JSON.parse(localStorage.getItem("hist.cols") || "{}"));
 if (!Object.keys(visible.value).length) {
   allColumns.forEach((c) => (visible.value[c.name] = true));
+} else {
+  // si ya existía prefs antiguas, asegura que "photo" exista
+  if (typeof visible.value.photo === "undefined") visible.value.photo = true;
 }
+
 function savePrefs() {
   localStorage.setItem("hist.cols", JSON.stringify(visible.value));
 }
@@ -504,26 +685,28 @@ const toggleableColumns = computed(() => allColumns);
 
 /* ===== BUILD ROWS ===== */
 const rows = computed(() => {
-  const list = (raw.value || []).map((a) => ({
-    __id: String(a._id || a.timestamp),
-    dateISO: (a.timestamp
-      ? new Date(a.timestamp)
-      : new Date(a.createdAt || Date.now())
-    )
-      .toISOString()
-      .slice(0, 10),
-    timestamp: a.timestamp || a.createdAt,
-    tipo: a.tipo,
-    mood: a.mood || a.estadoAnimo || "",
-    note: a.note || a.comentario || "",
-    ubicacion: a.ubicacion || null,
-  }));
-  // filtros
+  const list = (raw.value || []).map((a) => {
+    const ts = a.timestamp || a.createdAt || Date.now();
+    const dateISO = new Date(ts).toISOString().slice(0, 10);
+    return {
+      __id: String(a._id || ts),
+      __dayKey: dateISO, // ✅ clave para galería
+      dateISO,
+      timestamp: ts,
+      tipo: a.tipo,
+      mood: a.mood || "",
+      note: a.note || "",
+      ubicacion: a.ubicacion || null,
+      photo: a.photo || null, // ✅
+    };
+  });
+
   let filtered = list;
   if (filterTipo.value)
     filtered = filtered.filter((r) => r.tipo === filterTipo.value);
   if (filterMood.value)
     filtered = filtered.filter((r) => r.mood === filterMood.value);
+
   if (filter.value) {
     const q = filter.value.toLowerCase();
     filtered = filtered.filter(
@@ -535,23 +718,24 @@ const rows = computed(() => {
         formatTime(r.timestamp).includes(q)
     );
   }
+
   return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 });
 
-/* ===== GROUP BY DAY + WORKED TIME ===== */
+/* ===== GROUP BY DAY + WORKED TIME + COUNT PHOTOS ===== */
 const groupedDays = computed(() => {
-  // agrupa
   const map = new Map();
   rows.value.forEach((r) => {
     if (!map.has(r.dateISO)) map.set(r.dateISO, []);
     map.get(r.dateISO).push(r);
   });
-  // calcula tiempo trabajado por día (pareo entrada→salida en orden cronológico)
+
   const out = [];
   for (const [dateISO, list] of map.entries()) {
     const dayRows = [...list].sort(
       (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
     );
+
     let minutes = 0;
     for (let i = 0; i < dayRows.length - 1; i++) {
       const a = dayRows[i],
@@ -561,18 +745,23 @@ const groupedDays = computed(() => {
           0,
           (new Date(b.timestamp) - new Date(a.timestamp)) / 60000
         );
-        i++; // saltar el par
+        i++;
       }
     }
+
+    const photos = dayRows.filter((r) => !!r.photo);
+
     out.push({
+      dayKey: dateISO,
       dateISO,
       rows: dayRows,
       minutes,
       totalHuman: toHumanMinutes(minutes),
       open: true,
+      photosCount: photos.length,
     });
   }
-  // orden descendente por fecha
+
   return out.sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1));
 });
 
@@ -581,9 +770,9 @@ const totalWorkedHuman = computed(() =>
   toHumanMinutes(groupedDays.value.reduce((acc, d) => acc + d.minutes, 0))
 );
 
-/* ===== PAGINATION FOR DAY TABLES ===== */
+/* ===== PAGINATION ===== */
 const dayPagination = ref({ page: 1, rowsPerPage: 0 });
-const tableFilterProxy = ref(""); // para evitar warnings
+const tableFilterProxy = ref("");
 
 /* ===== LOAD ===== */
 async function reload() {
@@ -593,6 +782,7 @@ async function reload() {
   }
   loading.value = true;
   error.value = null;
+
   try {
     const resp = await asistenciaStore.fetchHistorialEmpleado({
       employeeId: userId.value,
@@ -626,14 +816,34 @@ async function exportExcel() {
     exporting.value = false;
   }
 }
+
 function exportDayCSV(day) {
-  const header = ["Fecha", "Hora", "Tipo", "Ánimo", "Nota", "Lat", "Lng"];
+  const header = [
+    "Fecha",
+    "Hora",
+    "Tipo",
+    "Ánimo",
+    "Nota",
+    "Lat",
+    "Lng",
+    "FotoKey",
+  ];
   const lines = day.rows.map((r) => {
     const d = formatDate(r.timestamp),
       h = formatTime(r.timestamp);
     const lat = r.ubicacion?.lat ?? "",
       lng = r.ubicacion?.lng ?? "";
-    return [d, h, r.tipo, r.mood, (r.note || "").replace(/\n/g, " "), lat, lng]
+    const key = r.photo?.key ?? "";
+    return [
+      d,
+      h,
+      r.tipo,
+      r.mood,
+      (r.note || "").replace(/\n/g, " "),
+      lat,
+      lng,
+      key,
+    ]
       .map((s) => `"${String(s).replace(/"/g, '""')}"`)
       .join(",");
   });
@@ -642,22 +852,44 @@ function exportDayCSV(day) {
     [header.join(","), ...lines].join("\n")
   );
 }
+
 function exportCSV() {
-  const header = ["Fecha", "Hora", "Tipo", "Ánimo", "Nota", "Lat", "Lng"];
+  const header = [
+    "Fecha",
+    "Hora",
+    "Tipo",
+    "Ánimo",
+    "Nota",
+    "Lat",
+    "Lng",
+    "FotoKey",
+  ];
   const lines = rows.value.map((r) => {
     const d = formatDate(r.timestamp),
       h = formatTime(r.timestamp);
     const lat = r.ubicacion?.lat ?? "",
       lng = r.ubicacion?.lng ?? "";
-    return [d, h, r.tipo, r.mood, (r.note || "").replace(/\n/g, " "), lat, lng]
+    const key = r.photo?.key ?? "";
+    return [
+      d,
+      h,
+      r.tipo,
+      r.mood,
+      (r.note || "").replace(/\n/g, " "),
+      lat,
+      lng,
+      key,
+    ]
       .map((s) => `"${String(s).replace(/"/g, '""')}"`)
       .join(",");
   });
   downloadText("asistencia.csv", [header.join(","), ...lines].join("\n"));
 }
+
 function printTable() {
   window.print();
 }
+
 async function copySummary() {
   const text = `Historial (${periodLabel.value})\nDías: ${dayCount.value}\nMarcas: ${rows.value.length}\nHoras totales: ${totalWorkedHuman.value}`;
   try {
@@ -667,6 +899,7 @@ async function copySummary() {
     $q.notify({ type: "warning", message: "No se pudo copiar" });
   }
 }
+
 function copyDay(day) {
   const lines = day.rows.map(
     (r) =>
@@ -679,6 +912,222 @@ function copyDay(day) {
     lines.join("\n");
   navigator.clipboard.writeText(text);
   $q.notify({ type: "positive", message: "Día copiado" });
+}
+
+/* =======================
+   ✅ FOTO: VISOR PRO
+======================= */
+const viewer = reactive({
+  open: false,
+  loading: false,
+  error: null,
+  src: null,
+  list: [], // [{ row, photo }]
+  index: 0,
+});
+
+const photoCache = reactive(Object.create(null)); // key => resolved url
+
+const viewerItem = computed(() => viewer.list[viewer.index] || null);
+const viewerRow = computed(() => viewerItem.value?.row || null);
+const viewerPhoto = computed(() => viewerItem.value?.photo || null);
+
+const viewerTitle = computed(() => {
+  const r = viewerRow.value;
+  if (!r) return "Foto";
+  return `${cap(r.tipo)} · ${formatDate(r.timestamp)} ${formatTime(
+    r.timestamp
+  )}`;
+});
+const viewerSubtitle = computed(() => {
+  if (viewer.list.length <= 1) return "";
+  return `${viewer.index + 1} de ${viewer.list.length}`;
+});
+
+function photoKey(photo) {
+  return photo?.bucket && photo?.key ? `${photo.bucket}::${photo.key}` : null;
+}
+
+/**
+ * Thumb: usamos URL directa al endpoint stream.
+ * Si tu endpoint stream funciona, thumbnails funcionan sin fetch extra.
+ */
+function thumbSrc(row) {
+  if (!row?.photo) return "";
+  // thumb liviano para tabla
+  return buildStreamUrl(row.__id, 96);
+}
+
+function buildStreamUrl(attendanceId, size) {
+  debugger;
+  if (!attendanceId) return "";
+  const base = `${PHOTO_STREAM_ENDPOINT}/${encodeURIComponent(
+    String(attendanceId)
+  )}/photo`;
+  if (!size) return base;
+  return `${base}?size=${encodeURIComponent(String(size))}`;
+}
+
+async function resolvePhotoUrl(photo) {
+  const k = photoKey(photo);
+  if (!k) return null;
+
+  // 1) si el backend ya manda url
+  if (photo?.url) {
+    photoCache[k] = photo.url;
+    return photo.url;
+  }
+
+  // 2) si ya está cacheado
+  if (photoCache[k]) return photoCache[k];
+
+  // 3) si el store tiene un método (opcional)
+  if (typeof asistenciaStore?.getAttendancePhotoUrl === "function") {
+    const u = await asistenciaStore.getAttendancePhotoUrl(photo);
+    if (u) {
+      photoCache[k] = u;
+      return u;
+    }
+  }
+
+  // 4) intentar signed endpoint (si existe)
+  try {
+    const qs = new URLSearchParams({
+      bucket: String(photo.bucket),
+      key: String(photo.key),
+    });
+    const r = await fetch(`${PHOTO_SIGNED_ENDPOINT}?${qs.toString()}`, {
+      method: "GET",
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
+
+    if (r.ok) {
+      const data = await r.json().catch(() => null);
+      const url =
+        data?.url ||
+        data?.data?.url ||
+        data?.signedUrl ||
+        data?.data?.signedUrl ||
+        null;
+      if (url) {
+        photoCache[k] = url;
+        return url;
+      }
+    }
+  } catch {
+    // si falla, caemos a stream
+  }
+
+  // 5) fallback stream (lo más simple y estable)
+  const streamUrl = buildStreamUrl(photo);
+  if (streamUrl) {
+    photoCache[k] = streamUrl;
+    return streamUrl;
+  }
+
+  return null;
+}
+
+async function openFromRow(row, dayKey) {
+  const day = groupedDays.value.find((d) => d.dayKey === dayKey);
+  const list = (day?.rows || [])
+    .filter((r) => !!r.photo)
+    .map((r) => ({ row: r, photo: r.photo }));
+  const idx = Math.max(
+    0,
+    list.findIndex((x) => x.row.__id === row.__id)
+  );
+  openViewer(list, idx);
+}
+
+function openDayGallery(day) {
+  const list = (day?.rows || [])
+    .filter((r) => !!r.photo)
+    .map((r) => ({ row: r, photo: r.photo }));
+  openViewer(list, 0);
+}
+
+function openViewer(list, index = 0) {
+  viewer.list = Array.isArray(list) ? list : [];
+  viewer.index = Math.min(
+    Math.max(0, index),
+    Math.max(0, viewer.list.length - 1)
+  );
+  viewer.open = true;
+  loadCurrentPhoto();
+}
+
+function closeViewer() {
+  viewer.open = false;
+  viewer.loading = false;
+  viewer.error = null;
+  viewer.src = null;
+  viewer.list = [];
+  viewer.index = 0;
+}
+
+async function loadCurrentPhoto() {
+  viewer.loading = true;
+  viewer.error = null;
+  viewer.src = null;
+
+  const p = viewerPhoto.value;
+  if (!p) {
+    viewer.loading = false;
+    viewer.error = "No hay foto disponible.";
+    return;
+  }
+
+  try {
+    const url = await resolvePhotoUrl(p);
+    if (!url) {
+      viewer.error = "No se pudo resolver la URL de la foto (signed/stream).";
+    } else {
+      viewer.src = url;
+    }
+  } catch (e) {
+    viewer.error = e?.message || "Error cargando la foto";
+  } finally {
+    viewer.loading = false;
+  }
+}
+
+function prevPhoto() {
+  if (viewer.list.length <= 1) return;
+  viewer.index = (viewer.index - 1 + viewer.list.length) % viewer.list.length;
+  loadCurrentPhoto();
+}
+function nextPhoto() {
+  if (viewer.list.length <= 1) return;
+  viewer.index = (viewer.index + 1) % viewer.list.length;
+  loadCurrentPhoto();
+}
+
+function onViewerError() {
+  viewer.error = "No se pudo mostrar la imagen (URL inválida o sin permisos).";
+}
+
+function onThumbError(photo) {
+  // si el thumb stream falla, no hacemos nada agresivo; el visor intentará signed/stream al abrir
+  const k = photoKey(photo);
+  if (k && photoCache[k] && photoCache[k].includes("mode=thumb"))
+    delete photoCache[k];
+}
+
+async function copyViewerLink() {
+  try {
+    const u = viewer.src || "";
+    await navigator.clipboard.writeText(u);
+    $q.notify({ type: "positive", message: "Link copiado" });
+  } catch {
+    $q.notify({ type: "warning", message: "No se pudo copiar" });
+  }
+}
+
+function openInNewTab() {
+  if (!viewer.src) return;
+  window.open(viewer.src, "_blank", "noopener,noreferrer");
 }
 
 /* ===== UTILS ===== */
@@ -765,6 +1214,7 @@ function downloadText(filename, content) {
 const subHeader = computed(
   () => `${rows.value.length} registros filtrados · ${dayCount.value} días`
 );
+
 onMounted(() => {
   if (rangePreset.value !== "custom") setPresetDates(rangePreset.value);
   reload();
@@ -795,6 +1245,54 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.rk-thumb {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--q-primary) 18%, transparent);
+}
+
+.rk-viewer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.rk-viewer-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.rk-viewer-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+.rk-image-wrap {
+  position: relative;
+  min-height: 48vh;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--q-primary) 12%, transparent);
+}
+.rk-image {
+  height: 52vh;
+}
+.rk-viewer-error {
+  display: flex;
+  align-items: center;
+}
+.rk-meta {
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--q-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--q-primary) 4%, transparent);
+}
+.rk-note {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media print {
   .header-actions,
   .rk-date,
