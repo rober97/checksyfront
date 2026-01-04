@@ -525,19 +525,23 @@ import SegmentControl from "@/components/SegmentControl.vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useAsistenciaStore } from "@/stores/asistenciaStore";
 import { API_URL } from "@/utils/api";
-/**
- * ✅ CONFIG FOTO
- * Ajusta SOLO estas rutas si tu API usa otras:
- *
- * - PHOTO_STREAM_ENDPOINT: endpoint que entrega la imagen (recommended)
- *   Ej: GET /api/attendance/photo?bucket=...&key=...
- *
- * - PHOTO_SIGNED_ENDPOINT: endpoint que devuelve { url } (optional)
- *   Ej: GET /api/attendance/photo-url?bucket=...&key=...
- */
+
+/* =========================
+   ✅ CONFIG / ENDPOINTS FOTO
+   Backend: GET /api/attendance/:id/photo?size=96
+========================= */
 const API_BASE = API_URL.replace(/\/$/, "");
-const PHOTO_STREAM_ENDPOINT = `${API_BASE}/attendance/photo`; // 👈 base para armar /:id/photo
-const PHOTO_SIGNED_ENDPOINT = `${API_BASE}/attendance/photo-url`;
+const PHOTO_STREAM_BASE = `${API_BASE}/attendance/photo`; // <- base real
+
+function buildPhotoUrl(attendanceId, size) {
+  
+  if (!attendanceId) return "";
+  const base = `${PHOTO_STREAM_BASE}/${encodeURIComponent(
+    String(attendanceId)
+  )}/photo`;
+  debugger;
+  return size ? `${base}?size=${encodeURIComponent(String(size))}` : base;
+}
 
 /* ===== UI / THEME ===== */
 const $q = useQuasar();
@@ -562,6 +566,7 @@ const presetOptions = [
 
 function setPresetDates(val) {
   const now = new Date();
+
   if (val === "7d") {
     const s = new Date(now);
     s.setDate(s.getDate() - 6);
@@ -569,23 +574,33 @@ function setPresetDates(val) {
       from: s.toISOString().slice(0, 10),
       to: now.toISOString().slice(0, 10),
     };
-  } else if (val === "30d") {
+    return;
+  }
+
+  if (val === "30d") {
     const s = new Date(now);
     s.setDate(s.getDate() - 29);
     range.value = {
       from: s.toISOString().slice(0, 10),
       to: now.toISOString().slice(0, 10),
     };
-  } else if (val === "ytd") {
+    return;
+  }
+
+  if (val === "ytd") {
     const s = new Date(now.getFullYear(), 0, 1);
     range.value = {
       from: s.toISOString().slice(0, 10),
       to: now.toISOString().slice(0, 10),
     };
-  } else if (val === "all") {
+    return;
+  }
+
+  if (val === "all") {
     range.value = { from: null, to: null };
   }
 }
+
 function onPresetChange(val) {
   localStorage.setItem("hist.preset", val);
   if (val !== "custom") {
@@ -593,9 +608,11 @@ function onPresetChange(val) {
     reload();
   }
 }
+
 function clearCustom() {
   range.value = { from: null, to: null };
 }
+
 function applyCustom() {
   if (!range.value?.from && !range.value?.to) return;
   rangePreset.value = "custom";
@@ -605,12 +622,13 @@ function applyCustom() {
 
 const dateRangeLabel = computed(() => {
   if (rangePreset.value !== "custom") return "Rango personalizado";
-  const f = range.value?.from,
-    t = range.value?.to;
+  const f = range.value?.from;
+  const t = range.value?.to;
   if (!f && !t) return "Seleccionar rango";
   const fmt = (d) => d?.split("-").reverse().join("/") || "—";
   return `${fmt(f)} → ${fmt(t)}`;
 });
+
 const periodLabel = computed(() => {
   if (rangePreset.value === "7d") return "Últimos 7 días";
   if (rangePreset.value === "30d") return "Últimos 30 días";
@@ -628,6 +646,7 @@ const tipoOptions = [
   { label: "Entrada", value: "entrada" },
   { label: "Salida", value: "salida" },
 ];
+
 const moodOptions = [
   { label: "Excelente", value: "great" },
   { label: "Bien", value: "good" },
@@ -635,6 +654,7 @@ const moodOptions = [
   { label: "Cansado", value: "tired" },
   { label: "Mal", value: "bad" },
 ];
+
 const filterTipo = ref(localStorage.getItem("hist.tipo") || null);
 const filterMood = ref(localStorage.getItem("hist.mood") || null);
 watch(filterTipo, (v) => localStorage.setItem("hist.tipo", v || ""));
@@ -660,14 +680,13 @@ const allColumns = [
   { name: "mood", label: "Ánimo", align: "left", field: "mood" },
   { name: "note", label: "Nota", align: "left", field: "note" },
   { name: "ubicacion", label: "Ubicación", align: "left", field: "ubicacion" },
-  { name: "photo", label: "Foto", align: "center", field: "photo" }, // ✅
+  { name: "photo", label: "Foto", align: "center", field: "photo" },
 ];
 
 const visible = ref(JSON.parse(localStorage.getItem("hist.cols") || "{}"));
 if (!Object.keys(visible.value).length) {
   allColumns.forEach((c) => (visible.value[c.name] = true));
 } else {
-  // si ya existía prefs antiguas, asegura que "photo" exista
   if (typeof visible.value.photo === "undefined") visible.value.photo = true;
 }
 
@@ -678,30 +697,39 @@ function toggleColumn(name) {
   visible.value[name] = !visible.value[name];
   savePrefs();
 }
+
 const visibleColumns = computed(() =>
   allColumns.filter((c) => visible.value[c.name])
 );
 const toggleableColumns = computed(() => allColumns);
 
-/* ===== BUILD ROWS ===== */
+/* =========================
+   ✅ BUILD ROWS (normaliza)
+========================= */
 const rows = computed(() => {
   const list = (raw.value || []).map((a) => {
     const ts = a.timestamp || a.createdAt || Date.now();
     const dateISO = new Date(ts).toISOString().slice(0, 10);
+
+    // id real del registro (necesario para /api/attendance/:id/photo)
+    const realId = a?._id ? String(a._id) : null;
+
     return {
-      __id: String(a._id || ts),
-      __dayKey: dateISO, // ✅ clave para galería
+      __id: realId || `tmp-${String(ts)}`, // tmp solo para render sin romper
+      __realId: realId, // ✅ este es el que sirve para foto
+      __dayKey: dateISO,
       dateISO,
       timestamp: ts,
       tipo: a.tipo,
       mood: a.mood || "",
       note: a.note || "",
       ubicacion: a.ubicacion || null,
-      photo: a.photo || null, // ✅
+      photo: a.photo || null,
     };
   });
 
   let filtered = list;
+
   if (filterTipo.value)
     filtered = filtered.filter((r) => r.tipo === filterTipo.value);
   if (filterMood.value)
@@ -722,7 +750,9 @@ const rows = computed(() => {
   return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 });
 
-/* ===== GROUP BY DAY + WORKED TIME + COUNT PHOTOS ===== */
+/* =========================
+   ✅ GROUP BY DAY + WORKED + PHOTO COUNT
+========================= */
 const groupedDays = computed(() => {
   const map = new Map();
   rows.value.forEach((r) => {
@@ -738,8 +768,8 @@ const groupedDays = computed(() => {
 
     let minutes = 0;
     for (let i = 0; i < dayRows.length - 1; i++) {
-      const a = dayRows[i],
-        b = dayRows[i + 1];
+      const a = dayRows[i];
+      const b = dayRows[i + 1];
       if (a.tipo === "entrada" && b.tipo === "salida") {
         minutes += Math.max(
           0,
@@ -749,7 +779,7 @@ const groupedDays = computed(() => {
       }
     }
 
-    const photos = dayRows.filter((r) => !!r.photo);
+    const photos = dayRows.filter((r) => !!r.photo && !!r.__realId);
 
     out.push({
       dayKey: dateISO,
@@ -774,12 +804,15 @@ const totalWorkedHuman = computed(() =>
 const dayPagination = ref({ page: 1, rowsPerPage: 0 });
 const tableFilterProxy = ref("");
 
-/* ===== LOAD ===== */
+/* =========================
+   ✅ LOAD
+========================= */
 async function reload() {
   if (!userId.value) {
     error.value = "No se encontró el usuario.";
     return;
   }
+
   loading.value = true;
   error.value = null;
 
@@ -789,6 +822,7 @@ async function reload() {
       from: range.value?.from || undefined,
       to: range.value?.to || undefined,
     });
+
     raw.value = resp?.asistencias || [];
   } catch (e) {
     error.value = e?.message || "No se pudo cargar el historial";
@@ -797,7 +831,9 @@ async function reload() {
   }
 }
 
-/* ===== EXPORTS / ACTIONS ===== */
+/* =========================
+   ✅ EXPORTS / ACTIONS
+========================= */
 async function exportExcel() {
   if (!userId.value) return;
   exporting.value = true;
@@ -829,10 +865,10 @@ function exportDayCSV(day) {
     "FotoKey",
   ];
   const lines = day.rows.map((r) => {
-    const d = formatDate(r.timestamp),
-      h = formatTime(r.timestamp);
-    const lat = r.ubicacion?.lat ?? "",
-      lng = r.ubicacion?.lng ?? "";
+    const d = formatDate(r.timestamp);
+    const h = formatTime(r.timestamp);
+    const lat = r.ubicacion?.lat ?? "";
+    const lng = r.ubicacion?.lng ?? "";
     const key = r.photo?.key ?? "";
     return [
       d,
@@ -847,6 +883,7 @@ function exportDayCSV(day) {
       .map((s) => `"${String(s).replace(/"/g, '""')}"`)
       .join(",");
   });
+
   downloadText(
     `asistencia_${day.dateISO}.csv`,
     [header.join(","), ...lines].join("\n")
@@ -865,10 +902,10 @@ function exportCSV() {
     "FotoKey",
   ];
   const lines = rows.value.map((r) => {
-    const d = formatDate(r.timestamp),
-      h = formatTime(r.timestamp);
-    const lat = r.ubicacion?.lat ?? "",
-      lng = r.ubicacion?.lng ?? "";
+    const d = formatDate(r.timestamp);
+    const h = formatTime(r.timestamp);
+    const lat = r.ubicacion?.lat ?? "";
+    const lng = r.ubicacion?.lng ?? "";
     const key = r.photo?.key ?? "";
     return [
       d,
@@ -883,6 +920,7 @@ function exportCSV() {
       .map((s) => `"${String(s).replace(/"/g, '""')}"`)
       .join(",");
   });
+
   downloadText("asistencia.csv", [header.join(","), ...lines].join("\n"));
 }
 
@@ -907,6 +945,7 @@ function copyDay(day) {
         r.note || "—"
       }`
   );
+
   const text =
     `${formatDateHuman(day.dateISO)} · Total: ${day.totalHuman}\n` +
     lines.join("\n");
@@ -914,23 +953,40 @@ function copyDay(day) {
   $q.notify({ type: "positive", message: "Día copiado" });
 }
 
-/* =======================
-   ✅ FOTO: VISOR PRO
-======================= */
+/* =========================
+   ✅ FOTO: MINIATURA + VISOR (usa mismo endpoint)
+========================= */
+
+// cache por id+size (evita recomputar strings; no evita requests del navegador, pero ordena)
+const photoUrlCache = reactive(Object.create(null));
+const photoCacheKey = (attendanceId, size) =>
+  `${attendanceId}::${size || "full"}`;
+
+function thumbSrc(row) {
+  if (!row?.photo || !row?.__realId) return "";
+  const ck = photoCacheKey(row.__realId, 96);
+  if (!photoUrlCache[ck]) photoUrlCache[ck] = buildPhotoUrl(row.__realId, 96);
+  return photoUrlCache[ck];
+}
+
+function fullSrc(row) {
+  if (!row?.photo || !row?.__realId) return "";
+  const ck = photoCacheKey(row.__realId, null);
+  if (!photoUrlCache[ck]) photoUrlCache[ck] = buildPhotoUrl(row.__realId);
+  return photoUrlCache[ck];
+}
+
+/* ---- Viewer state ---- */
 const viewer = reactive({
   open: false,
   loading: false,
   error: null,
   src: null,
-  list: [], // [{ row, photo }]
+  list: [], // rows con foto
   index: 0,
 });
 
-const photoCache = reactive(Object.create(null)); // key => resolved url
-
-const viewerItem = computed(() => viewer.list[viewer.index] || null);
-const viewerRow = computed(() => viewerItem.value?.row || null);
-const viewerPhoto = computed(() => viewerItem.value?.photo || null);
+const viewerRow = computed(() => viewer.list[viewer.index] || null);
 
 const viewerTitle = computed(() => {
   const r = viewerRow.value;
@@ -939,121 +995,32 @@ const viewerTitle = computed(() => {
     r.timestamp
   )}`;
 });
+
 const viewerSubtitle = computed(() => {
   if (viewer.list.length <= 1) return "";
   return `${viewer.index + 1} de ${viewer.list.length}`;
 });
 
-function photoKey(photo) {
-  return photo?.bucket && photo?.key ? `${photo.bucket}::${photo.key}` : null;
-}
-
-/**
- * Thumb: usamos URL directa al endpoint stream.
- * Si tu endpoint stream funciona, thumbnails funcionan sin fetch extra.
- */
-function thumbSrc(row) {
-  if (!row?.photo) return "";
-  // thumb liviano para tabla
-  return buildStreamUrl(row.__id, 96);
-}
-
-function buildStreamUrl(attendanceId, size) {
-  debugger;
-  if (!attendanceId) return "";
-  const base = `${PHOTO_STREAM_ENDPOINT}/${encodeURIComponent(
-    String(attendanceId)
-  )}/photo`;
-  if (!size) return base;
-  return `${base}?size=${encodeURIComponent(String(size))}`;
-}
-
-async function resolvePhotoUrl(photo) {
-  const k = photoKey(photo);
-  if (!k) return null;
-
-  // 1) si el backend ya manda url
-  if (photo?.url) {
-    photoCache[k] = photo.url;
-    return photo.url;
-  }
-
-  // 2) si ya está cacheado
-  if (photoCache[k]) return photoCache[k];
-
-  // 3) si el store tiene un método (opcional)
-  if (typeof asistenciaStore?.getAttendancePhotoUrl === "function") {
-    const u = await asistenciaStore.getAttendancePhotoUrl(photo);
-    if (u) {
-      photoCache[k] = u;
-      return u;
-    }
-  }
-
-  // 4) intentar signed endpoint (si existe)
-  try {
-    const qs = new URLSearchParams({
-      bucket: String(photo.bucket),
-      key: String(photo.key),
-    });
-    const r = await fetch(`${PHOTO_SIGNED_ENDPOINT}?${qs.toString()}`, {
-      method: "GET",
-      credentials: "include",
-      headers: { Accept: "application/json" },
-    });
-
-    if (r.ok) {
-      const data = await r.json().catch(() => null);
-      const url =
-        data?.url ||
-        data?.data?.url ||
-        data?.signedUrl ||
-        data?.data?.signedUrl ||
-        null;
-      if (url) {
-        photoCache[k] = url;
-        return url;
-      }
-    }
-  } catch {
-    // si falla, caemos a stream
-  }
-
-  // 5) fallback stream (lo más simple y estable)
-  const streamUrl = buildStreamUrl(photo);
-  if (streamUrl) {
-    photoCache[k] = streamUrl;
-    return streamUrl;
-  }
-
-  return null;
-}
-
-async function openFromRow(row, dayKey) {
+function openFromRow(row, dayKey) {
+  // arma galería del día, solo rows con foto + id real
   const day = groupedDays.value.find((d) => d.dayKey === dayKey);
-  const list = (day?.rows || [])
-    .filter((r) => !!r.photo)
-    .map((r) => ({ row: r, photo: r.photo }));
+  const list = (day?.rows || []).filter((r) => !!r.photo && !!r.__realId);
+
   const idx = Math.max(
     0,
-    list.findIndex((x) => x.row.__id === row.__id)
+    list.findIndex((x) => x.__id === row.__id)
   );
   openViewer(list, idx);
 }
 
 function openDayGallery(day) {
-  const list = (day?.rows || [])
-    .filter((r) => !!r.photo)
-    .map((r) => ({ row: r, photo: r.photo }));
+  const list = (day?.rows || []).filter((r) => !!r.photo && !!r.__realId);
   openViewer(list, 0);
 }
 
 function openViewer(list, index = 0) {
   viewer.list = Array.isArray(list) ? list : [];
-  viewer.index = Math.min(
-    Math.max(0, index),
-    Math.max(0, viewer.list.length - 1)
-  );
+  viewer.index = clamp(index, 0, Math.max(0, viewer.list.length - 1));
   viewer.open = true;
   loadCurrentPhoto();
 }
@@ -1067,29 +1034,50 @@ function closeViewer() {
   viewer.index = 0;
 }
 
+function jumpTo(i) {
+  viewer.index = clamp(i, 0, Math.max(0, viewer.list.length - 1));
+  loadCurrentPhoto();
+}
+
 async function loadCurrentPhoto() {
   viewer.loading = true;
   viewer.error = null;
   viewer.src = null;
 
-  const p = viewerPhoto.value;
-  if (!p) {
+  const r = viewerRow.value;
+  if (!r?.photo || !r?.__realId) {
     viewer.loading = false;
     viewer.error = "No hay foto disponible.";
     return;
   }
 
   try {
-    const url = await resolvePhotoUrl(p);
-    if (!url) {
-      viewer.error = "No se pudo resolver la URL de la foto (signed/stream).";
-    } else {
-      viewer.src = url;
-    }
+    viewer.src = fullSrc(r); // ✅ mismo endpoint, sin size
+    prefetchNeighbors(); // UX: precarga suave
   } catch (e) {
     viewer.error = e?.message || "Error cargando la foto";
   } finally {
     viewer.loading = false;
+  }
+}
+
+function prefetchNeighbors() {
+  if (viewer.list.length <= 1) return;
+
+  const prev =
+    viewer.list[(viewer.index - 1 + viewer.list.length) % viewer.list.length];
+  const next = viewer.list[(viewer.index + 1) % viewer.list.length];
+
+  const prevUrl = prev?.__realId ? fullSrc(prev) : null;
+  const nextUrl = next?.__realId ? fullSrc(next) : null;
+
+  if (prevUrl) {
+    const img = new Image();
+    img.src = prevUrl;
+  }
+  if (nextUrl) {
+    const img = new Image();
+    img.src = nextUrl;
   }
 }
 
@@ -1098,6 +1086,7 @@ function prevPhoto() {
   viewer.index = (viewer.index - 1 + viewer.list.length) % viewer.list.length;
   loadCurrentPhoto();
 }
+
 function nextPhoto() {
   if (viewer.list.length <= 1) return;
   viewer.index = (viewer.index + 1) % viewer.list.length;
@@ -1108,11 +1097,8 @@ function onViewerError() {
   viewer.error = "No se pudo mostrar la imagen (URL inválida o sin permisos).";
 }
 
-function onThumbError(photo) {
-  // si el thumb stream falla, no hacemos nada agresivo; el visor intentará signed/stream al abrir
-  const k = photoKey(photo);
-  if (k && photoCache[k] && photoCache[k].includes("mode=thumb"))
-    delete photoCache[k];
+function onThumbError() {
+  // si falla el thumb, no rompemos nada: el visor intentará igual
 }
 
 async function copyViewerLink() {
@@ -1130,7 +1116,37 @@ function openInNewTab() {
   window.open(viewer.src, "_blank", "noopener,noreferrer");
 }
 
-/* ===== UTILS ===== */
+/* ---- Keyboard (ESC / arrows) ---- */
+function onViewerKeydown(e) {
+  if (!viewer.open) return;
+
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closeViewer();
+  } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    prevPhoto();
+  } else if (e.key === "ArrowRight") {
+    e.preventDefault();
+    nextPhoto();
+  }
+}
+
+watch(
+  () => viewer.open,
+  (isOpen) => {
+    if (isOpen)
+      window.addEventListener("keydown", onViewerKeydown, { passive: false });
+    else window.removeEventListener("keydown", onViewerKeydown);
+  }
+);
+
+/* =========================
+   ✅ UTILS
+========================= */
+function clamp(n, min, max) {
+  return Math.min(Math.max(Number(n) || 0, min), max);
+}
 function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 }
@@ -1191,13 +1207,15 @@ function mapsLink(u) {
   return `https://maps.google.com/?q=${Number(u.lat)},${Number(u.lng)}`;
 }
 function locToText(u) {
-  const lat = Number(u?.lat),
-    lng = Number(u?.lng),
-    acc = u?.acc;
+  const lat = Number(u?.lat);
+  const lng = Number(u?.lng);
+  const acc = u?.acc;
+
   const base =
     isFinite(lat) && isFinite(lng)
       ? `lat ${lat.toFixed(5)}, lng ${lng.toFixed(5)}`
       : "—";
+
   return acc ? `${base} (±${Math.round(acc)}m)` : base;
 }
 function downloadText(filename, content) {
