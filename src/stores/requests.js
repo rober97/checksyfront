@@ -149,6 +149,7 @@ export const useRequestsStore = defineStore('requests', {
         const cfg = isFD ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined
 
         const res = await secureAxios.post(`${API_URL}/requests`, payload, cfg)
+        debugger
         const created = normalizeRequest(res?.data?.data || res?.data)
 
         if (created) {
@@ -158,6 +159,7 @@ export const useRequestsStore = defineStore('requests', {
         }
         return created
       } catch (err) {
+        debugger
         console.error('[requests.createRequest] ', err)
         const status = err?.response?.status
         const msg =

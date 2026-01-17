@@ -406,13 +406,13 @@ const rowsView = computed(() => {
 /* Métricas */
 const totalCount = computed(() => rawRows.value.length || 0);
 const pendingCount = computed(
-  () => rawRows.value.filter((r) => r.estado === "Pendiente").length
+  () => rawRows.value.filter((r) => r.status === "PENDING").length
 );
 const approvedCount = computed(
-  () => rawRows.value.filter((r) => r.estado === "Aprobado").length
+  () => rawRows.value.filter((r) => r.status === "APPROVED").length
 );
 const rejectedCount = computed(
-  () => rawRows.value.filter((r) => r.estado === "Rechazado").length
+  () => rawRows.value.filter((r) => r.status === "REJECTED").length
 );
 
 /* Tabla */
@@ -477,7 +477,7 @@ const estadoIcon = (s) =>
 const estadoLabel = (s) =>
   s === "PENDING" ? "Pendiente" : s === "REJECTED" ? "Rechazado" : s === "APPROVED" ? "Aprobada" : 'DESCONOCIDO';
 const tipoLabel = (s) =>
-  s === "VACATION" ? "Vacaciones" : s === "REJECTED" ? "Rechazado" : "schedule";
+  s === "VACATION" ? "Vacaciones" : s === "REJECTED" ? "Rechazado" : s === "OTHER" ? "Otro" : "schedule";
 const tipoIcon = (t) =>
   ({
     Vacaciones: "beach_access",
