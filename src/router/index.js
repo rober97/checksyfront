@@ -8,41 +8,42 @@ import CompanyLayout from '@/layouts/EmpresaLayout.vue'
 import EmployeeLayout from '@/layouts/EmpleadoLayout.vue'
 
 // ====== Views (lazy: reduce el bundle inicial)
-const HomePublic      = () => import(/* webpackChunkName:"public"    */ '@/views/HomePublic.vue')
-const Login           = () => import(/* webpackChunkName:"public"    */ '@/views/Login.vue')
-const Register        = () => import(/* webpackChunkName:"public"    */ '@/views/Register.vue')
-const NotFound        = () => import(/* webpackChunkName:"misc"      */ '@/views/NotFound.vue')
-const Dashboard       = () => import(/* webpackChunkName:"dashboard" */ '@/views/Dashboard.vue')
+const HomePublic = () => import(/* webpackChunkName:"public"    */ '@/views/HomePublic.vue')
+const Login = () => import(/* webpackChunkName:"public"    */ '@/views/Login.vue')
+const Register = () => import(/* webpackChunkName:"public"    */ '@/views/Register.vue')
+const NotFound = () => import(/* webpackChunkName:"misc"      */ '@/views/NotFound.vue')
+const Dashboard = () => import(/* webpackChunkName:"dashboard" */ '@/views/Dashboard.vue')
 
-const Permissions     = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/Permisos.vue')
-const UserManagement  = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionUsuarios.vue')
+const Permissions = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/Permisos.vue')
+const UserManagement = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionUsuarios.vue')
 const GestionHorarios = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionHorarios.vue')
-const AsistenciasEmp  = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
+const AsistenciasEmp = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
+const Payroll = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollModule.vue")
 
-const CompanyList     = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaList.vue')
-const CompanyForm     = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaForm.vue')
-const CompanyDetail   = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaDetalle.vue')
+const CompanyList = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaList.vue')
+const CompanyForm = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaForm.vue')
+const CompanyDetail = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaDetalle.vue')
 
-const RequestListEmployee     = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/RequestsListEmployee.vue')
+const RequestListEmployee = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/RequestsListEmployee.vue')
 
-const EmployeeDocs    = () => import(/* webpackChunkName:"docs"      */ '@/views/Documentos/DocumentosEmpleado.vue')
-const UploadDocument  = () => import(/* webpackChunkName:"docs"      */ '@/views/Documentos/SubirDocumento.vue')
+const EmployeeDocs = () => import(/* webpackChunkName:"docs"      */ '@/views/Documentos/DocumentosEmpleado.vue')
+const UploadDocument = () => import(/* webpackChunkName:"docs"      */ '@/views/Documentos/SubirDocumento.vue')
 
-const CompanyReport   = () => import(/* webpackChunkName:"reportes"  */ '@/views/Empresa/ReporteGeneral.vue')
+const CompanyReport = () => import(/* webpackChunkName:"reportes"  */ '@/views/Empresa/ReporteGeneral.vue')
 
-const RequestList     = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/SolicitudesList.vue')
+const RequestList = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/SolicitudesList.vue')
 const ApproveRequests = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/AprobarSolicitudes.vue')
-const Attendance      = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/MarcarAsistencia.vue')
-const History         = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/Historial.vue')
-const CreateRequest   = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/CrearSolicitud.vue')
-const Configuration   = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Configuration.vue')
+const Attendance = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/MarcarAsistencia.vue')
+const History = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/Historial.vue')
+const CreateRequest = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/CrearSolicitud.vue')
+const Configuration = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Configuration.vue')
 
 // ====== Utilidades de autorización y navegación
 const BASE = process.env.BASE_URL || '/'
 const APP_TITLE = 'Recksy'
 const DEFAULT_PERMS_MODE = 'all' // 'all' | 'any'
 
-const normalizeRole   = (r) => String(r || '').toLowerCase()
+const normalizeRole = (r) => String(r || '').toLowerCase()
 const hasRequiredRole = (userRole, requiredRoles) => {
   if (!requiredRoles?.length) return true
   const target = normalizeRole(userRole)
@@ -66,26 +67,26 @@ const safeRedirectOf = (to) => {
   const raw = to?.query?.redirect
   if (!raw) return null
   let val = String(raw)
-  try { val = decodeURIComponent(val) } catch(_) {}
+  try { val = decodeURIComponent(val) } catch (_) { }
   return isInternalPath(val) ? val : null
 }
 
 const roleHome = (role) => {
   console.log('ROL', role)
   switch (normalizeRole(role)) {
-    case 'admin':    return '/admin/dashboard'
-    case 'empresa':  return '/company/dashboard'
+    case 'admin': return '/admin/dashboard'
+    case 'empresa': return '/company/dashboard'
     case 'employee': return '/employee/dashboard'
-    default:         return '/'
+    default: return '/'
   }
 }
 
 // ====== Definición de rutas
 const routes = [
   // Público
-  { path: '/',          name: 'Home',     component: HomePublic, meta: { public: true, title: 'Inicio' } },
-  { path: '/login',     name: 'Login',    component: Login,      meta: { public: true, onlyGuests: true, title: 'Iniciar sesión' } },
-  { path: '/register',  name: 'Register', component: Register,   meta: { public: true, onlyGuests: true, title: 'Registro' } },
+  { path: '/', name: 'Home', component: HomePublic, meta: { public: true, title: 'Inicio' } },
+  { path: '/login', name: 'Login', component: Login, meta: { public: true, onlyGuests: true, title: 'Iniciar sesión' } },
+  { path: '/register', name: 'Register', component: Register, meta: { public: true, onlyGuests: true, title: 'Registro' } },
 
   // Perfil/config (cualquier rol autenticado)
   { path: '/configuration', name: 'ConfigurationRoot', component: Configuration, meta: { requiresAuth: true, title: 'Configuración' } },
@@ -96,16 +97,17 @@ const routes = [
     component: AdminLayout,
     meta: { requiresAuth: true, roles: ['admin'] },
     children: [
-      { path: '',            redirect: { name: 'AdminDashboard' } },
-      { path: 'dashboard',   name: 'AdminDashboard',      component: Dashboard,      meta: { title: 'Panel • Admin' } },
-      { path: 'users',       name: 'UserManagement',      component: UserManagement, meta: { permissions: ['users:read'],       title: 'Usuarios' } },
-      { path: 'permissions', name: 'Permissions',         component: Permissions,    meta: { permissions: ['permissions:read'], title: 'Permisos' } },
-      { path: 'horarios',    name: 'HorariosList',        component: GestionHorarios,meta: { permissions: ['schedules:read'],   title: 'Horarios' } },
-      { path: 'attendance',  name: 'AsistenciaList',      component: AsistenciasEmp, meta: { permissions: ['attendance:read'],  title: 'Asistencias' } },
-      { path: 'companies',   name: 'CompanyListAdmin',    component: CompanyList,    meta: { permissions: ['companies:read'],   title: 'Empresas' } },
-      { path: 'company/new', name: 'CompanyFormAdmin',    component: CompanyForm,    meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
-      { path: 'company/:id', name: 'CompanyDetailAdmin',  component: CompanyDetail,  props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
-      { path: 'requests', name: 'RequestsAdmin',  component: RequestList,  props: true, meta: { permissions: ['companies:read'], title: 'Requests' } },
+      { path: '', redirect: { name: 'AdminDashboard' } },
+      { path: 'dashboard', name: 'AdminDashboard', component: Dashboard, meta: { title: 'Panel • Admin' } },
+      { path: 'users', name: 'UserManagement', component: UserManagement, meta: { permissions: ['users:read'], title: 'Usuarios' } },
+      { path: 'permissions', name: 'Permissions', component: Permissions, meta: { permissions: ['permissions:read'], title: 'Permisos' } },
+      { path: 'horarios', name: 'HorariosList', component: GestionHorarios, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
+      { path: 'attendance', name: 'AsistenciaList', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },
+      { path: 'companies', name: 'CompanyListAdmin', component: CompanyList, meta: { permissions: ['companies:read'], title: 'Empresas' } },
+      { path: 'company/new', name: 'CompanyFormAdmin', component: CompanyForm, meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
+      { path: 'company/:id', name: 'CompanyDetailAdmin', component: CompanyDetail, props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
+      { path: 'requests', name: 'RequestsAdmin', component: RequestList, props: true, meta: { permissions: ['companies:read'], title: 'Requests' } },
+      { path: "payroll", name: "payroll", component: Payroll, props: true, meta: { permissions: ['companies:read'], title: 'Requests' }}
     ]
   },
 
@@ -115,13 +117,13 @@ const routes = [
     component: EmployeeLayout,
     meta: { requiresAuth: true, roles: ['employee'] },
     children: [
-      { path: '',              redirect: { name: 'EmployeeDashboard' } },
-      { path: 'dashboard',     name: 'EmployeeDashboard', component: Dashboard,   meta: { title: 'Panel • Empleado' } },
-      { path: 'attendance',    name: 'Attendance',        component: Attendance,  meta: { title: 'Marcar asistencia' } },
-      { path: 'history',       name: 'History',           component: History,     meta: { title: 'Historial' } },
-      { path: 'create-request',name: 'CreateRequest',     component: CreateRequest, meta: { title: 'Nueva solicitud' } },
-      { path: 'documents',name: 'Documents',     component: EmployeeDocs, meta: { title: 'Documents' } },
-      { path: 'requests',name: 'Requests',     component: RequestListEmployee, meta: { title: 'Requests' } },
+      { path: '', redirect: { name: 'EmployeeDashboard' } },
+      { path: 'dashboard', name: 'EmployeeDashboard', component: Dashboard, meta: { title: 'Panel • Empleado' } },
+      { path: 'attendance', name: 'Attendance', component: Attendance, meta: { title: 'Marcar asistencia' } },
+      { path: 'history', name: 'History', component: History, meta: { title: 'Historial' } },
+      { path: 'create-request', name: 'CreateRequest', component: CreateRequest, meta: { title: 'Nueva solicitud' } },
+      { path: 'documents', name: 'Documents', component: EmployeeDocs, meta: { title: 'Documents' } },
+      { path: 'requests', name: 'Requests', component: RequestListEmployee, meta: { title: 'Requests' } },
     ]
   },
 
@@ -148,7 +150,7 @@ async function ensureSession() {
   const auth = useAuthStore()
   if (!triedRestore) {
     triedRestore = true
-    try { await auth.restore() } catch (_) {}
+    try { await auth.restore() } catch (_) { }
   }
   return auth
 }
@@ -156,9 +158,9 @@ async function ensureSession() {
 router.beforeEach(async (to, from, next) => {
   const auth = await ensureSession()
 
-  const isPublic   = to.matched.some(r => r.meta?.public)
+  const isPublic = to.matched.some(r => r.meta?.public)
   const onlyGuests = to.matched.some(r => r.meta?.onlyGuests)
-  const needsAuth  = to.matched.some(r => r.meta?.requiresAuth)
+  const needsAuth = to.matched.some(r => r.meta?.requiresAuth)
   // 1) Si está logueado y cae en páginas solo para invitados (login/register) → a destino seguro
   if (onlyGuests && auth.isAuthenticated) {
     const safe = safeRedirectOf(to) || roleHome(auth.role)

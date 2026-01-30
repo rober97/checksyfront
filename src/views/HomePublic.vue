@@ -31,13 +31,6 @@
       :steps="steps"
     />
 
-    <!-- FEATURES -->
-    <FeaturesGrid
-      id="funciones"
-      eyebrow="Potencia tu gestión"
-      title="Características destacadas"
-      :features="features"
-    />
     <!-- PRICING -->
     <PricingPlans
       id="planes"
@@ -57,32 +50,6 @@
       title="Preguntas frecuentes"
       :items="faqs"
     />
-
-    <!-- CTA FINAL (opcional: puedes moverlo a Hero/Footer si quieres) -->
-    <section class="mk-cta-final">
-      <div class="mk-container text-center">
-        <h3 class="mk-h2">¿Listo para operar con nivel enterprise?</h3>
-        <p class="mk-subtitle">Prueba gratis durante 14 días. Sin tarjeta requerida.</p>
-
-        <div class="row justify-center q-gutter-sm q-mt-sm">
-          <q-btn
-            color="white"
-            text-color="primary"
-            unelevated
-            size="lg"
-            label="Iniciar prueba"
-            @click="handleNavigate('/register')"
-          />
-          <q-btn
-            outline
-            color="white"
-            size="lg"
-            label="Hablar con ventas"
-            @click="handleNavigate('#contacto')"
-          />
-        </div>
-      </div>
-    </section>
 
     <!-- FOOTER -->
     <FooterNoctua
@@ -108,7 +75,6 @@ import { useRouter } from 'vue-router'
 import NavBar from '@/components/marketing/NavBar.vue'
 import HeroNoctua from '@/components/marketing/HeroNoctua.vue'
 import StepsTimeline from '@/components/marketing/StepsTimeline.vue'
-import FeaturesGrid from '@/components/marketing/FeaturesGrid.vue'
 import PricingPlans from '@/components/marketing/PricingPlans.vue'
 import FAQAccordion from '@/components/marketing/FAQAccordion.vue'
 import FooterNoctua from '@/components/marketing/FooterNoctua.vue'

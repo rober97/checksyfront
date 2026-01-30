@@ -11,6 +11,7 @@ export const MENU = [
       { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance' },
       { label: 'Empresas', icon: 'apartment', to: '/admin/companies' },
       { label: 'Solicitudes', icon: 'apartment', to: '/admin/requests' },
+      { label: "Liquidaciones", icon: "payments", to: '/admin/payroll' },
     ]
   },
 
