@@ -1,235 +1,152 @@
 <template>
-  <q-page class="q-pa-md" :class="pageBgClass">
-    <div class="rk-container">
-      <!-- Floating notifications -->
-      <div class="rk-notifications">
-        <transition-group name="slide-down">
-          <div
-            v-for="notif in notifications"
-            :key="notif.id"
-            class="rk-notification"
-            :class="`type-${notif.type}`"
-          >
+  <q-page class="rk-attendance-page">
+    <!-- Background Effects -->
+    <div class="rk-page-bg">
+      <div class="rk-grid-pattern"></div>
+      <div class="rk-glow-orb rk-orb-1"></div>
+      <div class="rk-glow-orb rk-orb-2"></div>
+    </div>
+
+    <!-- Floating Notifications -->
+    <div class="rk-notifications">
+      <transition-group name="slide-down">
+        <div
+          v-for="notif in notifications"
+          :key="notif.id"
+          class="rk-notification"
+          :class="`type-${notif.type}`"
+        >
+          <div class="rk-notif-icon">
             <q-icon :name="notif.icon" />
-            <span>{{ notif.message }}</span>
-            <q-btn
-              flat
-              dense
-              round
-              icon="close"
-              size="sm"
-              @click="removeNotification(notif.id)"
-            />
           </div>
-        </transition-group>
-      </div>
+          <span class="rk-notif-text">{{ notif.message }}</span>
+          <q-btn flat dense round icon="close" size="sm" @click="removeNotification(notif.id)" class="rk-notif-close" />
+        </div>
+      </transition-group>
+    </div>
 
-      <!-- HEADER -->
-      <div class="row items-center justify-between q-mb-xl">
-        <div class="col row items-center no-wrap q-gutter-sm">
-          <div class="rk-avatar-container">
-            <q-avatar size="52px" class="rk-ring animated-avatar">
-              <q-icon name="access_time" size="28px" />
-            </q-avatar>
-            <div class="rk-pulse" :class="{ active: form.tipo }"></div>
+    <div class="rk-container">
+      <!-- Header Premium -->
+      <div class="rk-header">
+        <div class="rk-header-left">
+          <div class="rk-avatar-wrapper">
+            <div class="rk-avatar-ring" :class="{ active: form.tipo }">
+              <q-avatar size="60px" class="rk-avatar">
+                <q-icon name="access_time" size="32px" />
+              </q-avatar>
+            </div>
+            <div class="rk-pulse-dot" :class="{ active: form.tipo }"></div>
           </div>
 
-          <div class="rk-header-text">
-            <div class="text-body1 text-grey-6 rk-time-display">
-              <q-icon name="calendar_today" size="16px" />
-              {{ fechaBonita }} ·
-              <span class="text-weight-bold rk-live-time">{{
-                horaActual
-              }}</span>
-              <q-chip
-                dense
-                size="sm"
-                color="primary"
-                text-color="white"
-                class="q-ml-sm"
-              >
-                {{ timezone }}
-              </q-chip>
+          <div class="rk-header-info">
+            <div class="rk-date-time">
+              <q-icon name="calendar_today" size="18px" />
+              <span class="rk-date">{{ fechaBonita }}</span>
+            </div>
+            <div class="rk-live-clock">
+              <span class="rk-time">{{ horaActual }}</span>
+              <q-chip dense size="sm" class="rk-timezone-chip">{{ timezone }}</q-chip>
             </div>
           </div>
         </div>
 
-        <div class="col-auto row items-center q-gutter-sm">
-          <q-badge
-            class="rk-status-badge"
-            :color="isOnline ? 'positive' : 'orange-8'"
-            outline
-          >
-            <q-icon
-              :name="isOnline ? 'wifi' : 'wifi_off'"
-              size="16px"
-              class="q-mr-xs"
-            />
-            {{ isOnline ? "En línea" : "Sin conexión" }}
+        <div class="rk-header-right">
+          <q-badge class="rk-status-badge" :class="{ online: isOnline }">
+            <q-icon :name="isOnline ? 'wifi' : 'wifi_off'" size="16px" />
+            <span>{{ isOnline ? "En línea" : "Sin conexión" }}</span>
           </q-badge>
 
-          <q-btn
-            dense
-            flat
-            round
-            :icon="geoEnabled ? 'my_location' : 'location_off'"
-            :color="geoEnabled ? 'primary' : 'grey-6'"
-            class="rk-icon-btn"
-            @click="toggleGeoloc"
-          >
-            <q-tooltip>{{
-              geoEnabled
-                ? "Geolocalización activada"
-                : "Activar geolocalización"
-            }}</q-tooltip>
-          </q-btn>
+          <button class="rk-icon-btn" :class="{ active: geoEnabled }" @click="toggleGeoloc">
+            <q-icon :name="geoEnabled ? 'my_location' : 'location_off'" />
+            <q-tooltip>{{ geoEnabled ? "Geolocalización activada" : "Activar geolocalización" }}</q-tooltip>
+          </button>
 
-          <q-btn
-            dense
-            flat
-            round
-            icon="history"
-            class="rk-icon-btn"
-            @click="dlgPendientes = true"
-          >
-            <q-badge v-if="queue.length > 0" color="red" floating rounded>{{
-              queue.length
-            }}</q-badge>
+          <button class="rk-icon-btn rk-icon-btn-badge" @click="dlgPendientes = true">
+            <q-icon name="history" />
+            <div v-if="queue.length > 0" class="rk-badge-dot">{{ queue.length }}</div>
             <q-tooltip>Pendientes offline</q-tooltip>
-          </q-btn>
+          </button>
         </div>
       </div>
 
-      <!-- GRID -->
-      <div class="row q-col-gutter-xl">
-        <!-- LEFT -->
-        <div class="col-12 col-lg-8">
-          <transition name="slide-fade">
-            <q-banner
-              v-if="form.tipo || form.estadoAnimo"
-              rounded
-              class="rk-summary q-mb-lg animated-border"
-            >
-              <template #avatar>
-                <q-avatar :color="summaryColor" text-color="white">
-                  <q-icon
-                    :name="
-                      form.tipo === 'entrada'
-                        ? 'login'
-                        : form.tipo === 'salida'
-                        ? 'logout'
-                        : 'info'
-                    "
-                  />
-                </q-avatar>
-              </template>
+      <!-- Summary Banner -->
+      <transition name="slide-fade">
+        <div v-if="form.tipo || form.estadoAnimo" class="rk-summary-banner">
+          <div class="rk-summary-icon" :class="`type-${form.tipo}`">
+            <q-icon :name="form.tipo === 'entrada' ? 'login' : form.tipo === 'salida' ? 'logout' : 'info'" />
+          </div>
+          <div class="rk-summary-content">
+            <strong class="rk-summary-title">{{ labelTipo || "Selecciona una opción" }}</strong>
+            <span v-if="form.estadoAnimo" class="rk-summary-subtitle"> · {{ labelAnimo }}</span>
+          </div>
+          <div v-if="geoEnabled && location" class="rk-summary-geo">
+            <q-icon name="place" size="16px" />
+            <span>{{ geoTexto }}</span>
+          </div>
+        </div>
+      </transition>
 
-              <div class="text-body1">
-                <b>{{ labelTipo || "Selecciona entrada o salida" }}</b>
-                <span v-if="form.estadoAnimo"> · {{ labelAnimo }}</span>
-              </div>
-
-              <template v-if="geoEnabled && location" #action>
-                <q-badge color="primary" outline class="rk-geo-badge">
-                  <q-icon name="place" size="14px" class="q-mr-xs" />
-                  {{ geoTexto }}
-                </q-badge>
-              </template>
-            </q-banner>
-          </transition>
-
-          <q-card flat bordered class="rk-card card-hover">
-            <q-form
-              @submit.prevent="confirmarEnvio"
-              class="q-gutter-xl q-pa-lg"
-            >
-              <!-- Tipo -->
-              <section>
-                <div class="rk-label q-mb-md">
-                  <q-icon name="swap_horiz" class="q-mr-sm" />
-                  Tipo de asistencia
+      <!-- Main Grid -->
+      <div class="rk-main-grid">
+        <!-- Left Column - Form -->
+        <div class="rk-form-section">
+          <div class="rk-form-card">
+            <q-form @submit.prevent="confirmarEnvio" class="rk-form">
+              <!-- Tipo de Asistencia -->
+              <section class="rk-form-section-item">
+                <div class="rk-section-header">
+                  <div class="rk-section-icon"><q-icon name="swap_horiz" /></div>
+                  <h3 class="rk-section-title">Tipo de asistencia</h3>
                 </div>
 
-                <div class="rk-segment">
-                  <q-btn
-                    class="rk-seg-btn"
-                    :class="{
-                      'is-active rk-seg-in': form.tipo === 'entrada',
-                      'pulse-animation': form.tipo === 'entrada',
-                    }"
-                    icon="login"
-                    no-caps
-                    glossy
-                    label="Entrada"
-                    @click="form.tipo = 'entrada'"
-                  >
-                    <q-icon
-                      v-if="form.tipo === 'entrada'"
-                      name="check_circle"
-                      size="18px"
-                      class="q-ml-xs"
-                    />
-                  </q-btn>
+                <div class="rk-type-selector">
+                  <button type="button" class="rk-type-btn" :class="{ active: form.tipo === 'entrada', 'type-entrada': form.tipo === 'entrada' }" @click="form.tipo = 'entrada'">
+                    <div class="rk-type-icon"><q-icon name="login" /></div>
+                    <span class="rk-type-label">Entrada</span>
+                    <div v-if="form.tipo === 'entrada'" class="rk-type-check"><q-icon name="check_circle" /></div>
+                    <div class="rk-type-shine"></div>
+                  </button>
 
-                  <q-btn
-                    class="rk-seg-btn"
-                    :class="{
-                      'is-active rk-seg-out': form.tipo === 'salida',
-                      'pulse-animation': form.tipo === 'salida',
-                    }"
-                    icon="logout"
-                    no-caps
-                    glossy
-                    label="Salida"
-                    @click="form.tipo = 'salida'"
-                  >
-                    <q-icon
-                      v-if="form.tipo === 'salida'"
-                      name="check_circle"
-                      size="18px"
-                      class="q-ml-xs"
-                    />
-                  </q-btn>
+                  <button type="button" class="rk-type-btn" :class="{ active: form.tipo === 'salida', 'type-salida': form.tipo === 'salida' }" @click="form.tipo = 'salida'">
+                    <div class="rk-type-icon"><q-icon name="logout" /></div>
+                    <span class="rk-type-label">Salida</span>
+                    <div v-if="form.tipo === 'salida'" class="rk-type-check"><q-icon name="check_circle" /></div>
+                    <div class="rk-type-shine"></div>
+                  </button>
                 </div>
 
-                <div class="text-caption text-grey-6 q-mt-sm rk-shortcuts">
-                  <kbd>E</kbd> Entrada · <kbd>S</kbd> Salida ·
-                  <kbd>Ctrl/⌘ + Enter</kbd> Enviar
+                <div class="rk-shortcuts-hint">
+                  <kbd>E</kbd> Entrada · <kbd>S</kbd> Salida · <kbd>Ctrl/⌘ + Enter</kbd> Enviar
                 </div>
               </section>
 
-              <!-- Ánimo -->
-              <section>
-                <div class="rk-label q-mb-md">
-                  <q-icon name="mood" class="q-mr-sm" />
-                  ¿Cómo te sientes hoy?
+              <!-- Estado de Ánimo -->
+              <section class="rk-form-section-item">
+                <div class="rk-section-header">
+                  <div class="rk-section-icon"><q-icon name="mood" /></div>
+                  <h3 class="rk-section-title">¿Cómo te sientes hoy?</h3>
                 </div>
 
-                <div class="row q-col-gutter-sm rk-moods">
-                  <q-chip
+                <div class="rk-moods-grid">
+                  <button
+                    type="button"
                     v-for="m in moods"
                     :key="m.value"
-                    clickable
-                    :color="form.estadoAnimo === m.value ? m.color : 'grey-4'"
-                    :text-color="
-                      form.estadoAnimo === m.value ? 'white' : 'dark'
-                    "
-                    class="rk-mood animated-chip"
+                    class="rk-mood-btn"
+                    :class="{ active: form.estadoAnimo === m.value, [`mood-${m.value}`]: form.estadoAnimo === m.value }"
                     @click="form.estadoAnimo = m.value"
                   >
-                    <span class="rk-emoji">{{ m.emoji }}</span>
-                    <span class="q-ml-sm text-weight-medium">{{
-                      m.label
-                    }}</span>
-                  </q-chip>
+                    <span class="rk-mood-emoji">{{ m.emoji }}</span>
+                    <span class="rk-mood-label">{{ m.label }}</span>
+                  </button>
                 </div>
               </section>
 
               <!-- Comentario -->
-              <section>
-                <div class="rk-label q-mb-md">
-                  <q-icon name="notes" class="q-mr-sm" />
-                  Comentario (opcional)
+              <section class="rk-form-section-item">
+                <div class="rk-section-header">
+                  <div class="rk-section-icon"><q-icon name="notes" /></div>
+                  <h3 class="rk-section-title">Comentario (opcional)</h3>
                 </div>
 
                 <q-input
@@ -238,428 +155,239 @@
                   autogrow
                   counter
                   maxlength="300"
-                  standout="bg"
+                  standout
                   :rules="[comentarioRule]"
                   placeholder="¿Algo para hoy? Ej: reunión temprano, médico en la tarde, etc."
                   class="rk-textarea"
                 >
-                  <template #prepend
-                    ><q-icon name="notes" class="text-primary"
-                  /></template>
+                  <template #prepend><q-icon name="edit_note" /></template>
                 </q-input>
 
-                <div class="text-caption text-grey-6 q-mt-xs text-right">
-                  {{ form.comentario.length }}/300 caracteres
-                </div>
+                <div class="rk-char-counter">{{ form.comentario.length }}/300 caracteres</div>
               </section>
             </q-form>
-          </q-card>
+          </div>
         </div>
 
-        <!-- RIGHT -->
-        <div class="col-12 col-lg-4 q-gutter-md">
-          <!-- KPIs -->
-          <div class="row q-col-gutter-md">
-            <KpiMini
-              icon="event_available"
-              :label="'Asistencias mes'"
-              :value="kpi.asistenciasMes ?? '—'"
-              color="primary"
-            />
-            <KpiMini
-              icon="alarm"
-              :label="'Horas trabajadas'"
-              :value="kpi.horasMes ?? '—'"
-              color="teal"
-            />
-            <KpiMini
-              icon="check_circle"
-              :label="'Puntualidad'"
-              :value="kpi.puntualidad != null ? kpi.puntualidad + '%' : '—'"
-              color="positive"
-            />
-            <KpiMini
-              icon="beach_access"
-              :label="'Vacaciones'"
-              :value="kpi.vacaciones ?? '—'"
-              color="orange"
-            />
+        <!-- Right Column - Info Cards -->
+        <div class="rk-info-section">
+          <!-- KPIs Mini -->
+          <div class="rk-kpis-grid">
+            <div class="rk-kpi-mini">
+              <div class="rk-kpi-icon rk-icon-primary"><q-icon name="event_available" /></div>
+              <div class="rk-kpi-content">
+                <span class="rk-kpi-label">Asistencias mes</span>
+                <strong class="rk-kpi-value">{{ kpi.asistenciasMes ?? '—' }}</strong>
+              </div>
+            </div>
+            <div class="rk-kpi-mini">
+              <div class="rk-kpi-icon rk-icon-teal"><q-icon name="alarm" /></div>
+              <div class="rk-kpi-content">
+                <span class="rk-kpi-label">Horas trabajadas</span>
+                <strong class="rk-kpi-value">{{ kpi.horasMes ?? '—' }}</strong>
+              </div>
+            </div>
+            <div class="rk-kpi-mini">
+              <div class="rk-kpi-icon rk-icon-green"><q-icon name="check_circle" /></div>
+              <div class="rk-kpi-content">
+                <span class="rk-kpi-label">Puntualidad</span>
+                <strong class="rk-kpi-value">{{ kpi.puntualidad != null ? kpi.puntualidad + '%' : '—' }}</strong>
+              </div>
+            </div>
+            <div class="rk-kpi-mini">
+              <div class="rk-kpi-icon rk-icon-orange"><q-icon name="beach_access" /></div>
+              <div class="rk-kpi-content">
+                <span class="rk-kpi-label">Vacaciones</span>
+                <strong class="rk-kpi-value">{{ kpi.vacaciones ?? '—' }}</strong>
+              </div>
+            </div>
           </div>
 
-          <!-- Tu día -->
-          <q-card flat bordered class="rk-card card-hover">
-            <q-card-section class="q-pb-sm">
-              <div class="row items-center q-gutter-sm">
-                <q-icon name="today" color="primary" />
-                <div class="text-subtitle2 text-weight-bold">Tu día</div>
+          <!-- Tu Día -->
+          <div class="rk-info-card">
+            <div class="rk-card-header">
+              <div class="rk-card-header-icon"><q-icon name="today" /></div>
+              <h4 class="rk-card-title">Tu día</h4>
+            </div>
+            <div class="rk-card-body">
+              <div class="rk-day-item">
+                <div class="rk-day-label"><q-icon name="login" size="16px" /><span>Primer registro</span></div>
+                <strong class="rk-day-value">{{ kpi.primerCheck ?? "—" }}</strong>
               </div>
-            </q-card-section>
-            <q-separator />
-            <q-card-section class="q-gutter-sm">
-              <div class="row items-center justify-between rk-day-item">
-                <div class="text-caption text-grey-7">
-                  <q-icon name="login" size="16px" class="q-mr-xs" />
-                  Primer registro
-                </div>
-                <div class="text-body2 text-weight-medium">
-                  {{ kpi.primerCheck ?? "—" }}
-                </div>
+              <div class="rk-day-item">
+                <div class="rk-day-label"><q-icon name="logout" size="16px" /><span>Último registro</span></div>
+                <strong class="rk-day-value">{{ kpi.ultimoCheck ?? "—" }}</strong>
               </div>
-
-              <div class="row items-center justify-between rk-day-item">
-                <div class="text-caption text-grey-7">
-                  <q-icon name="logout" size="16px" class="q-mr-xs" />
-                  Último registro
+              <div class="rk-progress-section">
+                <div class="rk-progress-header">
+                  <div class="rk-progress-label"><q-icon name="schedule" size="16px" /><span>Acumulado hoy</span></div>
+                  <strong class="rk-progress-value">{{ kpi.horasHoy ?? "—" }}</strong>
                 </div>
-                <div class="text-body2 text-weight-medium">
-                  {{ kpi.ultimoCheck ?? "—" }}
-                </div>
-              </div>
-
-              <div class="q-mt-md">
-                <div class="row items-center justify-between q-mb-xs">
-                  <div class="text-caption text-grey-7">
-                    <q-icon name="schedule" size="16px" class="q-mr-xs" />
-                    Acumulado hoy
-                  </div>
-                  <div class="text-body2 text-weight-medium">
-                    {{ kpi.horasHoy ?? "—" }}
+                <div class="rk-progress-bar-wrapper">
+                  <div class="rk-progress-bar">
+                    <div class="rk-progress-fill" :class="`color-${jornadaProgress.color}`" :style="{ width: `${jornadaProgress.value * 100}%` }">
+                      <div class="rk-progress-shine"></div>
+                    </div>
                   </div>
                 </div>
+                <div class="rk-progress-footer">
+                  <span class="rk-progress-percent">{{ Math.round(jornadaProgress.value * 100) }}% de {{ workHoursGoal }}h</span>
+                  <span class="rk-progress-remaining" :class="jornadaProgress.textColor">{{ jornadaProgress.remaining }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <q-linear-progress
-                  rounded
-                  size="14px"
-                  :value="jornadaProgress.value"
-                  :color="jornadaProgress.color"
-                  track-color="grey-3"
-                  class="q-mb-xs"
-                />
-
-                <div class="row justify-between items-center">
-                  <div class="text-caption text-grey-6">
-                    {{ Math.round(jornadaProgress.value * 100) }}% de
-                    {{ workHoursGoal }}h
-                  </div>
-                  <div class="text-caption" :class="jornadaProgress.textColor">
-                    {{ jornadaProgress.remaining }}
+          <!-- Actividad Reciente -->
+          <div class="rk-info-card">
+            <div class="rk-card-header">
+              <div class="rk-card-header-content">
+                <div class="rk-card-header-icon"><q-icon name="timeline" /></div>
+                <h4 class="rk-card-title">Actividad reciente</h4>
+              </div>
+              <button class="rk-refresh-btn" @click="loadActivity" :disabled="refreshingActivity">
+                <q-icon name="refresh" :class="{ 'rotate-animation': refreshingActivity }" />
+                <q-tooltip>Actualizar</q-tooltip>
+              </button>
+            </div>
+            <div class="rk-activity-list">
+              <div v-for="(a, i) in actividad" :key="i" class="rk-activity-item">
+                <div class="rk-activity-avatar" :class="`type-${a.tipo}`">
+                  <q-icon :name="a.tipo === 'entrada' ? 'login' : 'logout'" />
+                </div>
+                <div class="rk-activity-content">
+                  <div class="rk-activity-title"><span class="rk-activity-type">{{ a.tipo }}</span> · {{ a.hora }}</div>
+                  <div class="rk-activity-details">
+                    <q-icon :name="moodIcon(a.animo)" size="14px" />
+                    <span>{{ a.animo || "—" }}</span> ·
+                    <span class="rk-activity-note">{{ a.comentario || "Sin comentario" }}</span>
                   </div>
                 </div>
               </div>
-            </q-card-section>
-          </q-card>
-
-          <!-- Actividad reciente -->
-          <q-card flat bordered class="rk-card card-hover">
-            <q-card-section class="q-pb-sm">
-              <div class="row items-center justify-between">
-                <div class="row items-center q-gutter-sm">
-                  <q-icon name="timeline" color="primary" />
-                  <div class="text-subtitle2 text-weight-bold">
-                    Actividad reciente
-                  </div>
-                </div>
-                <q-btn
-                  flat
-                  dense
-                  round
-                  icon="refresh"
-                  size="sm"
-                  @click="loadActivity"
-                  :loading="refreshingActivity"
-                >
-                  <q-tooltip>Actualizar actividad</q-tooltip>
-                </q-btn>
+              <div v-if="actividad.length === 0" class="rk-empty-activity">
+                <q-icon name="history_off" />
+                <p>Sin registros recientes</p>
               </div>
-            </q-card-section>
-            <q-separator />
-
-            <q-list separator class="rk-activity-list">
-              <q-item
-                v-for="(a, i) in actividad"
-                :key="i"
-                class="rk-activity animated-item"
-              >
-                <q-item-section avatar>
-                  <q-avatar
-                    size="32px"
-                    :class="
-                      a.tipo === 'entrada'
-                        ? 'bg-primary text-white'
-                        : 'bg-negative text-white'
-                    "
-                  >
-                    <q-icon
-                      :name="a.tipo === 'entrada' ? 'login' : 'logout'"
-                      size="16px"
-                    />
-                  </q-avatar>
-                </q-item-section>
-
-                <q-item-section>
-                  <q-item-label class="text-weight-medium">
-                    <span class="text-capitalize">{{ a.tipo }}</span> ·
-                    {{ a.hora }}
-                  </q-item-label>
-                  <q-item-label caption class="rk-activity-details">
-                    <q-icon
-                      :name="moodIcon(a.animo)"
-                      size="14px"
-                      class="q-mr-xs"
-                    />
-                    {{ a.animo || "—" }} ·
-                    {{ a.comentario || "Sin comentario" }}
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <div
-                v-if="actividad.length === 0"
-                class="text-grey-6 q-pa-md text-center"
-              >
-                <q-icon name="history_off" size="32px" class="q-mb-sm" />
-                <div>Sin registros recientes</div>
-              </div>
-            </q-list>
-          </q-card>
+            </div>
+          </div>
 
           <!-- Racha -->
-          <q-card flat bordered class="rk-card card-hover">
-            <q-card-section class="q-pb-sm">
-              <div class="row items-center q-gutter-sm">
-                <q-icon name="local_fire_department" color="orange" />
-                <div class="text-subtitle2 text-weight-bold">Racha actual</div>
-                <q-badge color="orange" class="rk-streak-badge"
-                  >{{ streakCount }} días</q-badge
-                >
+          <div class="rk-info-card rk-streak-card">
+            <div class="rk-card-header">
+              <div class="rk-card-header-content">
+                <div class="rk-card-header-icon rk-icon-fire"><q-icon name="local_fire_department" /></div>
+                <h4 class="rk-card-title">Racha actual</h4>
               </div>
-            </q-card-section>
-            <q-separator />
-
-            <q-card-section>
-              <div class="row q-col-gutter-xs rk-streak-grid">
-                <div
-                  v-for="(d, i) in streak"
-                  :key="i"
-                  class="rk-streak"
-                  :class="d.ok ? 'ok' : 'ko'"
-                  :title="d.label"
-                >
-                  <q-icon :name="d.ok ? 'check' : 'close'" size="14px" />
+              <q-badge class="rk-streak-badge">{{ streakCount }} días</q-badge>
+            </div>
+            <div class="rk-card-body">
+              <div class="rk-streak-grid">
+                <div v-for="(d, i) in streak" :key="i" class="rk-streak-day" :class="{ ok: d.ok }" :title="d.label">
+                  <q-icon :name="d.ok ? 'check' : 'close'" size="16px" />
                 </div>
               </div>
-
-              <div class="text-caption text-grey-6 q-mt-sm text-center">
-                Últimos {{ streak.length }} días
-                <q-btn
-                  v-if="streakCount > 0"
-                  flat
-                  dense
-                  size="sm"
-                  color="orange"
-                  label="Compartir"
-                  icon="share"
-                  class="q-ml-sm"
-                  @click="shareStreak"
-                />
+              <div class="rk-streak-footer">
+                <span>Últimos {{ streak.length }} días</span>
+                <button v-if="streakCount > 0" class="rk-share-btn" @click="shareStreak">
+                  <q-icon name="share" size="16px" /><span>Compartir</span>
+                </button>
               </div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-
-      <!-- DOCK -->
-      <div class="rk-dock">
-        <div class="rk-dock-inner">
-          <div class="row items-center q-gutter-sm">
-            <q-btn
-              flat
-              dense
-              icon="history"
-              label="Historial"
-              class="rk-ghost"
-              to="/employee/attendance/history"
-            />
-            <q-btn
-              flat
-              dense
-              icon="event_note"
-              label="Nueva solicitud"
-              class="rk-ghost"
-              to="/employee/requests"
-            />
-            <q-btn
-              flat
-              dense
-              icon="insights"
-              label="Estadísticas"
-              class="rk-ghost"
-              to="/employee/analytics"
-            />
+            </div>
           </div>
-
-          <q-btn
-            :label="labelCTA"
-            color="primary"
-            size="lg"
-            class="rk-cta"
-            :disable="!form.tipo || loading"
-            :loading="loading"
-            @click="confirmarEnvio"
-            unelevated
-          >
-            <template #loading>
-              <q-spinner-hourglass class="on-left" /> Enviando...
-            </template>
-          </q-btn>
         </div>
       </div>
     </div>
 
-    <!-- DIALOGS -->
-    <q-dialog v-model="dlgPendientes" position="right">
-      <q-card style="width: 500px; max-width: 90vw" class="rk-card">
-        <q-card-section class="row items-center q-gutter-sm">
-          <q-avatar icon="sync" color="primary" text-color="white" />
-          <div class="text-h6">Pendientes por enviar</div>
-          <q-space />
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-card-section>
+    <!-- Floating Action Dock -->
+    <div class="rk-dock">
+      <div class="rk-dock-content">
+        <div class="rk-dock-links">
+          <router-link to="/employee/attendance/history" class="rk-dock-link"><q-icon name="history" /><span>Historial</span></router-link>
+          <router-link to="/employee/requests" class="rk-dock-link"><q-icon name="event_note" /><span>Solicitudes</span></router-link>
+          <router-link to="/employee/analytics" class="rk-dock-link"><q-icon name="insights" /><span>Estadísticas</span></router-link>
+        </div>
+        <button class="rk-submit-btn" :disabled="!form.tipo || loading" :class="{ loading: loading }" @click="confirmarEnvio">
+          <q-icon v-if="!loading" name="check_circle" />
+          <q-spinner-hourglass v-else />
+          <span>{{ loading ? "Enviando..." : labelCTA }}</span>
+          <div class="rk-submit-shine"></div>
+        </button>
+      </div>
+    </div>
 
-        <q-separator />
-
-        <q-card-section class="q-pa-none">
-          <div
-            v-if="queue.length === 0"
-            class="text-grey-6 q-pa-xl text-center"
-          >
-            <q-icon
-              name="check_circle"
-              size="48px"
-              color="positive"
-              class="q-mb-md"
-            />
-            <div>No hay pendientes por enviar</div>
+    <!-- Dialogs -->
+    <q-dialog v-model="dlgPendientes" position="right" class="rk-dialog">
+      <div class="rk-dialog-card">
+        <div class="rk-dialog-header">
+          <div class="rk-dialog-header-content">
+            <div class="rk-dialog-icon"><q-icon name="sync" /></div>
+            <h3 class="rk-dialog-title">Pendientes por enviar</h3>
           </div>
-
-          <q-scroll-area v-else style="height: 400px">
-            <q-list bordered separator class="rounded-borders">
-              <q-item v-for="(item, i) in queue" :key="i" class="rk-queue-item">
-                <q-item-section>
-                  <q-item-label class="text-weight-medium">
-                    <q-icon
-                      :name="item.tipo === 'entrada' ? 'login' : 'logout'"
-                      :color="item.tipo === 'entrada' ? 'primary' : 'negative'"
-                    />
-                    {{ item.tipo }} ·
-                    {{ new Date(item.timestamp).toLocaleString("es-CL") }}
-                  </q-item-label>
-
-                  <q-item-label caption>
-                    <q-icon
-                      :name="moodIcon(item.mood)"
-                      size="14px"
-                      class="q-mr-xs"
-                    />
-                    {{ item.mood || "—" }} ·
-                    {{ (item.note || "").slice(0, 80) }}
-                  </q-item-label>
-
-                  <q-item-label v-if="item.ubicacion" caption>
-                    <q-icon name="place" size="12px" class="q-mr-xs" />
-                    {{ locToText(item.ubicacion) }}
-                  </q-item-label>
-                </q-item-section>
-
-                <q-item-section side top>
-                  <div class="row q-gutter-xs">
-                    <q-btn
-                      dense
-                      flat
-                      round
-                      icon="send"
-                      color="primary"
-                      @click="reintentar(i)"
-                    />
-                    <q-btn
-                      dense
-                      flat
-                      round
-                      icon="delete"
-                      color="negative"
-                      @click="borrarPendiente(i)"
-                    />
-                  </div>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-scroll-area>
-        </q-card-section>
-
-        <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat label="Cerrar" v-close-popup />
-          <q-btn
-            outline
-            color="negative"
-            label="Vaciar cola"
-            @click="vaciarCola"
-            :disable="queue.length === 0"
-          />
-        </q-card-actions>
-      </q-card>
+          <button class="rk-dialog-close" v-close-popup><q-icon name="close" /></button>
+        </div>
+        <div class="rk-dialog-body">
+          <div v-if="queue.length === 0" class="rk-empty-queue">
+            <q-icon name="check_circle" />
+            <p>No hay pendientes por enviar</p>
+          </div>
+          <div v-else class="rk-queue-list">
+            <div v-for="(item, i) in queue" :key="i" class="rk-queue-item">
+              <div class="rk-queue-info">
+                <div class="rk-queue-title">
+                  <q-icon :name="item.tipo === 'entrada' ? 'login' : 'logout'" :class="`type-${item.tipo}`" />
+                  <span>{{ item.tipo }}</span> ·
+                  <span class="rk-queue-date">{{ new Date(item.timestamp).toLocaleString("es-CL") }}</span>
+                </div>
+                <div class="rk-queue-details">
+                  <q-icon :name="moodIcon(item.mood)" size="14px" />
+                  <span>{{ item.mood || "—" }}</span> ·
+                  <span class="rk-queue-note">{{ (item.note || "").slice(0, 80) }}</span>
+                </div>
+                <div v-if="item.ubicacion" class="rk-queue-location">
+                  <q-icon name="place" size="12px" />
+                  <span>{{ locToText(item.ubicacion) }}</span>
+                </div>
+              </div>
+              <div class="rk-queue-actions">
+                <button class="rk-queue-action-btn" @click="reintentar(i)"><q-icon name="send" /></button>
+                <button class="rk-queue-action-btn rk-btn-danger" @click="borrarPendiente(i)"><q-icon name="delete" /></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rk-dialog-footer">
+          <button class="rk-dialog-btn" v-close-popup>Cerrar</button>
+          <button class="rk-dialog-btn rk-btn-danger" @click="vaciarCola" :disabled="queue.length === 0">Vaciar cola</button>
+        </div>
+      </div>
     </q-dialog>
 
-    <q-dialog v-model="dlgConfirm" persistent>
-      <q-card style="min-width: 420px" class="rk-card">
-        <q-card-section class="row items-center q-gutter-sm">
-          <q-avatar icon="task_alt" color="primary" text-color="white" />
-          <div class="text-h6">Confirmar envío</div>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-section class="q-gutter-sm">
-          <div class="row items-center q-gutter-sm">
-            <q-icon name="swap_horiz" color="primary" />
-            <div><b>Tipo:</b> {{ labelTipo || "—" }}</div>
+    <q-dialog v-model="dlgConfirm" persistent class="rk-dialog">
+      <div class="rk-dialog-card rk-confirm-card">
+        <div class="rk-dialog-header">
+          <div class="rk-dialog-icon rk-icon-confirm"><q-icon name="task_alt" /></div>
+          <h3 class="rk-dialog-title">Confirmar envío</h3>
+        </div>
+        <div class="rk-dialog-body">
+          <div class="rk-confirm-list">
+            <div class="rk-confirm-item"><q-icon name="swap_horiz" /><div><strong>Tipo:</strong> {{ labelTipo || "—" }}</div></div>
+            <div v-if="form.estadoAnimo" class="rk-confirm-item"><q-icon name="mood" /><div><strong>Estado de ánimo:</strong> {{ labelAnimo || "—" }}</div></div>
+            <div v-if="form.comentario?.trim()" class="rk-confirm-item"><q-icon name="notes" /><div><strong>Comentario:</strong> {{ form.comentario?.trim() || "—" }}</div></div>
+            <div v-if="geoEnabled" class="rk-confirm-item"><q-icon name="place" /><div><strong>Ubicación:</strong> {{ geoTexto }}</div></div>
           </div>
-
-          <div class="row items-center q-gutter-sm" v-if="form.estadoAnimo">
-            <q-icon name="mood" :color="moodColor" />
-            <div><b>Estado de ánimo:</b> {{ labelAnimo || "—" }}</div>
+          <div v-if="!isOnline" class="rk-offline-warning">
+            <q-icon name="wifi_off" />
+            <span>Se guardará en la cola offline y se enviará cuando vuelva la conexión.</span>
           </div>
-
-          <div
-            class="row items-center q-gutter-sm"
-            v-if="form.comentario?.trim()"
-          >
-            <q-icon name="notes" color="primary" />
-            <div><b>Comentario:</b> {{ form.comentario?.trim() || "—" }}</div>
-          </div>
-
-          <div class="row items-center q-gutter-sm" v-if="geoEnabled">
-            <q-icon name="place" color="primary" />
-            <div><b>Ubicación:</b> {{ geoTexto }}</div>
-          </div>
-
-          <div v-if="!isOnline" class="text-orange-8 q-mt-sm">
-            <q-icon name="wifi_off" class="q-mr-sm" />
-            Se guardará en la cola offline y se enviará cuando vuelva la
-            conexión.
-          </div>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" v-close-popup />
-          <q-btn
-            color="primary"
-            label="Enviar"
-            :loading="loading"
-            @click="enviarAsistencia"
-            class="rk-confirm-btn"
-          />
-        </q-card-actions>
-      </q-card>
+        </div>
+        <div class="rk-dialog-footer">
+          <button class="rk-dialog-btn" v-close-popup>Cancelar</button>
+          <button class="rk-dialog-btn rk-btn-primary" :disabled="loading" @click="enviarAsistencia">
+            <q-spinner-hourglass v-if="loading" size="18px" class="q-mr-sm" />
+            <span>{{ loading ? "Enviando..." : "Enviar" }}</span>
+          </button>
+        </div>
+      </div>
     </q-dialog>
 
     <canvas ref="confettiCanvas" class="rk-confetti"></canvas>
@@ -667,70 +395,26 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  reactive,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  computed,
-} from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import { useQuasar } from "quasar";
-
-// Stores
 import { useAsistenciaStore } from "@/stores/asistenciaStore";
-import { useUserStore } from "@/stores/userStore"; // opcional
+import { useUserStore } from "@/stores/userStore";
 import { useAuthStore } from "@/stores/authStore";
 
-// ====== Constantes ======
 const ALLOWED_MOODS = new Set(["great", "good", "ok", "tired", "bad"]);
 const moods = [
-  {
-    label: "Bien",
-    value: "good",
-    emoji: "😄",
-    color: "positive",
-    icon: "sentiment_very_satisfied",
-  },
-  {
-    label: "Excelente",
-    value: "great",
-    emoji: "🌟",
-    color: "primary",
-    icon: "mood",
-  },
-  {
-    label: "Normal",
-    value: "ok",
-    emoji: "😐",
-    color: "info",
-    icon: "sentiment_satisfied",
-  },
-  {
-    label: "Cansado",
-    value: "tired",
-    emoji: "😴",
-    color: "warning",
-    icon: "sentiment_dissatisfied",
-  },
-  {
-    label: "Mal",
-    value: "bad",
-    emoji: "☹️",
-    color: "negative",
-    icon: "sentiment_very_dissatisfied",
-  },
+  { label: "Excelente", value: "great", emoji: "🌟", color: "primary", icon: "mood" },
+  { label: "Bien", value: "good", emoji: "😄", color: "positive", icon: "sentiment_very_satisfied" },
+  { label: "Normal", value: "ok", emoji: "😐", color: "info", icon: "sentiment_satisfied" },
+  { label: "Cansado", value: "tired", emoji: "😴", color: "warning", icon: "sentiment_dissatisfied" },
+  { label: "Mal", value: "bad", emoji: "☹️", color: "negative", icon: "sentiment_very_dissatisfied" },
 ];
 
-// Quasar
 const $q = useQuasar();
-
-// Pinia
 const asistenciaStore = useAsistenciaStore();
 const userStore = useUserStore?.();
 const auth = useAuthStore();
 
-// ====== Estado ======
 const loading = ref(false);
 const isOnline = ref(navigator.onLine);
 const dlgConfirm = ref(false);
@@ -739,99 +423,39 @@ const refreshingActivity = ref(false);
 const notifications = ref([]);
 const notificationId = ref(0);
 
-const isDark = computed(() => $q.dark.isActive);
-const pageBgClass = computed(() =>
-  isDark.value ? "bg-grey-10 text-white" : "bg-grey-1"
-);
-
-// Form
 const form = reactive({ tipo: null, estadoAnimo: null, comentario: "" });
 
-// Usuario actual
-const currentUserId = computed(
-  () =>
-    auth?.user?.id ||
-    userStore?.currentUser?._id ||
-    localStorage.getItem("userId") ||
-    null
-);
+const currentUserId = computed(() => auth?.user?.id || userStore?.currentUser?._id || localStorage.getItem("userId") || null);
+const labelTipo = computed(() => form.tipo === "entrada" ? "Entrada" : form.tipo === "salida" ? "Salida" : "");
+const labelAnimo = computed(() => moods.find((m) => m.value === form.estadoAnimo)?.label || "");
+const labelCTA = computed(() => form.tipo ? `Marcar ${labelTipo.value.toLowerCase()}` : "Marcar asistencia");
 
-// Labels/colores UI
-const labelTipo = computed(() =>
-  form.tipo === "entrada" ? "Entrada" : form.tipo === "salida" ? "Salida" : ""
-);
-const labelAnimo = computed(
-  () => moods.find((m) => m.value === form.estadoAnimo)?.label || ""
-);
-const labelCTA = computed(() =>
-  form.tipo ? `Marcar ${labelTipo.value.toLowerCase()}` : "Marcar asistencia"
-);
-const summaryColor = computed(() =>
-  form.tipo === "entrada"
-    ? "positive"
-    : form.tipo === "salida"
-    ? "negative"
-    : "primary"
-);
-const moodColor = computed(
-  () => moods.find((m) => m.value === form.estadoAnimo)?.color || "primary"
-);
-
-// Fecha/hora
-const horaActual = ref("--:--");
-const fechaBonita = ref(
-  new Intl.DateTimeFormat("es-CL", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date())
-);
+const horaActual = ref("--:--:--");
+const fechaBonita = ref(new Intl.DateTimeFormat("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date()));
 const timezone = ref(Intl.DateTimeFormat().resolvedOptions().timeZone);
 let clockTimer = null;
 
-// Geolocalización
 const geoEnabled = ref(false);
 const location = ref(null);
 const geoTexto = computed(() => locToText(location.value));
 
-// Ajustes & metas
-const settings = reactive({
-  autoLocation: true,
-  offlineMode: true,
-  soundEffects: true,
-  haptics: true,
-});
+const settings = reactive({ autoLocation: true, offlineMode: true, soundEffects: true, haptics: true });
 const workHoursGoal = ref(9);
 
-// Cola offline (local)
 const QUEUE_KEY = "rk.attendance.queue";
 const SETTINGS_KEY = "rk.attendance.settings";
 const DRAFT_KEY = "rk.attendance.draft";
 const queue = ref([]);
 
-// Datos dinámicos (sin mock)
-const kpi = reactive({
-  asistenciasMes: null,
-  horasMes: null,
-  puntualidad: null,
-  vacaciones: null,
-  primerCheck: null,
-  ultimoCheck: null,
-  horasHoy: null,
-});
+const kpi = reactive({ asistenciasMes: null, horasMes: null, puntualidad: null, vacaciones: null, primerCheck: null, ultimoCheck: null, horasHoy: null });
+const actividad = ref([]);
+const streak = reactive([]);
 
-const actividad = ref([]); // Array<{ tipo, hora, animo, comentario }>
-const streak = reactive([]); // Array<{ ok:boolean, label:string }>
-
-// Progreso de jornada
 const jornadaProgress = computed(() => {
   const mins = parseHorasToMin(kpi.horasHoy);
   const target = (Number(workHoursGoal.value) || 0) * 60;
   const val = target > 0 ? Math.max(0, Math.min(1, mins / target)) : 0;
-  let color = "primary",
-    textColor = "text-primary",
-    remaining = "";
+  let color = "primary", textColor = "text-primary", remaining = "";
   if (target === 0) {
     remaining = "Configura tu meta";
   } else if (val >= 1) {
@@ -848,32 +472,24 @@ const jornadaProgress = computed(() => {
   }
   return { value: val, color, textColor, remaining };
 });
-const streakCount = computed(() => streak.filter((d) => d.ok).length);
 
-// Reglas
+const streakCount = computed(() => streak.filter((d) => d.ok).length);
 const comentarioRule = (v) => !v || v.length <= 300 || "Máx. 300 caracteres";
 
-// ====== Lifecycle ======
 onMounted(async () => {
   updateClock();
   clockTimer = setInterval(updateClock, 1000);
   window.addEventListener("online", handleOnline);
   window.addEventListener("offline", handleOffline);
   window.addEventListener("keydown", shortcuts);
-
   restoreDraft();
   loadQueue();
   await loadSettingsFromStore();
-
-  // Autoloc si aplica
   if (settings.autoLocation) {
     geoEnabled.value = true;
     setTimeout(() => getLocation(true), 800);
   }
-
-  // Cargar dashboard
   await loadDashboardData();
-
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 });
@@ -887,29 +503,19 @@ onBeforeUnmount(() => {
   if (confettiRAF) cancelAnimationFrame(confettiRAF);
 });
 
-// ====== Carga de datos desde Store ======
 async function loadDashboardData() {
-  debugger
   if (!currentUserId.value) return;
-
   try {
     const [k, act, st, goal] = await Promise.all([
       asistenciaStore.fetchKPIs?.({ userId: currentUserId.value }),
-      asistenciaStore.fetchActivity?.({
-        userId: currentUserId.value,
-        limit: 20,
-      }),
+      asistenciaStore.fetchActivity?.({ userId: currentUserId.value, limit: 20 }),
       asistenciaStore.fetchStreak?.({ userId: currentUserId.value, days: 14 }),
       asistenciaStore.getWorkHoursGoal?.({ userId: currentUserId.value }),
     ]);
-
     if (k) Object.assign(kpi, k);
     if (Array.isArray(act)) actividad.value = act;
-    if (Array.isArray(st)) {
-      streak.splice(0, streak.length, ...st);
-    }
-    if (typeof goal === "number" && !Number.isNaN(goal))
-      workHoursGoal.value = goal;
+    if (Array.isArray(st)) streak.splice(0, streak.length, ...st);
+    if (typeof goal === "number" && !Number.isNaN(goal)) workHoursGoal.value = goal;
   } catch (e) {
     showNotification("No se pudo cargar el panel", "warning", "warning");
   }
@@ -919,10 +525,7 @@ async function loadActivity() {
   if (!currentUserId.value || !asistenciaStore.fetchActivity) return;
   refreshingActivity.value = true;
   try {
-    const act = await asistenciaStore.fetchActivity({
-      userId: currentUserId.value,
-      limit: 20,
-    });
+    const act = await asistenciaStore.fetchActivity({ userId: currentUserId.value, limit: 20 });
     actividad.value = Array.isArray(act) ? act : [];
     showNotification("Actividad actualizada", "positive", "refresh");
   } catch {
@@ -934,29 +537,22 @@ async function loadActivity() {
 
 async function loadSettingsFromStore() {
   try {
-    const s = await asistenciaStore.getSettings?.({
-      userId: currentUserId.value,
-    });
+    const s = await asistenciaStore.getSettings?.({ userId: currentUserId.value });
     if (s && typeof s === "object") Object.assign(settings, s);
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
-    Object.assign(settings, saved); // local override
+    Object.assign(settings, saved);
     if (asistenciaStore.getWorkHoursGoal) {
-      const goal = await asistenciaStore.getWorkHoursGoal({
-        userId: currentUserId.value,
-      });
-      if (typeof goal === "number" && !Number.isNaN(goal))
-        workHoursGoal.value = goal;
+      const goal = await asistenciaStore.getWorkHoursGoal({ userId: currentUserId.value });
+      if (typeof goal === "number" && !Number.isNaN(goal)) workHoursGoal.value = goal;
     }
   } catch {}
 }
 
-// ====== Helpers UI ======
 function updateClock() {
   const d = new Date();
-  horaActual.value = `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes()
-  ).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+  horaActual.value = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
 }
+
 function shortcuts(e) {
   if (e.metaKey || e.ctrlKey) {
     if (e.key.toLowerCase() === "enter") {
@@ -968,18 +564,19 @@ function shortcuts(e) {
   if (e.key.toLowerCase() === "e") form.tipo = "entrada";
   if (e.key.toLowerCase() === "s") form.tipo = "salida";
 }
+
 function toggleGeoloc() {
   geoEnabled.value = !geoEnabled.value;
   if (geoEnabled.value) getLocation(true);
 }
+
 function locToText(loc) {
   if (!loc) return "—";
   const { lat, lng, acc } = loc;
   const accStr = Number.isFinite(acc) ? ` (±${Math.round(acc)}m)` : "";
-  return `lat ${Number(lat).toFixed(5)}, lng ${Number(lng).toFixed(
-    5
-  )}${accStr}`;
+  return `lat ${Number(lat).toFixed(5)}, lng ${Number(lng).toFixed(5)}${accStr}`;
 }
+
 async function getLocation(force = false) {
   if (!geoEnabled.value) return;
   if (!force && location.value) return;
@@ -989,80 +586,62 @@ async function getLocation(force = false) {
   }
   try {
     const pos = await new Promise((res, rej) =>
-      navigator.geolocation.getCurrentPosition(res, rej, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      })
+      navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
     );
-    location.value = {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      acc: pos.coords.accuracy,
-    };
+    location.value = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
     showNotification("Ubicación obtenida", "positive", "my_location");
   } catch (err) {
-    showNotification(
-      "No se pudo obtener la ubicación",
-      "warning",
-      "location_off"
-    );
+    showNotification("No se pudo obtener la ubicación", "warning", "location_off");
   }
 }
+
 function handleOnline() {
   isOnline.value = true;
-  showNotification(
-    "Conexión restaurada. Reintentando pendientes…",
-    "positive",
-    "wifi"
-  );
+  showNotification("Conexión restaurada. Reintentando pendientes…", "positive", "wifi");
   reintentarTodos();
   asistenciaStore.syncPending?.(queue.value).catch(() => {});
 }
+
 function handleOffline() {
   isOnline.value = false;
-  showNotification(
-    "Sin conexión. Guardaremos tus marcas y las enviaremos luego.",
-    "warning",
-    "wifi_off"
-  );
+  showNotification("Sin conexión. Guardaremos tus marcas y las enviaremos luego.", "warning", "wifi_off");
 }
 
-// Notificaciones
 function showNotification(message, type = "info", icon = "info") {
   const id = notificationId.value++;
   notifications.value.push({ id, message, type, icon });
   setTimeout(() => removeNotification(id), 5000);
 }
+
 function removeNotification(id) {
   const i = notifications.value.findIndex((n) => n.id === id);
   if (i > -1) notifications.value.splice(i, 1);
 }
 
-// ====== Cola offline (local) ======
 function loadQueue() {
   try {
     queue.value = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]") || [];
   } catch {
     queue.value = [];
   }
-  // Purga moods inválidos antiguos
-  queue.value = queue.value.filter(
-    (item) => !item?.mood || ALLOWED_MOODS.has(item.mood)
-  );
+  queue.value = queue.value.filter((item) => !item?.mood || ALLOWED_MOODS.has(item.mood));
   saveQueue();
 }
+
 function saveQueue() {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue.value));
 }
+
 function pushQueue(p) {
   queue.value.unshift(p);
   saveQueue();
 }
+
 function borrarPendiente(i) {
   queue.value.splice(i, 1);
   saveQueue();
 }
+
 function vaciarCola() {
   queue.value = [];
   saveQueue();
@@ -1080,6 +659,7 @@ async function reintentar(i) {
     showNotification("No se pudo enviar el pendiente", "negative", "error");
   }
 }
+
 async function reintentarTodos() {
   for (let i = queue.value.length - 1; i >= 0; i--) {
     try {
@@ -1090,17 +670,10 @@ async function reintentarTodos() {
   saveQueue();
 }
 
-// Draft & Settings (local)
 function saveDraft() {
-  localStorage.setItem(
-    DRAFT_KEY,
-    JSON.stringify({
-      tipo: form.tipo,
-      estadoAnimo: form.estadoAnimo,
-      comentario: form.comentario,
-    })
-  );
+  localStorage.setItem(DRAFT_KEY, JSON.stringify({ tipo: form.tipo, estadoAnimo: form.estadoAnimo, comentario: form.comentario }));
 }
+
 function restoreDraft() {
   try {
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}");
@@ -1109,39 +682,25 @@ function restoreDraft() {
     form.comentario = d.comentario ?? "";
   } catch {}
 }
+
 watch(form, saveDraft, { deep: true });
 
-// ====== Confirm + Send ======
 function confirmarEnvio() {
-  if (!form.tipo)
-    return showNotification("Selecciona entrada o salida", "warning", "info");
-  if (!ALLOWED_MOODS.has(form.estadoAnimo || ""))
-    return showNotification("Selecciona tu estado de ánimo", "warning", "mood");
-  if (!currentUserId.value)
-    return showNotification(
-      "No se encontró el usuario autenticado",
-      "negative",
-      "error"
-    );
+  if (!form.tipo) return showNotification("Selecciona entrada o salida", "warning", "info");
+  if (!ALLOWED_MOODS.has(form.estadoAnimo || "")) return showNotification("Selecciona tu estado de ánimo", "warning", "mood");
+  if (!currentUserId.value) return showNotification("No se encontró el usuario autenticado", "negative", "error");
   dlgConfirm.value = true;
 }
 
 async function enviarAsistencia() {
   const payload = {
     userId: currentUserId.value,
-    tipo: form.tipo, // 'entrada' | 'salida'
-    mood: form.estadoAnimo, // 'great' | 'good' | 'ok' | 'tired' | 'bad'
+    tipo: form.tipo,
+    mood: form.estadoAnimo,
     note: form.comentario?.trim() || "",
-    ubicacion:
-      geoEnabled.value && location.value
-        ? { lat: Number(location.value.lat), lng: Number(location.value.lng) }
-        : null,
+    ubicacion: geoEnabled.value && location.value ? { lat: Number(location.value.lat), lng: Number(location.value.lng) } : null,
     timestamp: Date.now(),
-    client: {
-      platform:
-        navigator?.userAgentData?.platform || navigator?.platform || "web",
-      appVersion: import.meta?.env?.VITE_APP_VERSION || "web",
-    },
+    client: { platform: navigator?.userAgentData?.platform || navigator?.platform || "web", appVersion: import.meta?.env?.VITE_APP_VERSION || "web" },
   };
 
   if (!ALLOWED_MOODS.has(payload.mood)) {
@@ -1153,11 +712,7 @@ async function enviarAsistencia() {
     pushQueue(payload);
     dlgConfirm.value = false;
     resetForm();
-    showNotification(
-      "Guardado offline. Se enviará al recuperar conexión.",
-      "warning",
-      "cloud_off"
-    );
+    showNotification("Guardado offline. Se enviará al recuperar conexión.", "warning", "cloud_off");
     vibrar();
     return;
   }
@@ -1167,23 +722,14 @@ async function enviarAsistencia() {
     await asistenciaStore.crearAsistencia?.(payload);
     dlgConfirm.value = false;
     resetForm();
-    showNotification(
-      "Asistencia registrada correctamente",
-      "positive",
-      "check_circle"
-    );
+    showNotification("Asistencia registrada correctamente", "positive", "check_circle");
     vibrar();
     confetti();
-    // refresca panel tras enviar
     loadDashboardData();
   } catch (e) {
     if (!navigator.onLine) {
       pushQueue(payload);
-      showNotification(
-        "Sin conexión. Guardado en pendientes.",
-        "warning",
-        "cloud_off"
-      );
+      showNotification("Sin conexión. Guardado en pendientes.", "warning", "cloud_off");
     } else {
       const msg = e?.message || "Error al registrar asistencia";
       showNotification(msg, "negative", "error");
@@ -1199,29 +745,28 @@ function resetForm() {
   form.comentario = "";
   saveDraft();
 }
+
 function vibrar() {
   if (settings.haptics && "vibrate" in navigator) navigator.vibrate?.(25);
 }
+
 function moodIcon(mood) {
   return moods.find((m) => m.value === mood)?.icon || "mood";
 }
+
 function shareStreak() {
   const text = `¡Llevo ${streakCount.value} días consecutivos marcando mi asistencia!`;
-  if (navigator.share)
-    navigator.share({
-      title: "Mi racha de asistencia",
-      text,
-      url: window.location.href,
-    });
-  else {
+  if (navigator.share) {
+    navigator.share({ title: "Mi racha de asistencia", text, url: window.location.href });
+  } else {
     navigator.clipboard.writeText(text);
     showNotification("Racha copiada al portapapeles", "info", "content_copy");
   }
 }
 
-// ====== Confetti ======
 const confettiCanvas = ref(null);
 let confettiRAF = null;
+
 function resizeCanvas() {
   const c = confettiCanvas.value;
   if (!c) return;
@@ -1229,6 +774,7 @@ function resizeCanvas() {
   c.height = 0;
   c.style.height = "0px";
 }
+
 function confetti() {
   const c = confettiCanvas.value;
   if (!c) return;
@@ -1278,57 +824,96 @@ function confetti() {
   confettiRAF = requestAnimationFrame(frame);
 }
 
-// Utils
 function parseHorasToMin(str) {
   if (!str) return 0;
-  // Acepta "8h 12m" o "08:12"
   const hm = /(\d+)\s*h(?:\s*(\d+)\s*m)?/i.exec(str);
-  if (hm) {
-    return (Number(hm[1]) || 0) * 60 + (Number(hm[2]) || 0);
-  }
+  if (hm) return (Number(hm[1]) || 0) * 60 + (Number(hm[2]) || 0);
   const clock = /^(\d{1,2}):(\d{2})$/.exec(str);
-  if (clock) {
-    return (Number(clock[1]) || 0) * 60 + (Number(clock[2]) || 0);
-  }
+  if (clock) return (Number(clock[1]) || 0) * 60 + (Number(clock[2]) || 0);
   return 0;
 }
 </script>
 
 <style scoped>
-/* === (todo tu CSS mejorado original; no contiene data fake) === */
-/* Variables y colores, notificaciones, header, summary, cards, chips, lista, dock, etc. */
-/* — He dejado tu CSS tal cual lo tenías en el mensaje, ya estaba sólido y sin mocks. — */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@700&display=swap');
 
-:root {
-  --rk-surface: #fff;
-  --rk-surface-2: #f8fafc;
-  --rk-surface-3: #f1f5f9;
-  --rk-border: #e2e8f0;
-  --rk-text: #1e293b;
-  --rk-text-muted: #64748b;
-  --rk-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --rk-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-  --rk-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* === VARIABLES === */
+.rk-attendance-page {
+  --color-primary: #06b6d4;
+  --color-primary-light: #22d3ee;
+  --color-accent: #14b8a6;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --surface-1: rgba(255, 255, 255, 0.95);
+  --surface-2: rgba(6, 182, 212, 0.04);
+  --surface-3: rgba(6, 182, 212, 0.08);
+  --border-1: rgba(6, 182, 212, 0.12);
+  --border-2: rgba(6, 182, 212, 0.2);
+  --text-primary: rgba(15, 23, 42, 0.95);
+  --text-secondary: rgba(15, 23, 42, 0.7);
+  --text-muted: rgba(15, 23, 42, 0.5);
+  min-height: 100vh;
+  position: relative;
+  background: linear-gradient(135deg, rgba(243, 244, 246, 0.8), rgba(249, 250, 251, 0.8));
+  font-family: 'Sora', -apple-system, sans-serif;
+  padding: 24px 24px 120px 24px;
 }
-.body--dark {
-  --rk-surface: #0f172a;
-  --rk-surface-2: #1e293b;
-  --rk-surface-3: #334155;
-  --rk-border: #475569;
-  --rk-text: #f1f5f9;
-  --rk-text-muted: #94a3b8;
-  --rk-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3),
-    0 8px 10px -6px rgba(0, 0, 0, 0.3);
-  --rk-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  --rk-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+
+.body--dark .rk-attendance-page {
+  --surface-1: rgba(17, 24, 39, 0.95);
+  --surface-2: rgba(6, 182, 212, 0.06);
+  --surface-3: rgba(6, 182, 212, 0.1);
+  --border-1: rgba(6, 182, 212, 0.15);
+  --border-2: rgba(6, 182, 212, 0.25);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(10, 14, 20, 0.95), rgba(15, 20, 25, 0.95));
 }
-.rk-container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 24px;
+
+/* === BACKGROUND === */
+.rk-page-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
+
+.rk-grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--border-1) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-1) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.3;
+}
+
+.rk-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.06;
+}
+
+.rk-orb-1 {
+  width: 500px;
+  height: 500px;
+  top: -100px;
+  right: -100px;
+  background: radial-gradient(circle, var(--color-primary), transparent 60%);
+}
+
+.rk-orb-2 {
+  width: 400px;
+  height: 400px;
+  bottom: -100px;
+  left: -100px;
+  background: radial-gradient(circle, var(--color-accent), transparent 60%);
+}
+
+/* === NOTIFICATIONS === */
 .rk-notifications {
   position: fixed;
   top: 20px;
@@ -1336,420 +921,1552 @@ function parseHorasToMin(str) {
   z-index: 10000;
   max-width: 400px;
 }
+
 .rk-notification {
-  background: white;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  box-shadow: var(--rk-shadow);
-  border-left: 4px solid;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  background: var(--surface-1);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border-1);
+  border-left: 4px solid;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
   animation: slideInRight 0.3s ease;
 }
-.rk-notification.type-positive {
-  border-left-color: #10b981;
+
+.rk-notification.type-positive { border-left-color: var(--color-success); }
+.rk-notification.type-negative { border-left-color: var(--color-danger); }
+.rk-notification.type-warning { border-left-color: var(--color-warning); }
+.rk-notification.type-info { border-left-color: var(--color-primary); }
+
+.rk-notif-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border-radius: 8px;
 }
-.rk-notification.type-negative {
-  border-left-color: #ef4444;
+
+.rk-notif-text {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
-.rk-notification.type-warning {
-  border-left-color: #f59e0b;
+
+.rk-notif-close {
+  opacity: 0.5;
+  transition: opacity 0.2s;
 }
-.rk-notification.type-info {
-  border-left-color: #3b82f6;
+
+.rk-notif-close:hover {
+  opacity: 1;
 }
-.rk-avatar-container {
+
+/* === CONTAINER === */
+.rk-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* === HEADER === */
+.rk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  margin-bottom: 28px;
+  background: var(--surface-1);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border-1);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+  animation: fadeInDown 0.6s ease;
+}
+
+.rk-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rk-avatar-wrapper {
   position: relative;
 }
-.animated-avatar {
-  transition: all 0.3s ease;
-  animation: float 6s ease-in-out infinite;
-}
-.rk-pulse {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
+
+.rk-avatar-ring {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
-  background: #ef4444;
-  opacity: 0;
+  border: 2px solid var(--border-1);
   transition: all 0.3s ease;
 }
-.rk-pulse.active {
+
+.rk-avatar-ring.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+.rk-avatar {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #fff;
+}
+
+.rk-pulse-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  background: var(--color-danger);
+  border-radius: 50%;
+  border: 2px solid var(--surface-1);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.rk-pulse-dot.active {
   opacity: 1;
   animation: pulse 2s infinite;
 }
-.rk-time-display {
+
+.rk-date-time {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
 }
-.rk-live-time {
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+
+.rk-live-clock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rk-time {
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-primary);
   letter-spacing: 1px;
 }
+
+.rk-timezone-chip {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.rk-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .rk-status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-warning);
 }
+
+.rk-status-badge.online {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: var(--color-success);
+}
+
 .rk-icon-btn {
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-.rk-icon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-.rk-summary {
-  background: color-mix(in srgb, var(--q-primary) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--q-primary) 25%, transparent);
-  border-radius: 16px;
-  padding: 16px 20px;
-  transition: all 0.3s ease;
-}
-.animated-border {
   position: relative;
-  overflow: hidden;
-}
-.animated-border::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 2px;
-  background: var(--rk-gradient);
-  animation: shimmer 3s infinite;
-}
-.rk-geo-badge {
-  padding: 6px 12px;
-  border-radius: 12px;
-}
-.rk-card {
-  border-radius: 20px;
-  border: 1px solid var(--rk-border);
-  box-shadow: var(--rk-shadow);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--rk-shadow-lg);
-  border-color: color-mix(in srgb, var(--q-primary) 30%, transparent);
-}
-.rk-label {
-  font-size: 13px;
-  color: var(--rk-text-muted);
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
-}
-.rk-segment {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.rk-seg-btn {
-  height: 60px;
-  border-radius: 16px !important;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  background: var(--rk-surface-3);
-  color: var(--rk-text);
-  border: 2px solid transparent;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-1);
+  border-radius: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 16px;
 }
-.rk-seg-btn:hover {
+
+.rk-icon-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--border-2);
+  color: var(--color-primary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
 }
-.rk-seg-btn.is-active {
-  color: #fff;
+
+.rk-icon-btn.active {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-color: transparent;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  color: #fff;
 }
-.rk-seg-in.is-active {
-  background: linear-gradient(135deg, #10b981, #059669) !important;
-}
-.rk-seg-out.is-active {
-  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-}
-.pulse-animation {
-  animation: gentlePulse 2s ease-in-out infinite;
-}
-.rk-moods {
-  margin-top: 8px;
-}
-.rk-mood {
-  padding: 12px 16px;
-  border-radius: 14px;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  font-size: 14px;
-}
-.rk-mood:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-.animated-chip {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.rk-emoji {
-  display: inline-block;
-  transform: translateY(2px);
-  font-size: 18px;
-}
-.rk-textarea :deep(.q-field__control) {
-  border-radius: 14px;
-  min-height: 80px;
-}
-.rk-textarea :deep(.q-field__control:before) {
-  border: 2px solid var(--rk-border);
-}
-.rk-textarea :deep(.q-field__control:hover:before) {
-  border-color: color-mix(in srgb, var(--q-primary) 50%, transparent);
-}
-.rk-kpi {
-  border-radius: 16px;
-  background: var(--rk-surface);
-  transition: all 0.3s ease;
-}
-.rk-kpi-avatar {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.rk-day-item {
-  padding: 8px 0;
-}
-.rk-activity-list {
-  max-height: 300px;
-}
-.rk-activity {
-  padding: 12px 16px;
-  transition: all 0.2s ease;
-}
-.rk-activity:hover {
-  background: color-mix(in srgb, var(--q-primary) 5%, transparent);
-  transform: translateX(4px);
-}
-.rk-activity-details {
+
+.rk-badge-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  background: var(--color-danger);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
 }
-.rk-streak-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
+
+/* === SUMMARY BANNER === */
+.rk-summary-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  margin-bottom: 28px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-1);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 16px;
+  animation: slideDown 0.4s ease;
 }
-.rk-streak-grid {
-  margin: 8px 0;
-}
-.rk-streak {
-  height: 36px;
+
+.rk-summary-icon {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  border: 2px solid var(--rk-border);
+  color: #fff;
+}
+
+.rk-summary-icon.type-entrada {
+  background: linear-gradient(135deg, var(--color-success), #16a34a);
+}
+
+.rk-summary-icon.type-salida {
+  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+}
+
+.rk-summary-content {
+  flex: 1;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.rk-summary-title {
+  font-weight: 800;
+}
+
+.rk-summary-geo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* === MAIN GRID === */
+.rk-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+/* === FORM SECTION === */
+.rk-form-card {
+  background: var(--surface-1);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border-1);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
   transition: all 0.3s ease;
 }
-.rk-streak.ok {
-  background: linear-gradient(
-    135deg,
-    rgba(76, 175, 80, 0.15),
-    rgba(76, 175, 80, 0.25)
-  );
-  color: #2e7d32;
-  border-color: rgba(76, 175, 80, 0.4);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+
+.rk-form-card:hover {
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
 }
-.rk-streak.ko {
-  background: rgba(244, 67, 54, 0.1);
-  color: #b71c1c;
-  border-color: rgba(244, 67, 54, 0.3);
+
+.rk-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
+
+.rk-form-section-item {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rk-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rk-section-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border-radius: 10px;
+  color: var(--color-primary);
+}
+
+.rk-section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* === TYPE SELECTOR === */
+.rk-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rk-type-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  background: var(--surface-2);
+  border: 2px solid var(--border-1);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.rk-type-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--border-2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(6, 182, 212, 0.15);
+}
+
+.rk-type-btn.active.type-entrada {
+  background: linear-gradient(135deg, var(--color-success), #16a34a);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+}
+
+.rk-type-btn.active.type-salida {
+  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+}
+
+.rk-type-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.rk-type-icon .q-icon {
+  font-size: 28px;
+}
+
+.rk-type-btn.active .rk-type-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.rk-type-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rk-type-btn.active .rk-type-label {
+  color: #fff;
+}
+
+.rk-type-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: scaleIn 0.3s ease;
+}
+
+.rk-type-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.rk-type-btn:hover .rk-type-shine {
+  left: 100%;
+}
+
+.rk-shortcuts-hint {
+  font-size: 0.85rem;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+kbd {
+  padding: 3px 8px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-1);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 0 var(--border-1);
+}
+
+/* === MOODS GRID === */
+.rk-moods-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.rk-mood-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--surface-2);
+  border: 2px solid var(--border-1);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.rk-mood-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--border-2);
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(6, 182, 212, 0.12);
+}
+
+.rk-mood-btn.active {
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(6, 182, 212, 0.25);
+}
+
+.rk-mood-btn.mood-great { background: linear-gradient(135deg, var(--color-primary), #0891b2); }
+.rk-mood-btn.mood-good { background: linear-gradient(135deg, var(--color-success), #16a34a); }
+.rk-mood-btn.mood-ok { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.rk-mood-btn.mood-tired { background: linear-gradient(135deg, var(--color-warning), #d97706); }
+.rk-mood-btn.mood-bad { background: linear-gradient(135deg, var(--color-danger), #dc2626); }
+
+.rk-mood-emoji {
+  font-size: 2rem;
+}
+
+.rk-mood-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rk-mood-btn.active .rk-mood-label {
+  color: #fff;
+}
+
+/* === TEXTAREA === */
+.rk-textarea :deep(.q-field__control) {
+  min-height: 100px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-1);
+}
+
+.rk-textarea :deep(.q-field__control):hover {
+  border-color: var(--border-2);
+}
+
+.rk-char-counter {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* === KPIS GRID === */
+.rk-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.rk-kpi-mini {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface-1);
+  border: 1.5px solid var(--border-1);
+  border-radius: 14px;
+  transition: all 0.3s ease;
+}
+
+.rk-kpi-mini:hover {
+  border-color: var(--border-2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.12);
+}
+
+.rk-kpi-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.rk-icon-primary { background: rgba(6, 182, 212, 0.12); color: var(--color-primary); }
+.rk-icon-teal { background: rgba(20, 184, 166, 0.12); color: var(--color-accent); }
+.rk-icon-green { background: rgba(34, 197, 94, 0.12); color: var(--color-success); }
+.rk-icon-orange { background: rgba(245, 158, 11, 0.12); color: var(--color-warning); }
+
+.rk-kpi-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.rk-kpi-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* === INFO CARDS === */
+.rk-info-card {
+  background: var(--surface-1);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border-1);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.08);
+  transition: all 0.3s ease;
+}
+
+.rk-info-card:hover {
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+}
+
+.rk-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1.5px solid var(--border-1);
+}
+
+.rk-card-header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rk-card-header-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border-radius: 10px;
+  color: var(--color-primary);
+}
+
+.rk-icon-fire {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+}
+
+.rk-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rk-refresh-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rk-refresh-btn:hover {
+  background: var(--surface-3);
+  color: var(--color-primary);
+}
+
+.rotate-animation {
+  animation: rotate 1s linear infinite;
+}
+
+.rk-card-body {
+  padding: 20px;
+}
+
+/* === DAY ITEMS === */
+.rk-day-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-1);
+}
+
+.rk-day-item:last-child {
+  border-bottom: none;
+}
+
+.rk-day-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.rk-day-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* === PROGRESS SECTION === */
+.rk-progress-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--border-1);
+}
+
+.rk-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rk-progress-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.rk-progress-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rk-progress-bar-wrapper {
+  margin-bottom: 10px;
+}
+
+.rk-progress-bar {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rk-progress-fill {
+  position: relative;
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.6s ease;
+  overflow: hidden;
+}
+
+.rk-progress-fill.color-primary { background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light)); }
+.rk-progress-fill.color-warning { background: linear-gradient(90deg, var(--color-warning), #d97706); }
+.rk-progress-fill.color-positive { background: linear-gradient(90deg, var(--color-success), #16a34a); }
+
+.rk-progress-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.rk-progress-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.rk-progress-percent {
+  color: var(--text-muted);
+}
+
+.rk-progress-remaining {
+  font-weight: 700;
+}
+
+.text-primary { color: var(--color-primary); }
+.text-warning { color: var(--color-warning); }
+.text-positive { color: var(--color-success); }
+
+/* === ACTIVITY LIST === */
+.rk-activity-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.rk-activity-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rk-activity-list::-webkit-scrollbar-track {
+  background: var(--surface-2);
+  border-radius: 3px;
+}
+
+.rk-activity-list::-webkit-scrollbar-thumb {
+  background: var(--border-1);
+  border-radius: 3px;
+}
+
+.rk-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-1);
+  transition: all 0.2s ease;
+}
+
+.rk-activity-item:hover {
+  background: var(--surface-2);
+  transform: translateX(4px);
+}
+
+.rk-activity-item:last-child {
+  border-bottom: none;
+}
+
+.rk-activity-avatar {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.rk-activity-avatar.type-entrada { background: linear-gradient(135deg, var(--color-success), #16a34a); }
+.rk-activity-avatar.type-salida { background: linear-gradient(135deg, var(--color-danger), #dc2626); }
+
+.rk-activity-content {
+  flex: 1;
+}
+
+.rk-activity-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.rk-activity-type {
+  text-transform: capitalize;
+}
+
+.rk-activity-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rk-activity-note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-empty-activity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.rk-empty-activity .q-icon {
+  font-size: 48px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.rk-empty-activity p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === STREAK CARD === */
+.rk-streak-badge {
+  padding: 6px 12px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.rk-streak-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rk-streak-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-1);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.rk-streak-day.ok {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.25));
+  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--color-success);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+.rk-streak-day:not(.ok) {
+  color: var(--text-muted);
+}
+
+.rk-streak-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rk-share-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  color: var(--color-warning);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rk-share-btn:hover {
+  background: var(--surface-3);
+  transform: translateY(-2px);
+}
+
+/* === FLOATING DOCK === */
 .rk-dock {
   position: fixed;
+  bottom: 24px;
   left: 0;
   right: 0;
-  bottom: 24px;
   z-index: 1000;
+  pointer-events: none;
 }
-.rk-dock-inner {
+
+.rk-dock-content {
+  max-width: 1400px;
   margin: 0 auto;
-  width: min(1400px, calc(100% - 48px));
+  padding: 0 24px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 20px;
-  background: color-mix(in srgb, var(--rk-surface) 85%, transparent);
-  border: 1px solid color-mix(in srgb, var(--rk-border) 50%, transparent);
-  border-radius: 20px;
-  padding: 16px 24px;
+  pointer-events: all;
+}
+
+.rk-dock-links {
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  animation: slideUp 0.5s ease-out;
-}
-.rk-cta {
-  min-width: 280px;
-  height: 56px;
+  border: 1.5px solid var(--border-1);
   border-radius: 16px;
-  font-weight: 700;
-  font-size: 16px;
-  background: var(--rk-gradient);
-  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.15);
+  animation: slideUp 0.5s ease;
 }
-.rk-cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(99, 102, 241, 0.4);
+
+.body--dark .rk-dock-links {
+  background: rgba(17, 24, 39, 0.85);
 }
-.rk-ghost {
+
+.rk-dock-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
   background: transparent;
   border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
   transition: all 0.2s ease;
 }
-.rk-ghost:hover {
-  background: color-mix(in srgb, var(--q-primary) 8%, transparent);
-  transform: translateY(-1px);
+
+.rk-dock-link:hover {
+  background: var(--surface-2);
+  transform: translateY(-2px);
 }
-.rk-queue-item {
+
+.rk-submit-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 280px;
+  height: 56px;
+  padding: 0 32px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  animation: slideUp 0.5s ease 0.1s both;
+}
+
+.rk-submit-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.4);
+}
+
+.rk-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rk-submit-btn .q-icon {
+  font-size: 24px;
+}
+
+.rk-submit-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+/* === DIALOGS === */
+.rk-dialog :deep(.q-dialog__backdrop) {
+  backdrop-filter: blur(8px);
+  background: rgba(10, 14, 20, 0.7);
+}
+
+.rk-dialog-card {
+  width: min(500px, 95vw);
+  background: var(--surface-1);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid var(--border-1);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(6, 182, 212, 0.2);
+}
+
+.rk-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  border-bottom: 1.5px solid var(--border-1);
+  background: var(--surface-2);
+}
+
+.rk-dialog-header-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rk-dialog-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 12px;
-  margin: 8px;
+  color: #fff;
+}
+
+.rk-icon-confirm {
+  background: linear-gradient(135deg, var(--color-success), #16a34a);
+}
+
+.rk-dialog-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rk-dialog-close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
   transition: all 0.2s ease;
 }
+
+.rk-dialog-close:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.rk-dialog-body {
+  padding: 28px;
+}
+
+.rk-empty-queue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.rk-empty-queue .q-icon {
+  font-size: 64px;
+  color: var(--color-success);
+  margin-bottom: 16px;
+}
+
+.rk-empty-queue p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.rk-queue-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.rk-queue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
 .rk-queue-item:hover {
-  background: color-mix(in srgb, var(--q-primary) 5%, transparent);
+  background: var(--surface-3);
   transform: translateX(4px);
 }
-.rk-confirm-btn {
+
+.rk-queue-info {
+  flex: 1;
+}
+
+.rk-queue-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.rk-queue-title .type-entrada { color: var(--color-success); }
+.rk-queue-title .type-salida { color: var(--color-danger); }
+
+.rk-queue-date {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.rk-queue-details,
+.rk-queue-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.rk-queue-note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-queue-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rk-queue-action-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rk-queue-action-btn:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.rk-queue-action-btn.rk-btn-danger { color: var(--color-danger); }
+.rk-queue-action-btn.rk-btn-danger:hover { background: var(--color-danger); border-color: var(--color-danger); }
+
+.rk-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 1.5px solid var(--border-1);
+  background: var(--surface-2);
+}
+
+.rk-dialog-btn {
+  padding: 11px 24px;
+  background: var(--surface-3);
+  border: 1.5px solid var(--border-1);
   border-radius: 12px;
-  padding: 8px 24px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.rk-shortcuts {
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+
+.rk-dialog-btn:hover {
+  background: var(--surface-2);
+  transform: translateY(-2px);
 }
-kbd {
-  background: var(--rk-surface-3);
-  border: 1px solid var(--rk-border);
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 12px;
-  box-shadow: 0 2px 0 var(--rk-border);
+
+.rk-dialog-btn.rk-btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
+
+.rk-dialog-btn.rk-btn-primary:hover {
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+}
+
+.rk-dialog-btn.rk-btn-danger {
+  background: var(--color-danger);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.rk-dialog-btn.rk-btn-danger:hover {
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.rk-dialog-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rk-confirm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rk-confirm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.rk-confirm-item .q-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.rk-confirm-item strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.rk-offline-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: var(--color-warning);
+}
+
+.rk-offline-warning .q-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* === CONFETTI === */
 .rk-confetti {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
   width: 100%;
   pointer-events: none;
-  z-index: 1200;
+  z-index: 9999;
 }
 
-/* Animaciones + transiciones */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+/* === ANIMATIONS === */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-@keyframes gentlePulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
+
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* === TRANSITIONS === */
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
+.slide-down-enter-from { opacity: 0; transform: translateY(-20px); }
+.slide-down-leave-to { opacity: 0; transform: translateY(-20px); }
+
+.slide-fade-enter-active { transition: all 0.3s ease; }
+.slide-fade-leave-active { transition: all 0.2s ease; }
+.slide-fade-enter-from { opacity: 0; transform: translateY(-10px); }
+.slide-fade-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* === RESPONSIVE === */
+@media (max-width: 1200px) {
+  .rk-main-grid {
+    grid-template-columns: 1fr 360px;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+}
+
+@media (max-width: 1023px) {
+  .rk-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rk-info-section {
+    order: -1;
+  }
+
+  .rk-kpis-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s ease;
+
+@media (max-width: 767px) {
+  .rk-attendance-page {
+    padding: 16px 16px 100px 16px;
+  }
+
+  .rk-header {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .rk-header-left {
+    width: 100%;
+  }
+
+  .rk-header-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .rk-time {
+    font-size: 1.2rem;
+  }
+
+  .rk-summary-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .rk-form-card {
+    padding: 24px 20px;
+  }
+
+  .rk-type-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .rk-moods-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .rk-kpis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rk-streak-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+
+  .rk-dock-content {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .rk-dock-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .rk-submit-btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .rk-dialog-card {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    border-radius: 0;
+  }
+
+  .rk-queue-list {
+    max-height: calc(100vh - 200px);
+  }
 }
-.slide-down-enter-from {
-  opacity: 0;
-  transform: translateY(-20px);
+
+@media (max-width: 599px) {
+  .rk-moods-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rk-kpis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rk-dock-links {
+    flex-direction: column;
+    padding: 12px 16px;
+  }
+
+  .rk-dock-link {
+    width: 100%;
+    justify-content: center;
+  }
 }
-.slide-down-leave-to {
-  opacity: 0;
-  transform: translateY(-20px);
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-.slide-fade-enter-active {
-  transition: all 0.3s ease;
-}
-.slide-fade-leave-active {
-  transition: all 0.2s ease;
-}
-.slide-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.slide-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-:deep(::-webkit-scrollbar) {
-  width: 8px;
-}
-:deep(::-webkit-scrollbar-track) {
-  background: var(--rk-surface-2);
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
   border-radius: 4px;
 }
-:deep(::-webkit-scrollbar-thumb) {
-  background: var(--rk-border);
-  border-radius: 4px;
+
+/* === DARK MODE REFINEMENTS === */
+.body--dark .rk-header,
+.body--dark .rk-form-card,
+.body--dark .rk-info-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
-:deep(::-webkit-scrollbar-thumb:hover) {
-  background: color-mix(in srgb, var(--q-primary) 50%, transparent);
+
+.body--dark .rk-dock-links {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.body--dark .rk-submit-btn {
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+}
+
+.body--dark .rk-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.5);
+}
+
+.body--dark .rk-dialog-card {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 </style>
