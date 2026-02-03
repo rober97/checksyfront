@@ -20,7 +20,6 @@
     @row-dblclick="(...args) => emit('row-dblclick', ...args)"
     @row-click="(...args) => emit('row-click', ...args)"
   >
-    <!-- Re-expose all named slots except default & loading to avoid conflicts -->
     <template
       v-for="name in passThroughNames"
       :key="name"
@@ -29,11 +28,18 @@
       <slot :name="name" v-bind="slotProps" />
     </template>
 
-    <!-- Provide our own loading slot (safe) -->
     <template #loading>
-      <q-inner-loading showing>
-        <q-spinner size="32px" />
-      </q-inner-loading>
+      <div class="rk-loading">
+        <q-spinner-hourglass color="cyan-5" size="40px" />
+        <p>{{ loadingLabel }}</p>
+      </div>
+    </template>
+
+    <template #no-data>
+      <div class="rk-no-data">
+        <q-icon name="inbox" size="48px" />
+        <p>{{ noDataLabel }}</p>
+      </div>
     </template>
   </q-table>
 </template>
@@ -55,7 +61,7 @@ const props = defineProps({
   noDataLabel: { type: String, default: 'Sin datos' },
   loadingLabel: { type: String, default: 'Cargando…' },
   filter: { type: [String, Object], default: '' },
-  selection: { type: String, default: 'none' }, // 'multiple' | 'single' | 'none'
+  selection: { type: String, default: 'none' },
   selected: { type: Array, default: () => [] },
   tableClass: { type: [String, Array, Object], default: '' }
 })
@@ -69,199 +75,490 @@ const selectedProxy = computed({
 
 const onRequest = (payload) => emit('request', payload)
 
-// Dynamic slot passthrough (exclude default & loading to prevent runtime errors)
 const slots = useSlots()
 const passThroughNames = computed(() => {
   const names = Object.keys(slots || {})
-  return names.filter(n => n !== 'default' && n !== 'loading')
+  return names.filter(n => n !== 'default' && n !== 'loading' && n !== 'no-data')
 })
 </script>
 
 <style scoped>
-/* ======= Tokens Light/Dark ======= */
-:root{
-  --rk-border: rgba(0,0,0,.08);
-  --rk-card: #ffffff;
-  --rk-soft: #f5f7fb;
-  --rk-muted: #667085;
-  --rk-shadow: 0 8px 22px rgba(0,0,0,.06);
-}
-.body--dark{
-  --rk-border: rgba(255,255,255,.10);
-  --rk-card: #0f1216;
-  --rk-soft: #0b0e12;
-  --rk-muted: #9aa3b2;
-  --rk-shadow: 0 10px 28px rgba(0,0,0,.45);
+/* ==========================================
+   COLORES EXACTOS DE LIQUIDACIONES
+   ========================================== */
+.rk-table {
+  /* Cyan/Teal principal */
+  --cyan-bright: #06b6d4;
+  --cyan-header: #0891b2;
+  --cyan-glow: rgba(6, 182, 212, 0.5);
+  
+  /* Backgrounds oscuros */
+  --bg-dark-1: #0f1419;
+  --bg-dark-2: #1a2332;
+  --bg-dark-3: #243447;
+  --bg-dark-row: #1e2a3a;
+  
+  /* Borders */
+  --border-subtle: rgba(6, 182, 212, 0.15);
+  --border-medium: rgba(6, 182, 212, 0.3);
+  --border-strong: #0891b2;
+  
+  /* Text */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 }
 
-/* ======= Contenedor ======= */
-.rk-table{
-  border-radius: 14px;
+/* ==========================================
+   CONTAINER - Integrado con el diseño
+   ========================================== */
+.rk-table {
+  border-radius: 12px;
   overflow: hidden;
-  border:1px solid var(--rk-border);
-  background: var(--rk-card);
-  box-shadow: var(--rk-shadow);
-  transition: box-shadow .2s ease, transform .12s ease, background-color .2s ease;
-}
-.rk-table:hover{ box-shadow: 0 14px 34px rgba(0,0,0,.10) }
-.body--dark .rk-table:hover{ box-shadow: 0 16px 40px rgba(0,0,0,.6) }
-
-/* ======= Top bar ======= */
-.rk-table :deep(.q-table__top){
-  padding: 10px 12px;
-  border-bottom:1px solid var(--rk-border);
-  background:
-    radial-gradient(140% 120% at 0% 0%, color-mix(in oklab, var(--q-primary) 10%, transparent), transparent 60%),
-    var(--rk-card);
-  backdrop-filter: saturate(1.05) blur(6px);
+  background: var(--bg-dark-2);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
-/* ======= Cabecera ======= */
-.rk-table :deep(thead tr){
-  background: color-mix(in oklab, var(--rk-soft) 92%, transparent);
-}
-.body--dark .rk-table :deep(thead tr){
-  background: color-mix(in oklab, var(--rk-soft) 85%, transparent);
-}
-.rk-table :deep(th){
-  font-weight: 700;
-  letter-spacing: .2px;
-  color: var(--rk-muted);
-  font-size: 12.5px;
-  border-bottom:1px solid var(--rk-border);
-  transition: background-color .2s ease, color .2s ease;
+/* ==========================================
+   TOP BAR - Cyan header matching Liquidaciones
+   ========================================== */
+.rk-table :deep(.q-table__top) {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  border-bottom: none;
 }
 
-/* ======= Cabecera sticky (activar con clase rk-scrollable en <q-table>) ======= */
-.rk-table.rk-scrollable :deep(.q-table__middle){
-  max-height: 58vh; /* ajusta a tu layout */
+/* ==========================================
+   HEADER - Cyan brillante
+   ========================================== */
+.rk-table :deep(thead) {
+  position: relative;
+  z-index: 2;
+}
+
+.rk-table :deep(thead tr) {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+}
+
+.rk-table :deep(th) {
+  padding: 14px 16px;
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+  border-bottom: none;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.rk-table :deep(th.sortable) {
+  cursor: pointer;
+}
+
+.rk-table :deep(th.sortable):hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Sort icon blanco */
+.rk-table :deep(.q-table__sort-icon) {
+  opacity: 0.6;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.rk-table :deep(th[aria-sort] .q-table__sort-icon) {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* ==========================================
+   STICKY HEADER
+   ========================================== */
+.rk-table.rk-scrollable :deep(.q-table__middle) {
+  max-height: 65vh;
   overflow: auto;
-  scrollbar-gutter: stable;
 }
-.rk-table.rk-scrollable :deep(thead th){
+
+.rk-table.rk-scrollable :deep(thead th) {
   position: sticky;
   top: 0;
-  z-index: 2;
-  backdrop-filter: blur(6px) saturate(1.05);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--rk-soft) 92%, transparent), transparent);
+  z-index: 10;
+  backdrop-filter: blur(10px);
 }
 
-/* Indicador de sort más visible */
-.rk-table :deep(.q-table__sort-icon){
-  opacity: .55;
-  transform: translateY(-.5px);
-  transition: opacity .12s ease, transform .12s ease;
-}
-.rk-table :deep(th[aria-sort="ascending"] .q-table__sort-icon),
-.rk-table :deep(th[aria-sort="descending"] .q-table__sort-icon){
-  opacity: 1;
-  transform: translateY(-.5px) scale(1.05);
+/* ==========================================
+   TABLE BODY - Oscuro con hover cyan
+   ========================================== */
+.rk-table :deep(tbody tr) {
+  transition: all 0.2s ease;
+  background: var(--bg-dark-2);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-/* ======= Filas / Celdas ======= */
-.rk-table :deep(tbody tr){
-  transition: background-color .16s ease, transform .08s ease, box-shadow .16s ease;
-}
-.rk-table :deep(tbody tr:nth-child(even)){
-  background: color-mix(in oklab, var(--rk-soft) 80%, transparent);
-}
-.rk-table :deep(tbody tr:hover){
-  background: color-mix(in oklab, var(--q-primary) 6%, transparent);
-}
-.body--dark .rk-table :deep(tbody tr:hover){
-  background: color-mix(in oklab, var(--q-primary) 12%, transparent);
-}
-.rk-table :deep(td){
-  vertical-align: middle;
-  font-size: 13.2px;
-  border-bottom:1px solid color-mix(in oklab, var(--rk-border) 60%, transparent);
+/* Zebra striping sutil */
+.rk-table :deep(tbody tr:nth-child(even)) {
+  background: var(--bg-dark-row);
 }
 
-/* Densidad (agrega rk-compact o rk-spacious al q-table) */
-.rk-table.rk-compact :deep(td){ padding-top: 6px; padding-bottom: 6px }
-.rk-table.rk-spacious :deep(td){ padding-top: 14px; padding-bottom: 14px }
-
-/* Selección (checkbox y fila seleccionada) */
-.rk-table :deep(.q-checkbox__inner){
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,.12));
-}
-.rk-table :deep(.q-tr--selected){
-  background: color-mix(in oklab, var(--q-primary) 12%, transparent) !important;
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--q-primary) 40%, transparent);
-}
-.body--dark .rk-table :deep(.q-tr--selected){
-  background: color-mix(in oklab, var(--q-primary) 18%, transparent) !important;
+/* Row hover - Efecto cyan brillante */
+.rk-table :deep(tbody tr:hover) {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.15), transparent);
+  box-shadow: inset 3px 0 0 var(--cyan-bright);
 }
 
-/* Estado de foco por accesibilidad */
-.rk-table :deep(tbody tr:focus-within){
-  outline: 2px solid color-mix(in oklab, var(--q-primary) 45%, transparent);
-  outline-offset: -2px;
+/* Cells */
+.rk-table :deep(td) {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  border-bottom: none;
 }
 
-/* ======= Celdas “clave” / monospace (opcional) ======= */
-.rk-table :deep(.rk-mono){
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-  font-size: 12.5px;
+.rk-table :deep(td:first-child) {
+  font-weight: 700;
 }
 
-/* ======= Chips / Badges internos ======= */
-.rk-table :deep(.q-chip){
-  background: color-mix(in oklab, var(--rk-soft) 82%, transparent);
-  border:1px solid var(--rk-border);
-  font-weight:600;
-  border-radius: 9px;
-}
-.rk-table :deep(.q-badge){
-  border-radius:10px;
-  font-weight:700;
+/* ==========================================
+   SELECTION - Checkboxes cyan
+   ========================================== */
+.rk-table :deep(.q-checkbox__bg) {
+  border: 2px solid var(--border-medium);
+  border-radius: 4px;
+  background: var(--bg-dark-3);
 }
 
-/* ======= Empty / Loading ======= */
-.rk-table :deep(.q-table__bottom--nodata){
-  color: var(--rk-muted);
-}
-.rk-table :deep(.q-inner-loading){
-  backdrop-filter: blur(2px) saturate(1.02);
+.rk-table :deep(.q-checkbox__bg):hover {
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 8px var(--cyan-glow);
 }
 
-/* ======= Scrollbars sutiles ======= */
-.rk-table :deep(.q-table__middle::-webkit-scrollbar){ width: 10px; height: 10px }
-.rk-table :deep(.q-table__middle::-webkit-scrollbar-thumb){
-  background: linear-gradient(180deg, rgba(127,127,127,.35), rgba(127,127,127,.24));
-  border-radius: 999px; border: 2px solid transparent; background-clip: content-box;
-}
-.rk-table :deep(.q-table__middle:hover::-webkit-scrollbar-thumb){
-  background: linear-gradient(180deg, rgba(127,127,127,.5), rgba(127,127,127,.34));
+.rk-table :deep(.q-checkbox__inner--truthy .q-checkbox__bg) {
+  background: var(--cyan-bright);
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 12px var(--cyan-glow);
 }
 
-/* ======= Acciones (botones en celdas) ======= */
-.rk-table :deep(td .q-btn){
+/* Selected row - Cyan glow */
+.rk-table :deep(.q-tr--selected) {
+  background: rgba(6, 182, 212, 0.2) !important;
+  box-shadow: 
+    inset 3px 0 0 var(--cyan-bright),
+    0 0 15px rgba(6, 182, 212, 0.3);
+}
+
+/* ==========================================
+   CHIPS & BADGES - Estilo Liquidaciones
+   ========================================== */
+.rk-table :deep(.q-chip) {
+  background: var(--bg-dark-3);
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  color: var(--text-primary);
+}
+
+.rk-table :deep(.q-badge) {
   border-radius: 10px;
-  transition: transform .08s ease, background-color .12s ease, box-shadow .12s ease;
-}
-.rk-table :deep(td .q-btn:hover){
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0,0,0,.12);
-}
-.body--dark .rk-table :deep(td .q-btn:hover){
-  box-shadow: 0 6px 16px rgba(0,0,0,.5);
+  font-weight: 800;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: var(--cyan-header);
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3);
 }
 
-/* ======= Mini utilidades ======= */
-.rk-table :deep(.rk-ellipsis){
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+/* ==========================================
+   BUTTONS - Cyan matching UI
+   ========================================== */
+.rk-table :deep(td .q-btn) {
+  border-radius: 8px;
+  font-weight: 700;
+  transition: all 0.2s ease;
 }
-.rk-table :deep(.rk-nowrap){ white-space: nowrap }
 
-/* ======= Variantes de fila semánticas (opcionales) ======= */
-/* Añade estas clases a <q-tr> (via slot body) si quieres estados */
-.rk-table :deep(.rk-row--ok){ background: color-mix(in oklab, #22c55e 10%, transparent) }
-.rk-table :deep(.rk-row--warn){ background: color-mix(in oklab, #f59e0b 12%, transparent) }
-.rk-table :deep(.rk-row--err){
-  background: color-mix(in oklab, #ef4444 10%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, #ef4444 35%, transparent);
+.rk-table :deep(td .q-btn.q-btn--flat) {
+  color: var(--cyan-bright);
+}
+
+.rk-table :deep(td .q-btn.q-btn--flat):hover {
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.rk-table :deep(td .q-btn:not(.q-btn--flat)) {
+  background: var(--cyan-header);
+  color: #ffffff;
+}
+
+.rk-table :deep(td .q-btn:not(.q-btn--flat)):hover {
+  background: var(--cyan-bright);
+  box-shadow: 0 4px 12px var(--cyan-glow);
+  transform: translateY(-2px);
+}
+
+/* ==========================================
+   MONOSPACE - IDs y códigos
+   ========================================== */
+.rk-table :deep(.rk-mono) {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--cyan-bright);
+  background: rgba(6, 182, 212, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-medium);
+}
+
+/* ==========================================
+   STATUS BADGES - Colores semánticos
+   ========================================== */
+.rk-table :deep(.rk-status) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.rk-table :deep(.rk-status.success) {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.rk-table :deep(.rk-status.warning) {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.rk-table :deep(.rk-status.danger) {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.rk-table :deep(.rk-status.info) {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--cyan-bright);
+  border: 1px solid var(--border-medium);
+}
+
+/* ==========================================
+   ROW VARIANTS
+   ========================================== */
+.rk-table :deep(.rk-row--success) {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), transparent);
+  box-shadow: inset 3px 0 0 #22c55e;
+}
+
+.rk-table :deep(.rk-row--warning) {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent);
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.rk-table :deep(.rk-row--danger) {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+  box-shadow: inset 3px 0 0 #ef4444;
+}
+
+/* ==========================================
+   LOADING - Cyan spinner
+   ========================================== */
+.rk-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  gap: 16px;
+}
+
+.rk-loading p {
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ==========================================
+   NO DATA - Empty state
+   ========================================== */
+.rk-no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.rk-no-data .q-icon {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.rk-no-data p {
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ==========================================
+   PAGINATION - Matching UI
+   ========================================== */
+.rk-table :deep(.q-table__bottom) {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-dark-3);
+}
+
+.rk-table :deep(.q-table__control) {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.rk-table :deep(.q-btn.q-pagination__btn) {
+  border-radius: 6px;
+  min-width: 32px;
+  height: 32px;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.rk-table :deep(.q-btn.q-pagination__btn:hover) {
+  border-color: var(--cyan-bright);
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.rk-table :deep(.q-btn.q-pagination__btn.q-btn--active) {
+  background: var(--cyan-bright);
+  color: #ffffff;
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+/* ==========================================
+   SCROLLBAR - Cyan theme
+   ========================================== */
+.rk-table :deep(.q-table__middle)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.rk-table :deep(.q-table__middle)::-webkit-scrollbar-track {
+  background: var(--bg-dark-3);
+}
+
+.rk-table :deep(.q-table__middle)::-webkit-scrollbar-thumb {
+  background: var(--cyan-header);
+  border-radius: 4px;
+}
+
+.rk-table :deep(.q-table__middle)::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan-bright);
+  box-shadow: 0 0 8px var(--cyan-glow);
+}
+
+/* ==========================================
+   UTILITIES
+   ========================================== */
+.rk-table :deep(.rk-ellipsis) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.rk-table :deep(.rk-nowrap) {
+  white-space: nowrap;
+}
+
+.rk-table :deep(.rk-text-cyan) {
+  color: var(--cyan-bright);
+  font-weight: 700;
+}
+
+/* ==========================================
+   DENSITY
+   ========================================== */
+.rk-table.rk-compact :deep(td),
+.rk-table.rk-compact :deep(th) {
+  padding: 8px 12px;
+}
+
+.rk-table.rk-spacious :deep(td),
+.rk-table.rk-spacious :deep(th) {
+  padding: 18px 20px;
+}
+
+/* ==========================================
+   FOCUS
+   ========================================== */
+.rk-table :deep(tbody tr:focus-within) {
+  outline: 2px solid var(--cyan-bright);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 767px) {
+  .rk-table {
+    border-radius: 10px;
+  }
+
+  .rk-table :deep(.q-table__top) {
+    padding: 12px 16px;
+  }
+
+  .rk-table :deep(th),
+  .rk-table :deep(td) {
+    padding: 12px 14px;
+    font-size: 0.8rem;
+  }
+
+  .rk-table :deep(th) {
+    font-size: 0.65rem;
+  }
+}
+
+/* ==========================================
+   REDUCED MOTION
+   ========================================== */
+@media (prefers-reduced-motion: reduce) {
+  .rk-table,
+  .rk-table :deep(*) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================
+   PRINT
+   ========================================== */
+@media print {
+  .rk-table {
+    box-shadow: none;
+    border: 1px solid #999;
+  }
+
+  .rk-table :deep(.q-table__top),
+  .rk-table :deep(.q-table__bottom) {
+    display: none;
+  }
+
+  .rk-table :deep(thead tr) {
+    background: #0891b2 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 </style>
-

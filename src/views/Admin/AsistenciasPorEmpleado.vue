@@ -1,23 +1,47 @@
 <!-- src/views/Attendance/AttendanceHistoryPage.vue -->
 <template>
-  <q-page class="q-pa-md" :class="pageBg">
-    <!-- ===== Header unificado ===== -->
-    <PageHeader
-      icon="group"
-      title="Historial de asistencias"
-      help-text="AYUDA"
-      :help-to="{ name: 'help.users' }"
-    >
-      <template #subtitle> Registros por colaborador </template>
-    </PageHeader>
+  <q-page class="rk-attendance-page">
+    <!-- Premium Header Component Style -->
+    <div class="rk-page-header">
+      <div class="rk-header-content">
+        <div class="rk-header-left">
+          <div class="rk-header-icon">
+            <q-icon name="group" />
+            <div class="rk-icon-pulse"></div>
+          </div>
+          <div class="rk-header-text">
+            <h1 class="rk-page-title">Historial de Asistencias</h1>
+            <p class="rk-page-subtitle">Registros por colaborador</p>
+          </div>
+        </div>
+        <div class="rk-header-actions">
+          <button class="rk-action-btn" @click="loadData" :disabled="loading">
+            <q-icon name="refresh" :class="{ 'rotate-animation': loading }" />
+            <span>Actualizar</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
-    <!-- ===== Card + Tabla principal ===== -->
-    <q-card
-      flat
-      bordered
-      class="rk-card soft-card fit column"
-      :class="cardTone"
-    >
+    <!-- Main Table Card -->
+    <div class="rk-table-container">
+      <!-- Search Bar -->
+      <div class="rk-search-section">
+        <q-input
+          v-model="search"
+          dense
+          outlined
+          clearable
+          placeholder="Buscar por nombre o RUT..."
+          class="rk-search-input"
+        >
+          <template #prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
+
+      <!-- Table -->
       <DynamicDataTable
         :rows="rowsMain"
         :columns="columns"
@@ -28,138 +52,123 @@
         loading-label="Cargando asistencias…"
         no-data-label="No hay registros"
         :filter="search"
-        :table-class="tableClass"
+        table-class="rk-scrollable"
         :binary-state-sort="true"
         :flat="true"
         :bordered="true"
-        :wrap-cells="false"
         selection="none"
       >
-        <!-- Buscador en top-right -->
-        <template #top-right>
-          <div class="row items-center q-gutter-sm">
-            <q-input
-              v-model="search"
-              dense
-              outlined
-              clearable
-              debounce="250"
-              placeholder="Buscar por nombre o RUT…"
-              class="rk-pill rk-search"
-            >
-              <template #prepend><q-icon name="search" /></template>
-            </q-input>
-          </div>
-        </template>
-
-        <!-- Columna: total -->
+        <!-- Total column -->
         <template #body-cell-total="props">
           <q-td :props="props">
-            <q-badge color="positive">{{ props.row.total }} días</q-badge>
+            <q-badge color="positive" class="rk-count-badge">
+              <q-icon name="event_available" size="14px" class="q-mr-xs" />
+              {{ props.row.total }} días
+            </q-badge>
           </q-td>
         </template>
 
-        <!-- Acciones -->
+        <!-- Actions column -->
         <template #body-cell-actions="props">
           <q-td :props="props" align="center">
             <q-btn
-              size="sm"
+              unelevated
+              dense
+              no-caps
               color="primary"
-              label="Ver Historial"
               icon="timeline"
+              label="Ver Historial"
+              size="sm"
               @click="verHistorial(props.row)"
             />
           </q-td>
         </template>
-
-        <!-- No data -->
-        <template #no-data>
-          <div class="full-width column items-center q-pa-lg text-grey-7">
-            <q-icon name="event_busy" size="48px" class="q-mb-sm" />
-            <div class="text-subtitle1 q-mb-xs">Sin registros</div>
-            <div class="text-caption">Aún no hay asistencias cargadas.</div>
-          </div>
-        </template>
       </DynamicDataTable>
-    </q-card>
+    </div>
 
-    <!-- ===== Dialogo PRO ===== -->
+    <!-- Modal Compacto -->
     <q-dialog
       v-model="modalHistorial"
       persistent
       transition-show="slide-up"
       transition-hide="slide-down"
+      class="rk-history-dialog"
     >
-      <q-card
-        class="q-pa-md glassy-card"
-        style="
-          width: 1180px;
-          max-width: 98vw;
-          max-height: 92vh;
-          display: flex;
-          flex-direction: column;
-        "
-      >
+      <q-card class="rk-history-card">
         <!-- Header -->
-        <q-card-section class="q-pb-none">
+        <q-card-section class="rk-modal-header">
           <div class="row items-center justify-between">
             <div class="col-auto">
-              <div class="text-h6">
-                📅 Historial de: {{ historialEmpleado?.nombre || "—" }}
+              <div class="text-h6 text-weight-bold">
+                📅 {{ historialEmpleado?.nombre || "—" }}
               </div>
               <div class="text-subtitle2 text-grey-7">
                 RUT: {{ historialEmpleado?.rut || "—" }}
               </div>
             </div>
+            <div class="col-auto">
+              <q-btn flat round dense icon="close" v-close-popup />
+            </div>
+          </div>
+        </q-card-section>
 
-            <div class="col-auto row items-center q-gutter-sm">
+        <q-separator />
+
+        <!-- Quick Filters -->
+        <q-card-section class="q-pb-none">
+          <div class="row q-col-gutter-sm">
+            <div class="col-auto">
               <q-chip
                 outline
                 color="primary"
                 clickable
                 @click="setQuickRange('hoy')"
-                >Hoy</q-chip
               >
+                Hoy
+              </q-chip>
+            </div>
+            <div class="col-auto">
               <q-chip
                 outline
                 color="primary"
                 clickable
                 @click="setQuickRange('semana')"
-                >Esta semana</q-chip
               >
+                Esta semana
+              </q-chip>
+            </div>
+            <div class="col-auto">
               <q-chip
                 outline
                 color="primary"
                 clickable
                 @click="setQuickRange('mes')"
-                >Este mes</q-chip
               >
-              <q-btn flat round icon="close" v-close-popup />
+                Este mes
+              </q-chip>
             </div>
           </div>
         </q-card-section>
 
-        <q-separator inset />
-
-        <!-- Filtros -->
-        <q-card-section class="q-pt-md q-pb-sm">
-          <div class="row q-col-gutter-md items-end">
+        <!-- Filters -->
+        <q-card-section>
+          <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-4">
               <q-input
                 filled
+                dense
                 v-model="rangoDesde"
                 label="Desde"
                 type="date"
-                dense
               />
             </div>
             <div class="col-12 col-sm-4">
               <q-input
                 filled
+                dense
                 v-model="rangoHasta"
                 label="Hasta"
                 type="date"
-                dense
               />
             </div>
             <div class="col-12 col-sm-4">
@@ -172,168 +181,137 @@
                   { label: 'Entradas', value: 'entrada' },
                   { label: 'Salidas', value: 'salida' },
                 ]"
-                label="Tipo de marca"
+                label="Tipo"
                 emit-value
                 map-options
               />
             </div>
           </div>
 
+          <!-- Stats -->
           <div class="row q-mt-sm items-center q-gutter-sm">
             <q-btn
               outline
+              dense
               color="warning"
-              label="Limpiar rango"
+              label="Limpiar"
               icon="clear"
+              size="sm"
               @click="limpiarRango"
             />
             <q-space />
-            <q-badge color="primary" align="middle" class="q-pa-sm">
-              Total: {{ conteos.total }}
-            </q-badge>
-            <q-badge color="positive" class="q-pa-sm">
-              Entradas: {{ conteos.entradas }}
-            </q-badge>
-            <q-badge color="negative" class="q-pa-sm">
-              Salidas: {{ conteos.salidas }}
-            </q-badge>
+            <q-badge color="primary">Total: {{ conteos.total }}</q-badge>
+            <q-badge color="positive">Entradas: {{ conteos.entradas }}</q-badge>
+            <q-badge color="negative">Salidas: {{ conteos.salidas }}</q-badge>
           </div>
         </q-card-section>
 
         <q-separator />
 
         <!-- Tabs -->
-        <q-card-section class="q-pt-none">
+        <q-card-section class="q-py-none">
           <q-tabs
             v-model="tab"
             dense
             class="text-primary"
+            active-color="primary"
+            indicator-color="primary"
             align="left"
-            narrow-indicator
           >
-            <q-tab name="timeline" icon="timeline" label="Línea de tiempo" />
+            <q-tab name="timeline" icon="timeline" label="Timeline" />
             <q-tab name="tabla" icon="table_chart" label="Tabla" />
           </q-tabs>
         </q-card-section>
 
         <q-separator />
 
-        <!-- Contenido -->
-        <q-card-section
-          style="
-            overflow: hidden;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-          "
-        >
-          <q-tab-panels v-model="tab" animated style="flex: 1">
-            <!-- TIMELINE -->
-            <q-tab-panel name="timeline" style="height: 100%; padding: 0">
-              <div
-                v-if="isFetching"
-                class="column flex flex-center"
-                style="height: 100%"
-              >
+        <!-- Content -->
+        <q-card-section class="rk-modal-content">
+          <q-tab-panels v-model="tab" animated>
+            <!-- Timeline -->
+            <q-tab-panel name="timeline">
+              <div v-if="isFetching" class="text-center q-pa-md">
                 <q-spinner size="lg" color="primary" />
-                <div class="text-grey q-mt-sm">Cargando historial…</div>
+                <div class="text-grey q-mt-sm">Cargando...</div>
               </div>
 
-              <template v-else>
-                <template v-if="gruposPorDia.length">
-                  <q-virtual-scroll
-                    :items="gruposPorDia"
-                    separator
-                    style="height: 100%"
-                    :virtual-scroll-item-size="64"
+              <div v-else-if="gruposPorDia.length">
+                <q-list separator>
+                  <q-expansion-item
+                    v-for="grupo in gruposPorDia"
+                    :key="grupo.fechaClave"
+                    expand-separator
+                    icon="event"
+                    :label="grupo.fechaLarga"
+                    :caption="`${grupo.items.length} marca(s)`"
+                    default-opened
                   >
-                    <template #default="{ item }">
-                      <q-expansion-item
-                        dense
-                        expand-separator
-                        icon="event"
-                        :label="item.fechaLarga"
-                        :caption="`${item.items.length} marca(s)`"
-                        default-opened
-                        header-class="bg-grey-1"
-                      >
-                        <q-list bordered class="rounded-borders">
-                          <q-item v-for="m in item.items" :key="m._id">
-                            <q-item-section avatar>
-                              <q-avatar
-                                :color="estadoColor(m.tipo)"
-                                text-color="white"
-                                icon="access_time"
-                              />
-                            </q-item-section>
-                            <q-item-section>
-                              <q-item-label class="text-weight-medium">
+                    <q-card flat>
+                      <q-list>
+                        <q-item v-for="m in grupo.items" :key="m._id">
+                          <q-item-section avatar>
+                            <q-avatar
+                              :color="estadoColor(m.tipo)"
+                              text-color="white"
+                              :icon="estadoIcono(m.tipo)"
+                            />
+                          </q-item-section>
+                          <q-item-section>
+                            <q-item-label>
+                              <span class="text-weight-bold">
                                 {{ capitalizar(m.tipo || "—") }}
-                                <q-badge
-                                  outline
-                                  class="q-ml-sm"
-                                  :color="estadoColor(m.tipo)"
+                              </span>
+                              <q-badge outline class="q-ml-sm" :color="estadoColor(m.tipo)">
+                                {{ horaBonita(m.timestamp) }}
+                              </q-badge>
+                            </q-item-label>
+                            <q-item-label caption>
+                              {{ m.note || "Sin comentario" }}
+                              <span v-if="m.ubicacion?.lat">
+                                •
+                                <a
+                                  href="#"
+                                  @click.prevent="openInMaps(m)"
+                                  class="text-primary"
                                 >
-                                  {{ horaBonita(m.timestamp) }}
-                                </q-badge>
-                              </q-item-label>
-                              <q-item-label caption>
-                                Comentario: {{ m.note || "—" }}
-                                <span
-                                  v-if="m.ubicacion?.lat && m.ubicacion?.lng"
-                                >
-                                  • Ubicación:
-                                  <a
-                                    href=""
-                                    @click.prevent="openInMaps(m)"
-                                    class="text-primary"
-                                  >
-                                    {{ m.ubicacion.lat }}, {{ m.ubicacion.lng }}
-                                  </a>
-                                </span>
-                              </q-item-label>
-                            </q-item-section>
-                            <q-item-section side>
-                              <q-icon
-                                :name="estadoIcono(m.tipo)"
-                                :color="estadoColor(m.tipo)"
-                                size="md"
-                              />
-                            </q-item-section>
-                          </q-item>
-                        </q-list>
-                      </q-expansion-item>
-                    </template>
-                  </q-virtual-scroll>
-                </template>
-                <div v-else class="text-grey text-center q-mt-md">
-                  No hay asistencias registradas para este rango.
-                </div>
-              </template>
+                                  Ver mapa
+                                </a>
+                              </span>
+                            </q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-card>
+                  </q-expansion-item>
+                </q-list>
+              </div>
+
+              <div v-else class="text-center text-grey q-pa-xl">
+                <q-icon name="event_busy" size="64px" />
+                <div class="q-mt-md">No hay registros en este rango</div>
+              </div>
             </q-tab-panel>
 
-            <!-- TABLA -->
-            <q-tab-panel name="tabla" style="height: 100%; padding: 0">
+            <!-- Tabla -->
+            <q-tab-panel name="tabla">
               <DynamicDataTable
                 :rows="historialFiltradoYTipado"
                 :columns="columnsHistorial"
                 row-key="_id"
                 :pagination="{
                   page: 1,
-                  rowsPerPage: 15,
+                  rowsPerPage: 10,
                   sortBy: 'fecha',
                   descending: true,
                 }"
-                :rows-per-page-options="[10, 15, 30]"
+                :rows-per-page-options="[10, 20, 30]"
                 :loading="isFetching"
-                loading-label="Cargando historial…"
+                loading-label="Cargando…"
                 no-data-label="Sin marcas"
-                :filter="''"
-                :table-class="tableClass"
+                table-class="rk-scrollable"
                 :binary-state-sort="true"
                 :flat="true"
                 :bordered="true"
-                :wrap-cells="false"
                 selection="none"
               >
                 <template #body-cell-tipo="props">
@@ -353,15 +331,13 @@
                 <template #body-cell-ubicacion="props">
                   <q-td :props="props">
                     <q-btn
-                      v-if="
-                        props.row.ubicacion?.lat && props.row.ubicacion?.lng
-                      "
+                      v-if="props.row.ubicacion?.lat"
                       dense
+                      flat
                       size="sm"
-                      outline
                       color="primary"
                       icon="map"
-                      label="Ver mapa"
+                      label="Mapa"
                       @click="openInMaps(props.row)"
                     />
                     <span v-else class="text-grey">—</span>
@@ -374,17 +350,15 @@
 
         <q-separator />
 
-        <!-- Acciones -->
-        <q-card-actions align="between">
+        <!-- Footer -->
+        <q-card-actions align="between" class="q-pa-md">
           <div class="text-caption text-grey">
-            Mostrando {{ conteos.total }} marcas ({{
-              conteos.entradas
-            }}
-            entradas, {{ conteos.salidas }} salidas)
+            {{ conteos.total }} marcas ({{ conteos.entradas }} entradas, {{ conteos.salidas }} salidas)
           </div>
           <div class="row q-gutter-sm">
             <q-btn
               flat
+              dense
               color="secondary"
               icon="print"
               label="Imprimir"
@@ -392,12 +366,13 @@
             />
             <q-btn
               flat
+              dense
               color="green"
               icon="file_download"
-              label="Exportar Excel"
+              label="Excel"
               @click="exportarExcel"
             />
-            <q-btn flat label="Cerrar" color="primary" v-close-popup />
+            <q-btn flat dense color="primary" label="Cerrar" v-close-popup />
           </div>
         </q-card-actions>
       </q-card>
@@ -406,48 +381,34 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
-import { useQuasar, date } from "quasar";
-import DynamicDataTable from "@/components/shared/DynamicDataTable.vue";
-import { useAsistenciaStore } from "@/stores/asistenciaStore";
-import PageHeader from "@/components/shared/PageHeader.vue";
+import { ref, computed, onMounted, watch } from 'vue';
+import { useQuasar, date } from 'quasar';
+import DynamicDataTable from '@/components/shared/DynamicDataTable.vue';
+import { useAsistenciaStore } from '@/stores/asistenciaStore';
 
 const $q = useQuasar();
 const asistenciaStore = useAsistenciaStore();
 
-/* ===== Tema ===== */
-const isDark = computed(() => $q.dark.isActive);
-const pageBg = computed(() =>
-  isDark.value ? "bg-grey-10 text-white" : "bg-grey-1"
-);
-const cardTone = computed(() =>
-  isDark.value ? "bg-grey-9  text-white" : "bg-white"
-);
-const titleClass = "text-primary";
-const tableClass = computed(() => [
-  "rk-scrollable",
-  "rk-compact",
-  isDark.value ? "bg-grey-9 text-white" : "bg-white text-dark",
-]);
-
-/* ===== Estado ===== */
-const search = ref("");
+/* State */
+const search = ref('');
 const loading = ref(true);
 const mainPagination = ref({
   page: 1,
   rowsPerPage: 10,
-  sortBy: "nombre",
+  sortBy: 'nombre',
   descending: false,
 });
 
-/* ===== Datos listado principal ===== */
+/* Main data */
 const rawEmployees = computed(() =>
   Array.isArray(asistenciaStore.employeeRecords)
     ? asistenciaStore.employeeRecords
     : []
 );
+
 const getAsistCount = (row) =>
   Array.isArray(row?.asistencias) ? row.asistencias.length : row?.total || 0;
+
 const rowsMain = computed(() =>
   rawEmployees.value.map((e) => ({
     ...e,
@@ -457,75 +418,87 @@ const rowsMain = computed(() =>
 
 const columns = [
   {
-    name: "nombre",
-    label: "Nombre",
-    field: "nombre",
-    align: "left",
-    sortable: true,
-  },
-  { name: "rut", label: "RUT", field: "rut", align: "left", sortable: true },
-  {
-    name: "total",
-    label: "Asistencias",
-    field: "total",
-    align: "center",
+    name: 'nombre',
+    label: 'NOMBRE',
+    field: 'nombre',
+    align: 'left',
     sortable: true,
   },
   {
-    name: "actions",
-    label: "Acciones",
-    field: "__actions",
-    align: "center",
+    name: 'rut',
+    label: 'RUT',
+    field: 'rut',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'total',
+    label: 'ASISTENCIAS',
+    field: 'total',
+    align: 'center',
+    sortable: true,
+  },
+  {
+    name: 'actions',
+    label: 'ACCIONES',
+    field: '__actions',
+    align: 'center',
     sortable: false,
   },
 ];
 
-/* ===== Carga inicial ===== */
-onMounted(async () => {
+/* Load data */
+const loadData = async () => {
   loading.value = true;
   try {
     await asistenciaStore.fetchRecordsByEmployee();
   } catch {
-    $q.notify({ type: "negative", message: "Error al cargar asistencias" });
+    $q.notify({ type: 'negative', message: 'Error al cargar asistencias' });
   } finally {
     loading.value = false;
   }
-});
+};
 
-/* ===== Modal / Historial por empleado ===== */
+onMounted(() => loadData());
+
+/* Modal */
 const modalHistorial = ref(false);
 const historialEmpleado = ref(null);
 const isFetching = ref(false);
-const rangoDesde = ref("");
-const rangoHasta = ref("");
-const filtroTipo = ref(""); // '', 'entrada', 'salida'
-const tab = ref("timeline");
+const rangoDesde = ref('');
+const rangoHasta = ref('');
+const filtroTipo = ref('');
+const tab = ref('timeline');
 
 const verHistorial = async (empleado) => {
   try {
-    rangoDesde.value = "";
-    rangoHasta.value = "";
-    filtroTipo.value = "";
-    tab.value = "timeline";
+    rangoDesde.value = '';
+    rangoHasta.value = '';
+    filtroTipo.value = '';
+    tab.value = 'timeline';
+    
+    modalHistorial.value = true;
     isFetching.value = true;
+    
     const data = await asistenciaStore.fetchHistorialEmpleado({
       employeeId: empleado._id,
     });
+    
     historialEmpleado.value = data || {
       asistencias: [],
       nombre: empleado?.nombre,
       rut: empleado?.rut,
       _id: empleado?._id,
     };
-    modalHistorial.value = true;
   } catch (e) {
-    $q.notify({ type: "negative", message: "No se pudo cargar el historial" });
+    modalHistorial.value = false;
+    $q.notify({ type: 'negative', message: 'No se pudo cargar el historial' });
   } finally {
     isFetching.value = false;
   }
 };
 
-/* Refetch por rango */
+/* Refetch on range */
 watch([rangoDesde, rangoHasta], () => {
   if (historialEmpleado.value?._id) recargarHistorialConRango();
 });
@@ -538,7 +511,6 @@ const recargarHistorialConRango = async () => {
       from: rangoDesde.value || null,
       to: rangoHasta.value || null,
     });
-    // preserva nombre/rut
     historialEmpleado.value = {
       ...(data || { asistencias: [] }),
       nombre: historialEmpleado.value?.nombre,
@@ -546,34 +518,35 @@ const recargarHistorialConRango = async () => {
       _id: historialEmpleado.value?._id,
     };
   } catch {
-    $q.notify({ type: "negative", message: "Error al filtrar por rango" });
+    $q.notify({ type: 'negative', message: 'Error al filtrar' });
   } finally {
     isFetching.value = false;
   }
 };
 
-/* Rango rápido / limpiar */
+/* Quick filters */
 const limpiarRango = () => {
-  rangoDesde.value = "";
-  rangoHasta.value = "";
+  rangoDesde.value = '';
+  rangoHasta.value = '';
 };
+
 const setQuickRange = (tipo) => {
   const hoy = new Date();
-  const fmt = (d) => date.formatDate(d, "YYYY-MM-DD");
-  if (tipo === "hoy") {
+  const fmt = (d) => date.formatDate(d, 'YYYY-MM-DD');
+  if (tipo === 'hoy') {
     const d = fmt(hoy);
     rangoDesde.value = d;
     rangoHasta.value = d;
-  } else if (tipo === "semana") {
-    rangoDesde.value = fmt(date.startOfDate(hoy, "week"));
-    rangoHasta.value = fmt(date.endOfDate(hoy, "week"));
-  } else if (tipo === "mes") {
-    rangoDesde.value = fmt(date.startOfDate(hoy, "month"));
-    rangoHasta.value = fmt(date.endOfDate(hoy, "month"));
+  } else if (tipo === 'semana') {
+    rangoDesde.value = fmt(date.startOfDate(hoy, 'week'));
+    rangoHasta.value = fmt(date.endOfDate(hoy, 'week'));
+  } else if (tipo === 'mes') {
+    rangoDesde.value = fmt(date.startOfDate(hoy, 'month'));
+    rangoHasta.value = fmt(date.endOfDate(hoy, 'month'));
   }
 };
 
-/* Historial filtrado (cliente) */
+/* Filtered data */
 const historialFiltrado = computed(() => {
   const asistencias = historialEmpleado.value?.asistencias || [];
   if (!asistencias.length) return [];
@@ -591,7 +564,6 @@ const historialFiltrado = computed(() => {
   });
 });
 
-/* Filtro por tipo + orden desc */
 const historialFiltradoYTipado = computed(() => {
   const arr = historialFiltrado.value;
   if (!arr.length) return [];
@@ -601,18 +573,18 @@ const historialFiltradoYTipado = computed(() => {
   return base.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 });
 
-/* Agrupación por día */
+/* Group by day */
 const gruposPorDia = computed(() => {
   const map = new Map();
   for (const m of historialFiltradoYTipado.value) {
-    const clave = date.formatDate(m.timestamp, "YYYY-MM-DD");
+    const clave = date.formatDate(m.timestamp, 'YYYY-MM-DD');
     if (!map.has(clave)) {
       const fecha = new Date(m.timestamp);
-      const fechaLarga = new Intl.DateTimeFormat("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "2-digit",
+      const fechaLarga = new Intl.DateTimeFormat('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: '2-digit',
       }).format(fecha);
       map.set(clave, { fechaClave: clave, fechaLarga, items: [] });
     }
@@ -621,58 +593,64 @@ const gruposPorDia = computed(() => {
   return Array.from(map.values());
 });
 
-/* Conteos */
+/* Counts */
 const conteos = computed(() => {
   let entradas = 0,
     salidas = 0;
   for (const m of historialFiltradoYTipado.value) {
-    if (m.tipo === "entrada") entradas++;
-    else if (m.tipo === "salida") salidas++;
+    if (m.tipo === 'entrada') entradas++;
+    else if (m.tipo === 'salida') salidas++;
   }
   return { entradas, salidas, total: historialFiltradoYTipado.value.length };
 });
 
-/* Tabla del historial (tab) */
+/* History table columns */
 const columnsHistorial = [
   {
-    name: "fecha",
-    label: "Fecha",
-    field: (r) => date.formatDate(r.timestamp, "YYYY-MM-DD"),
-    align: "left",
+    name: 'fecha',
+    label: 'FECHA',
+    field: (r) => date.formatDate(r.timestamp, 'YYYY-MM-DD'),
+    align: 'left',
     sortable: true,
   },
   {
-    name: "hora",
-    label: "Hora",
-    field: "hora",
-    align: "left",
+    name: 'hora',
+    label: 'HORA',
+    field: 'hora',
+    align: 'left',
     sortable: false,
   },
-  { name: "tipo", label: "Tipo", field: "tipo", align: "left", sortable: true },
   {
-    name: "ubicacion",
-    label: "Ubicación",
-    field: "ubicacion",
-    align: "left",
+    name: 'tipo',
+    label: 'TIPO',
+    field: 'tipo',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'ubicacion',
+    label: 'UBICACIÓN',
+    field: 'ubicacion',
+    align: 'left',
     sortable: false,
   },
 ];
 
-/* UI helpers */
+/* Helpers */
 const estadoColor = (t) =>
-  t === "entrada" ? "positive" : t === "salida" ? "negative" : "grey";
+  t === 'entrada' ? 'positive' : t === 'salida' ? 'negative' : 'grey';
 const estadoIcono = (t) =>
-  t === "entrada" ? "login" : t === "salida" ? "logout" : "help";
+  t === 'entrada' ? 'login' : t === 'salida' ? 'logout' : 'help';
 const capitalizar = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-const horaBonita = (ts) => date.formatDate(ts, "HH:mm");
+const horaBonita = (ts) => date.formatDate(ts, 'HH:mm');
 const openInMaps = (m) => {
   const lat = m?.ubicacion?.lat,
     lng = m?.ubicacion?.lng;
   if (lat && lng)
-    window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank");
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 };
 
-/* Export / imprimir */
+/* Export/Print */
 const exportarExcel = async () => {
   if (!historialEmpleado.value?._id) return;
   try {
@@ -681,234 +659,280 @@ const exportarExcel = async () => {
       from: rangoDesde.value || null,
       to: rangoHasta.value || null,
     });
-    $q.notify({ type: "positive", message: "Exportación iniciada" });
+    $q.notify({ type: 'positive', message: 'Exportación iniciada' });
   } catch {
-    $q.notify({ type: "negative", message: "Error al exportar asistencia" });
+    $q.notify({ type: 'negative', message: 'Error al exportar' });
   }
 };
+
 const imprimirHistorial = () => window.print();
 </script>
 
 <style scoped>
-/* ===== Tokens ===== */
-:root {
-  --rk-border: rgba(0, 0, 0, 0.08);
-  --rk-card: #ffffff;
-  --rk-muted: #667085;
-  --rk-soft: #f5f7fb;
-}
-.body--dark {
-  --rk-border: rgba(255, 255, 255, 0.1);
-  --rk-card: #101318;
-  --rk-muted: #9aa3b2;
-  --rk-soft: #0f1216;
+/* Page */
+.rk-attendance-page {
+  padding: 24px;
+  min-height: 100vh;
 }
 
-/* ===== Head ===== */
-.rk-head {
-  padding: 12px 10px;
+/* ==========================================
+   HEADER - Matching Liquidaciones
+   ========================================== */
+.rk-page-header {
+  margin-bottom: 24px;
+  animation: fadeInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rk-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(6, 182, 212, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+}
+
+.body--dark .rk-header-content {
+  background: rgba(17, 24, 39, 0.95);
+  border-color: rgba(6, 182, 212, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.rk-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rk-header-icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #06b6d4, #14b8a6);
   border-radius: 16px;
-  background: linear-gradient(
-    180deg,
-    rgba(33, 150, 243, 0.1),
-    rgba(33, 150, 243, 0.03)
-  );
-  border: 1px solid var(--rk-border);
-  backdrop-filter: blur(8px) saturate(1.1);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
 }
-.body--dark .rk-head {
-  background: linear-gradient(
-    180deg,
-    rgba(33, 150, 243, 0.14),
-    rgba(33, 150, 243, 0.06)
-  );
+
+.rk-header-icon .q-icon {
+  font-size: 32px;
+  color: #fff;
+  z-index: 1;
 }
-.rk-head__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  color: var(--q-primary);
-  background: radial-gradient(
-    circle at 30% 20%,
-    rgba(33, 150, 243, 0.35),
-    rgba(33, 150, 243, 0) 70%
-  );
-  border: 1px solid rgba(33, 150, 243, 0.28);
-  box-shadow: inset 0 0 16px rgba(33, 150, 243, 0.18);
+
+.rk-icon-pulse {
+  position: absolute;
+  inset: -6px;
+  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  border-radius: 20px;
+  opacity: 0;
+  filter: blur(10px);
+  animation: iconPulse 3s ease-in-out infinite;
 }
-.rk-title {
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.2);
+  }
+}
+
+.rk-page-title {
+  font-size: 2rem;
   font-weight: 800;
-  letter-spacing: 0.2px;
-}
-.rk-sub {
-  margin-top: -2px;
-  color: var(--rk-muted);
+  margin: 0 0 8px 0;
+  color: rgba(15, 23, 42, 0.95);
+  letter-spacing: -0.5px;
 }
 
-/* ===== Card contenedora ===== */
-.rk-card {
-  border-radius: 16px;
-  border: 1px solid var(--rk-border);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+.body--dark .rk-page-title {
+  color: rgba(255, 255, 255, 0.95);
 }
 
-/* ===== Pills / inputs ===== */
-.rk-pill :deep(.q-field__control) {
-  border-radius: 12px !important;
-  background: color-mix(in oklab, var(--rk-soft) 82%, transparent);
-}
-.rk-search {
-  min-width: 260px;
+.rk-page-subtitle {
+  font-size: 1rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin: 0;
+  font-weight: 500;
 }
 
-/* ===== Dialog “glassy” ===== */
-.glassy-card {
-  --card-bg: rgba(255, 255, 255, 0.88);
-  --card-border: rgba(60, 60, 67, 0.25);
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  --radius: 16px;
-  backdrop-filter: saturate(1.25) blur(10px);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+.body--dark .rk-page-subtitle {
+  color: rgba(255, 255, 255, 0.7);
 }
-.body--dark .glassy-card {
-  --card-bg: rgba(18, 19, 22, 0.82);
-  --card-border: rgba(255, 255, 255, 0.07);
-  --shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
-}
-.glassy-card :deep(.q-separator) {
-  opacity: 0.7;
-}
-.glassy-card :deep(.q-card__section) {
-  padding-top: 14px;
-  padding-bottom: 14px;
-}
-.glassy-card :deep(.text-h6) {
-  display: inline-flex;
+
+.rk-action-btn {
+  display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-}
-.glassy-card :deep(.q-chip) {
-  border-radius: 999px;
-  font-weight: 600;
-  padding: 0 10px;
-  transition: transform 0.08s, box-shadow 0.15s;
-}
-.glassy-card :deep(.q-chip.q-chip--clickable:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-}
-
-/* Virtual / expansion */
-.glassy-card :deep(.q-virtual-scroll) {
-  padding-bottom: 8px;
-}
-.glassy-card :deep(.q-expansion-item) {
-  margin: 8px 0;
-  border: 1px solid var(--card-border);
+  padding: 12px 24px;
+  background: rgba(6, 182, 212, 0.05);
+  border: 1.5px solid rgba(6, 182, 212, 0.12);
   border-radius: 12px;
-  overflow: hidden;
-  transition: box-shadow 0.15s, transform 0.06s;
-}
-.glassy-card :deep(.q-expansion-item:hover) {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
-}
-.glassy-card :deep(.q-expansion-item .q-item) {
-  background: transparent !important;
-}
-.glassy-card :deep(.q-expansion-item__container > .q-item) {
-  backdrop-filter: saturate(1.1);
+  color: rgba(15, 23, 42, 0.95);
+  font-size: 0.95rem;
   font-weight: 700;
-}
-.rounded-borders {
-  border-radius: 12px;
-}
-.glassy-card :deep(.q-list .q-item) {
-  border-bottom: 1px dashed rgba(127, 127, 127, 0.2);
-}
-.glassy-card :deep(.q-list .q-item:last-child) {
-  border-bottom: none;
-}
-.glassy-card :deep(.q-item__label + .q-item__label) {
-  margin-top: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* Avatares glow */
-.glassy-card :deep(.q-avatar.bg-positive) {
-  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
-}
-.glassy-card :deep(.q-avatar.bg-negative) {
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+.body--dark .rk-action-btn {
+  background: rgba(6, 182, 212, 0.08);
+  border-color: rgba(6, 182, 212, 0.2);
+  color: rgba(255, 255, 255, 0.95);
 }
 
-/* Badges */
-.glassy-card :deep(.q-badge) {
-  border-radius: 10px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-.glassy-card :deep(.q-badge[outline]) {
-  border-width: 2px;
-  font-weight: 800;
+.rk-action-btn:hover:not(:disabled) {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: rgba(6, 182, 212, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
 }
 
-/* Tabla del panel */
-.glassy-card :deep(.q-table) {
-  border-radius: 12px;
+.rk-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rotate-animation {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   TABLE CONTAINER
+   ========================================== */
+.rk-table-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(6, 182, 212, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
   overflow: hidden;
 }
-.glassy-card :deep(.q-table__top, .q-table__bottom) {
-  background: transparent;
-}
-.glassy-card :deep(.q-table thead th) {
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-.glassy-card :deep(.q-table__body .q-tr:nth-child(even)) {
-  background: rgba(125, 125, 125, 0.06);
-}
-.body--dark .glassy-card :deep(.q-table__body .q-tr:nth-child(even)) {
-  background: rgba(255, 255, 255, 0.03);
+
+.body--dark .rk-table-container {
+  background: rgba(17, 24, 39, 0.95);
+  border-color: rgba(6, 182, 212, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* Scrollbar sutil */
-.glassy-card :deep(*::-webkit-scrollbar) {
-  height: 10px;
-  width: 10px;
+.rk-search-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(6, 182, 212, 0.1);
 }
-.glassy-card :deep(*::-webkit-scrollbar-thumb) {
-  background: rgba(127, 127, 127, 0.35);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+
+.body--dark .rk-search-section {
+  border-bottom-color: rgba(6, 182, 212, 0.15);
 }
-.glassy-card :deep(*::-webkit-scrollbar-thumb:hover) {
-  background: rgba(127, 127, 127, 0.55);
+
+.rk-search-input {
+  max-width: 500px;
 }
-.glassy-card :deep(a.text-primary) {
-  text-decoration: none;
-  border-bottom: 1px dotted currentColor;
-  transition: opacity 0.15s;
-}
-.glassy-card :deep(a.text-primary:hover) {
-  opacity: 0.85;
-}
-.glassy-card :deep(.q-card__actions) {
-  border-top: 1px solid var(--card-border);
-}
-.glassy-card :deep(.q-card__actions .q-btn) {
-  border-radius: 10px;
+
+.rk-count-badge {
   font-weight: 700;
+  padding: 6px 12px;
 }
-.q-tab-panels {
-  overflow-y: auto;
-  background: transparent;
+
+/* ==========================================
+   MODAL COMPACTO
+   ========================================== */
+.rk-history-dialog :deep(.q-dialog__backdrop) {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.rk-history-card {
+  width: 900px;
+  max-width: 95vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.rk-modal-header {
+  background: linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%);
+  color: #fff;
+}
+
+.rk-modal-header .text-h6 {
+  color: #fff;
+}
+
+.rk-modal-header .text-subtitle2 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.rk-modal-content {
+  flex: 1;
+  overflow: auto;
+  max-height: 50vh;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 767px) {
+  .rk-attendance-page {
+    padding: 16px;
+  }
+
+  .rk-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .rk-header-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .rk-page-title {
+    font-size: 1.5rem;
+  }
+
+  .rk-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rk-history-card {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
 }
 </style>
