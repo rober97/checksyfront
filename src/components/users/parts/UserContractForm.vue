@@ -54,46 +54,73 @@
       </q-input>
     </div>
 
+    <!-- ✅ AFP dinámico (entityId) -->
     <div class="col-6 col-sm-4">
       <q-select
-        v-model="local.afp"
+        v-model="local.afpEntityId"
         label="AFP"
-        :options="afps"
+        :options="afpSelectOptions"
         dense
         outlined
         emit-value
         map-options
+        option-value="value"
+        option-label="label"
         :rules="[req]"
-      />
+        :loading="loadingCatalog"
+        :disable="loadingCatalog"
+      >
+        <template #no-option>
+          <div class="q-pa-md text-center">
+            <q-icon name="account_tree" size="32px" class="q-mb-sm" />
+            <div class="text-weight-bold">No hay AFP disponibles</div>
+            <div class="text-caption">Configura el catálogo global de nómina</div>
+          </div>
+        </template>
+      </q-select>
     </div>
 
+    <!-- ✅ Salud dinámico (entityId) -->
     <div class="col-6 col-sm-4">
       <q-select
-        v-model="local.saludSistema"
+        v-model="local.healthEntityId"
         label="Salud"
-        :options="salud"
+        :options="healthSelectOptions"
         dense
         outlined
         emit-value
         map-options
+        option-value="value"
+        option-label="label"
         :rules="[req]"
-      />
+        :loading="loadingCatalog"
+        :disable="loadingCatalog"
+      >
+        <template #no-option>
+          <div class="q-pa-md text-center">
+            <q-icon name="medical_services" size="32px" class="q-mb-sm" />
+            <div class="text-weight-bold">No hay opciones de salud</div>
+            <div class="text-caption">Configura el catálogo global de nómina</div>
+          </div>
+        </template>
+      </q-select>
     </div>
 
-    <div class="col-6 col-sm-4" v-if="local.saludSistema === 'ISAPRE'">
+    <!-- ✅ Campos extra SOLO si el meta lo requiere -->
+    <div class="col-6 col-sm-4" v-if="requiresUf">
       <q-input
         v-model="local.isaprePlan"
-        label="Isapre / Plan"
+        label="Plan (Isapre / Salud)"
         dense
         outlined
         :rules="[req]"
       />
     </div>
 
-    <div class="col-6 col-sm-4" v-if="local.saludSistema === 'ISAPRE'">
+    <div class="col-6 col-sm-4" v-if="requiresUf">
       <q-input
         v-model="local.isapreUf"
-        label="Plan Isapre (UF)"
+        label="Plan (UF)"
         dense
         outlined
         :rules="[reqNumber]"
@@ -150,12 +177,7 @@
     </div>
 
     <div class="col-12 col-sm-4">
-      <q-input
-        v-model="local.numeroCuenta"
-        label="N° de cuenta"
-        dense
-        outlined
-      />
+      <q-input v-model="local.numeroCuenta" label="N° de cuenta" dense outlined />
     </div>
 
     <div class="col-12">
@@ -172,9 +194,7 @@
               label="Gratificación"
               dense
               outlined
-              @update:model-value="
-                (v) => (local.gratificacion = normalizeMoney(v))
-              "
+              @update:model-value="(v) => (local.gratificacion = normalizeMoney(v))"
               :hint="formatMoney(local.gratificacion)"
             />
           </div>
@@ -184,9 +204,7 @@
               label="Colación"
               dense
               outlined
-              @update:model-value="
-                (v) => (local.bonoColacion = normalizeMoney(v))
-              "
+              @update:model-value="(v) => (local.bonoColacion = normalizeMoney(v))"
               :hint="formatMoney(local.bonoColacion)"
             />
           </div>
@@ -196,9 +214,7 @@
               label="Movilización"
               dense
               outlined
-              @update:model-value="
-                (v) => (local.bonoMovilizacion = normalizeMoney(v))
-              "
+              @update:model-value="(v) => (local.bonoMovilizacion = normalizeMoney(v))"
               :hint="formatMoney(local.bonoMovilizacion)"
             />
           </div>
@@ -208,9 +224,7 @@
               label="Desc. préstamo"
               dense
               outlined
-              @update:model-value="
-                (v) => (local.descuentoPrestamo = normalizeMoney(v))
-              "
+              @update:model-value="(v) => (local.descuentoPrestamo = normalizeMoney(v))"
               :hint="formatMoney(local.descuentoPrestamo)"
             />
           </div>
@@ -221,36 +235,36 @@
 </template>
 
 <script setup>
-import { reactive, watch } from "vue";
+import { reactive, watch, computed } from "vue";
 import { normalizeMoney, normalizeDecimal, formatMoney } from "@/utils/format";
 import { req, reqNumber, nroEntero0, fechaPasada } from "@/utils/validators";
 
-const props = defineProps({ modelValue: { type: Object, required: true } });
+const props = defineProps({
+  modelValue: { type: Object, required: true },
+
+  // ✅ dinámicos (vienen del diálogo)
+  loadingCatalog: { type: Boolean, default: false },
+  afpOptions: { type: Array, default: () => [] },     // [{_id, displayName, slug, meta}]
+  healthOptions: { type: Array, default: () => [] },  // [{_id, displayName, slug, meta}]
+  healthSelectedMeta: { type: Object, default: null },// meta del seleccionado (requiresUf, etc.)
+});
+
 const emit = defineEmits(["update:modelValue"]);
 
+/* ✅ Listas “estables” (si mañana quieres, las haces dinámicas igual) */
 const contractTypes = [
   { label: "Indefinido", value: "indefinido" },
   { label: "Plazo fijo", value: "plazo_fijo" },
   { label: "Part-time", value: "part_time" },
   { label: "Honorarios", value: "honorarios" },
 ];
+
 const jornadas = [
   { label: "Completa", value: "completa" },
   { label: "Parcial", value: "parcial" },
   { label: "Turnos", value: "turnos" },
 ];
-const afps = [
-  { label: "AFP Habitat", value: "HABITAT" },
-  { label: "AFP Capital", value: "CAPITAL" },
-  { label: "AFP Cuprum", value: "CUPRUM" },
-  { label: "AFP Provida", value: "PROVIDA" },
-  { label: "AFP Modelo", value: "MODELO" },
-  { label: "IPS (ex INP)", value: "IPS" },
-];
-const salud = [
-  { label: "Fonasa", value: "FONASA" },
-  { label: "Isapre", value: "ISAPRE" },
-];
+
 const bancos = [
   "BancoEstado",
   "Banco de Chile",
@@ -263,6 +277,7 @@ const bancos = [
   "Ripley",
   "Consorcio",
 ].map((b) => ({ label: b, value: b }));
+
 const tiposCuenta = [
   { label: "Cuenta corriente", value: "corriente" },
   { label: "Cuenta vista", value: "vista" },
@@ -270,10 +285,44 @@ const tiposCuenta = [
   { label: "Ahorro", value: "ahorro" },
 ];
 
+/* ✅ opciones para q-select (IDs) */
+const afpSelectOptions = computed(() =>
+  (props.afpOptions || [])
+    .filter(x => x && x._id && x.displayName)
+    .map(x => ({ label: x.displayName, value: x._id }))
+);
+
+const healthSelectOptions = computed(() =>
+  (props.healthOptions || [])
+    .filter(x => x && x._id && x.displayName)
+    .map(x => ({ label: x.displayName, value: x._id }))
+);
+
+const requiresUf = computed(() => !!props.healthSelectedMeta?.requiresUf);
+
+/* ✅ local model */
 const local = reactive({ ...props.modelValue });
+
 watch(
   () => props.modelValue,
   (v) => Object.assign(local, v)
 );
-watch(local, (v) => emit("update:modelValue", { ...v }), { deep: true });
+
+watch(
+  local,
+  (v) => emit("update:modelValue", { ...v }),
+  { deep: true }
+);
+
+/* ✅ limpieza automática: si salud no requiere UF, borra campos */
+watch(
+  () => requiresUf.value,
+  (need) => {
+    if (!need) {
+      local.isaprePlan = "";
+      local.isapreUf = 0;
+    }
+  },
+  { immediate: true }
+);
 </script>

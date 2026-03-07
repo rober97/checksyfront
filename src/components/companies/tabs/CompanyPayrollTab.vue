@@ -1,1346 +1,1122 @@
 <template>
-  <div class="rk-sched">
-    <!-- Main Grid Layout -->
-    <div class="rk-sched-grid">
-      <!-- Left: Configuration Panel -->
-      <div class="rk-config-panel">
-        <div class="rk-panel-card">
-          <!-- Card Header -->
-          <div class="rk-card-header">
-            <div class="rk-header-content">
-              <div class="rk-header-icon">
-                <q-icon name="schedule" />
-                <div class="rk-icon-pulse"></div>
-              </div>
-              <div class="rk-header-text">
-                <h3 class="rk-header-title">Programación de nómina</h3>
-                <p class="rk-header-subtitle">Configura generación y publicación automática</p>
-              </div>
-            </div>
-            <div class="rk-status-badge" :class="`rk-status-${vm.autoPublish ? 'auto' : 'manual'}`">
-              <div class="rk-badge-dot"></div>
-              <span>{{ vm.autoPublish ? 'Publicación automática' : 'Con revisión' }}</span>
-            </div>
+  <div class="rk-wrap">
+    <!-- Header -->
+    <div class="rk-top">
+      <div class="rk-title">
+        <q-icon name="receipt_long" />
+        <div>
+          <div class="rk-h1">Conceptos de liquidación</div>
+          <div class="rk-h2">
+            Define qué se paga y qué se descuenta en las liquidaciones de la empresa.
           </div>
+        </div>
+      </div>
 
-          <!-- Info Banner -->
-          <div class="rk-info-banner">
-            <div class="rk-info-icon">
-              <q-icon name="info" />
+      <div class="rk-state" :class="store.validation?.ok ? 'ok' : 'warn'">
+        <q-icon :name="store.validation?.ok ? 'verified' : 'report_problem'" />
+        <span>{{ store.validation?.ok ? "Configuración lista" : "Faltan mínimos" }}</span>
+      </div>
+    </div>
+
+    <div class="rk-note">
+      <q-icon name="info" />
+      <div>
+        Esto es <b>por empresa</b>. Si faltan conceptos mínimos, <b>no podrás emitir liquidaciones</b>.
+      </div>
+    </div>
+
+    <!-- Error backend -->
+    <q-banner v-if="store.error" class="rk-banner rk-banner--error" rounded>
+      <template #avatar><q-icon name="warning" /></template>
+      <div>
+        <b>Ocurrió un problema</b>
+        <div class="rk-muted">{{ store.error }}</div>
+      </div>
+    </q-banner>
+
+    <!-- Missing config (human friendly) -->
+    <q-banner v-if="missingListPretty.length" class="rk-banner rk-banner--warn" rounded>
+      <template #avatar><q-icon name="report" /></template>
+      <div>
+        <b>Te falta configuración mínima</b>
+        <div class="rk-muted">Agrega o activa lo siguiente:</div>
+        <ul class="rk-missing">
+          <li v-for="m in missingListPretty" :key="m">{{ m }}</li>
+        </ul>
+      </div>
+    </q-banner>
+
+    <!-- Stepper -->
+    <q-stepper v-model="step" flat bordered animated class="rk-stepper">
+      <q-step :name="1" title="Elegir una plantilla" icon="layers" :done="step > 1">
+        <div class="rk-grid">
+          <div class="rk-card">
+            <div class="rk-card-title">
+              <q-icon name="file_download" />
+              <span>Aplicar plantilla</span>
+              <q-space />
+              <q-btn flat dense icon="help" @click="showHelp('plantilla')" />
             </div>
-            <p>Configura el <strong>corte de variables</strong>, la <strong>regla de pago</strong>, el <strong>ajuste por día no hábil</strong>, y la <strong>hora</strong> de ejecución.</p>
-          </div>
 
-          <!-- Form Fields -->
-          <div class="rk-form-fields">
-            <!-- Frequency -->
-            <div class="rk-field-group">
-              <label class="rk-field-label">
-                <q-icon name="event_repeat" />
-                <span>Frecuencia de generación</span>
-              </label>
+            <div class="rk-form">
               <q-select
-                v-model="vm.frequency"
-                :options="freqOpts"
-                dense
+                v-model="templateId"
+                :options="templateOptions"
                 outlined
+                dense
+                :loading="store.loading"
+                label="Plantilla"
+                hint="Recomendado: plantilla con mínimos legales"
                 emit-value
                 map-options
-                @update:model-value="emitValid"
-                class="rk-select"
+              />
+
+              <q-select
+                v-model="applyMode"
+                :options="applyModeOptsEs"
+                outlined
+                dense
+                label="Cómo aplicar"
+                hint="Elige si quieres mantener tus conceptos o reemplazarlos"
+                emit-value
+                map-options
+              />
+
+              <div class="rk-actions">
+                <q-btn
+                  unelevated
+                  color="primary"
+                  icon="download"
+                  label="Aplicar plantilla"
+                  :disable="!companyId || !templateId || store.loading"
+                  @click="applyTemplate"
+                />
+                <q-btn
+                  outline
+                  color="primary"
+                  icon="fact_check"
+                  label="Revisar mínimos"
+                  :disable="!companyId || store.loading"
+                  @click="validate"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="rk-card">
+            <div class="rk-card-title">
+              <q-icon name="lightbulb" />
+              <span>Guía rápida</span>
+            </div>
+
+            <div class="rk-mini">
+              <div class="rk-mini-item">
+                <q-icon name="add_circle" />
+                <div>
+                  <b>Haberes</b>
+                  <div class="rk-muted">Sumas al pago (sueldo base, gratificación, bonos).</div>
+                </div>
+              </div>
+
+              <div class="rk-mini-item">
+                <q-icon name="remove_circle" />
+                <div>
+                  <b>Descuentos</b>
+                  <div class="rk-muted">Restas al pago (AFP, salud, cesantía u otros).</div>
+                </div>
+              </div>
+
+              <div class="rk-mini-item">
+                <q-icon name="route" />
+                <div>
+                  <b>Origen del valor</b>
+                  <div class="rk-muted">Desde contrato / cálculo automático / parámetros.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row justify-end q-mt-md">
+          <q-btn color="primary" label="Siguiente" icon-right="chevron_right" @click="step = 2" />
+        </div>
+      </q-step>
+
+      <q-step :name="2" title="Revisar y editar" icon="list_alt" :done="step > 2">
+        <div class="rk-toolbar">
+          <q-input
+            v-model="q"
+            dense
+            outlined
+            placeholder="Buscar por código o nombre…"
+            class="rk-search"
+            clearable
+          >
+            <template #prepend><q-icon name="search" /></template>
+          </q-input>
+
+          <q-btn outline icon="add" label="Crear concepto" @click="openCreate" />
+          <q-btn
+            outline
+            icon="fact_check"
+            label="Revisar mínimos"
+            :disable="store.loading"
+            @click="validate"
+          />
+        </div>
+
+        <q-table
+          flat
+          :rows="filteredRows"
+          :columns="colsEs"
+          row-key="_id"
+          :loading="store.loading"
+          separator="horizontal"
+          class="rk-table"
+          :pagination="{ rowsPerPage: 12 }"
+          rows-per-page-label="Registros por página:"
+          no-data-label="No hay conceptos aún"
+          loading-label="Cargando…"
+        >
+          <template #body-cell_habilitado="p">
+            <q-td :props="p">
+              <q-toggle
+                v-model="p.row.active"
+                @update:model-value="queuePatch(p.row, { active: p.row.active })"
+              />
+            </q-td>
+          </template>
+
+          <template #body-cell_tipo="p">
+            <q-td :props="p">
+              <q-chip
+                dense
+                :icon="p.row.kind === 'EARNING' ? 'add_circle' : 'remove_circle'"
+                :label="p.row.kind === 'EARNING' ? 'Haber' : 'Descuento'"
+              />
+            </q-td>
+          </template>
+
+          <template #body-cell_origen="p">
+            <q-td :props="p">
+              <q-chip dense icon="input" :label="origenLabel(p.row.valueType)" />
+              <div class="rk-muted rk-small q-mt-xs" v-if="origenHint(p.row)">
+                {{ origenHint(p.row) }}
+              </div>
+            </q-td>
+          </template>
+
+          <template #body-cell_imponible="p">
+            <q-td :props="p">
+              <span class="rk-bool" :class="p.row.taxable ? 'yes' : 'no'">
+                <q-icon :name="p.row.taxable ? 'check_circle' : 'cancel'" />
+                {{ p.row.taxable ? "Sí" : "No" }}
+              </span>
+            </q-td>
+          </template>
+
+          <template #body-cell_prorratea="p">
+            <q-td :props="p">
+              <span class="rk-bool" :class="p.row.prorate ? 'yes' : 'no'">
+                <q-icon :name="p.row.prorate ? 'check_circle' : 'cancel'" />
+                {{ p.row.prorate ? "Sí" : "No" }}
+              </span>
+            </q-td>
+          </template>
+
+          <template #body-cell_orden="p">
+            <q-td :props="p">
+              <q-input
+                v-model.number="p.row.order"
+                type="number"
+                dense
+                outlined
+                style="width: 110px"
+                @update:model-value="queuePatch(p.row, { order: Number(p.row.order || 100) })"
+              />
+            </q-td>
+          </template>
+
+          <template #body-cell_acciones="p">
+            <q-td :props="p" class="text-right">
+              <q-btn dense flat round icon="edit" @click="openEdit(p.row)" />
+            </q-td>
+          </template>
+        </q-table>
+
+        <div class="row justify-between q-mt-md">
+          <q-btn flat icon="chevron_left" label="Volver" @click="step = 1" />
+          <q-btn color="primary" label="Siguiente" icon-right="chevron_right" @click="step = 3" />
+        </div>
+      </q-step>
+
+      <q-step :name="3" title="Validar y guardar" icon="task_alt">
+        <div class="rk-grid">
+          <div class="rk-card">
+            <div class="rk-card-title">
+              <q-icon name="summarize" />
+              <span>Resumen</span>
+            </div>
+
+            <div class="rk-summary">
+              <div class="rk-summary-row">
+                <span>Conceptos activos</span>
+                <b>{{ store.activeCount }}</b>
+              </div>
+              <div class="rk-summary-row">
+                <span>Haberes</span>
+                <b>{{ store.earningsCount }}</b>
+              </div>
+              <div class="rk-summary-row">
+                <span>Descuentos</span>
+                <b>{{ store.deductionsCount }}</b>
+              </div>
+              <div class="rk-summary-row">
+                <span>Estado</span>
+                <b>{{ store.validation?.ok ? "Listo" : "Faltan mínimos" }}</b>
+              </div>
+            </div>
+
+            <div class="rk-actions q-mt-md">
+              <q-btn
+                outline
+                color="primary"
+                icon="fact_check"
+                label="Revisar mínimos"
+                :disable="store.loading"
+                @click="validate"
+              />
+              <q-btn
+                unelevated
+                color="primary"
+                icon="save"
+                :label="patches.length ? `Guardar cambios (${patches.length})` : 'Guardar cambios'"
+                :disable="!patches.length || store.loading"
+                @click="saveBulk"
+              />
+            </div>
+          </div>
+
+          <div class="rk-card">
+            <div class="rk-card-title">
+              <q-icon name="help_outline" />
+              <span>Consejo</span>
+            </div>
+            <div class="rk-muted">
+              Si quieres que quede “como debe”, parte por:
+              <b>Aplicar plantilla</b> → ajustar → <b>Revisar mínimos</b> → guardar.
+            </div>
+          </div>
+        </div>
+
+        <div class="row justify-start q-mt-md">
+          <q-btn flat icon="chevron_left" label="Volver" @click="step = 2" />
+        </div>
+      </q-step>
+    </q-stepper>
+
+    <!-- Save bar -->
+    <div class="rk-savebar" v-if="patches.length">
+      <div class="rk-savebar-left">
+        <q-icon name="edit_note" />
+        <div>
+          <b>Tienes cambios pendientes</b>
+          <div class="rk-muted">{{ patches.length }} cambio(s) sin guardar</div>
+        </div>
+      </div>
+      <q-btn
+        unelevated
+        color="primary"
+        icon="save"
+        :label="`Guardar (${patches.length})`"
+        :disable="store.loading"
+        @click="saveBulk"
+      />
+    </div>
+
+    <!-- Dialog create/edit -->
+    <q-dialog v-model="dlg">
+      <q-card style="width: 780px; max-width: 92vw; border-radius: 16px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-weight-bold">
+            {{ editingId ? "Editar concepto" : "Nuevo concepto" }}
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-gutter-md">
+          <q-banner class="rk-banner rk-banner--info" rounded>
+            <template #avatar><q-icon name="info" /></template>
+            <div class="rk-muted">
+              Elige <b>Tipo</b> y <b>De dónde sale el valor</b>. No necesitas escribir “claves raras”.
+              Solo usa “Avanzado” si sabes lo que haces.
+            </div>
+          </q-banner>
+
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-sm-4">
+              <q-input v-model="edit.code" outlined dense label="Código (único)" />
+            </div>
+            <div class="col-12 col-sm-8">
+              <q-input v-model="edit.name" outlined dense label="Nombre visible" />
+            </div>
+
+            <div class="col-12 col-sm-4">
+              <q-select
+                v-model="edit.kind"
+                :options="kindOptsEs"
+                outlined
+                dense
+                emit-value
+                map-options
+                label="Tipo"
               />
             </div>
 
-            <!-- Cutoff Day & Payday Rule -->
-            <div class="rk-field-row">
-              <div class="rk-field-group rk-field-half">
-                <label class="rk-field-label">
-                  <q-icon name="cut" />
-                  <span>Día de corte</span>
-                </label>
-                <q-input
-                  v-model.number="vm.cutoffDay"
-                  type="number"
-                  min="1"
-                  max="31"
-                  dense
-                  outlined
-                  :hint="hintCorte"
-                  :error="!!errors.cutoffDay"
-                  :error-message="errors.cutoffDay"
-                  @update:model-value="emitValid"
-                  class="rk-input"
-                >
-                  <template #prepend>
-                    <q-icon name="today" />
-                  </template>
-                </q-input>
-              </div>
-
-              <div class="rk-field-group rk-field-half">
-                <label class="rk-field-label">
-                  <q-icon name="rule" />
-                  <span>Regla de pago</span>
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    size="sm"
-                    icon="help"
-                    class="rk-help-btn"
-                  >
-                    <q-tooltip class="rk-tooltip" max-width="360px">
-                      <strong>Último día hábil:</strong> Calcula automáticamente el último día laboral del mes (omite fines de semana y feriados).<br><br>
-                      <strong>Día fijo:</strong> Usa el día específico indicado. Si cae en día no hábil, se aplica el ajuste elegido.
-                    </q-tooltip>
-                  </q-btn>
-                </label>
-                <q-select
-                  v-model="vm.paydayRule"
-                  :options="paydayRuleOpts"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  :error="!!errors.paydayRule"
-                  :error-message="errors.paydayRule"
-                  @update:model-value="emitValid"
-                  class="rk-select"
-                />
-              </div>
-            </div>
-
-            <!-- Fixed Day (conditional) -->
-            <div v-if="vm.paydayRule === 'fixed_day'" class="rk-field-group">
-              <label class="rk-field-label">
-                <q-icon name="push_pin" />
-                <span>Día fijo de pago</span>
-              </label>
-              <q-input
-                v-model.number="vm.paydayDayOfMonth"
-                type="number"
-                min="1"
-                max="31"
-                dense
+            <div class="col-12 col-sm-4">
+              <q-select
+                v-model="edit.valueType"
+                :options="valueTypeOptsEs"
                 outlined
-                hint="Día específico del mes para generar la nómina"
-                :error="!!errors.paydayDayOfMonth"
-                :error-message="errors.paydayDayOfMonth"
-                @update:model-value="emitValid"
-                class="rk-input"
-              >
-                <template #prepend>
-                  <q-icon name="calendar_month" />
-                </template>
-              </q-input>
-            </div>
-
-            <!-- Business Day Adjust & Time -->
-            <div class="rk-field-row">
-              <div class="rk-field-group rk-field-half">
-                <label class="rk-field-label">
-                  <q-icon name="swap_horiz" />
-                  <span>Ajuste por día no hábil</span>
-                </label>
-                <q-select
-                  v-model="vm.businessDayAdjust"
-                  :options="adjustOpts"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  :disable="vm.paydayRule === 'last_business_day'"
-                  :hint="vm.paydayRule === 'last_business_day'
-                    ? 'No aplica: ya usa el último día hábil'
-                    : 'Elige cómo ajustar si cae en día no hábil'"
-                  @update:model-value="emitValid"
-                  class="rk-select"
-                />
-              </div>
-
-              <div class="rk-field-group rk-field-half">
-                <label class="rk-field-label">
-                  <q-icon name="access_time" />
-                  <span>Hora de ejecución</span>
-                </label>
-                <q-input
-                  v-model="vm.generateTime"
-                  dense
-                  outlined
-                  mask="##:##"
-                  fill-mask
-                  hint="Formato 24 horas (HH:mm)"
-                  :error="!!errors.generateTime"
-                  :error-message="errors.generateTime"
-                  @update:model-value="emitValid"
-                  class="rk-input"
-                >
-                  <template #prepend>
-                    <q-icon name="schedule" />
-                  </template>
-                </q-input>
-              </div>
-            </div>
-
-            <!-- Timezone & Rounding -->
-            <div class="rk-field-row">
-              <div class="rk-field-group rk-field-grow">
-                <label class="rk-field-label">
-                  <q-icon name="language" />
-                  <span>Zona horaria</span>
-                </label>
-                <q-select
-                  v-model="vm.timezone"
-                  :options="tzOpts"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  @update:model-value="emitValid"
-                  class="rk-select"
-                />
-              </div>
-
-              <div class="rk-field-group rk-field-shrink">
-                <label class="rk-field-label">
-                  <q-icon name="calculate" />
-                  <span>Redondeo</span>
-                </label>
-                <q-select
-                  v-model="vm.rounding"
-                  :options="roundingOpts"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  :hint="roundingHint"
-                  @update:model-value="emitValid"
-                  class="rk-select"
-                />
-              </div>
-            </div>
-
-            <!-- Toggles Section -->
-            <div class="rk-toggles-section">
-              <div class="rk-toggle-card">
-                <div class="rk-toggle-icon">
-                  <q-icon name="rocket_launch" />
-                </div>
-                <div class="rk-toggle-content">
-                  <div class="rk-toggle-header">
-                    <strong>Publicación automática</strong>
-                    <q-btn
-                      flat
-                      dense
-                      round
-                      size="sm"
-                      icon="help"
-                      class="rk-help-btn"
-                    >
-                      <q-tooltip class="rk-tooltip">
-                        Si está activo, al terminar la generación el documento queda <strong>publicado de inmediato</strong> sin revisión previa.
-                      </q-tooltip>
-                    </q-btn>
-                  </div>
-                  <p class="rk-toggle-desc">
-                    {{ vm.autoPublish ? 'El documento se publicará automáticamente al generarse' : 'Requiere revisión manual antes de publicar' }}
-                  </p>
-                </div>
-                <q-toggle
-                  v-model="vm.autoPublish"
-                  @update:model-value="emitValid"
-                  color="primary"
-                  size="lg"
-                />
-              </div>
-
-              <div class="rk-toggle-card">
-                <div class="rk-toggle-icon">
-                  <q-icon name="notifications_active" />
-                </div>
-                <div class="rk-toggle-content">
-                  <div class="rk-toggle-header">
-                    <strong>Enviar avisos al publicar</strong>
-                    <q-btn
-                      flat
-                      dense
-                      round
-                      size="sm"
-                      icon="help"
-                      class="rk-help-btn"
-                    >
-                      <q-tooltip class="rk-tooltip">
-                        Notifica a los destinatarios cuando el documento queda publicado (automática o manualmente).
-                      </q-tooltip>
-                    </q-btn>
-                  </div>
-                  <p class="rk-toggle-desc">
-                    {{ vm.notifyOnPublish ? 'Se enviarán notificaciones al publicar' : 'No se enviarán notificaciones' }}
-                  </p>
-                </div>
-                <q-toggle
-                  v-model="vm.notifyOnPublish"
-                  @update:model-value="emitValid"
-                  color="primary"
-                  size="lg"
-                />
-              </div>
-            </div>
-
-            <!-- Template -->
-            <div class="rk-field-group">
-              <label class="rk-field-label">
-                <q-icon name="description" />
-                <span>Plantilla PDF (opcional)</span>
-              </label>
-              <q-input
-                v-model="vm.templateId"
                 dense
-                outlined
-                placeholder="ID de la plantilla personalizada"
-                hint="Deja vacío para usar la plantilla por defecto"
-                @update:model-value="emitValid"
-                class="rk-input"
-              >
-                <template #prepend>
-                  <q-icon name="picture_as_pdf" />
-                </template>
-              </q-input>
+                emit-value
+                map-options
+                label="De dónde sale el valor"
+              />
             </div>
 
-            <!-- Warning: Auto-publish without template -->
-            <div v-if="vm.autoPublish && !vm.templateId" class="rk-warning-banner">
-              <div class="rk-warning-icon">
-                <q-icon name="warning" />
-              </div>
-              <div class="rk-warning-content">
-                <strong>Atención</strong>
-                <p>Publicación automática activa sin plantilla personalizada. Se usará el diseño por defecto.</p>
-              </div>
+            <div class="col-12 col-sm-4">
+              <q-input v-model.number="edit.order" type="number" outlined dense label="Orden (prioridad)" />
             </div>
+          </div>
 
-            <!-- Next Execution Preview -->
-            <div class="rk-execution-preview">
-              <div class="rk-preview-icon">
-                <q-icon name="event" />
+          <q-separator />
+
+          <!-- PATH: selector amigable -->
+          <div v-if="edit.valueType === 'PATH'" class="rk-form">
+            <q-select
+              v-model="pathChoice"
+              :options="contractFieldOptions"
+              outlined
+              dense
+              label="Campo del contrato"
+              hint="Ej: sueldo base, gratificación, colación…"
+              emit-value
+              map-options
+            />
+            <q-slide-transition>
+              <div v-if="pathChoice === '__CUSTOM__'">
+                <q-input
+                  v-model="edit.valuePath"
+                  outlined
+                  dense
+                  label="Ruta avanzada (opcional)"
+                  hint="Solo si sabes exactamente qué ruta usa tu sistema"
+                />
               </div>
-              <div class="rk-preview-content">
-                <h4 class="rk-preview-title">Próxima ejecución estimada</h4>
-                <div class="rk-preview-date">
-                  <strong>{{ nextDateLabel }}</strong>
-                  <span v-if="vm.generateTime && vm.timezone">
-                    · {{ vm.generateTime }} ({{ vm.timezone }})
-                  </span>
+            </q-slide-transition>
+          </div>
+
+          <!-- PARAM: (lo dejamos simple, con opción avanzada) -->
+          <div v-else-if="edit.valueType === 'PARAM'" class="rk-form">
+            <q-select
+              v-model="paramChoice"
+              :options="paramPresetOptions"
+              outlined
+              dense
+              label="Parámetro"
+              hint="Ej: UF, sueldo mínimo…"
+              emit-value
+              map-options
+            />
+            <q-slide-transition>
+              <div v-if="paramChoice === '__CUSTOM__'" class="row q-col-gutter-sm">
+                <div class="col-12 col-sm-4">
+                  <q-input v-model="edit.param.type" outlined dense label="Tipo" />
                 </div>
-                <p v-if="adjustNote" class="rk-preview-note">{{ adjustNote }}</p>
+                <div class="col-12 col-sm-4">
+                  <q-input v-model="edit.param.scope" outlined dense label="Alcance" />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <q-input v-model="edit.param.key" outlined dense label="Clave" />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: Guide & Summary Panel -->
-      <div class="rk-guide-panel">
-        <!-- Quick Guide -->
-        <div class="rk-guide-card">
-          <div class="rk-guide-header">
-            <div class="rk-guide-icon">
-              <q-icon name="lightbulb" />
-            </div>
-            <h4 class="rk-guide-title">Guía rápida</h4>
-          </div>
-          
-          <div class="rk-guide-list">
-            <div class="rk-guide-item">
-              <div class="rk-guide-item-icon">
-                <q-icon name="cut" />
-              </div>
-              <div class="rk-guide-item-content">
-                <strong>Corte de variables</strong>
-                <p>Se incluyen las variables registradas hasta ese día del mes (incluido).</p>
-              </div>
-            </div>
-
-            <div class="rk-guide-item">
-              <div class="rk-guide-item-icon">
-                <q-icon name="event_busy" />
-              </div>
-              <div class="rk-guide-item-content">
-                <strong>Último día hábil</strong>
-                <p>Calcula automáticamente el último día laboral omitiendo fines de semana y feriados.</p>
-              </div>
-            </div>
-
-            <div class="rk-guide-item">
-              <div class="rk-guide-item-icon">
-                <q-icon name="push_pin" />
-              </div>
-              <div class="rk-guide-item-content">
-                <strong>Día fijo</strong>
-                <p>Si cae en día no hábil, se aplica el ajuste elegido (anterior/siguiente/sin ajuste).</p>
-              </div>
-            </div>
-
-            <div class="rk-guide-item">
-              <div class="rk-guide-item-icon">
-                <q-icon name="rocket_launch" />
-              </div>
-              <div class="rk-guide-item-content">
-                <strong>Publicación automática</strong>
-                <p>Al terminar, el documento se publica sin revisión previa.</p>
-              </div>
-            </div>
-
-            <div class="rk-guide-item">
-              <div class="rk-guide-item-icon">
-                <q-icon name="notifications" />
-              </div>
-              <div class="rk-guide-item-content">
-                <strong>Avisos</strong>
-                <p>Notifica a destinatarios cuando el documento queda publicado.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Configuration Summary -->
-        <div class="rk-summary-card">
-          <div class="rk-summary-header">
-            <div class="rk-summary-icon">
-              <q-icon name="summarize" />
-            </div>
-            <h4 class="rk-summary-title">Resumen de configuración</h4>
+            </q-slide-transition>
           </div>
 
-          <div class="rk-summary-list">
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="event_repeat" />
-                <span>Frecuencia</span>
+          <!-- CALC: selector amigable -->
+          <div v-else-if="edit.valueType === 'CALC'" class="rk-form">
+            <q-select
+              v-model="calcChoice"
+              :options="calcPresetOptions"
+              outlined
+              dense
+              label="Cálculo automático"
+              hint="Selecciona el cálculo, no lo escribas"
+              emit-value
+              map-options
+            />
+            <q-slide-transition>
+              <div v-if="calcChoice === '__CUSTOM__'">
+                <q-input
+                  v-model="edit.calcKey"
+                  outlined
+                  dense
+                  label="Clave avanzada (opcional)"
+                  hint="Solo si sabes exactamente el nombre interno"
+                />
               </div>
-              <strong>{{ etiquetaDe(freqOpts, vm.frequency) }}</strong>
-            </div>
+            </q-slide-transition>
+          </div>
 
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="cut" />
-                <span>Corte de variables</span>
-              </div>
-              <strong>Día {{ vm.cutoffDay || '—' }}</strong>
+          <!-- Toggles -->
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-sm-4">
+              <q-toggle v-model="edit.active" label="Habilitado" />
             </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="rule" />
-                <span>Regla de pago</span>
-              </div>
-              <strong>{{ etiquetaDe(paydayRuleOpts, vm.paydayRule) }}</strong>
+            <div class="col-12 col-sm-4">
+              <q-toggle v-model="edit.taxable" label="Imponible" />
             </div>
-
-            <div v-if="vm.paydayRule === 'fixed_day'" class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="push_pin" />
-                <span>Día fijo</span>
-              </div>
-              <strong>Día {{ vm.paydayDayOfMonth || '—' }}</strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="swap_horiz" />
-                <span>Ajuste día no hábil</span>
-              </div>
-              <strong>
-                {{ vm.paydayRule === 'last_business_day' 
-                  ? 'No aplica' 
-                  : etiquetaDe(adjustOpts, vm.businessDayAdjust) 
-                }}
-              </strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="access_time" />
-                <span>Hora de ejecución</span>
-              </div>
-              <strong>{{ vm.generateTime || '—' }}</strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="language" />
-                <span>Zona horaria</span>
-              </div>
-              <strong>{{ vm.timezone || '—' }}</strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="calculate" />
-                <span>Redondeo</span>
-              </div>
-              <strong>{{ etiquetaDe(roundingOpts, vm.rounding) }}</strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="rocket_launch" />
-                <span>Publicación</span>
-              </div>
-              <strong>{{ vm.autoPublish ? 'Automática' : 'Con revisión' }}</strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="notifications" />
-                <span>Avisos</span>
-              </div>
-              <strong>{{ vm.notifyOnPublish ? 'Activados' : 'Desactivados' }}</strong>
-            </div>
-
-            <div class="rk-summary-item">
-              <div class="rk-summary-item-label">
-                <q-icon name="picture_as_pdf" />
-                <span>Plantilla PDF</span>
-              </div>
-              <strong>{{ vm.templateId || 'Por defecto' }}</strong>
+            <div class="col-12 col-sm-4">
+              <q-toggle v-model="edit.prorate" label="Prorratea" />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" v-close-popup />
+          <q-btn unelevated color="primary" label="Guardar" @click="saveOne" :disable="store.loading" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Help -->
+    <q-dialog v-model="helpDlg">
+      <q-card style="width: 620px; max-width: 92vw; border-radius: 16px">
+        <q-card-section class="row items-center">
+          <div class="text-weight-bold">Ayuda</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section class="rk-muted" style="line-height: 1.6">
+          <div v-if="helpKey === 'plantilla'">
+            <b>Agregar sin borrar:</b> mantiene tus conceptos y agrega los que falten.<br />
+            <b>Reemplazar todo:</b> deja la empresa exactamente como la plantilla.
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, watch, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from "vue";
+import { useQuasar } from "quasar";
+import { usePayrollConceptsStore } from "@/stores/payrollConceptsStore";
+
+const $q = useQuasar();
+const store = usePayrollConceptsStore();
 
 const props = defineProps({
-  modelValue: { type: Object, required: true },
-  holidays: { type: Array, default: () => [] },
-})
-const emit = defineEmits(['update:modelValue', 'validity'])
+  companyId: { type: String, required: true },
+});
 
-const vm = computed({
-  get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v),
-})
+const step = ref(1);
+const q = ref("");
+const templateId = ref(null);
+const applyMode = ref("merge");
+const patches = ref([]);
 
-/* Options */
-const freqOpts = [{ label: 'Mensual', value: 'monthly' }]
-const paydayRuleOpts = [
-  { label: 'Último día hábil', value: 'last_business_day' },
-  { label: 'Día fijo', value: 'fixed_day' },
-]
-const adjustOpts = [
-  { label: 'Día hábil anterior', value: 'previous' },
-  { label: 'Día hábil siguiente', value: 'next' },
-  { label: 'Sin ajuste', value: 'none' },
-]
-const roundingOpts = [
-  { label: 'Sin redondeo', value: 'none' },
-  { label: 'A enteros (0)', value: '0' },
-  { label: 'A décimas (0,1)', value: '0.1' },
-  { label: 'A medios (0,5)', value: '0.5' },
-  { label: 'A unidades (1)', value: '1' },
-]
-const tzOpts = [
-  { label: 'America/Santiago', value: 'America/Santiago' },
-  { label: 'America/Bogota', value: 'America/Bogota' },
-  { label: 'UTC', value: 'UTC' },
-]
+// Help
+const helpDlg = ref(false);
+const helpKey = ref("plantilla");
+function showHelp(key) {
+  helpKey.value = key;
+  helpDlg.value = true;
+}
 
-/* Dynamic texts */
-const hintCorte = computed(() =>
-  vm.value?.cutoffDay
-    ? `Variables hasta el día ${vm.value.cutoffDay} incluido`
-    : 'Elige un día entre 1 y 31'
-)
+// Dialog
+const dlg = ref(false);
+const editingId = ref(null);
 
-const roundingHint = computed(() => {
-  switch (vm.value?.rounding) {
-    case '0': return 'Redondea a enteros'
-    case '0.1': return 'Redondea a décimas'
-    case '0.5': return 'Redondea a múltiplos de 0,5'
-    case '1': return 'Redondea a múltiplos de 1'
-    default: return 'No modifica los valores'
+// UI selectors (friendly choices)
+const calcChoice = ref(null);
+const pathChoice = ref(null);
+const paramChoice = ref(null);
+
+const edit = ref({
+  code: "",
+  name: "",
+  kind: "EARNING",     // backend values (no se muestran)
+  valueType: "PATH",   // backend values (no se muestran)
+  valuePath: "",
+  param: { type: "", scope: "", key: "" },
+  calcKey: "",
+  taxable: false,
+  prorate: false,
+  active: true,
+  order: 100,
+});
+
+// Opciones UI (ES)
+const applyModeOptsEs = [
+  { label: "Agregar sin borrar (recomendado)", value: "merge" },
+  { label: "Reemplazar todo", value: "replace" },
+];
+
+const kindOptsEs = [
+  { label: "Haber (suma al pago)", value: "EARNING" },
+  { label: "Descuento (resta al pago)", value: "DEDUCTION" },
+];
+
+const valueTypeOptsEs = [
+  { label: "Desde contrato", value: "PATH" },
+  { label: "Cálculo automático", value: "CALC" },
+  { label: "Desde parámetros", value: "PARAM" },
+];
+
+// Catálogo amigable (puedes ampliar cuando quieras)
+const contractFieldOptions = [
+  { label: "Sueldo base", value: "baseSalary" },
+  { label: "Gratificación", value: "gratification" },
+  { label: "Colación", value: "mealAllowance" },
+  { label: "Movilización", value: "transportAllowance" },
+  { label: "Bono", value: "bonus" },
+  { label: "Otro (avanzado)", value: "__CUSTOM__" },
+];
+
+const calcPresetOptions = [
+  { label: "AFP (descuento trabajador)", value: "AFP_WORKER" },
+  { label: "Salud (descuento trabajador)", value: "HEALTH_WORKER" },
+  { label: "Seguro de cesantía (trabajador)", value: "CESANTIA_WORKER" },
+  // puedes agregar empleador si aplica:
+  // { label: "Seguro de cesantía (empleador)", value: "CESANTIA_EMPLOYER" },
+  { label: "Otro (avanzado)", value: "__CUSTOM__" },
+];
+
+const paramPresetOptions = [
+  { label: "UF (empresa)", value: "UF__COMPANY" },
+  { label: "Sueldo mínimo (empresa)", value: "MIN_WAGE__COMPANY" },
+  { label: "Otro (avanzado)", value: "__CUSTOM__" },
+];
+
+// Tabla (ES)
+const colsEs = [
+  { name: "habilitado", label: "Habilitado", field: "active", align: "left" },
+  { name: "code", label: "Código", field: "code", align: "left", sortable: true },
+  { name: "name", label: "Nombre", field: "name", align: "left", sortable: true },
+  { name: "tipo", label: "Tipo", field: "kind", align: "left" },
+  { name: "origen", label: "De dónde sale", field: "valueType", align: "left" },
+  { name: "imponible", label: "Imponible", field: "taxable", align: "left" },
+  { name: "prorratea", label: "Prorratea", field: "prorate", align: "left" },
+  { name: "orden", label: "Orden", field: "order", align: "left", sortable: true },
+  { name: "acciones", label: "", field: "actions", align: "right" },
+];
+
+const templateOptions = computed(() =>
+  (store.templates || []).map((t) => ({
+    label: t.name || t.code || t._id,
+    value: t._id,
+  }))
+);
+
+const filteredRows = computed(() => {
+  const rows = store.items || [];
+  const term = (q.value || "").trim().toLowerCase();
+  if (!term) return rows;
+  return rows.filter((r) => {
+    const a = String(r.code || "").toLowerCase();
+    const b = String(r.name || "").toLowerCase();
+    return a.includes(term) || b.includes(term);
+  });
+});
+
+// ---- Missing list (human friendly) ----
+function origenLabel(valueType) {
+  if (valueType === "PATH") return "Desde contrato";
+  if (valueType === "PARAM") return "Desde parámetros";
+  if (valueType === "CALC") return "Cálculo automático";
+  return "Sin definir";
+}
+
+function kindLabel(kind) {
+  return kind === "EARNING" ? "Haber" : kind === "DEDUCTION" ? "Descuento" : "Sin definir";
+}
+
+function prettyFromValuePath(path) {
+  const found = contractFieldOptions.find((x) => x.value === path);
+  return found?.label || path || "";
+}
+
+function prettyFromCalcKey(key) {
+  const found = calcPresetOptions.find((x) => x.value === key);
+  return found?.label || key || "";
+}
+
+// convierte textos tipo:
+// "Falta concepto activo: sueldo base (EARNING PATH valuePath=baseSalary taxable=true)"
+function prettyMissingLine(line) {
+  const s = String(line || "");
+
+  // nombre
+  const nameMatch = s.match(/Falta concepto activo:\s*([^(]+)\s*\(/i);
+  const name = nameMatch ? nameMatch[1].trim() : "";
+
+  // kind / valueType / keys
+  const kind = s.includes("EARNING") ? "EARNING" : s.includes("DEDUCTION") ? "DEDUCTION" : null;
+  const valueType = s.includes(" PATH ") || s.includes("(EARNING PATH") || s.includes("(DEDUCTION PATH")
+    ? "PATH"
+    : s.includes(" CALC ") || s.includes("(EARNING CALC") || s.includes("(DEDUCTION CALC")
+    ? "CALC"
+    : s.includes(" PARAM ") || s.includes("(EARNING PARAM") || s.includes("(DEDUCTION PARAM")
+    ? "PARAM"
+    : null;
+
+  const valuePathMatch = s.match(/valuePath=([A-Za-z0-9_.-]+)/);
+  const calcKeyMatch = s.match(/calcKey=([A-Za-z0-9_.-]+)/);
+  const taxable = /taxable=true/i.test(s);
+
+  const parts = [];
+  if (name) parts.push(name);
+  if (kind) parts.push(`(${kindLabel(kind)})`);
+  if (valueType) parts.push(`— ${origenLabel(valueType)}`);
+
+  if (valueType === "PATH" && valuePathMatch?.[1]) {
+    parts.push(`— ${prettyFromValuePath(valuePathMatch[1])}`);
   }
-})
+  if (valueType === "CALC" && calcKeyMatch?.[1]) {
+    parts.push(`— ${prettyFromCalcKey(calcKeyMatch[1])}`);
+  }
+  if (taxable) parts.push("— Imponible");
 
-/* Validation */
-const errors = computed(() => {
-  const t = vm.value || {}
-  const e = {}
+  return parts.length ? parts.join(" ") : s;
+}
 
-  const okTime = /^([01]\d|2[0-3]):[0-5]\d$/.test(t.generateTime || '')
-  if (!okTime) e.generateTime = 'Formato HH:mm (00-23:59)'
+const missingListPretty = computed(() => {
+  const m = store.validation?.missing || {};
+  const raw = [];
 
-  const cut = Number(t.cutoffDay)
-  if (!Number.isFinite(cut) || cut < 1 || cut > 31) e.cutoffDay = 'Entre 1 y 31'
-
-  if (!t.paydayRule) e.paydayRule = 'Requerido'
-
-  if (t.paydayRule === 'fixed_day') {
-    const d = Number(t.paydayDayOfMonth)
-    if (!Number.isFinite(d) || d < 1 || d > 31) e.paydayDayOfMonth = 'Entre 1 y 31'
+  if (Array.isArray(m)) raw.push(...m);
+  else {
+    for (const [k, v] of Object.entries(m)) {
+      if (Array.isArray(v)) v.forEach((x) => raw.push(`${k}: ${x}`));
+      else if (v) raw.push(String(v));
+    }
   }
 
-  return e
-})
+  // Limpia el prefijo "concepts:" y lo hace humano
+  return raw.map((x) => {
+    const line = String(x).replace(/^concepts:\s*/i, "");
+    return prettyMissingLine(line);
+  });
+});
 
-function esValido () { return Object.keys(errors.value).length === 0 }
-function emitValid () { emit('validity', esValido()) }
-onMounted(emitValid)
-watch(() => vm.value, emitValid, { deep: true })
+// ---- Dialog: mantener select sincronizado con datos reales ----
+function syncSelectorsFromEdit() {
+  // PATH
+  if (edit.value.valueType === "PATH") {
+    const known = contractFieldOptions.some((o) => o.value === edit.value.valuePath);
+    pathChoice.value = known ? edit.value.valuePath : "__CUSTOM__";
+  } else pathChoice.value = null;
 
-/* Business days and holidays logic */
-function isoUTC (date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-    .toISOString().slice(0,10)
-}
-function esFinDeSemanaUTC (date) {
-  const d = date.getUTCDay()
-  return d === 0 || d === 6
-}
-function esFeriadoUTC (date) {
-  return (props.holidays || []).includes(isoUTC(date))
-}
-function esHabilUTC (date) {
-  return !esFinDeSemanaUTC(date) && !esFeriadoUTC(date)
-}
-function ultimoHabilDelMesUTC (y, m) {
-  const d = new Date(Date.UTC(y, m + 1, 0, 12, 0, 0))
-  while (!esHabilUTC(d)) d.setUTCDate(d.getUTCDate() - 1)
-  return d
-}
-function moverAHabilUTC (date, direccion) {
-  if (direccion === 'none') return date
-  const d = new Date(date)
-  if (esHabilUTC(d)) return d
-  if (direccion === 'previous') while (!esHabilUTC(d)) d.setUTCDate(d.getUTCDate() - 1)
-  else if (direccion === 'next') while (!esHabilUTC(d)) d.setUTCDate(d.getUTCDate() + 1)
-  return d
+  // CALC
+  if (edit.value.valueType === "CALC") {
+    const known = calcPresetOptions.some((o) => o.value === edit.value.calcKey);
+    calcChoice.value = known ? edit.value.calcKey : "__CUSTOM__";
+  } else calcChoice.value = null;
+
+  // PARAM
+  if (edit.value.valueType === "PARAM") {
+    // intento mapear 2 presets
+    const key = (edit.value.param?.key || "").toUpperCase();
+    if (key === "UF") paramChoice.value = "UF__COMPANY";
+    else if (key === "MIN_WAGE") paramChoice.value = "MIN_WAGE__COMPANY";
+    else paramChoice.value = "__CUSTOM__";
+  } else paramChoice.value = null;
 }
 
-/* Next execution */
-const nextDate = computed(() => {
+watch(
+  () => edit.value.valueType,
+  () => {
+    // al cambiar origen, resetea campos no usados (evita basura)
+    if (edit.value.valueType !== "PATH") edit.value.valuePath = "";
+    if (edit.value.valueType !== "CALC") edit.value.calcKey = "";
+    if (edit.value.valueType !== "PARAM") edit.value.param = { type: "", scope: "", key: "" };
+    syncSelectorsFromEdit();
+  }
+);
+
+watch(pathChoice, (v) => {
+  if (edit.value.valueType !== "PATH") return;
+  if (v && v !== "__CUSTOM__") edit.value.valuePath = v;
+  if (v === "__CUSTOM__" && !edit.value.valuePath) edit.value.valuePath = "";
+});
+
+watch(calcChoice, (v) => {
+  if (edit.value.valueType !== "CALC") return;
+  if (v && v !== "__CUSTOM__") edit.value.calcKey = v;
+  if (v === "__CUSTOM__" && !edit.value.calcKey) edit.value.calcKey = "";
+});
+
+watch(paramChoice, (v) => {
+  if (edit.value.valueType !== "PARAM") return;
+  if (v === "UF__COMPANY") edit.value.param = { type: "MONEY", scope: "COMPANY", key: "UF" };
+  else if (v === "MIN_WAGE__COMPANY") edit.value.param = { type: "MONEY", scope: "COMPANY", key: "MIN_WAGE" };
+  else if (v === "__CUSTOM__" && !edit.value.param) edit.value.param = { type: "", scope: "", key: "" };
+});
+
+// ---- Load ----
+async function reload() {
+  await Promise.allSettled([
+    store.fetchConcepts(props.companyId),
+    store.fetchTemplates(),
+    store.validateCompanyPayroll(props.companyId),
+  ]);
+}
+
+onMounted(reload);
+
+// ---- Actions ----
+async function applyTemplate() {
   try {
-    const ahora = new Date()
-    const y = ahora.getUTCFullYear()
-    const m = ahora.getUTCMonth()
-    const t = vm.value || {}
-
-    if (t.paydayRule === 'last_business_day') return ultimoHabilDelMesUTC(y, m)
-
-    const base = new Date(Date.UTC(y, m, Number(t.paydayDayOfMonth || 1), 12, 0, 0))
-    return moverAHabilUTC(base, t.businessDayAdjust || 'none')
-  } catch {
-    return null
+    await store.applyTemplate({
+      companyId: props.companyId,
+      templateId: templateId.value,
+      mode: applyMode.value,
+    });
+    await store.validateCompanyPayroll(props.companyId);
+    $q.notify({ type: "positive", message: "Plantilla aplicada", icon: "check_circle", position: "top" });
+    step.value = 2;
+  } catch (e) {
+    $q.notify({ type: "negative", message: e?.message || "Error aplicando plantilla", icon: "error", position: "top" });
   }
-})
+}
 
-const nextDateLabel = computed(() => {
-  if (!nextDate.value) return '—'
-  try { return new Intl.DateTimeFormat('es-CL', { dateStyle: 'full' }).format(nextDate.value) }
-  catch { return nextDate.value.toISOString().slice(0,10) }
-})
-
-const adjustNote = computed(() => {
-  const t = vm.value || {}
-  if (t.paydayRule === 'last_business_day') 
-    return 'Se utiliza el último día hábil del mes (omite fines de semana y feriados)'
-  if (t.paydayRule === 'fixed_day') {
-    if (t.businessDayAdjust === 'previous') 
-      return 'Si cae en día no hábil, se mueve al hábil anterior'
-    if (t.businessDayAdjust === 'next') 
-      return 'Si cae en día no hábil, se mueve al hábil siguiente'
-    if (t.businessDayAdjust === 'none') 
-      return 'Si cae en día no hábil, no se modifica'
+async function validate() {
+  try {
+    await store.validateCompanyPayroll(props.companyId);
+    $q.notify({
+      type: store.validation?.ok ? "positive" : "warning",
+      message: store.validation?.ok ? "Configuración lista" : "Faltan mínimos",
+      position: "top",
+    });
+  } catch (e) {
+    $q.notify({ type: "negative", message: e?.message || "Error revisando mínimos", position: "top" });
   }
-  return ''
-})
+}
 
-/* Utilities */
-function etiquetaDe (opts, val) {
-  const o = (opts || []).find(o => o.value === val)
-  return o ? o.label : '—'
+function queuePatch(row, patch) {
+  const id = row._id;
+  const idx = patches.value.findIndex((p) => p._id === id);
+  if (idx === -1) patches.value.push({ _id: id, ...patch });
+  else patches.value[idx] = { ...patches.value[idx], ...patch };
+}
+
+async function saveBulk() {
+  try {
+    await store.bulkUpdate({ companyId: props.companyId, patches: patches.value });
+    patches.value = [];
+    await store.validateCompanyPayroll(props.companyId);
+    $q.notify({ type: "positive", message: "Cambios guardados", icon: "save", position: "top" });
+  } catch (e) {
+    $q.notify({ type: "negative", message: e?.message || "Error guardando", icon: "error", position: "top" });
+  }
+}
+
+function openCreate() {
+  editingId.value = null;
+  edit.value = {
+    code: "",
+    name: "",
+    kind: "EARNING",
+    valueType: "PATH",
+    valuePath: "baseSalary",
+    param: { type: "", scope: "", key: "" },
+    calcKey: "",
+    taxable: true,
+    prorate: false,
+    active: true,
+    order: 100,
+  };
+  syncSelectorsFromEdit();
+  dlg.value = true;
+}
+
+function openEdit(row) {
+  editingId.value = row._id;
+  edit.value = JSON.parse(JSON.stringify(row));
+  edit.value.param = edit.value.param || { type: "", scope: "", key: "" };
+  syncSelectorsFromEdit();
+  dlg.value = true;
+}
+
+async function saveOne() {
+  try {
+    if (!edit.value.code || !edit.value.name) {
+      return $q.notify({ type: "warning", message: "Código y nombre son requeridos", position: "top" });
+    }
+
+    // Validaciones amigables
+    if (edit.value.valueType === "PATH" && !edit.value.valuePath) {
+      return $q.notify({ type: "warning", message: "Debes elegir un campo del contrato", position: "top" });
+    }
+    if (edit.value.valueType === "CALC" && !edit.value.calcKey) {
+      return $q.notify({ type: "warning", message: "Debes elegir un cálculo automático", position: "top" });
+    }
+    if (
+      edit.value.valueType === "PARAM" &&
+      (!edit.value.param?.type || !edit.value.param?.scope || !edit.value.param?.key)
+    ) {
+      return $q.notify({ type: "warning", message: "Debes elegir un parámetro o completar el modo avanzado", position: "top" });
+    }
+
+    await store.upsertConcept({ companyId: props.companyId, concept: edit.value });
+    dlg.value = false;
+    await store.validateCompanyPayroll(props.companyId);
+    $q.notify({ type: "positive", message: "Concepto guardado", position: "top" });
+  } catch (e) {
+    $q.notify({ type: "negative", message: e?.message || "Error guardando concepto", position: "top" });
+  }
 }
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap");
 
-:root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
+.rk-wrap {
+  font-family: "Sora", -apple-system, sans-serif;
+  padding: 14px;
 }
 
-/* Theme Variables */
-.rk-sched {
-  --bg-card: rgba(255, 255, 255, 0.95);
-  --surface-1: rgba(6, 182, 212, 0.03);
-  --surface-2: rgba(6, 182, 212, 0.06);
-  --surface-3: rgba(6, 182, 212, 0.1);
-  --text-primary: rgba(15, 23, 42, 0.95);
-  --text-secondary: rgba(15, 23, 42, 0.7);
-  --text-muted: rgba(15, 23, 42, 0.5);
-  --border-1: rgba(6, 182, 212, 0.12);
-  --border-2: rgba(6, 182, 212, 0.2);
-  --shadow-sm: 0 2px 8px rgba(6, 182, 212, 0.08);
-  --shadow-md: 0 4px 16px rgba(6, 182, 212, 0.12);
-}
-
-.body--dark .rk-sched {
-  --bg-card: rgba(10, 14, 20, 0.95);
-  --surface-1: rgba(6, 182, 212, 0.05);
-  --surface-2: rgba(6, 182, 212, 0.08);
-  --surface-3: rgba(6, 182, 212, 0.12);
-  --text-primary: rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
-  --border-1: rgba(6, 182, 212, 0.15);
-  --border-2: rgba(6, 182, 212, 0.25);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-/* Container */
-.rk-sched {
-  font-family: 'Sora', -apple-system, sans-serif;
-  padding: 0;
-}
-
-/* Main Grid */
-.rk-sched-grid {
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 24px;
-}
-
-/* Panel Cards Base */
-.rk-panel-card,
-.rk-guide-card,
-.rk-summary-card {
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-1);
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(10px);
-}
-
-/* Card Header */
-.rk-card-header {
+.rk-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1.5px solid var(--border-1);
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.rk-header-content {
+.rk-title {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
+  gap: 10px;
+  align-items: flex-start;
 }
 
-.rk-header-icon {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
-}
-
-.rk-header-icon .q-icon {
-  font-size: 26px;
-  color: #fff;
-  z-index: 1;
-}
-
-.rk-icon-pulse {
-  position: absolute;
-  inset: -4px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 16px;
-  opacity: 0;
-  filter: blur(8px);
-  animation: iconPulse 3s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.2);
-  }
-}
-
-.rk-header-title {
-  font-size: 1.35rem;
+.rk-h1 {
+  font-size: 1.25rem;
   font-weight: 800;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
+  line-height: 1.2;
 }
 
-.rk-header-subtitle {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  margin: 0;
-  font-weight: 500;
+.rk-h2 {
+  margin-top: 4px;
+  opacity: 0.7;
+  font-size: 0.9rem;
 }
 
-/* Status Badge */
-.rk-status-badge {
+.rk-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.rk-state.ok {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.rk-state.warn {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.rk-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(6, 182, 212, 0.06);
+  border: 1px solid rgba(6, 182, 212, 0.16);
+  margin-bottom: 12px;
+}
+
+.rk-banner {
+  margin-bottom: 12px;
+}
+
+.rk-banner--warn {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.rk-banner--error {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.rk-banner--info {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.rk-muted {
+  opacity: 0.75;
+}
+
+.rk-small {
+  font-size: 0.8rem;
+}
+
+.rk-missing {
+  margin: 8px 0 0 16px;
+}
+
+.rk-stepper {
+  border-radius: 14px;
+}
+
+.rk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.rk-card {
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.body--dark .rk-card {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rk-card-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
+  font-weight: 900;
+  margin-bottom: 10px;
 }
 
-.rk-status-auto {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1.5px solid rgba(34, 197, 94, 0.3);
-  color: #16a34a;
-}
-
-.body--dark .rk-status-auto {
-  background: rgba(34, 197, 94, 0.15);
-  border-color: rgba(34, 197, 94, 0.4);
-  color: #4ade80;
-}
-
-.rk-status-manual {
-  background: rgba(6, 182, 212, 0.12);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
-  color: var(--color-primary);
-}
-
-.body--dark .rk-status-manual {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.35);
-  color: var(--color-primary-light);
-}
-
-.rk-badge-dot {
-  width: 8px;
-  height: 8px;
-  background: currentColor;
-  border-radius: 50%;
-  animation: badgePulse 2s ease-in-out infinite;
-}
-
-@keyframes badgePulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  70% {
-    box-shadow: 0 0 0 6px transparent;
-  }
-}
-
-/* Info Banner */
-.rk-info-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-1);
-  border-left: 4px solid var(--color-primary);
-  border-radius: 12px;
-  margin-bottom: 24px;
-}
-
-.rk-info-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.rk-info-icon .q-icon {
-  font-size: 18px;
-  color: var(--color-primary-light);
-}
-
-.rk-info-banner p {
-  font-size: 0.92rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0;
-  font-weight: 500;
-}
-
-/* Form Fields */
-.rk-form-fields {
+.rk-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
-.rk-field-group {
+.rk-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rk-mini {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.rk-field-label {
+.rk-mini-item {
   display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(6, 182, 212, 0.05);
+  border: 1px solid rgba(6, 182, 212, 0.12);
+}
+
+.rk-toolbar {
+  display: flex;
+  gap: 10px;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
-.rk-field-label .q-icon {
-  font-size: 18px;
-  color: var(--color-primary-light);
+.rk-search {
+  min-width: 260px;
+  flex: 1;
 }
 
-.rk-help-btn {
-  color: var(--text-muted);
-  margin-left: auto;
+.rk-table {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.rk-help-btn:hover {
-  color: var(--color-primary-light);
+.rk-bool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
 }
 
-.rk-field-row {
+.rk-bool.yes {
+  color: #16a34a;
+}
+
+.rk-bool.no {
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.body--dark .rk-bool.no {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.rk-summary {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 10px;
 }
 
-.rk-field-half {
-  grid-column: span 1;
-}
-
-.rk-field-grow {
-  flex: 1;
-}
-
-.rk-field-shrink {
-  width: 180px;
-}
-
-/* Input Styling */
-.rk-input :deep(.q-field__control),
-.rk-select :deep(.q-field__control) {
-  background: var(--surface-1);
-  border-color: var(--border-1);
-  transition: all 0.3s ease;
-}
-
-.rk-input :deep(.q-field__control):hover,
-.rk-select :deep(.q-field__control):hover {
-  background: var(--surface-2);
-  border-color: var(--border-2);
-}
-
-.rk-input :deep(.q-field--focused .q-field__control),
-.rk-select :deep(.q-field--focused .q-field__control) {
-  background: var(--surface-2);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
-}
-
-/* Toggles Section */
-.rk-toggles-section {
+.rk-summary-row {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.rk-toggle-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px;
-  background: var(--surface-1);
-  border: 1.5px solid var(--border-1);
-  border-radius: 14px;
-  transition: all 0.3s ease;
-}
-
-.rk-toggle-card:hover {
-  background: var(--surface-2);
-  border-color: var(--border-2);
-}
-
-.rk-toggle-icon {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 11px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-}
-
-.rk-toggle-icon .q-icon {
-  font-size: 22px;
-  color: #fff;
-}
-
-.rk-toggle-content {
-  flex: 1;
-}
-
-.rk-toggle-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.rk-toggle-header strong {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.rk-toggle-desc {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* Warning Banner */
-.rk-warning-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px 18px;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  border-left: 4px solid #f59e0b;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
   border-radius: 12px;
+  background: rgba(0, 0, 0, 0.04);
 }
 
-.body--dark .rk-warning-banner {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.3);
+.body--dark .rk-summary-row {
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.rk-warning-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(245, 158, 11, 0.15);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.body--dark .rk-warning-icon {
-  background: rgba(245, 158, 11, 0.2);
-}
-
-.rk-warning-icon .q-icon {
-  font-size: 18px;
-  color: #f59e0b;
-}
-
-.body--dark .rk-warning-icon .q-icon {
-  color: #fbbf24;
-}
-
-.rk-warning-content strong {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #d97706;
-}
-
-.body--dark .rk-warning-content strong {
-  color: #fbbf24;
-}
-
-.rk-warning-content p {
-  font-size: 0.88rem;
-  color: #d97706;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.body--dark .rk-warning-content p {
-  color: rgba(251, 191, 36, 0.9);
-}
-
-/* Execution Preview */
-.rk-execution-preview {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px;
-  background: var(--surface-1);
-  border: 1.5px solid var(--border-1);
-  border-radius: 14px;
-  margin-top: 8px;
-}
-
-.rk-preview-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 12px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
-}
-
-.rk-preview-icon .q-icon {
-  font-size: 24px;
-  color: #fff;
-}
-
-.rk-preview-content {
-  flex: 1;
-}
-
-.rk-preview-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.rk-preview-date {
-  font-size: 1.05rem;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-.rk-preview-date strong {
-  color: var(--color-primary);
-  font-weight: 800;
-}
-
-.body--dark .rk-preview-date strong {
-  color: var(--color-primary-light);
-}
-
-.rk-preview-note {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin: 0;
-  line-height: 1.5;
-  font-style: italic;
-}
-
-/* Guide Panel */
-.rk-guide-card,
-.rk-summary-card {
-  margin-bottom: 24px;
-}
-
-.rk-guide-header,
-.rk-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1.5px solid var(--border-1);
-}
-
-.rk-guide-icon,
-.rk-summary-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-}
-
-.rk-guide-icon .q-icon,
-.rk-summary-icon .q-icon {
-  font-size: 20px;
-  color: #fff;
-}
-
-.rk-guide-title,
-.rk-summary-title {
-  font-size: 1.1rem;
-  font-weight: 800;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-/* Guide List */
-.rk-guide-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.rk-guide-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.rk-guide-item-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.rk-guide-item-icon .q-icon {
-  font-size: 18px;
-  color: var(--color-primary-light);
-}
-
-.rk-guide-item-content strong {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-  color: var(--text-primary);
-}
-
-.rk-guide-item-content p {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* Summary List */
-.rk-summary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.rk-summary-item {
+.rk-savebar {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
-  background: var(--surface-1);
-  border-radius: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  backdrop-filter: blur(10px);
 }
 
-.rk-summary-item-label {
+.rk-savebar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 600;
+  gap: 10px;
 }
 
-.rk-summary-item-label .q-icon {
-  font-size: 16px;
-  color: var(--color-primary-light);
-}
-
-.rk-summary-item strong {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: right;
-}
-
-/* Tooltip */
-.rk-tooltip {
-  background: rgba(6, 182, 212, 0.95);
-  backdrop-filter: blur(10px);
-  font-size: 0.85rem;
-  padding: 12px;
-  border-radius: 8px;
-  line-height: 1.6;
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-  .rk-sched-grid {
+@media (max-width: 900px) {
+  .rk-grid {
     grid-template-columns: 1fr;
-  }
-
-  .rk-guide-panel {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-}
-
-@media (max-width: 767px) {
-  .rk-panel-card,
-  .rk-guide-card,
-  .rk-summary-card {
-    padding: 20px;
-  }
-
-  .rk-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .rk-status-badge {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .rk-field-row {
-    grid-template-columns: 1fr;
-  }
-
-  .rk-field-half,
-  .rk-field-grow,
-  .rk-field-shrink {
-    width: 100%;
-  }
-
-  .rk-guide-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .rk-toggle-card {
-    flex-direction: column;
-    text-align: center;
   }
 }
 </style>

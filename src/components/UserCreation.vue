@@ -24,7 +24,9 @@
           </div>
           <div class="rk-header-text">
             <h3 class="rk-header-title">Crear nuevo usuario</h3>
-            <p class="rk-header-subtitle">Complete todos los datos requeridos del perfil</p>
+            <p class="rk-header-subtitle">
+              Complete todos los datos requeridos del perfil
+            </p>
           </div>
         </div>
         <button class="rk-close-btn" @click="cancelar">
@@ -35,8 +37,8 @@
       <!-- Progress Bar -->
       <div class="rk-progress-container">
         <div class="rk-progress-bar">
-          <div 
-            class="rk-progress-fill" 
+          <div
+            class="rk-progress-fill"
             :style="{ width: formProgress + '%' }"
           ></div>
         </div>
@@ -48,9 +50,9 @@
 
       <!-- Body with Splitter -->
       <div class="rk-body">
-        <q-splitter 
-          v-model="split" 
-          :limits="[60, 75]" 
+        <q-splitter
+          v-model="split"
+          :limits="[60, 75]"
           class="rk-splitter"
           separator-class="rk-separator"
         >
@@ -63,12 +65,18 @@
                     v-for="tabItem in tabs"
                     :key="tabItem.value"
                     class="rk-tab"
-                    :class="{ 'active': tab === tabItem.value, 'completed': isTabCompleted(tabItem.value) }"
+                    :class="{
+                      active: tab === tabItem.value,
+                      completed: isTabCompleted(tabItem.value),
+                    }"
                     @click="tab = tabItem.value"
                   >
                     <div class="rk-tab-icon">
                       <q-icon :name="tabItem.icon" />
-                      <div v-if="isTabCompleted(tabItem.value)" class="rk-tab-check">
+                      <div
+                        v-if="isTabCompleted(tabItem.value)"
+                        class="rk-tab-check"
+                      >
                         <q-icon name="check" />
                       </div>
                     </div>
@@ -101,7 +109,9 @@
                       <q-icon name="badge" class="rk-panel-icon" />
                       <div>
                         <h4 class="rk-panel-title">Información básica</h4>
-                        <p class="rk-panel-subtitle">Datos personales y credenciales de acceso</p>
+                        <p class="rk-panel-subtitle">
+                          Datos personales y credenciales de acceso
+                        </p>
                       </div>
                     </div>
 
@@ -119,21 +129,28 @@
                         <div class="rk-password-icon">
                           <q-icon name="key" />
                         </div>
+
                         <div class="rk-password-info">
-                          <h5 class="rk-password-title">Seguridad de contraseña</h5>
+                          <h5 class="rk-password-title">
+                            Seguridad de contraseña
+                          </h5>
                           <div class="rk-password-strength">
                             <div class="rk-strength-bar-container">
-                              <div 
-                                class="rk-strength-bar" 
+                              <div
+                                class="rk-strength-bar"
                                 :class="`rk-strength-${passwordStrength}`"
-                                :style="{ width: (passwordScore * 100) + '%' }"
+                                :style="{ width: passwordScore * 100 + '%' }"
                               ></div>
                             </div>
-                            <span class="rk-strength-label" :class="`rk-strength-${passwordStrength}`">
+                            <span
+                              class="rk-strength-label"
+                              :class="`rk-strength-${passwordStrength}`"
+                            >
                               {{ passwordLabel }}
                             </span>
                           </div>
                         </div>
+
                         <q-btn
                           unelevated
                           no-caps
@@ -146,10 +163,7 @@
                       </div>
 
                       <div class="rk-invite-toggle">
-                        <q-checkbox 
-                          v-model="invitar" 
-                          class="rk-checkbox"
-                        >
+                        <q-checkbox v-model="invitar" class="rk-checkbox">
                           <template #default>
                             <div class="rk-checkbox-content">
                               <div class="rk-checkbox-icon">
@@ -157,7 +171,10 @@
                               </div>
                               <div>
                                 <strong>Enviar invitación por correo</strong>
-                                <p>El usuario recibirá un email con sus credenciales de acceso</p>
+                                <p>
+                                  El usuario recibirá un email con sus
+                                  credenciales de acceso
+                                </p>
                               </div>
                             </div>
                           </template>
@@ -172,10 +189,38 @@
                       <q-icon name="work" class="rk-panel-icon" />
                       <div>
                         <h4 class="rk-panel-title">Contrato y remuneración</h4>
-                        <p class="rk-panel-subtitle">Detalles laborales y datos de nómina</p>
+                        <p class="rk-panel-subtitle">
+                          Detalles laborales y datos de nómina
+                        </p>
                       </div>
                     </div>
-                    <UserContractForm v-model="form.payroll" />
+
+                    <!-- 👇 Aquí viene lo dinámico -->
+                    <UserContractForm
+                      v-model="form.payroll"
+                      :loading-catalog="loadingCatalog"
+                      :afp-options="afpOptions"
+                      :health-options="healthOptions"
+                      :health-selected-meta="
+                        payrollCatalogStore.getHealthMetaById(
+                          form.payroll.healthEntityId,
+                        )
+                      "
+                    />
+
+                    <div v-if="catalogError" class="rk-catalog-error">
+                      <q-icon name="error" />
+                      <div>
+                        <strong>No se pudo cargar el catálogo de nómina</strong>
+                        <p>{{ catalogError }}</p>
+                      </div>
+                      <q-btn
+                        flat
+                        icon="refresh"
+                        label="Reintentar"
+                        @click="loadPayrollCatalog()"
+                      />
+                    </div>
                   </q-tab-panel>
 
                   <!-- Panel: Contacto -->
@@ -184,7 +229,9 @@
                       <q-icon name="home" class="rk-panel-icon" />
                       <div>
                         <h4 class="rk-panel-title">Dirección y contacto</h4>
-                        <p class="rk-panel-subtitle">Información de ubicación y contacto de emergencia</p>
+                        <p class="rk-panel-subtitle">
+                          Información de ubicación y contacto de emergencia
+                        </p>
                       </div>
                     </div>
                     <UserContactForm v-model="form" />
@@ -193,10 +240,15 @@
                   <!-- Panel: Permisos -->
                   <q-tab-panel name="permisos" class="rk-panel">
                     <div class="rk-panel-header">
-                      <q-icon name="admin_panel_settings" class="rk-panel-icon" />
+                      <q-icon
+                        name="admin_panel_settings"
+                        class="rk-panel-icon"
+                      />
                       <div>
                         <h4 class="rk-panel-title">Permisos y accesos</h4>
-                        <p class="rk-panel-subtitle">Configure los niveles de acceso del usuario</p>
+                        <p class="rk-panel-subtitle">
+                          Configure los niveles de acceso del usuario
+                        </p>
                       </div>
                     </div>
                     <UserPermissionsForm v-model="form.permissions" />
@@ -231,7 +283,10 @@
       <div class="rk-footer">
         <div class="rk-footer-info">
           <q-icon name="info" />
-          <span>Usa <kbd>Esc</kbd> para cancelar, <kbd>Ctrl+Enter</kbd> para guardar</span>
+          <span
+            >Usa <kbd>Esc</kbd> para cancelar, <kbd>Ctrl+Enter</kbd> para
+            guardar</span
+          >
         </div>
         <div class="rk-footer-actions">
           <q-btn
@@ -277,10 +332,15 @@ import {
   onMounted,
   onBeforeUnmount,
 } from "vue";
-import { useQuasar } from "quasar";
 import { useToast } from "vue-toastification";
+import { useQuasar } from "quasar";
+
 import { useUserStore } from "@/stores/userStore";
 import { useCompaniesStore } from "@/stores/companies";
+import { usePayrollCatalogStore } from "@/stores/payrollCatalogStore";
+
+import { validarRUT } from "@/utils/validators";
+import { normalizeMoney, normalizeDecimal } from "@/utils/format";
 
 import UserBasicsForm from "./users/parts/UserBasicsForm.vue";
 import UserContractForm from "./users/parts/UserContractForm.vue";
@@ -288,13 +348,12 @@ import UserContactForm from "./users/parts/UserContactForm.vue";
 import UserPermissionsForm from "./users/parts/UserPermissionsForm.vue";
 import UserSummary from "./users/parts/UserSummary.vue";
 
-import { validarRUT } from "@/utils/validators";
-import { normalizeMoney, normalizeDecimal } from "@/utils/format";
-
 const $q = useQuasar();
 const toast = useToast();
+
 const userStore = useUserStore();
 const companiesStore = useCompaniesStore();
+const payrollCatalogStore = usePayrollCatalogStore();
 
 const props = defineProps({ modelValue: { type: Boolean, required: true } });
 const emit = defineEmits(["update:modelValue", "created", "saved"]);
@@ -317,88 +376,99 @@ const empresasRaw = ref([]);
 const form = ref(getEmptyForm());
 
 const tabs = [
-  { 
-    value: 'basicos', 
-    label: 'Básicos', 
-    icon: 'badge',
-    desc: 'Datos personales'
+  {
+    value: "basicos",
+    label: "Básicos",
+    icon: "badge",
+    desc: "Datos personales",
   },
-  { 
-    value: 'contrato', 
-    label: 'Contrato', 
-    icon: 'work',
-    desc: 'Información laboral'
+  {
+    value: "contrato",
+    label: "Contrato",
+    icon: "work",
+    desc: "Información laboral",
   },
-  { 
-    value: 'contacto', 
-    label: 'Contacto', 
-    icon: 'home',
-    desc: 'Dirección y teléfono'
+  {
+    value: "contacto",
+    label: "Contacto",
+    icon: "home",
+    desc: "Dirección y teléfono",
   },
-  { 
-    value: 'permisos', 
-    label: 'Permisos', 
-    icon: 'admin_panel_settings',
-    desc: 'Niveles de acceso'
-  }
-]
+  {
+    value: "permisos",
+    label: "Permisos",
+    icon: "admin_panel_settings",
+    desc: "Niveles de acceso",
+  },
+];
 
-// Form Progress
+// ✅ catálogo dinámico desde store
+const loadingCatalog = computed(() => payrollCatalogStore.loading);
+const catalogError = computed(() => payrollCatalogStore.error);
+const afpOptions = computed(() => payrollCatalogStore.afpOptions);
+const healthOptions = computed(() => payrollCatalogStore.healthOptions);
+
+const healthSelectedMeta = computed(() => {
+  const id = form.value?.payroll?.healthEntityId;
+  return payrollCatalogStore.getHealthMetaById(id);
+});
+
+// Progreso igual que lo tenías
 const formProgress = computed(() => {
-  let progress = 0
-  const f = form.value
-  
-  // Básicos (40%)
-  if (f.firstName && f.lastName) progress += 10
-  if (f.email) progress += 10
-  if (f.password) progress += 10
-  if (f.tipo) progress += 5
-  if (f.tipo === 'admin' || f.empresa) progress += 5
-  
-  // Contrato (20%)
-  if (f.payroll?.baseSalary) progress += 10
-  if (f.payroll?.contractType) progress += 5
-  if (f.payroll?.startDate) progress += 5
-  
-  // Contacto (20%)
-  if (f.phone) progress += 10
-  if (f.address?.line1) progress += 5
-  if (f.address?.commune) progress += 5
-  
-  // Permisos (20%)
-  if (f.permissions?.length > 0) progress += 20
-  
-  return Math.min(Math.round(progress), 100)
-})
+  let progress = 0;
+  const f = form.value;
 
-// Tab Completion
+  if (f.firstName && f.lastName) progress += 10;
+  if (f.email) progress += 10;
+  if (f.password) progress += 10;
+  if (f.tipo) progress += 5;
+  if (f.tipo === "admin" || f.empresa) progress += 5;
+
+  if (f.payroll?.baseSalary) progress += 10;
+  if (f.payroll?.contractType) progress += 5;
+  if (f.payroll?.startDate) progress += 5;
+
+  if (f.phone) progress += 10;
+  if (f.address?.line1) progress += 5;
+  if (f.address?.commune) progress += 5;
+
+  if (f.permissions?.length > 0) progress += 20;
+
+  return Math.min(Math.round(progress), 100);
+});
+
 const isTabCompleted = (tabName) => {
-  const f = form.value
-  switch(tabName) {
-    case 'basicos':
-      return !!(f.firstName && f.lastName && f.email && f.password)
-    case 'contrato':
-      return !!(f.payroll?.baseSalary && f.payroll?.contractType)
-    case 'contacto':
-      return !!(f.phone && f.address?.line1)
-    case 'permisos':
-      return f.permissions?.length > 0
+  const f = form.value;
+  switch (tabName) {
+    case "basicos":
+      return !!(f.firstName && f.lastName && f.email && f.password);
+    case "contrato":
+      return !!(f.payroll?.baseSalary && f.payroll?.contractType);
+    case "contacto":
+      return !!(f.phone && f.address?.line1);
+    case "permisos":
+      return (f.permissions?.length || 0) > 0;
     default:
-      return false
+      return false;
   }
-}
+};
 
-// Watch dialog open
+// Watch open dialog: carga empresas + catálogo desde store
 watch(
   () => props.modelValue,
   async (val) => {
     if (!val) return;
+
     tab.value = "basicos";
     split.value = 65;
     form.value = getEmptyForm();
-    await loadEmpresasRaw();
+
+    await Promise.allSettled([
+      loadEmpresasRaw(),
+      payrollCatalogStore.fetchAll({ force: false }),
+    ]);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 function onBasicsPatch(patch) {
@@ -437,12 +507,12 @@ function onTipoChange(val) {
   if (val !== "empleado") {
     form.value.horarioLaboralId = null;
     form.value.rut = "";
-  } else if (val === "empleado" && form.value.empresa) {
+  } else if (form.value.empresa) {
     loadHorarios(form.value.empresa);
   }
 }
 
-/* Password Strength */
+// Password strength (igual que lo tenías)
 const passwordScore = computed(() => {
   const p = form.value.password || "";
   if (!p) return 0;
@@ -456,20 +526,20 @@ const passwordScore = computed(() => {
 });
 
 const passwordStrength = computed(() => {
-  const score = passwordScore.value
-  if (score < 0.3) return 'weak'
-  if (score < 0.6) return 'medium'
-  if (score < 0.9) return 'good'
-  return 'excellent'
-})
+  const score = passwordScore.value;
+  if (score < 0.3) return "weak";
+  if (score < 0.6) return "medium";
+  if (score < 0.9) return "good";
+  return "excellent";
+});
 
 const passwordLabel = computed(() => {
-  const score = passwordScore.value
-  if (score < 0.3) return 'Muy débil'
-  if (score < 0.6) return 'Débil'
-  if (score < 0.9) return 'Buena'
-  return 'Excelente'
-})
+  const score = passwordScore.value;
+  if (score < 0.3) return "Muy débil";
+  if (score < 0.6) return "Débil";
+  if (score < 0.9) return "Buena";
+  return "Excelente";
+});
 
 function generarPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@$%*";
@@ -479,7 +549,6 @@ function generarPassword() {
   form.value.password = out;
 }
 
-/* Validation & Submit */
 async function validateForm() {
   try {
     const r = await formRef.value?.validate();
@@ -491,10 +560,7 @@ async function validateForm() {
 
 async function submitForm() {
   const ok = await validateForm();
-  if (!ok) {
-    toast.error("Revisa los campos requeridos.");
-    return;
-  }
+  if (!ok) return toast.error("Revisa los campos requeridos.");
 
   if (form.value.tipo !== "admin" && !form.value.empresa) {
     toast.error("Debes seleccionar una empresa.");
@@ -513,15 +579,44 @@ async function submitForm() {
       tab.value = "basicos";
       return;
     }
+
+    // ✅ validación dinámica: si catálogo no cargó, no sigas
+    if (!payrollCatalogStore.isReady) {
+      toast.error("Catálogo de nómina no disponible. Reintenta.");
+      tab.value = "contrato";
+      return;
+    }
+
+    if (!form.value.payroll?.afpEntityId) {
+      toast.error("Selecciona AFP.");
+      tab.value = "contrato";
+      return;
+    }
+    if (!form.value.payroll?.healthEntityId) {
+      toast.error("Selecciona sistema de salud.");
+      tab.value = "contrato";
+      return;
+    }
+
+    const requiresUf = !!healthSelectedMeta.value?.requiresUf;
+    if (requiresUf) {
+      const uf = Number(normalizeDecimal(form.value.payroll?.isapreUf || 0));
+      if (!(uf > 0)) {
+        toast.error("Este sistema de salud requiere plan en UF.");
+        tab.value = "contrato";
+        return;
+      }
+    }
   }
 
-  const payload = mapPayload(form.value, { invitar: invitar.value });
+  const payload = mapPayload(form.value);
+
   try {
     saving.value = true;
     const data = await userStore.createUser(payload);
     toast.success("Usuario creado correctamente.");
     emit("created");
-    emit('saved', data)
+    emit("saved", data);
     dialogVisible.value = false;
   } catch {
     toast.error(userStore.error || "No se pudo crear el usuario.");
@@ -532,18 +627,16 @@ async function submitForm() {
 
 async function submitAndReset() {
   const ok = await validateForm();
-  if (!ok) {
-    toast.error("Revisa los campos requeridos.");
-    return;
-  }
+  if (!ok) return toast.error("Revisa los campos requeridos.");
 
-  const payload = mapPayload(form.value, { invitar: invitar.value });
+  const payload = mapPayload(form.value);
+
   try {
     saving.value = true;
     const data = await userStore.createUser(payload);
     toast.success("Usuario creado. Puedes crear otro ahora.");
     emit("created");
-    emit('saved', data)
+    emit("saved", data);
     form.value = getEmptyForm();
     await nextTick();
   } catch {
@@ -557,8 +650,12 @@ function cancelar() {
   dialogVisible.value = false;
 }
 
-/* Helpers */
-function mapPayload(f, extra) {
+function mapPayload(f) {
+  // opcional: guardar saludSistema desde entity slug (dinámico, no hardcode)
+  const saludSistema = payrollCatalogStore.getHealthSlugById(
+    f.payroll?.healthEntityId,
+  );
+  debugger
   return {
     firstName: f.firstName?.trim() || "",
     lastName: f.lastName?.trim() || "",
@@ -567,7 +664,7 @@ function mapPayload(f, extra) {
     rut: f.tipo === "empleado" ? f.rut : null,
     role: f.tipo,
     company: f.tipo !== "admin" ? f.empresa : null,
-    workSchedule: f.tipo === "empleado" ? f.horarioLaboralId : null,
+    workSchedule: f.workScheduleChoice.scheduleId,
     phone: f.phone?.trim() || null,
     emergencyContact: f.emergencyContact?.trim() || null,
     address: {
@@ -582,8 +679,12 @@ function mapPayload(f, extra) {
       contractType: f.payroll?.contractType || "",
       jornada: f.payroll?.jornada || "",
       startDate: f.payroll?.startDate || null,
-      afp: f.payroll?.afp || "",
-      saludSistema: f.payroll?.saludSistema || "",
+
+      // ✅ IDs globales
+      afpEntityId: f.payroll?.afpEntityId || null,
+      healthEntityId: f.payroll?.healthEntityId || null,
+      saludSistema, // opcional, derivado del catálogo
+
       isaprePlan: f.payroll?.isaprePlan || null,
       isapreUf: Number(normalizeDecimal(f.payroll?.isapreUf || 0)),
       apv: normalizeMoney(f.payroll?.apv || 0),
@@ -596,7 +697,7 @@ function mapPayload(f, extra) {
       bonoMovilizacion: normalizeMoney(f.payroll?.bonoMovilizacion || 0),
       descuentoPrestamo: normalizeMoney(f.payroll?.descuentoPrestamo || 0),
     },
-    invite: !!extra?.invitar,
+    invite: !!invitar.value,
   };
 }
 
@@ -610,7 +711,7 @@ function getEmptyForm() {
     empresa: null,
     rut: "",
     horarioLaboralId: null,
-    workScheduleChoice: { mode: 'companyDefault', scheduleId: null },
+    workScheduleChoice: { mode: "companyDefault", scheduleId: null },
     phone: "",
     emergencyContact: "",
     address: { line1: "", commune: "", city: "", region: "" },
@@ -620,8 +721,10 @@ function getEmptyForm() {
       contractType: "",
       jornada: "",
       startDate: "",
-      afp: "",
-      saludSistema: "",
+
+      afpEntityId: null,
+      healthEntityId: null,
+
       isaprePlan: "",
       isapreUf: 0,
       apv: 0,
@@ -637,7 +740,7 @@ function getEmptyForm() {
   };
 }
 
-/* Hotkeys */
+// Hotkeys
 function hotkeys(e) {
   if (!dialogVisible.value) return;
   if (e.key === "Escape") {
@@ -658,12 +761,32 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap");
 
 :root {
   --color-primary: #06b6d4;
   --color-primary-light: #22d3ee;
   --color-accent: #14b8a6;
+}
+
+.rk-catalog-error {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.06);
+}
+.rk-catalog-error .q-icon {
+  color: #ef4444;
+  font-size: 20px;
+  margin-top: 2px;
+}
+.rk-catalog-error p {
+  margin: 4px 0 0 0;
+  opacity: 0.75;
 }
 
 /* Theme Variables */
@@ -718,7 +841,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: 'Sora', -apple-system, sans-serif;
+  font-family: "Sora", -apple-system, sans-serif;
 }
 
 /* Background Effects */
@@ -733,8 +856,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 .rk-grid-pattern {
   position: absolute;
   inset: 0;
-  background-image: 
-    linear-gradient(var(--border-1) 1px, transparent 1px),
+  background-image: linear-gradient(var(--border-1) 1px, transparent 1px),
     linear-gradient(90deg, var(--border-1) 1px, transparent 1px);
   background-size: 50px 50px;
   opacity: 0.3;
@@ -788,7 +910,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   border-radius: 14px;
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
 }
@@ -802,7 +928,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 .rk-icon-pulse {
   position: absolute;
   inset: -4px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   border-radius: 16px;
   opacity: 0;
   filter: blur(8px);
@@ -810,7 +940,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 }
 
 @keyframes iconPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0;
     transform: scale(1);
   }
@@ -899,7 +1030,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 .rk-progress-label strong {
   font-weight: 800;
   color: var(--color-primary);
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
 }
 
 .body--dark .rk-progress-label strong {
@@ -965,7 +1096,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 }
 
 .rk-tab::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: var(--surface-2);
@@ -1002,7 +1133,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 }
 
 .rk-tab.active .rk-tab-icon {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
 
@@ -1114,7 +1249,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   border-radius: 12px;
   font-size: 24px;
   color: #fff;
@@ -1158,7 +1297,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   border-radius: 11px;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
@@ -1201,10 +1344,18 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.rk-strength-weak { background: linear-gradient(90deg, #ef4444, #f87171); }
-.rk-strength-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.rk-strength-good { background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); }
-.rk-strength-excellent { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.rk-strength-weak {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+.rk-strength-medium {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+.rk-strength-good {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+}
+.rk-strength-excellent {
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+}
 
 .rk-strength-label {
   font-size: 0.85rem;
@@ -1212,12 +1363,24 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   letter-spacing: 0.3px;
 }
 
-.rk-strength-weak { color: #ef4444; }
-.rk-strength-medium { color: #f59e0b; }
-.rk-strength-good { color: var(--color-primary); }
-.body--dark .rk-strength-good { color: var(--color-primary-light); }
-.rk-strength-excellent { color: #22c55e; }
-.body--dark .rk-strength-excellent { color: #4ade80; }
+.rk-strength-weak {
+  color: #ef4444;
+}
+.rk-strength-medium {
+  color: #f59e0b;
+}
+.rk-strength-good {
+  color: var(--color-primary);
+}
+.body--dark .rk-strength-good {
+  color: var(--color-primary-light);
+}
+.rk-strength-excellent {
+  color: #22c55e;
+}
+.body--dark .rk-strength-excellent {
+  color: #4ade80;
+}
 
 .rk-generate-btn {
   border-radius: 10px;
@@ -1306,7 +1469,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   border-radius: 11px;
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
@@ -1362,7 +1529,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   border: 1px solid var(--border-1);
   border-radius: 6px;
   font-size: 0.75rem;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -1413,7 +1580,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 
 .rk-btn-primary {
   position: relative;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
   overflow: hidden;
 }
@@ -1429,7 +1600,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   transition: left 0.6s ease;
 }
 
