@@ -101,6 +101,34 @@ export const usePayrollConceptsStore = defineStore("payrollConcepts", {
       }
     },
 
+    async deleteConcept({ companyId, conceptId }) {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        if (!companyId) throw new Error("companyId is required");
+        if (!conceptId) throw new Error("conceptId is required");
+
+        const res = await secureAxios.delete(
+          `/companies/${companyId}/payroll/concepts/${conceptId}`
+        );
+
+        const ok = res?.data?.success ?? true;
+        if (!ok) throw new Error(res?.data?.message || "Error deleting concept");
+
+        this.items = asArray(this.items).filter((x) => x._id !== conceptId);
+
+        return res?.data;
+      } catch (e) {
+        console.error("[payrollConcepts.deleteConcept] error:", e);
+        this.error =
+          e?.response?.data?.message || e?.message || "Error deleting concept";
+        throw new Error(this.error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async bulkUpdate({ companyId, patches }) {
       this.loading = true; this.error = null;
       try {
