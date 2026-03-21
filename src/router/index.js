@@ -19,6 +19,7 @@ const UserManagement = () => import(/* webpackChunkName:"admin"     */ '@/views/
 const GestionHorarios = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionHorarios.vue')
 const AsistenciasEmp = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
 const Payroll = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollModule.vue")
+const PayrollRate = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollRate.vue")
 
 const CompanyList = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaList.vue')
 const CompanyForm = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaForm.vue')
@@ -107,7 +108,8 @@ const routes = [
       { path: 'company/new', name: 'CompanyFormAdmin', component: CompanyForm, meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
       { path: 'company/:id', name: 'CompanyDetailAdmin', component: CompanyDetail, props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
       { path: 'requests', name: 'RequestsAdmin', component: RequestList, props: true, meta: { permissions: ['companies:read'], title: 'Requests' } },
-      { path: "payroll", name: "payroll", component: Payroll, props: true, meta: { permissions: ['companies:read'], title: 'Requests' }}
+      { path: "payroll", name: "payroll", component: Payroll, props: true, meta: { permissions: ['companies:read'], title: 'Requests' }},
+      { path: "payrollRates", name: "payrollRate", component: PayrollRate, props: true, meta: { permissions: ['companies:read'], title: 'Requests' }}
     ]
   },
 

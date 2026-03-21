@@ -10,8 +10,12 @@ export const MENU = [
       { label: 'Permisos', icon: 'lock', to: '/admin/permissions' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance' },
       { label: 'Empresas', icon: 'apartment', to: '/admin/companies' },
-      { label: 'Solicitudes', icon: 'apartment', to: '/admin/requests' },
-      { label: "Liquidaciones", icon: "payments", to: '/admin/payroll' },
+      { label: 'Solicitudes', icon: 'assignment', to: '/admin/requests' },
+      { label: 'Liquidaciones', icon: 'payments', to: '/admin/payroll' },
+
+      // ✅ NUEVA
+      { label: 'Configuración Nómina (Rates)', icon: 'percent', to: '/admin/payrollRates' },
+      // o: to: '/admin/payrollRates'
     ]
   },
 
