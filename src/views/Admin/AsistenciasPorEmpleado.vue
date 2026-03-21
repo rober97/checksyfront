@@ -1,6 +1,6 @@
 <!-- src/views/Attendance/AttendanceHistoryPage.vue -->
 <template>
-  <q-page class="rk-page" :class="{ 'is-dark': isDark }">
+  <q-page class="rk-page rk-page--attendance" :class="{ 'is-dark': isDark }">
 
     <!-- ===== Fondo decorativo ===== -->
     <div class="rk-bg-mesh" aria-hidden="true">

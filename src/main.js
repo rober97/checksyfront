@@ -11,6 +11,8 @@ import quasarUserOptions from './quasar-user-options'
 import Toast, { POSITION } from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
+import './css/tokens.css'
+import './css/patterns.css'
 import './css/theme.css'
 import './css/base.css'
 

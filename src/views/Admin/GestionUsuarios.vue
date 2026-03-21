@@ -1,6 +1,6 @@
 <!-- src/views/Admin/UsersPage.vue -->
 <template>
-  <q-page class="rk-page" :class="{ 'is-dark': isDark }">
+  <q-page class="rk-page rk-page--users" :class="{ 'is-dark': isDark }">
 
     <!-- ===== Fondo decorativo ===== -->
     <div class="rk-bg-mesh" aria-hidden="true">
