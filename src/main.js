@@ -15,6 +15,7 @@ import './css/tokens.css'
 import './css/patterns.css'
 import './css/theme.css'
 import './css/base.css'
+import './css/module-shell.css'
 
 // 👉 Instancia principal de la app
 const app = createApp(App)

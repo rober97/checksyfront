@@ -276,15 +276,22 @@ function getStatusColor(status) {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .rk-mode-toggle {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 0 1 380px;
+  width: min(100%, 380px);
+  min-width: 280px;
   background: rgba(6, 182, 212, 0.05);
   border: 1.5px solid rgba(6, 182, 212, 0.12);
   border-radius: 12px;
   padding: 4px;
+  isolation: isolate;
 }
 
 .body--dark .rk-mode-toggle {
@@ -296,17 +303,22 @@ function getStatusColor(status) {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
   background: transparent;
   border: none;
   border-radius: 10px;
   color: rgba(15, 23, 42, 0.7);
   font-size: 0.95rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 1;
+  transition: color 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+  z-index: 2;
+  opacity: 0.72;
 }
 
 .body--dark .rk-mode-btn {
@@ -319,42 +331,64 @@ function getStatusColor(status) {
 
 .rk-mode-btn.active {
   color: rgba(15, 23, 42, 0.95);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .body--dark .rk-mode-btn.active {
   color: rgba(255, 255, 255, 0.95);
 }
 
+.rk-mode-btn.active .q-icon,
+.rk-mode-btn.active span {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.body--dark .rk-mode-btn.active .q-icon,
+.body--dark .rk-mode-btn.active span {
+  text-shadow: none;
+}
+
 .rk-mode-indicator {
   position: absolute;
   top: 4px;
   left: 4px;
+  width: calc(50% - 4px);
   height: calc(100% - 8px);
-  background: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 249, 255, 0.98));
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 0;
+  border: 1px solid rgba(6, 182, 212, 0.18);
+  box-shadow:
+    0 10px 24px rgba(6, 182, 212, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  pointer-events: none;
 }
 
 .body--dark .rk-mode-indicator {
-  background: rgba(17, 24, 39, 0.95);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+  border-color: rgba(34, 211, 238, 0.22);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .rk-mode-periods {
-  width: calc(50% - 4px);
+  transform: translateX(0);
 }
 
 .rk-mode-detail {
-  width: calc(50% - 4px);
   transform: translateX(calc(100% + 4px));
 }
 
 .rk-action-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
+  min-width: 144px;
   background: rgba(6, 182, 212, 0.05);
   border: 1.5px solid rgba(6, 182, 212, 0.12);
   border-radius: 12px;
@@ -414,6 +448,8 @@ function getStatusColor(status) {
 .rk-selector-header {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -599,7 +635,7 @@ function getStatusColor(status) {
 
   .rk-header-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: stretch;
   }
 
   .rk-company-stats {
@@ -633,11 +669,22 @@ function getStatusColor(status) {
 
   .rk-mode-toggle {
     width: 100%;
+    min-width: 0;
   }
 
   .rk-action-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .rk-mode-btn {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+
+  .rk-mode-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 </style>

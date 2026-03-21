@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHh lpR fFf">
+  <q-layout view="hHh lpR fFf" class="rk-shell-layout">
     <!-- Header superior -->
     <Header @toggle-drawer="toggleDrawer" />
 
@@ -8,7 +8,7 @@
 
 
     <!-- Contenido principal -->
-    <q-page-container class="bg-grey-2">
+    <q-page-container :class="pageContainerClass">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -19,6 +19,7 @@ import { ref } from 'vue';
 import Drawer from '@/components/Drawer.vue';
 import Header from '@/components/Header.vue';
 import UserAvatarMenu from '@/components/UserAvatarMenu.vue';
+import { useThemeClasses } from '@/utils/themeClasses';
 
 // Simula nombre empresa activa
 const empresaActiva = ref({ nombre: 'Empresa Ejemplo S.A.' });
@@ -27,4 +28,6 @@ const drawerOpen = ref(true);
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value;
 }
+
+const { pageContainerClass } = useThemeClasses();
 </script>

@@ -254,7 +254,7 @@ function getStatusLabel(status) {
 
 .rk-controls-section {
   display: grid;
-  grid-template-columns: 300px 1fr 200px;
+  grid-template-columns: minmax(240px, 320px) minmax(240px, 1fr) minmax(200px, 240px);
   gap: 20px;
   margin-bottom: 32px;
   align-items: flex-end;
@@ -354,6 +354,8 @@ function getStatusLabel(status) {
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
   transition: all 0.3s ease;
   overflow: hidden;
+  min-height: 50px;
+  width: 100%;
 }
 
 .rk-generate-btn:hover:not(:disabled) {

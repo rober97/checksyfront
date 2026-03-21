@@ -6,7 +6,7 @@
       <div>
         <h5 class="rates-title">Tasas de nómina</h5>
         <p class="rates-subtitle">
-          Configura las tasas de AFP, salud y cesantía para el cálculo de liquidaciones.
+          Configura las tasas de AFP, salud, cesantía y otros descuentos para el cálculo de liquidaciones.
         </p>
       </div>
       <q-btn
@@ -96,7 +96,7 @@
         <div class="card-body">
           <!-- Top row: name + status -->
           <div class="card-top">
-            <span class="card-name">{{ hasEntity ? row.entityLabel : row.key }}</span>
+            <span class="card-name">{{ rowDisplayName(row) }}</span>
             <span class="status-pill" :class="row.active ? 'status-active' : 'status-inactive'">
               <span class="status-dot" />
               {{ row.active ? 'Vigente' : 'Inactivo' }}
@@ -104,7 +104,7 @@
           </div>
 
           <!-- Slug -->
-          <div v-if="hasEntity" class="card-slug">{{ row.key }}</div>
+          <div v-if="showSecondaryKey(row)" class="card-slug">{{ row.key }}</div>
 
           <!-- Bottom row: dates + rate -->
           <div class="card-bottom">
@@ -148,8 +148,27 @@
         </div>
 
         <q-card-section class="dialog-body">
-          <!-- Contract type (cesantía only, new) -->
-          <div v-if="!hasEntity && !dlg.editingId" class="form-group">
+          <!-- Contract type / discount key -->
+          <div v-if="showKeyField" class="form-group">
+            <label class="form-label">
+              <q-icon name="sell" size="14px" />
+              Nombre del descuento
+            </label>
+            <q-input
+              v-model.trim="dlg.form.label"
+              dense
+              outlined
+              class="form-input"
+              placeholder="Ej: Impuesto a la renta"
+              :error="!!dlg.errors.key"
+              :error-message="dlg.errors.key"
+            />
+            <div class="field-hint">
+              Se guardará como una clave interna derivada del nombre para que puedas tener varios descuentos configurables.
+            </div>
+          </div>
+
+          <div v-else-if="showContractTypeField" class="form-group">
             <label class="form-label">
               <q-icon name="description" size="14px" />
               Tipo de contrato
@@ -162,6 +181,8 @@
               dense
               outlined
               class="form-input"
+              :error="!!dlg.errors.key"
+              :error-message="dlg.errors.key"
             />
           </div>
 
@@ -299,6 +320,7 @@ const categories = [
   { key: 'afp', label: 'AFP', icon: 'account_balance', desc: 'Descuento previsional obligatorio' },
   { key: 'health', label: 'Salud', icon: 'health_and_safety', desc: 'Cotización de salud (Fonasa)' },
   { key: 'cesantia', label: 'Cesantía', icon: 'gavel', desc: 'Seguro de cesantía por contrato' },
+  { key: 'other', label: 'Otros descuentos', icon: 'request_quote', desc: 'Descuentos adicionales como impuesto a la renta u otras retenciones' },
 ]
 
 const contractTypeOptions = [
@@ -311,13 +333,16 @@ const currentCategory = computed(() =>
   categories.find(c => c.key === tab.value) || categories[0]
 )
 
-const hasEntity = computed(() => tab.value !== 'cesantia')
+const hasEntity = computed(() => ['afp', 'health'].includes(tab.value))
+const showContractTypeField = computed(() => dlg.scope === 'CONTRACT_TYPE' && !dlg.editingId)
+const showKeyField = computed(() => dlg.scope === 'KEY')
 
 // ─── Data ────────────────────────────────────────────────────────
 const rowsMap = {
   afp: computed(() => store.afpRows),
   health: computed(() => store.healthRows),
   cesantia: computed(() => store.cesantiaRows),
+  other: computed(() => store.otherDeductionRows),
 }
 
 const currentRows = computed(() => rowsMap[tab.value]?.value || [])
@@ -338,6 +363,7 @@ const filteredRows = computed(() => {
     if (!s) return true
     return (
       (r.entityLabel || '').toLowerCase().includes(s) ||
+      (r.metaLabel || '').toLowerCase().includes(s) ||
       (r.key || '').toLowerCase().includes(s)
     )
   })
@@ -353,6 +379,15 @@ function formatDate(d) {
   const str = String(d).slice(0, 10)
   const [y, m, day] = str.split('-')
   return `${day}/${m}/${y}`
+}
+
+function rowDisplayName(row) {
+  if (row?.entityLabel) return row.entityLabel
+  return row?.metaLabel || humanizeKey(row?.key)
+}
+
+function showSecondaryKey(row) {
+  return !!row?.entityLabel || (!!row?.metaLabel && row.metaLabel !== humanizeKey(row.key))
 }
 
 function toISODateStart(str) {
@@ -383,12 +418,13 @@ const dlg = reactive({
   editingId: null,
   form: {
     key: '',
+    label: '',
     validFrom: '',
     validTo: '',
     inputMode: 'PERCENT',
     valueInput: null,
   },
-  errors: { validFrom: '', validTo: '', value: '' },
+  errors: { key: '', validFrom: '', validTo: '', value: '' },
 })
 
 // Live preview computeds
@@ -425,32 +461,34 @@ function closeDialog() {
   Object.assign(dlg, {
     open: false, saving: false, title: '', type: '', scope: '',
     entityId: null, editingId: null,
-    form: { key: '', validFrom: '', validTo: '', inputMode: 'PERCENT', valueInput: null },
-    errors: { validFrom: '', validTo: '', value: '' },
+    form: { key: '', label: '', validFrom: '', validTo: '', inputMode: 'PERCENT', valueInput: null },
+    errors: { key: '', validFrom: '', validTo: '', value: '' },
   })
 }
 
 function openCreate() {
   closeDialog()
-  const typeMap = { afp: 'AFP_RATE', health: 'FONASA_RATE', cesantia: 'CESANTIA_RATE' }
+  const typeMap = { afp: 'AFP_RATE', health: 'FONASA_RATE', cesantia: 'CESANTIA_RATE', other: 'OTHER_DEDUCTION_RATE' }
   dlg.open = true
   dlg.type = typeMap[tab.value]
-  dlg.scope = hasEntity.value ? 'ENTITY' : 'CONTRACT_TYPE'
+  dlg.scope = hasEntity.value ? 'ENTITY' : tab.value === 'cesantia' ? 'CONTRACT_TYPE' : 'KEY'
   dlg.title = `Nueva tasa de ${currentCategory.value.label}`
   dlg.form.validFrom = new Date().toISOString().slice(0, 10)
   dlg.form.inputMode = 'PERCENT'
+  if (dlg.scope === 'KEY') dlg.form.label = 'Impuesto a la renta'
 }
 
 function openEdit(row) {
   closeDialog()
-  const typeMap = { afp: 'AFP_RATE', health: 'FONASA_RATE', cesantia: 'CESANTIA_RATE' }
+  const typeMap = { afp: 'AFP_RATE', health: 'FONASA_RATE', cesantia: 'CESANTIA_RATE', other: 'OTHER_DEDUCTION_RATE' }
   dlg.open = true
   dlg.type = typeMap[tab.value]
-  dlg.scope = row.entityId ? 'ENTITY' : 'CONTRACT_TYPE'
+  dlg.scope = row.entityId ? 'ENTITY' : tab.value === 'cesantia' ? 'CONTRACT_TYPE' : 'KEY'
   dlg.entityId = row.entityId || null
   dlg.editingId = row.paramId || null
-  dlg.title = `Editar — ${row.entityLabel || row.key}`
+  dlg.title = `Editar — ${row.metaLabel || row.entityLabel || row.key}`
   dlg.form.key = row.key
+  dlg.form.label = row.metaLabel || humanizeKey(row.key)
   dlg.form.validFrom = String(row.validFrom || '').slice(0, 10)
   dlg.form.validTo = row.validTo ? String(row.validTo).slice(0, 10) : ''
   dlg.form.inputMode = 'DECIMAL'
@@ -458,7 +496,7 @@ function openEdit(row) {
 }
 
 function validate() {
-  dlg.errors = { validFrom: '', validTo: '', value: '' }
+  dlg.errors = { key: '', validFrom: '', validTo: '', value: '' }
   const vf = toISODateStart(dlg.form.validFrom)
   if (!vf) dlg.errors.validFrom = 'Fecha inválida'
   const vt = dlg.form.validTo ? toISODateStart(dlg.form.validTo) : null
@@ -468,8 +506,10 @@ function validate() {
   if (!Number.isFinite(n)) dlg.errors.value = 'Ingrese un número válido'
   else if (n < 0) dlg.errors.value = 'No puede ser negativo'
   if (dlg.scope === 'CONTRACT_TYPE' && !dlg.form.key)
-    dlg.errors.value = dlg.errors.value || 'Seleccione un tipo'
-  return !dlg.errors.validFrom && !dlg.errors.validTo && !dlg.errors.value
+    dlg.errors.key = 'Seleccione un tipo'
+  if (dlg.scope === 'KEY' && !normalizeCustomKey(dlg.form.label))
+    dlg.errors.key = 'Ingresa un nombre para el descuento'
+  return !dlg.errors.key && !dlg.errors.validFrom && !dlg.errors.validTo && !dlg.errors.value
 }
 
 function normalizeValue() {
@@ -477,19 +517,36 @@ function normalizeValue() {
   return dlg.form.inputMode === 'PERCENT' ? v / 100 : v
 }
 
+function normalizeCustomKey(label) {
+  return String(label || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
+
+function humanizeKey(key) {
+  return String(key || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (m) => m.toUpperCase())
+}
+
 async function submitUpsert() {
   if (!validate()) return
+  const customKey = dlg.scope === 'KEY' ? normalizeCustomKey(dlg.form.label) : null
   const payload = {
     companyId: null,
     type: dlg.type,
     scope: dlg.scope,
-    key: dlg.form.key,
+    key: dlg.scope === 'KEY' ? customKey : dlg.form.key,
     entityId: dlg.scope === 'ENTITY' ? dlg.entityId : null,
     value: normalizeValue(),
     validFrom: toISODateStart(dlg.form.validFrom),
     validTo: dlg.form.validTo ? toISODateStart(dlg.form.validTo) : null,
     active: true,
-    meta: {},
+    meta: dlg.scope === 'KEY' ? { label: dlg.form.label?.trim() || humanizeKey(customKey) } : {},
   }
   dlg.saving = true
   try {
@@ -822,6 +879,10 @@ async function confirmDeactivate(row) {
   background: linear-gradient(135deg, #713f12 0%, #d97706 100%);
 }
 
+.hero-other {
+  background: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%);
+}
+
 .hero-icon-wrap {
   width: 48px;
   height: 48px;
@@ -885,6 +946,13 @@ async function confirmDeactivate(row) {
 
 .form-input {
   width: 100%;
+}
+
+.field-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #78716c;
+  line-height: 1.45;
 }
 
 /* Value section */
@@ -1109,5 +1177,9 @@ async function confirmDeactivate(row) {
   background: #1e293b;
   border-color: #1e3a5f;
   color: #93c5fd;
+}
+
+.body--dark .field-hint {
+  color: #a8a29e;
 }
 </style>

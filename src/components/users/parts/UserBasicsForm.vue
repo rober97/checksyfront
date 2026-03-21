@@ -247,7 +247,9 @@
           </div>
           <div class="rk-section-title-wrap">
             <h4 class="rk-section-title">Acceso y seguridad</h4>
-            <p class="rk-section-desc">Configura las credenciales de acceso</p>
+            <p class="rk-section-desc">
+              {{ requirePassword ? 'Configura las credenciales de acceso' : 'Actualiza la contraseña solo si necesitas cambiarla' }}
+            </p>
           </div>
         </div>
 
@@ -260,7 +262,7 @@
               dense
               outlined
               clearable
-              :rules="[passMin]"
+              :rules="passwordRules"
               autocomplete="new-password"
               class="rk-input"
             >
@@ -331,7 +333,7 @@
               dense
               outlined
               clearable
-              :rules="[matchPasswordRule]"
+              :rules="confirmPasswordRules"
               autocomplete="new-password"
               class="rk-input"
             >
@@ -389,7 +391,8 @@ import SchedulePicker from '@/components/users/SchedulePicker.vue'
 /* Props / Emits */
 const props = defineProps({
   modelValue: { type: Object, required: true },
-  empresasRaw: { type: Array, default: () => [] }
+  empresasRaw: { type: Array, default: () => [] },
+  requirePassword: { type: Boolean, default: true }
 })
 const emit = defineEmits(['update:modelValue', 'tipo-change', 'preview-schedule'])
 
@@ -462,7 +465,7 @@ const currentStep = computed(() => {
   if (!local.firstName || !local.lastName || !local.email || !local.rut) return 0
   if (!local.tipo) return 1
   if (local.tipo !== 'admin' && !local.empresa) return 2
-  if (!local.password || !local.passwordConfirm) return local.tipo === 'admin' ? 2 : 3
+  if (props.requirePassword && (!local.password || !local.passwordConfirm)) return local.tipo === 'admin' ? 2 : 3
   return progressSteps.value.length
 })
 
@@ -533,8 +536,17 @@ watch(
 )
 
 /* Utilidades */
-const matchPasswordRule = (v) => v === local.password || 'Las contraseñas no coinciden'
+const matchPasswordRule = (v) => {
+  if (!props.requirePassword && !local.password && !v) return true
+  return v === local.password || 'Las contraseñas no coinciden'
+}
 const passwordsMatch = computed(() => !local.password || local.passwordConfirm === local.password)
+const passwordRules = computed(() => props.requirePassword ? [passMin] : [(v) => !v || passMin(v)])
+const confirmPasswordRules = computed(() =>
+  props.requirePassword
+    ? [matchPasswordRule]
+    : [(v) => (!local.password && !v) || matchPasswordRule(v)]
+)
 
 function formatRut () {
   if (!local.rut) return

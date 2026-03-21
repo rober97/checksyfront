@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHh lpR fFf">
+  <q-layout view="hHh lpR fFf" class="rk-shell-layout">
     <!-- Header superior -->
     <Header @toggle-drawer="toggleDrawer" />
 
@@ -7,7 +7,7 @@
     <Drawer v-model="drawerOpen" />
 
     <!-- Contenido principal -->
-    <q-page-container class="bg-grey-2">
+    <q-page-container :class="pageContainerClass">
       <router-view />
     </q-page-container>
   </q-layout>

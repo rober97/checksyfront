@@ -110,7 +110,7 @@
         <div class="rk-kpi">
           <div class="rk-kpi-label">AFP / Salud</div>
           <div class="rk-kpi-value ellipsis">
-            {{ form.payroll.afp || '—' }} · {{ form.payroll.saludSistema || '—' }}
+            {{ afpDisplay || '—' }} · {{ healthDisplay || '—' }}
           </div>
         </div>
 
@@ -129,7 +129,7 @@
 
       <!-- Detalle compacto si hay Isapre -->
       <div
-        v-if="form.payroll.saludSistema === 'ISAPRE' && (form.payroll.isaprePlan || form.payroll.isapreUf)"
+        v-if="healthDisplay === 'ISAPRE' && (form.payroll.isaprePlan || form.payroll.isapreUf)"
         class="rk-compact"
       >
         <q-icon name="medical_services" size="16px" class="q-mr-xs" />
@@ -198,6 +198,8 @@ const empresaLabel = computed(() => {
 })
 
 const isEmployee = computed(() => form.tipo === 'empleado')
+const afpDisplay = computed(() => form?.payroll?.afp || form?.payroll?.afpEntityId || '')
+const healthDisplay = computed(() => form?.payroll?.saludSistema || form?.payroll?.healthEntityId || '')
 
 /* Nombre bonito del contrato */
 const contractNice = computed(() => {
@@ -215,7 +217,7 @@ const completeness = computed(() => {
   const reqBase = ['firstName', 'lastName', 'email', 'password', 'tipo']
   const reqCompany = form.tipo !== 'admin' ? ['empresa'] : []
   const reqEmp = form.tipo === 'empleado' ? ['rut', 'horarioLaboralId'] : []
-  const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afp', 'payroll.saludSistema']
+  const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afpEntityId', 'payroll.healthEntityId']
 
   const required = [...reqBase, ...reqCompany, ...reqEmp, ...reqPayroll]
   const missing = required.filter((path) => !get(form, path))
@@ -248,8 +250,8 @@ function humanizeField(f) {
     'payroll.contractType': 'Tipo contrato',
     'payroll.jornada': 'Jornada',
     'payroll.startDate': 'Fecha ingreso',
-    'payroll.afp': 'AFP',
-    'payroll.saludSistema': 'Salud',
+    'payroll.afpEntityId': 'AFP',
+    'payroll.healthEntityId': 'Salud',
   }
   return map[f] || f
 }

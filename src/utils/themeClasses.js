@@ -21,9 +21,7 @@ export function useThemeClasses() {
     isDark.value ? 'bg-orange-10 text-white' : 'bg-orange-1 text-dark'
   );
 
-  const pageContainerClass = computed(() =>
-    isDark.value ? 'bg-grey-10 text-white' : 'bg-grey-2 text-dark'
-  );
+  const pageContainerClass = computed(() => 'rk-shell-container');
 
   const headerClass = computed(() =>
   isDark.value ? 'bg-dark text-white' : 'bg-primary text-white'

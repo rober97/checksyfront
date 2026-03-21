@@ -23,11 +23,13 @@ export const usePayrollRatesStore = defineStore("payrollRates", {
     afpParams: [],
     healthParams: [],
     cesantiaParams: [],
+    otherDeductionParams: [],
 
     // tablas “armadas”
     afpRows: [],
     healthRows: [],
-    cesantiaRows: []
+    cesantiaRows: [],
+    otherDeductionRows: []
   }),
 
   actions: {
@@ -46,15 +48,17 @@ export const usePayrollRatesStore = defineStore("payrollRates", {
         // 2) params
         const cid = companyId === null ? "null" : companyId;
 
-        const [afpP, healthP, cesP] = await Promise.all([
+        const [afpP, healthP, cesP, otherP] = await Promise.all([
           secureAxios.get("/payroll/params", { params: { type: "AFP_RATE", scope: "ENTITY", companyId: cid, active: true, limit: 2000 } }),
           secureAxios.get("/payroll/params", { params: { type: "FONASA_RATE", scope: "ENTITY", companyId: cid, active: true, limit: 2000 } }),
-          secureAxios.get("/payroll/params", { params: { type: "CESANTIA_RATE", scope: "CONTRACT_TYPE", companyId: cid, active: true, limit: 2000 } })
+          secureAxios.get("/payroll/params", { params: { type: "CESANTIA_RATE", scope: "CONTRACT_TYPE", companyId: cid, active: true, limit: 2000 } }),
+          secureAxios.get("/payroll/params", { params: { type: "OTHER_DEDUCTION_RATE", scope: "KEY", companyId: cid, active: true, limit: 2000 } })
         ]);
 
         this.afpParams = safeArr(afpP?.data?.rows);
         this.healthParams = safeArr(healthP?.data?.rows);
         this.cesantiaParams = safeArr(cesP?.data?.rows);
+        this.otherDeductionParams = safeArr(otherP?.data?.rows);
 
         this.buildTables();
       } finally {
@@ -172,6 +176,23 @@ export const usePayrollRatesStore = defineStore("payrollRates", {
           metaLabel: p?.meta?.label || ""
         }))
         .sort((a, b) => String(a.key).localeCompare(String(b.key)));
+
+      // ===== OTHER DEDUCTION rows =====
+      this.otherDeductionRows = this.otherDeductionParams
+        .map((p) => ({
+          rowKey: String(p._id),
+          missing: false,
+          paramId: String(p._id),
+          key: toKey(p.key),
+          value: p.value,
+          validFrom: p.validFrom,
+          validTo: p.validTo,
+          active: !!p.active,
+          metaLabel: p?.meta?.label || ""
+        }))
+        .sort((a, b) =>
+          String(a.metaLabel || a.key).localeCompare(String(b.metaLabel || b.key))
+        );
     },
 
     async upsert(payload) {

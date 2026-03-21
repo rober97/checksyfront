@@ -14,7 +14,7 @@ export const MENU = [
       { label: 'Liquidaciones', icon: 'payments', to: '/admin/payroll' },
 
       // ✅ NUEVA
-      { label: 'Configuración Nómina (Rates)', icon: 'percent', to: '/admin/payrollRates' },
+      { label: 'Configuración Nómina', icon: 'percent', to: '/admin/payrollRates' },
       // o: to: '/admin/payrollRates'
     ]
   },

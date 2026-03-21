@@ -368,6 +368,7 @@ function getStatusIcon(s) {
   border-radius: 20px;
   padding: 32px;
   box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+  overflow: hidden;
 }
 
 .body--dark .rk-content-card {
@@ -378,7 +379,7 @@ function getStatusIcon(s) {
 
 .rk-filters-section {
   display: grid;
-  grid-template-columns: 200px 280px 180px 1fr;
+  grid-template-columns: minmax(180px, 220px) minmax(220px, 1.2fr) minmax(160px, 200px) minmax(240px, auto);
   gap: 16px;
   margin-bottom: 28px;
   align-items: flex-end;
@@ -422,16 +423,22 @@ function getStatusIcon(s) {
 
 .rk-filter-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   justify-content: flex-end;
+  align-items: stretch;
 }
 
 .rk-filter-btn {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 20px;
+  min-height: 46px;
+  min-width: 150px;
+  flex: 1 1 170px;
   background: rgba(6, 182, 212, 0.05);
   border: 1.5px solid rgba(6, 182, 212, 0.15);
   border-radius: 10px;
@@ -622,6 +629,7 @@ function getStatusIcon(s) {
   border-radius: 12px;
   overflow: hidden;
   border: 1.5px solid rgba(6, 182, 212, 0.12);
+  width: 100%;
 }
 
 .body--dark .rk-table-container {
@@ -811,12 +819,16 @@ function getStatusIcon(s) {
 .rk-action-group {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .rk-action-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 36px;
   width: 36px;
   height: 36px;
   background: rgba(6, 182, 212, 0.08);
@@ -938,10 +950,11 @@ function getStatusIcon(s) {
 
 @media (max-width: 1023px) {
   .rk-filters-section {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .rk-filter-actions {
+    grid-column: 1 / -1;
     justify-content: flex-start;
   }
 
@@ -954,6 +967,15 @@ function getStatusIcon(s) {
   .rk-content-card {
     padding: 20px;
     border-radius: 16px;
+  }
+
+  .rk-filters-section {
+    grid-template-columns: 1fr;
+  }
+
+  .rk-filter-btn {
+    width: 100%;
+    flex-basis: 100%;
   }
 
   .rk-table :deep(thead th),

@@ -19,19 +19,49 @@
       <div class="rk-header">
         <div class="rk-header-content">
           <div class="rk-header-icon">
-            <q-icon name="person_add" />
+            <q-icon :name="isEditMode ? 'manage_accounts' : 'person_add'" />
             <div class="rk-icon-pulse"></div>
           </div>
           <div class="rk-header-text">
-            <h3 class="rk-header-title">Crear nuevo usuario</h3>
+            <h3 class="rk-header-title">{{ dialogTitle }}</h3>
             <p class="rk-header-subtitle">
-              Complete todos los datos requeridos del perfil
+              {{ dialogSubtitle }}
             </p>
           </div>
         </div>
-        <button class="rk-close-btn" @click="cancelar">
-          <q-icon name="close" />
-        </button>
+        <div class="rk-header-actions">
+          <q-badge v-if="isEditMode" :color="statusColor(form.status)" outline class="rk-status-chip">
+            {{ statusNice(form.status) }}
+          </q-badge>
+          <q-btn
+            v-if="isEditMode"
+            flat
+            dense
+            no-caps
+            icon="key"
+            label="Cambiar contraseña"
+            class="rk-header-btn"
+            @click="openPasswordDialog"
+          />
+          <button class="rk-close-btn" @click="cancelar">
+            <q-icon name="close" />
+          </button>
+        </div>
+      </div>
+
+      <div v-if="isEditMode" class="rk-audit-strip">
+        <div class="rk-audit-item">
+          <q-icon name="event" />
+          <span>Creado: {{ friendly(audit.createdAt) }}</span>
+        </div>
+        <div class="rk-audit-item">
+          <q-icon name="event_available" />
+          <span>Actualizado: {{ friendly(audit.updatedAt) }}</span>
+        </div>
+        <div class="rk-audit-item">
+          <q-icon name="schedule" />
+          <span>Último acceso: {{ friendly(audit.lastLogin) }}</span>
+        </div>
       </div>
 
       <!-- Progress Bar -->
@@ -118,13 +148,14 @@
                     <UserBasicsForm
                       :model-value="form"
                       @update:model-value="onBasicsPatch"
+                      :require-password="!isEditMode"
                       :horarios="horarios"
                       :loading-horarios="loadingHorarios"
                       @tipo-change="onTipoChange"
                     />
 
                     <!-- Password Card Premium -->
-                    <div class="rk-password-card">
+                    <div v-if="!isEditMode" class="rk-password-card">
                       <div class="rk-password-header">
                         <div class="rk-password-icon">
                           <q-icon name="key" />
@@ -292,11 +323,22 @@
           <q-btn
             flat
             no-caps
-            label="Cancelar"
+            :label="isEditMode ? 'Cerrar' : 'Cancelar'"
             @click="cancelar"
             class="rk-footer-btn rk-btn-cancel"
           />
           <q-btn
+            v-if="isEditMode"
+            flat
+            no-caps
+            color="negative"
+            label="Eliminar"
+            icon="delete"
+            @click="confirmDelete"
+            class="rk-footer-btn"
+          />
+          <q-btn
+            v-if="!isEditMode"
             outline
             no-caps
             :disable="saving"
@@ -309,16 +351,46 @@
             unelevated
             no-caps
             color="primary"
-            :label="saving ? 'Guardando...' : 'Guardar usuario'"
+            :label="primaryActionLabel"
             :loading="saving"
-            icon-right="check"
-            @click="submitForm"
+            :icon-right="isEditMode ? 'save' : 'check'"
+            @click="handlePrimaryAction"
             class="rk-footer-btn rk-btn-primary"
           >
             <div class="rk-btn-shine"></div>
           </q-btn>
+          <q-btn
+            v-if="isEditMode"
+            color="primary"
+            outline
+            :disable="saving"
+            class="rk-footer-btn rk-btn-secondary"
+            label="Guardar y cerrar"
+            @click="saveEdit(true)"
+          />
         </div>
       </div>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="pwdDialog">
+    <q-card style="min-width: 380px">
+      <q-card-section class="row items-center q-gutter-sm">
+        <q-icon name="key" />
+        <div class="text-subtitle2">Cambiar contraseña</div>
+      </q-card-section>
+      <q-card-section class="q-gutter-sm">
+        <q-input v-model="pwd" :type="showPwd ? 'text' : 'password'" label="Nueva contraseña" dense outlined>
+          <template #append>
+            <q-btn flat dense round :icon="showPwd ? 'visibility' : 'visibility_off'" @click="showPwd = !showPwd" />
+          </template>
+        </q-input>
+        <q-btn flat dense icon="autorenew" label="Generar segura" @click="genPwd" />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancelar" v-close-popup />
+        <q-btn color="primary" label="Actualizar" :disable="!pwd" @click="doChangePassword" />
+      </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
@@ -341,6 +413,9 @@ import { usePayrollCatalogStore } from "@/stores/payrollCatalogStore";
 
 import { validarRUT } from "@/utils/validators";
 import { normalizeMoney, normalizeDecimal } from "@/utils/format";
+import { mapFromApi, buildApiPatch } from "@/utils/userMapping";
+import { diff, deepClone } from "@/utils/diff";
+import { friendly, statusColor, statusNice } from "@/composables/useUserForm";
 
 import UserBasicsForm from "./users/parts/UserBasicsForm.vue";
 import UserContractForm from "./users/parts/UserContractForm.vue";
@@ -355,8 +430,12 @@ const userStore = useUserStore();
 const companiesStore = useCompaniesStore();
 const payrollCatalogStore = usePayrollCatalogStore();
 
-const props = defineProps({ modelValue: { type: Boolean, required: true } });
-const emit = defineEmits(["update:modelValue", "created", "saved"]);
+const props = defineProps({
+  modelValue: { type: Boolean, required: true },
+  mode: { type: String, default: "create" },
+  userId: { type: String, default: null },
+});
+const emit = defineEmits(["update:modelValue", "created", "saved", "updated", "deleted"]);
 
 const dialogVisible = computed({
   get: () => props.modelValue,
@@ -368,6 +447,26 @@ const tab = ref("basicos");
 const split = ref(65);
 const saving = ref(false);
 const invitar = ref(true);
+const pwdDialog = ref(false);
+const pwd = ref("");
+const showPwd = ref(false);
+const audit = ref({ createdAt: null, updatedAt: null, lastLogin: null });
+let original = null;
+
+const isEditMode = computed(() => props.mode === "edit");
+const dialogTitle = computed(() => isEditMode.value ? "Editar usuario" : "Crear nuevo usuario");
+const dialogSubtitle = computed(() =>
+  isEditMode.value
+    ? "Modifica los datos del perfil y guarda solo los cambios necesarios"
+    : "Complete todos los datos requeridos del perfil"
+);
+const primaryActionLabel = computed(() =>
+  saving.value
+    ? "Guardando..."
+    : isEditMode.value
+      ? "Guardar cambios"
+      : "Guardar usuario"
+);
 
 const horarios = ref([]);
 const loadingHorarios = ref(false);
@@ -441,7 +540,7 @@ const isTabCompleted = (tabName) => {
   const f = form.value;
   switch (tabName) {
     case "basicos":
-      return !!(f.firstName && f.lastName && f.email && f.password);
+      return !!(f.firstName && f.lastName && f.email && (isEditMode.value || f.password));
     case "contrato":
       return !!(f.payroll?.baseSalary && f.payroll?.contractType);
     case "contacto":
@@ -462,11 +561,17 @@ watch(
     tab.value = "basicos";
     split.value = 65;
     form.value = getEmptyForm();
+    original = null;
+    audit.value = { createdAt: null, updatedAt: null, lastLogin: null };
 
     await Promise.allSettled([
       loadEmpresasRaw(),
       payrollCatalogStore.fetchAll({ force: false }),
     ]);
+
+    if (isEditMode.value && props.userId) {
+      await hydrateEditUser();
+    }
   },
   { immediate: true },
 );
@@ -500,6 +605,39 @@ async function loadHorarios(empresaId) {
     horarios.value = [];
   } finally {
     loadingHorarios.value = false;
+  }
+}
+
+async function hydrateEditUser() {
+  const res = await userStore.fetchUserById(props.userId);
+  const currentUser = res?.data || userStore.currentUser;
+  if (!currentUser) {
+    toast.error("No se encontró el usuario");
+    dialogVisible.value = false;
+    return;
+  }
+
+  form.value = {
+    ...getEmptyForm(),
+    ...mapFromApi(currentUser),
+    password: "",
+    passwordConfirm: "",
+    workScheduleChoice: {
+      mode: "companyDefault",
+      scheduleId: currentUser.workSchedule?._id || currentUser.workSchedule || null,
+    },
+  };
+
+  audit.value = {
+    createdAt: currentUser.createdAt,
+    updatedAt: currentUser.updatedAt,
+    lastLogin: currentUser.lastLogin,
+  };
+
+  original = deepClone(form.value);
+
+  if (form.value.tipo === "empleado" && form.value.empresa) {
+    await loadHorarios(form.value.empresa);
   }
 }
 
@@ -625,6 +763,42 @@ async function submitForm() {
   }
 }
 
+async function saveEdit(closeAfter = false) {
+  const ok = await validateForm();
+  if (!ok) return toast.error("Revisa los campos requeridos.");
+
+  try {
+    saving.value = true;
+    const uiPatch = diff(original || {}, form.value);
+    delete uiPatch.password;
+    delete uiPatch.passwordConfirm;
+
+    if (Object.keys(uiPatch).length === 0) {
+      toast.info("No hay cambios para guardar");
+      if (closeAfter) dialogVisible.value = false;
+      return;
+    }
+
+    const apiPatch = buildApiPatch(uiPatch);
+    if (apiPatch.workScheduleChoice) {
+      apiPatch.workSchedule = apiPatch.workScheduleChoice.scheduleId || null;
+      delete apiPatch.workScheduleChoice;
+    }
+    normalizeEditPatch(apiPatch);
+
+    await userStore.updateUser({ id: props.userId, patch: apiPatch });
+    toast.success("Cambios guardados");
+    emit("updated");
+    emit("saved");
+    original = deepClone(form.value);
+    if (closeAfter) dialogVisible.value = false;
+  } catch {
+    toast.error("No se pudo guardar");
+  } finally {
+    saving.value = false;
+  }
+}
+
 async function submitAndReset() {
   const ok = await validateForm();
   if (!ok) return toast.error("Revisa los campos requeridos.");
@@ -647,7 +821,28 @@ async function submitAndReset() {
 }
 
 function cancelar() {
-  dialogVisible.value = false;
+  if (!isEditMode.value || !original) {
+    dialogVisible.value = false;
+    return;
+  }
+
+  const hasChanges = Object.keys(diff(original, form.value)).length > 0;
+  if (!hasChanges) {
+    dialogVisible.value = false;
+    return;
+  }
+
+  $q.dialog({
+    title: "Descartar cambios",
+    message: "Tienes cambios sin guardar. ¿Cerrar de todos modos?",
+    ok: { label: "Descartar" },
+    cancel: { label: "Seguir editando" },
+  }).onOk(() => { dialogVisible.value = false; });
+}
+
+function handlePrimaryAction() {
+  if (isEditMode.value) return saveEdit(false);
+  return submitForm();
 }
 
 function mapPayload(f) {
@@ -655,7 +850,6 @@ function mapPayload(f) {
   const saludSistema = payrollCatalogStore.getHealthSlugById(
     f.payroll?.healthEntityId,
   );
-  debugger
   return {
     firstName: f.firstName?.trim() || "",
     lastName: f.lastName?.trim() || "",
@@ -701,6 +895,24 @@ function mapPayload(f) {
   };
 }
 
+function normalizeEditPatch(patch) {
+  if (!patch?.payroll) return;
+  const payroll = patch.payroll;
+  [
+    "baseSalary",
+    "apv",
+    "gratificacion",
+    "bonoColacion",
+    "bonoMovilizacion",
+    "descuentoPrestamo",
+  ].forEach((key) => {
+    if (payroll[key] !== undefined) payroll[key] = normalizeMoney(payroll[key]);
+  });
+  if (payroll.isapreUf !== undefined) {
+    payroll.isapreUf = Number(normalizeDecimal(payroll.isapreUf || 0));
+  }
+}
+
 function getEmptyForm() {
   return {
     firstName: "",
@@ -712,6 +924,7 @@ function getEmptyForm() {
     rut: "",
     horarioLaboralId: null,
     workScheduleChoice: { mode: "companyDefault", scheduleId: null },
+    status: "active",
     phone: "",
     emergencyContact: "",
     address: { line1: "", commune: "", city: "", region: "" },
@@ -738,6 +951,43 @@ function getEmptyForm() {
       descuentoPrestamo: 0,
     },
   };
+}
+
+function confirmDelete() {
+  $q.dialog({
+    title: "Eliminar usuario",
+    message: "Esta acción no se puede deshacer. ¿Eliminar?",
+    ok: { label: "Eliminar", color: "negative" },
+    cancel: { label: "Cancelar" },
+  }).onOk(async () => {
+    try {
+      await userStore.deleteUser(props.userId);
+      toast.success("Usuario eliminado");
+      emit("deleted");
+      dialogVisible.value = false;
+    } catch {
+      toast.error("No se pudo eliminar");
+    }
+  });
+}
+
+function openPasswordDialog() { pwdDialog.value = true; }
+function genPwd() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@$%*";
+  let pass = "";
+  for (let i = 0; i < 12; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+  pwd.value = pass;
+}
+async function doChangePassword() {
+  if (!pwd.value || pwd.value.length < 6) { toast.error("Mínimo 6 caracteres"); return; }
+  try {
+    await userStore.changePassword({ id: props.userId, newPassword: pwd.value });
+    toast.success("Contraseña actualizada");
+    pwdDialog.value = false;
+    pwd.value = "";
+  } catch {
+    toast.error("No se pudo cambiar la contraseña");
+  }
 }
 
 // Hotkeys
@@ -903,6 +1153,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   gap: 16px;
 }
 
+.rk-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .rk-header-icon {
   position: relative;
   width: 52px;
@@ -977,6 +1235,41 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.rk-header-btn {
+  border-radius: 11px;
+  border: 1px solid var(--border-1);
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.rk-status-chip {
+  font-weight: 700;
+}
+
+.rk-audit-strip {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 32px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-1);
+}
+
+.rk-audit-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .rk-close-btn:hover {

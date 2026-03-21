@@ -118,7 +118,6 @@ const pdfTitle = ref("Liquidación");
 // Computed
 const companyOptions = computed(() => {
   const companies = companiesStore.items || companiesStore.empresas || companiesStore.list || [];
-  debugger
   return companies.filter(c => c.status === 'active' || c.status === 'Active' || !c.status);
 });
 
@@ -386,6 +385,7 @@ function promptReason() {
   padding: 24px;
   background: var(--page-bg);
   font-family: 'Sora', -apple-system, sans-serif;
+  color: rgba(15, 23, 42, 0.96);
 }
 
 .body--dark .rk-payroll-page {
