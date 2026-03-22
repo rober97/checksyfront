@@ -70,6 +70,31 @@
           <div class="text-caption text-grey">
             Esta previsualización no guarda cambios. Confirme para aplicar al editor.
           </div>
+
+          <div v-if="previewRows.length" class="rk-preview-list q-mt-md">
+            <div
+              v-for="row in previewRows"
+              :key="row.key"
+              class="rk-preview-row"
+            >
+              <div class="rk-preview-main">
+                <div class="rk-preview-title">{{ row.label }}</div>
+                <div class="rk-preview-meta">
+                  {{ row.key }} · {{ stateNice(row.before) }} → {{ stateNice(row.after) }}
+                </div>
+              </div>
+
+              <div class="rk-preview-tags">
+                <q-badge v-if="row.conflict" color="negative" outline>Conflicto</q-badge>
+                <q-badge v-else-if="row.fromProfile" color="primary" outline>Desde perfil</q-badge>
+                <q-badge v-else outline>Se conserva usuario</q-badge>
+              </div>
+            </div>
+
+            <div v-if="previewOverflow > 0" class="rk-preview-more">
+              Y {{ previewOverflow }} cambio(s) más en la vista previa completa.
+            </div>
+          </div>
         </div>
       </q-card-section>
 
@@ -144,12 +169,25 @@ const getProfileMap = (pid) => {
   const p = props.profiles.find(x => (x.id || x._id) === pid)
   return { ...(p?.map || {}) }
 }
+const labelByKey = computed(() => {
+  const out = {}
+  for (const item of props.catalog.items || []) {
+    out[item.key] = item.label || item.description || item.key
+  }
+  return out
+})
+const stateNice = (value) => ({
+  allow: 'Permitido',
+  deny: 'Denegado',
+  inherit: 'Heredado',
+}[value] || 'Heredado')
 
 /* ===== Merge & preview (the only place where it exists) ===== */
 const computeMerged = (userMap, profileMap, plc, byCatMap = {}) => {
   const allKeys = new Set([...Object.keys(userMap || {}), ...Object.keys(profileMap || {})])
   const merged = {}
   let fromProfile = 0, keptUser = 0, totalChanged = 0, conflicts = 0
+  const details = []
 
   // Build helper sets for categoryManual
   const byCat = { user: new Set(), profile: new Set() }
@@ -196,23 +234,38 @@ const computeMerged = (userMap, profileMap, plc, byCatMap = {}) => {
     }
 
     merged[k] = out
+    if (out !== u) {
+      details.push({
+        key: k,
+        label: labelByKey.value[k] || k,
+        before: u,
+        after: out,
+        fromProfile: out === p && out !== u,
+        conflict: opposite(u, p),
+      })
+    }
   }
 
-  return { merged, summary: { totalChanged, fromProfile, keptUser, conflicts } }
+  return { merged, summary: { totalChanged, fromProfile, keptUser, conflicts }, details }
 }
 
 /* ===== Preview reactive ===== */
 const preview = ref({ totalChanged: 0, fromProfile: 0, keptUser: 0, conflicts: 0 })
+const previewDetails = ref([])
+const previewRows = computed(() => previewDetails.value.slice(0, 8))
+const previewOverflow = computed(() => Math.max(0, previewDetails.value.length - previewRows.value.length))
 
 const rebuildPreview = () => {
   if (!profileId.value) {
     preview.value = { totalChanged: 0, fromProfile: 0, keptUser: 0, conflicts: 0 }
+    previewDetails.value = []
     return
   }
   const pMap = getProfileMap(profileId.value)
   const uMap = props.workingPerms || {}
-  const { summary } = computeMerged(uMap, pMap, policy.value, categorySource.value || {})
+  const { summary, details } = computeMerged(uMap, pMap, policy.value, categorySource.value || {})
   preview.value = summary
+  previewDetails.value = details
 }
 
 watch([profileId, policy, categorySource], rebuildPreview, { deep: true })
@@ -252,4 +305,38 @@ const cancel = () => {
 .rk-cat-manual{ border:1px dashed rgba(127,127,127,.25); border-radius:12px; background:rgba(127,127,127,.04) }
 .rk-cat-manual-row{ padding:6px 8px }
 .rk-policy-hint{ opacity:.9 }
+.rk-preview-list{
+  border:1px solid rgba(127,127,127,.18);
+  border-radius:12px;
+  padding:10px;
+  background:rgba(127,127,127,.04);
+}
+.rk-preview-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 0;
+}
+.rk-preview-row + .rk-preview-row{
+  border-top:1px solid rgba(127,127,127,.12);
+}
+.rk-preview-main{ min-width:0; }
+.rk-preview-title{ font-weight:600; }
+.rk-preview-meta{
+  font-size:.85rem;
+  opacity:.78;
+  word-break:break-word;
+}
+.rk-preview-tags{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+}
+.rk-preview-more{
+  margin-top:10px;
+  font-size:.85rem;
+  opacity:.78;
+}
 </style>

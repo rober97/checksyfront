@@ -101,10 +101,19 @@
                 >
                   <div class="rk-item-info">
                     <div class="rk-item-title">
-                      <span class="rk-key">{{ it.key }}</span>
+                      <span class="rk-title-main">{{ labelFor(it) }}</span>
+                      <q-badge outline class="rk-key-badge">{{ it.key }}</q-badge>
+                      <q-badge
+                        outline
+                        class="rk-state-badge"
+                        :class="`rk-state-badge--${stateOf(it.key)}`"
+                      >
+                        {{ stateLabel(stateOf(it.key)) }}
+                      </q-badge>
                       <q-btn class="rk-ghost" flat round dense icon="content_copy" @click="copy(it.key)" />
                     </div>
-                    <div class="rk-item-desc">{{ it.label || it.description || "Permiso" }}</div>
+                    <div class="rk-item-desc">{{ descriptionFor(it) }}</div>
+                    <div class="rk-item-state-hint">{{ stateHint(stateOf(it.key)) }}</div>
 
                     <div class="rk-tags row q-gutter-xs">
                       <q-badge v-if="showDiffs && isDifferentFromHighlight(it.key)" color="info" outline>Diferencia</q-badge>
@@ -184,6 +193,25 @@ const favSet = computed(() => new Set(props.favs || []));
 const collapsedSet = computed(() => new Set(props.collapsed || []));
 const valOf = (map, k) => map?.[k] ?? "inherit";
 const opposite = (x, y) => (x === "allow" && y === "deny") || (x === "deny" && y === "allow");
+const stateOf = (key) => valOf(props.workingPerms, key);
+const labelFor = (item) => item.label || humanizeKey(item.key);
+const descriptionFor = (item) =>
+  item.description ||
+  "Controla si este módulo o acción queda disponible, bloqueado o heredado desde la base.";
+const humanizeKey = (key = "") =>
+  String(key)
+    .split(":")
+    .map((part) => part.replace(/[-_]/g, " "))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" / ");
+const stateLabel = (state) =>
+  ({ allow: "Permitido", deny: "Denegado", inherit: "Heredado" }[state] || "Heredado");
+const stateHint = (state) =>
+  ({
+    allow: "El usuario tendrá acceso directo a esta función.",
+    deny: "El usuario no podrá usar esta función aunque exista un perfil base.",
+    inherit: "La decisión se tomará desde el perfil o configuración base.",
+  }[state] || "La decisión se tomará desde la configuración base.");
 
 const changedKeysSet = computed(() => {
   const before = props.baseSnapshot || {};
@@ -364,11 +392,20 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
 
 .rk-item-info{ max-width: 70% }
 .rk-item-title{ display:flex; align-items:center; gap:6px; font-weight:700; color: var(--title) }
+.rk-title-main{ font-weight: 700; }
 .rk-key{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
   font-size: .9rem;
 }
-.rk-item-desc{ font-size:.85rem; color: var(--muted) }
+.rk-item-desc{ font-size:.9rem; color: var(--title) }
+.rk-item-state-hint{ font-size:.82rem; color: var(--muted); margin-top: 2px }
+.rk-key-badge{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  color: var(--muted);
+}
+.rk-state-badge--allow{ color: var(--allow); border-color: color-mix(in srgb, var(--allow) 55%, transparent); }
+.rk-state-badge--deny{ color: var(--deny); border-color: color-mix(in srgb, var(--deny) 55%, transparent); }
+.rk-state-badge--inherit{ color: var(--inherit); border-color: color-mix(in srgb, var(--inherit) 55%, transparent); }
 .rk-item-actions{ gap: 8px }
 
 /* Ghost actions */

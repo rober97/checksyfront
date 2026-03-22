@@ -389,7 +389,36 @@
             :key="i"
             class="col-12 col-sm-6 col-md-4 col-lg-3"
           >
-            <q-skeleton-card bordered />
+            <q-card
+              bordered
+              class="rk-doc-card"
+              :class="isDark ? 'bg-grey-9' : ''"
+            >
+              <q-card-section class="row items-start no-wrap q-pb-sm">
+                <q-skeleton type="QAvatar" size="48px" class="q-mr-sm" />
+
+                <div class="col q-pt-xs">
+                  <q-skeleton type="text" width="88%" class="q-mb-xs" />
+                  <q-skeleton type="text" width="62%" class="q-mb-sm" />
+
+                  <div class="row items-center q-gutter-xs q-mb-sm">
+                    <q-skeleton type="QChip" width="92px" />
+                    <q-skeleton type="QChip" width="74px" />
+                  </div>
+
+                  <q-skeleton type="text" width="100%" class="q-mb-xs" />
+                  <q-skeleton type="text" width="78%" class="q-mb-sm" />
+                  <q-skeleton type="text" width="46%" />
+                </div>
+              </q-card-section>
+
+              <q-separator />
+
+              <q-card-actions align="between" class="q-px-md q-py-sm">
+                <q-skeleton type="QBtn" width="78px" />
+                <q-skeleton type="QBtn" width="96px" />
+              </q-card-actions>
+            </q-card>
           </div>
         </div>
 

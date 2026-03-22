@@ -9,9 +9,10 @@
       :help-to="{ name: 'help.permissions' }"
     >
       <template #subtitle>
-        Gestione por <a @click.prevent="goByUser">Usuario</a> o por
-        <a @click.prevent="goByProfile">Perfil</a>. Defina “Permitir / Heredar /
-        Denegar”.
+        Administra accesos por <a @click.prevent="goByUser">usuario</a> o por
+        <a @click.prevent="goByProfile">perfil</a>. Cada permiso puede quedar en
+        <b>Permitir</b>, <b>Heredar</b> o <b>Denegar</b> para que el impacto del cambio
+        se entienda antes de guardarlo.
       </template>
 
       <!-- opcional -->
@@ -156,7 +157,7 @@
           @search-users="onSearchUsers"
           @pick-user="onPickUser"
           v-model:profileQuery="profileQuery"
-          :profiles="profiles"
+          :profiles="filteredProfiles"
           :selected-profile-id="selectedProfileId"
           @pick-profile="onPickProfile"
           @open-create-profile="onOpenCreateProfile"
@@ -179,7 +180,10 @@
         <PermsToolsBar
           :card-tone="cardTone"
           v-model:searchQ="searchQ"
+          v-model:onlyFavs="onlyFavs"
+          v-model:onlyChanged="onlyChanged"
           :editable="hasTarget"
+          :total-visible="filteredItemsCount"
           :allow-count="allowCount"
           :deny-count="denyCount"
           :inherit-count="inheritCount"
@@ -231,7 +235,12 @@
 <script setup>
 import { ref, computed, nextTick, watch, onMounted } from "vue";
 import { useQuasar } from "quasar";
-import { usePermissionsStore } from "@/stores/permissionsStore"; // FIX: re-integrate store
+import { usePermissionsStore } from "@/stores/permissionsStore";
+import {
+  buildPermissionMap,
+  countPermissionStates,
+  normalizePermissionCatalog,
+} from "@/utils/permissions";
 
 import PermsSidebar from "@/components/permissions/PermsSidebar.vue";
 import PermsToolsBar from "@/components/permissions/PermsToolsBar.vue";
@@ -245,10 +254,14 @@ const $q = useQuasar();
 const store = usePermissionsStore();
 
 const goByUser = () => {
-  /* navega a pestaña/route Usuario */
+  if (mode.value === "user") return;
+  mode.value = "user";
+  onModeChange();
 };
 const goByProfile = () => {
-  /* navega a pestaña/route Perfil */
+  if (mode.value === "profile") return;
+  mode.value = "profile";
+  onModeChange();
 };
 
 /* ===== Modo ===== */
@@ -276,6 +289,15 @@ const selectedUser = ref(null);
 const profileQuery = ref("");
 const profiles = ref([]); // [{id/_id, name, map}]
 const selectedProfileId = ref(null);
+const filteredProfiles = computed(() => {
+  const query = profileQuery.value.trim().toLowerCase();
+  if (!query) return profiles.value;
+  return profiles.value.filter((profile) =>
+    String(profile?.name || "")
+      .toLowerCase()
+      .includes(query)
+  );
+});
 const profileOptions = computed(() =>
   profiles.value.map((p) => ({ label: p.name, value: p.id || p._id }))
 );
@@ -339,6 +361,28 @@ const persistCollapsed = () =>
     COLL_KEY,
     JSON.stringify(Array.from(collapsedSet.value))
   );
+const changedKeysSet = computed(() => {
+  const before = baseSnapshot.value || {};
+  const after = workingPerms.value || {};
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  const changed = new Set();
+  keys.forEach((key) => {
+    if ((before?.[key] || "inherit") !== (after?.[key] || "inherit")) {
+      changed.add(key);
+    }
+  });
+  return changed;
+});
+const filteredItemsCount = computed(() => {
+  const query = searchQ.value.trim().toLowerCase();
+  return (catalog.value.items || []).filter((item) => {
+    const haystack = `${item.key} ${item.label || ""} ${item.description || ""}`.toLowerCase();
+    if (query && !haystack.includes(query)) return false;
+    if (onlyFavs.value && !favsSet.value.has(item.key)) return false;
+    if (onlyChanged.value && !changedKeysSet.value.has(item.key)) return false;
+    return true;
+  }).length;
+});
 
 /* ===== Dirty & contadores ===== */
 const hasTarget = computed(
@@ -351,15 +395,10 @@ const dirty = computed(
   () =>
     JSON.stringify(workingPerms.value) !== JSON.stringify(baseSnapshot.value)
 );
-const allowCount = computed(
-  () => Object.values(workingPerms.value).filter((v) => v === "allow").length
-);
-const denyCount = computed(
-  () => Object.values(workingPerms.value).filter((v) => v === "deny").length
-);
-const inheritCount = computed(
-  () => Object.values(workingPerms.value).filter((v) => v === "inherit").length
-);
+const permissionCounts = computed(() => countPermissionStates(workingPerms.value));
+const allowCount = computed(() => permissionCounts.value.allow);
+const denyCount = computed(() => permissionCounts.value.deny);
+const inheritCount = computed(() => permissionCounts.value.inherit);
 
 /* ===== Highlight ===== */
 const highlightSource = ref(null); // null | 'base' | 'profile'
@@ -383,6 +422,17 @@ const highlightCompareMap = computed(() => {
   return { ...(p?.map || {}) };
 });
 
+const syncWorkingMaps = (map = {}) => {
+  const normalized = buildPermissionMap(catalog.value, map);
+  baseSnapshot.value = { ...normalized };
+  workingPerms.value = { ...normalized };
+};
+const hydrateProfiles = (items = []) =>
+  (items || []).map((profile) => ({
+    ...profile,
+    map: buildPermissionMap(catalog.value, profile?.map || {}),
+  }));
+
 /* ===== Helpers ===== */
 const debounce = (fn, wait = 250) => {
   let t;
@@ -401,9 +451,12 @@ const focusUserSearch = () =>
 const init = async () => {
   try {
     loadingMatrix.value = true;
-    await Promise.all([store.fetchCatalog?.(), store.fetchProfiles?.()]);
-    if (store.catalog) catalog.value = store.catalog;
-    if (store.profiles) profiles.value = store.profiles;
+    const [fetchedCatalog, fetchedProfiles] = await Promise.all([
+      store.fetchCatalog?.(),
+      store.fetchProfiles?.(),
+    ]);
+    catalog.value = normalizePermissionCatalog(fetchedCatalog || store.catalog || {});
+    profiles.value = hydrateProfiles(fetchedProfiles || store.profiles || []);
   } catch (e) {
     $q.notify({
       type: "negative",
@@ -441,10 +494,10 @@ const onPickUser = async (id) => {
     loadingMatrix.value = true;
     // Cargar permisos usuario y (si falta) catálogo
     const map = await store.fetchUserPermissions?.(id);
-    if (store.catalog && !catalog.value.items?.length)
-      catalog.value = store.catalog;
-    baseSnapshot.value = { ...(map || {}) };
-    workingPerms.value = { ...(map || {}) };
+    if (!catalog.value.items?.length) {
+      catalog.value = normalizePermissionCatalog(store.catalog || {});
+    }
+    syncWorkingMaps(map || {});
     highlightSource.value = null;
     showDiffs.value = showConflicts.value = showChanges.value = false;
   } catch (e) {
@@ -459,31 +512,123 @@ const onPickUser = async (id) => {
 
 const onPickProfile = (id) => {
   selectedProfileId.value = id;
-  loadingMatrix.value = true;
-  setTimeout(() => {
-    const p = profiles.value.find((x) => (x.id || x._id) === id);
-    baseSnapshot.value = { ...(p?.map || {}) };
-    workingPerms.value = { ...(p?.map || {}) };
-    inlineProfileName.value = p?.name || "";
-    highlightSource.value = null;
-    showDiffs.value = showConflicts.value = showChanges.value = false;
-    loadingMatrix.value = false;
-  }, 50);
+  const p = profiles.value.find((x) => (x.id || x._id) === id);
+  syncWorkingMaps(p?.map || {});
+  inlineProfileName.value = p?.name || "";
+  highlightSource.value = null;
+  showDiffs.value = showConflicts.value = showChanges.value = false;
 };
 
 /* ===== CRUD Perfiles ===== */
-const onOpenCreateProfile = () =>
-  $q.notify({ type: "info", message: "Crear perfil (conectar backend)." });
-const onDuplicateProfile = (p) =>
-  $q.notify({
-    type: "info",
-    message: `Duplicar "${p.name}" (conectar backend).`,
+const selectProfile = (id) => {
+  selectedProfileId.value = id;
+  onPickProfile(id);
+};
+const promptProfileName = (title, message, value = "") =>
+  new Promise((resolve) => {
+    $q.dialog({
+      title,
+      message,
+      prompt: {
+        model: value,
+        type: "text",
+        isValid: (input) => !!String(input || "").trim(),
+      },
+      cancel: true,
+      persistent: true,
+      ok: { label: "Guardar", color: "primary", unelevated: true },
+      cancel: { label: "Cancelar", flat: true },
+    })
+      .onOk((input) => resolve(String(input || "").trim()))
+      .onCancel(() => resolve(null));
   });
-const onRemoveProfile = (id) =>
-  $q.notify({
-    type: "warning",
-    message: "Eliminar perfil (conectar backend).",
+
+const onOpenCreateProfile = async () => {
+  const name = await promptProfileName(
+    "Nuevo perfil",
+    "Ponle un nombre claro, por ejemplo “RRHH”, “Supervisor turnos” o “Lectura nómina”."
+  );
+  if (!name) return;
+
+  try {
+    const list = await store.createProfile?.({
+      name,
+      map: buildPermissionMap(catalog.value, {}),
+    });
+    profiles.value = hydrateProfiles(list || store.profiles || []);
+    const created =
+      profiles.value.find((profile) => profile.name === name) ||
+      profiles.value[profiles.value.length - 1];
+    if (created) {
+      mode.value = "profile";
+      selectProfile(created.id || created._id);
+    }
+    $q.notify({ type: "positive", message: "Perfil creado correctamente." });
+  } catch (e) {
+    $q.notify({
+      type: "negative",
+      message: e?.message || "No se pudo crear el perfil.",
+    });
+  }
+};
+
+const onDuplicateProfile = async (profile) => {
+  const name = await promptProfileName(
+    "Duplicar perfil",
+    `Se creará una copia editable de "${profile.name}".`,
+    `Copia de ${profile.name}`
+  );
+  if (!name) return;
+
+  try {
+    const list = await store.createProfile?.({
+      name,
+      map: buildPermissionMap(catalog.value, profile?.map || {}),
+    });
+    profiles.value = hydrateProfiles(list || store.profiles || []);
+    const created =
+      profiles.value.find((item) => item.name === name) ||
+      profiles.value[profiles.value.length - 1];
+    if (created) {
+      mode.value = "profile";
+      selectProfile(created.id || created._id);
+    }
+    $q.notify({ type: "positive", message: "Perfil duplicado correctamente." });
+  } catch (e) {
+    $q.notify({
+      type: "negative",
+      message: e?.message || "No se pudo duplicar el perfil.",
+    });
+  }
+};
+
+const onRemoveProfile = (id) => {
+  const profile = profiles.value.find((item) => (item.id || item._id) === id);
+  $q.dialog({
+    title: "Eliminar perfil",
+    message: `Se eliminará "${profile?.name || "este perfil"}". Esta acción no se puede deshacer.`,
+    cancel: true,
+    persistent: true,
+    ok: { label: "Eliminar", color: "negative", unelevated: true },
+    cancel: { label: "Cancelar", flat: true },
+  }).onOk(async () => {
+    try {
+      const list = await store.deleteProfile?.(id);
+      profiles.value = hydrateProfiles(list || store.profiles || []);
+      if (selectedProfileId.value === id) {
+        selectedProfileId.value = null;
+        inlineProfileName.value = "";
+        syncWorkingMaps({});
+      }
+      $q.notify({ type: "positive", message: "Perfil eliminado." });
+    } catch (e) {
+      $q.notify({
+        type: "negative",
+        message: e?.message || "No se pudo eliminar el perfil.",
+      });
+    }
   });
+};
 const onPreviewProfile = (p) => {
   profileToApply.value = p.id || p._id;
   highlightSource.value = "profile";
@@ -499,11 +644,12 @@ const saveInlineProfileName = async () => {
     const p = profiles.value.find((x) => (x.id || x._id) === id);
     const newName = inlineProfileName.value || p?.name;
     if (store.updateProfile) {
-      profiles.value = await store.updateProfile({
+      const list = await store.updateProfile({
         id,
         name: newName,
         map: workingPerms.value,
       });
+      profiles.value = hydrateProfiles(list || store.profiles || []);
     } else {
       const idx = profiles.value.findIndex((x) => (x.id || x._id) === id);
       if (idx >= 0)
@@ -540,9 +686,11 @@ const onToggleCat = (name) => {
   persistCollapsed();
 };
 const onBulkSet = (val) => {
-  const m = {};
-  for (const it of catalog.value.items || []) m[it.key] = val;
-  workingPerms.value = m;
+  const next = buildPermissionMap(catalog.value, workingPerms.value);
+  for (const item of catalog.value.items || []) {
+    next[item.key] = val;
+  }
+  workingPerms.value = next;
 };
 
 /* ===== Guardar / Descartar ===== */
@@ -556,11 +704,12 @@ const onSave = async () => {
         (x) => (x.id || x._id) === selectedProfileId.value
       );
       if (p && store.updateProfile) {
-        profiles.value = await store.updateProfile({
+        const list = await store.updateProfile({
           id: p.id || p._id,
           name: inlineProfileName.value || p.name,
           map: workingPerms.value,
         });
+        profiles.value = hydrateProfiles(list || store.profiles || []);
       }
     } else {
       return $q.notify({
@@ -568,7 +717,7 @@ const onSave = async () => {
         message: "Seleccione un objetivo (Usuario o Perfil).",
       });
     }
-    baseSnapshot.value = { ...workingPerms.value };
+    baseSnapshot.value = buildPermissionMap(catalog.value, workingPerms.value);
     $q.notify({
       type: "positive",
       message: "Permisos guardados correctamente.",
@@ -580,7 +729,7 @@ const onSave = async () => {
   }
 };
 const onDiscard = () => {
-  workingPerms.value = { ...baseSnapshot.value };
+  workingPerms.value = buildPermissionMap(catalog.value, baseSnapshot.value);
   $q.notify({ type: "info", message: "Cambios descartados." });
 };
 
@@ -590,7 +739,7 @@ const onOpenApplyWizard = () => {
   showApplyDialog.value = true;
 };
 const onApplyMerged = ({ merged, summary, profileId, policy }) => {
-  workingPerms.value = merged;
+  workingPerms.value = buildPermissionMap(catalog.value, merged);
   highlightSource.value = null;
   showDiffs.value = false;
   showConflicts.value = false;
@@ -612,8 +761,7 @@ const onModeChange = () => {
   selectedUser.value = null;
   selectedProfileId.value = null;
   inlineProfileName.value = "";
-  workingPerms.value = {};
-  baseSnapshot.value = {};
+  syncWorkingMaps({});
   highlightSource.value = null;
   showDiffs.value = showConflicts.value = showChanges.value = false;
   nextTick(() => {

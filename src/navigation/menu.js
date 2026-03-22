@@ -6,16 +6,13 @@ export const MENU = [
     access: { roles: ['admin'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/admin/dashboard', exact: true },
-      { label: 'Usuarios', icon: 'people', to: '/admin/users' },
-      { label: 'Permisos', icon: 'lock', to: '/admin/permissions' },
-      { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance' },
-      { label: 'Empresas', icon: 'apartment', to: '/admin/companies' },
-      { label: 'Solicitudes', icon: 'assignment', to: '/admin/requests' },
-      { label: 'Liquidaciones', icon: 'payments', to: '/admin/payroll' },
-
-      // ✅ NUEVA
-      { label: 'Configuración Nómina', icon: 'percent', to: '/admin/payrollRates' },
-      // o: to: '/admin/payrollRates'
+      { label: 'Usuarios', icon: 'people', to: '/admin/users', access: { all: ['users:read'] } },
+      { label: 'Permisos', icon: 'lock', to: '/admin/permissions', access: { all: ['permissions:read'] } },
+      { label: 'Asistencias', icon: 'assignment_ind', to: '/admin/attendance', access: { all: ['attendance:read'] } },
+      { label: 'Empresas', icon: 'apartment', to: '/admin/companies', access: { all: ['companies:read'] } },
+      { label: 'Solicitudes', icon: 'assignment', to: '/admin/requests', access: { all: ['companies:read'] } },
+      { label: 'Liquidaciones', icon: 'payments', to: '/admin/payroll', access: { all: ['companies:read'] } },
+      { label: 'Configuración Nómina', icon: 'percent', to: '/admin/payrollRates', access: { all: ['companies:read'] } },
     ]
   },
 

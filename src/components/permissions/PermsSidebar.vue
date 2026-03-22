@@ -3,6 +3,9 @@
     <!-- === USUARIO ===================================================== -->
     <div v-if="mode === 'user'">
       <div class="rk-section-title q-mb-xs">Buscar usuario</div>
+      <div class="rk-section-help q-mb-sm">
+        Busca a la persona, revisa sus accesos y guarda solo cuando el resumen quede correcto.
+      </div>
       <q-input
         ref="userSearchRef"
         v-model="userQueryLocal"
@@ -44,6 +47,9 @@
 
       <!-- === APLICAR PERFIL ============================================ -->
       <div class="rk-section-title q-mb-xs">Aplicar perfil al usuario</div>
+      <div class="rk-section-help q-mb-sm">
+        Usa un perfil como punto de partida cuando quieras asignar permisos estándar sin partir desde cero.
+      </div>
 
       <!-- Buscador de perfiles -->
       <q-input
@@ -62,7 +68,7 @@
         <q-menu v-model="applyMenu" fit anchor="bottom left" self="top left" class="rk-menu">
           <q-list class="rk-suggest">
             <q-item
-              v-for="opt in profileOptions" :key="opt.value || opt.id"
+              v-for="opt in applyProfileMatches" :key="opt.value || opt.id"
               clickable v-ripple class="rk-suggest-item"
               @click="pickProfileToApply(opt)"
             >
@@ -73,7 +79,7 @@
               <q-item-section side><q-icon name="north_east" /></q-item-section>
             </q-item>
 
-            <div v-if="!profileOptions?.length && applyProfileQueryLocal" class="rk-empty-mini">
+            <div v-if="!applyProfileMatches.length && applyProfileQueryLocal" class="rk-empty-mini">
               <q-icon name="search_off" class="q-mr-xs" /> Sin resultados
             </div>
           </q-list>
@@ -121,6 +127,9 @@
         <div class="rk-section-title">Perfiles</div>
         <q-btn icon="add" color="primary" label="Nuevo" class="rk-btn rk-btn--pill" @click="emitCreateProfile" />
       </div>
+      <div class="rk-section-help q-mb-sm">
+        Crea perfiles claros por función, reutilízalos en usuarios similares y evita configurar permiso por permiso cada vez.
+      </div>
 
       <q-input
         v-model="profileQueryLocal"
@@ -148,6 +157,9 @@
               <q-item-label caption>Perfil</q-item-label>
             </q-item-section>
             <q-item-section side class="row items-center q-gutter-xs">
+              <q-btn flat round dense icon="visibility" class="rk-iconbtn" @click.stop="emitPreviewProfile(p)">
+                <q-tooltip>Comparar con este perfil</q-tooltip>
+              </q-btn>
               <q-btn flat round dense icon="content_copy" class="rk-iconbtn" @click.stop="emitDuplicateProfile(p)" />
               <q-btn flat round dense icon="delete" color="negative" class="rk-iconbtn" @click.stop="emitRemoveProfile(p.id || p._id)" />
             </q-item-section>
@@ -185,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref, watch, defineProps, defineEmits } from 'vue'
+import { computed, ref, watch, defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
   cardTone: { type: String, default: '' },
@@ -227,11 +239,25 @@ watch(() => props.profileQuery, v => { profileQueryLocal.value = v })
 watch(profileQueryLocal, v => emit('update:profileQuery', v))
 
 const profileToApplyLocal = ref(props.profileToApply)
-watch(() => props.profileToApply, v => { profileToApplyLocal.value = v })
+watch(() => props.profileToApply, v => {
+  profileToApplyLocal.value = v
+  const match = (props.profileOptions || []).find((option) => (option.value || option.id) === v)
+  applyProfileLabel.value = match ? (match.label || match.name || '') : ''
+})
 
 const applyProfileQueryLocal = ref('')
 const applyProfileLabel = ref('')
 const applyMenu = ref(false)
+const applyProfileMatches = computed(() => {
+  const query = applyProfileQueryLocal.value.trim().toLowerCase()
+  const options = props.profileOptions || []
+  if (!query) return options.slice(0, 10)
+  return options.filter((option) =>
+    String(option?.label || option?.name || "")
+      .toLowerCase()
+      .includes(query)
+  )
+})
 
 const highlightSourceLocal = ref(props.highlightSource)
 watch(() => props.highlightSource, v => { highlightSourceLocal.value = v })
@@ -289,7 +315,7 @@ const clearProfileToApply = () => {
   emit('update:profileToApply', null)
 }
 const tryPickFirstProfileToApply = () => {
-  const first = (props.profileOptions || [])[0]
+  const first = applyProfileMatches.value[0]
   if (first) pickProfileToApply(first)
 }
 
@@ -317,6 +343,7 @@ const initials = (label = '') => {
 
 /* Títulos */
 .rk-section-title{ color:#e9eaf0; font-weight:700; letter-spacing:.2px }
+.rk-section-help{ color:#aeb5c0; font-size:.9rem; line-height:1.35 }
 
 /* Campos */
 .rk-field :deep(.q-field),

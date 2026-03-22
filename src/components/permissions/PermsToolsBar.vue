@@ -16,6 +16,45 @@
 
       <!-- === ACCIONES + CONTADORES ===================================== -->
       <div class="rk-right">
+        <div class="rk-filters" aria-label="Filtros rápidos de permisos">
+          <q-btn
+            dense
+            flat
+            no-caps
+            icon="star"
+            label="Solo favoritos"
+            class="rk-filter rk-btn--pill"
+            :class="{ 'rk-filter--active': onlyFavs }"
+            @click="emit('update:onlyFavs', !onlyFavs)"
+          />
+
+          <q-btn
+            dense
+            flat
+            no-caps
+            icon="edit_note"
+            label="Solo modificados"
+            class="rk-filter rk-btn--pill"
+            :class="{ 'rk-filter--active': onlyChanged }"
+            @click="emit('update:onlyChanged', !onlyChanged)"
+          />
+
+          <q-btn
+            v-if="hasActiveFilters"
+            dense
+            flat
+            no-caps
+            icon="filter_alt_off"
+            label="Limpiar"
+            class="rk-filter rk-btn--pill"
+            @click="clearFilters"
+          />
+
+          <q-badge outline class="rk-visible-count">
+            {{ totalVisible }} visibles
+          </q-badge>
+        </div>
+
         <div class="rk-actions" aria-label="Acciones masivas sobre permisos">
           <!-- Permitir -->
           <q-btn
@@ -93,24 +132,33 @@
 </template>
 
 <script setup>
-import { ref, watch, defineProps, defineEmits } from "vue";
+import { computed, ref, watch, defineProps, defineEmits } from "vue";
 
 const props = defineProps({
   cardTone: { type: String, default: "" },
   editable: { type: Boolean, default: false },
   searchQ: { type: String, default: "" },
+  onlyFavs: { type: Boolean, default: false },
+  onlyChanged: { type: Boolean, default: false },
+  totalVisible: { type: Number, default: 0 },
   allowCount: { type: Number, default: 0 },
   denyCount: { type: Number, default: 0 },
   inheritCount: { type: Number, default: 0 },
 });
 
-const emit = defineEmits(["update:searchQ", "bulk-set"]);
+const emit = defineEmits([
+  "update:searchQ",
+  "update:onlyFavs",
+  "update:onlyChanged",
+  "bulk-set",
+]);
 
 const searchQLocal = ref(props.searchQ);
 watch(() => props.searchQ, v => { searchQLocal.value = v; });
 watch(searchQLocal, v => emit("update:searchQ", v));
 
 const selectedAction = ref(null); // 'allow' | 'deny' | 'inherit' | null
+const hasActiveFilters = computed(() => !!props.onlyFavs || !!props.onlyChanged || !!searchQLocal.value);
 
 const onBulk = (action) => {
   // Toggle: si vuelven a apretar el mismo, se des-selecciona visualmente
@@ -119,6 +167,11 @@ const onBulk = (action) => {
 };
 
 const emitSearch = () => emit("update:searchQ", searchQLocal.value);
+const clearFilters = () => {
+  searchQLocal.value = "";
+  emit("update:onlyFavs", false);
+  emit("update:onlyChanged", false);
+};
 </script>
 
 <style scoped>
@@ -143,6 +196,7 @@ const emitSearch = () => emit("update:searchQ", searchQLocal.value);
 .rk-right{
   display:flex; align-items:center; gap:12px;
   overflow: visible;                 /* <== evita recortes */
+  flex-wrap: wrap;
 }
 
 /* ====== Buscador ====== */
@@ -162,6 +216,30 @@ const emitSearch = () => emit("update:searchQ", searchQLocal.value);
   overflow: visible;                 /* <== muy importante */
   scrollbar-width:thin;
   padding-bottom:2px;
+}
+
+.rk-filters{
+  display:flex; align-items:center; gap:8px;
+  flex-wrap: wrap;
+}
+
+.rk-filter{
+  color: inherit;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+}
+
+.rk-filter--active{
+  color: #fff;
+  background: rgba(59,130,246,.22);
+  border-color: rgba(96,165,250,.45);
+}
+
+.rk-visible-count{
+  border-radius: 999px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .rk-btn{
@@ -247,4 +325,3 @@ const emitSearch = () => emit("update:searchQ", searchQLocal.value);
   .rk-btn{ --rk-h:34px; padding:0 10px }
 }
 </style>
-

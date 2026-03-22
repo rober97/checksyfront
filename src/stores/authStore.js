@@ -2,6 +2,13 @@
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
 import publicAxios from '@/utils/publicRequest'
+import {
+  hasAllPermissions,
+  hasAnyPermission,
+  hasPermission,
+  normalizeRole,
+  normalizePermissions,
+} from '@/utils/permissions'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -15,9 +22,11 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: (s) => !!s.token && !!s.user,
     role: (s) => s.user?.role || null,
-    permissions: (s) => s.user?.permissions || [],
-    hasRole: (s) => (r) => s.user?.role === r,
-    hasPermission: (s) => (perm) => (s.user?.permissions || []).includes(perm),
+    permissions: (s) => normalizePermissions(s.user?.permissions),
+    hasRole: (s) => (r) => normalizeRole(s.user?.role) === normalizeRole(r),
+    hasPermission: (s) => (perm) => hasPermission(s.user?.permissions, perm),
+    hasAnyPermission: (s) => (perms) => hasAnyPermission(s.user?.permissions, perms),
+    hasAllPermissions: (s) => (perms) => hasAllPermissions(s.user?.permissions, perms),
     getUser: (s) => s.user
   },
 

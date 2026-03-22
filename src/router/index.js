@@ -1,6 +1,7 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { hasAllPermissions, hasAnyPermission } from '@/utils/permissions'
 
 // ====== Layouts (eager: el shell carga rápido)
 import AdminLayout from '@/layouts/AdminLayout.vue'
@@ -51,16 +52,12 @@ const hasRequiredRole = (userRole, requiredRoles) => {
   return requiredRoles.map(normalizeRole).includes(target)
 }
 
-// const hasPermissions = (auth, requiredPerms = [], mode = DEFAULT_PERMS_MODE) => {
-//   if (!requiredPerms.length) return true
-//   const check = (p) => auth?.hasPermission?.(p) === true
-//   return mode === 'any' ? requiredPerms.some(check) : requiredPerms.every(check)
-// }
-
 const hasPermissions = (auth, requiredPerms = [], mode = DEFAULT_PERMS_MODE) => {
   if (!requiredPerms.length) return true
-  const check = (p) => auth?.hasPermission?.(p) === true
-  return true
+  const granted = auth?.permissions || auth?.user?.permissions || []
+  return mode === 'any'
+    ? hasAnyPermission(granted, requiredPerms)
+    : hasAllPermissions(granted, requiredPerms)
 }
 
 const isInternalPath = (p) => typeof p === 'string' && p.startsWith('/') && !p.startsWith('//')
