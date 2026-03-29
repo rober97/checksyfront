@@ -300,7 +300,7 @@
           <q-btn icon="close" flat round dense size="sm" v-close-popup />
         </div>
 
-        <q-card-section class="q-pt-sm q-pb-none">
+        <q-card-section class="q-pt-sm q-pb-none rk-dlg-body">
 
           <!-- MODO CREAR: tabs catálogo / manual -->
           <template v-if="!editingId">
@@ -325,6 +325,7 @@
                         <div class="rk-preset-name">
                           {{ p.nombre }}
                           <span v-if="p.legal" class="rk-tag rk-tag--warn">Obligatorio</span>
+                          <span v-else-if="p.conditional" class="rk-tag rk-tag--muted">Condicional</span>
                           <span v-else-if="p.recomendado" class="rk-tag rk-tag--muted">Recomendado</span>
                         </div>
                         <div class="rk-muted rk-small">{{ p.descripcion }}</div>
@@ -613,6 +614,7 @@ const PRESETS = [
   { id: "afp",          emoji: "🏦", nombre: "AFP",                descripcion: "Cotización previsional obligatoria (~10–12%)",tipo: "DEDUCTION",origen: "CALC", calcKey: "AFP_WORKER",          taxable: false, prorate: false, order: 100, categoria: "descuentos_legales", recomendado: true, legal: true },
   { id: "salud",        emoji: "🏥", nombre: "Salud",              descripcion: "Descuento de salud obligatorio (7%)",        tipo: "DEDUCTION",origen: "CALC", calcKey: "HEALTH_WORKER",       taxable: false, prorate: false, order: 110, categoria: "descuentos_legales", recomendado: true, legal: true },
   { id: "cesantia",     emoji: "🛡️", nombre: "Seguro de cesantía", descripcion: "Seguro de desempleo obligatorio (0.6%)",     tipo: "DEDUCTION",origen: "CALC", calcKey: "CESANTIA_WORKER",     taxable: false, prorate: false, order: 120, categoria: "descuentos_legales", recomendado: true, legal: true },
+  { id: "impuesto_renta", emoji: "🧾", nombre: "Impuesto a la renta", descripcion: "Impuesto único de segunda categoría; aplícalo solo a trabajadores afectos y cuando corresponda por tramo", tipo: "DEDUCTION", origen: "CALC", calcKey: "IU", taxable: false, prorate: false, order: 130, categoria: "descuentos_legales", recomendado: false, conditional: true },
 ];
 const LEGAL_IDS = ["afp", "salud", "cesantia"];
 const catalogoCats = [
@@ -653,6 +655,7 @@ const calcPresetOptions = [
   { label: "AFP (trabajador)", value: "AFP_WORKER" },
   { label: "Salud (trabajador)", value: "HEALTH_WORKER" },
   { label: "Seguro de cesantía (trabajador)", value: "CESANTIA_WORKER" },
+  { label: "Impuesto único / renta", value: "IU" },
   { label: "Otro (avanzado)", value: "__CUSTOM__" },
 ];
 const paramPresetOptions = [
@@ -1049,9 +1052,20 @@ async function saveOne() {
 /* ──────────────────────────── TABLA ── */
 .rk-table-wrap {
   background: var(--c-surface); border: 1px solid var(--c-border);
-  border-radius: 12px; overflow: hidden;
+  border-radius: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable both-edges;
 }
-.rk-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.rk-table-wrap::-webkit-scrollbar {
+  height: 10px;
+}
+.rk-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--c-border-strong);
+  border-radius: 999px;
+}
+.rk-table { width: 100%; min-width: 920px; border-collapse: collapse; font-size: 0.83rem; }
 .rk-table thead tr { background: var(--c-surface-2); border-bottom: 1px solid var(--c-border); }
 .rk-table th {
   padding: 9px 11px; text-align: left;
@@ -1062,15 +1076,30 @@ async function saveOne() {
 .col-code    { width: 110px; }
 .col-flag    { width: 76px; }
 .col-order   { width: 72px; }
-.col-actions { width: 72px; }
+.col-actions { width: 88px; }
 
 .rk-table tbody tr { border-bottom: 1px solid var(--c-border); transition: background 0.1s; }
 .rk-table tbody tr:last-child { border-bottom: none; }
 .rk-table tbody tr:hover { background: var(--c-surface-2); }
 .rk-table td { padding: 8px 11px; vertical-align: middle; }
+.rk-table th.col-actions,
+.rk-table td.col-actions {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--c-surface);
+  box-shadow: -10px 0 16px -16px rgba(15, 23, 42, 0.65);
+}
+.rk-table thead .col-actions {
+  background: var(--c-surface-2);
+  z-index: 3;
+}
 
 .rk-row--inactive { opacity: 0.45; }
 .rk-row--patched  { background: rgba(30, 64, 175, 0.03) !important; }
+.rk-row--patched td.col-actions {
+  background: var(--c-surface);
+}
 
 .rk-empty {
   padding: 52px; text-align: center; color: var(--c-ink-4);
@@ -1161,7 +1190,15 @@ async function saveOne() {
 .rk-savebar-anim-enter-from, .rk-savebar-anim-leave-to { transform: translateY(80px); opacity: 0; }
 
 /* ──────────────────────────── DIALOGS ── */
-.rk-dlg    { width: 760px; max-width: 94vw; border-radius: 16px !important; overflow: hidden; }
+.rk-dlg    {
+  width: 760px;
+  max-width: 94vw;
+  max-height: min(88vh, 820px);
+  border-radius: 16px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 .rk-dlg-sm { width: 440px; max-width: 92vw; border-radius: 14px !important; overflow: hidden; }
 .rk-dlg-header {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -1176,6 +1213,20 @@ async function saveOne() {
 .rk-dlg-icon--edit   { background: var(--c-surface-3);   color: var(--c-ink-2);  border: 1px solid var(--c-border); }
 .rk-dlg-icon--delete { background: var(--c-deduct-bg);   color: var(--c-deduct); border: 1px solid var(--c-deduct-border); }
 .rk-dlg-title        { font-weight: 700; font-size: 0.98rem; color: var(--c-ink); }
+.rk-dlg-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.rk-dlg-body::-webkit-scrollbar {
+  width: 8px;
+}
+.rk-dlg-body::-webkit-scrollbar-thumb {
+  background: var(--c-border-strong);
+  border-radius: 999px;
+}
 .rk-dlg-footer       { border-top: 1px solid var(--c-border); }
 .rk-tabs             { border-bottom: 1px solid var(--c-border); margin-bottom: 2px; }
 
@@ -1280,5 +1331,6 @@ async function saveOne() {
   .rk-onboarding      { padding: 24px 16px; }
   .rk-legend-sep      { display: none; }
   .rk-onboarding-legend { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .rk-dlg             { max-height: 92vh; }
 }
 </style>

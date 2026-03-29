@@ -125,6 +125,13 @@
             {{ Number(form.payroll.cargasFamiliares || 0) }}
           </div>
         </div>
+
+        <div class="rk-kpi" v-if="isEmployee">
+          <div class="rk-kpi-label">Imp. renta</div>
+          <div class="rk-kpi-value">
+            {{ form.payroll.incomeTaxApplies === false ? 'Exento' : 'Afecto' }}
+          </div>
+        </div>
       </div>
 
       <!-- Detalle compacto si hay Isapre -->
@@ -136,6 +143,16 @@
         <span class="text-caption">
           Plan: <b>{{ form.payroll.isaprePlan || '—' }}</b>
           <span v-if="form.payroll.isapreUf"> · {{ form.payroll.isapreUf }} UF</span>
+        </span>
+      </div>
+
+      <div
+        v-if="isEmployee && form.payroll.incomeTaxApplies === false && form.payroll.incomeTaxNote"
+        class="rk-compact"
+      >
+        <q-icon name="receipt_long" size="16px" class="q-mr-xs" />
+        <span class="text-caption">
+          Exención tributaria: <b>{{ form.payroll.incomeTaxNote }}</b>
         </span>
       </div>
     </div>

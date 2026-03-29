@@ -166,7 +166,7 @@
           </div>
           <div class="rk-section-title-wrap">
             <h4 class="rk-section-title">Rol del usuario</h4>
-            <p class="rk-section-desc">Define los permisos y accesos</p>
+            <p class="rk-section-desc">Define el tipo de perfil dentro del sistema</p>
           </div>
         </div>
 

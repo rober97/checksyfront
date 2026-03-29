@@ -1,6 +1,105 @@
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
 import { API_URL } from '@/utils/api'
+import { normalizeDecimal, normalizeMoney } from '@/utils/format'
+
+function cleanText(value, fallback = null) {
+  if (value === null || value === undefined) return fallback
+  const text = String(value).trim()
+  return text === '' ? fallback : text
+}
+
+function normalizeRole(role) {
+  const value = cleanText(role, '')?.toLowerCase()
+
+  if (value === 'employee') return 'empleado'
+  if (value === 'company') return 'empresa'
+
+  return value || 'empleado'
+}
+
+function hasPayrollData(payroll = {}) {
+  return Object.values(payroll).some((value) => {
+    if (value === null || value === undefined) return false
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'number') return value !== 0
+    return String(value).trim() !== ''
+  })
+}
+
+function normalizePayroll(payroll = {}, role = 'empleado') {
+  const baseSalary = normalizeMoney(payroll?.baseSalary || 0)
+  const contractType = cleanText(payroll?.contractType, '')
+  const jornada = cleanText(payroll?.jornada, '')
+  const startDate = cleanText(payroll?.startDate, null)
+  const afpEntityId = cleanText(payroll?.afpEntityId, null)
+  const healthEntityId = cleanText(payroll?.healthEntityId, null)
+  const saludSistema = cleanText(payroll?.saludSistema, null)
+  const isaprePlan = cleanText(payroll?.isaprePlan, null)
+  const isapreUf = Number(normalizeDecimal(payroll?.isapreUf || 0))
+  const apv = normalizeMoney(payroll?.apv || 0)
+  const cargasFamiliares = Number(payroll?.cargasFamiliares || 0)
+  const incomeTaxNote = cleanText(payroll?.incomeTaxNote, '') || ''
+  const explicitIncomeTax = typeof payroll?.incomeTaxApplies === 'boolean'
+    ? payroll.incomeTaxApplies
+    : null
+
+  const isEmployee = role === 'empleado'
+  const incomeTaxApplies = explicitIncomeTax ?? (isEmployee && incomeTaxNote === '' && baseSalary > 0)
+
+  const normalized = {
+    baseSalary,
+    contractType,
+    jornada,
+    startDate,
+    afpEntityId,
+    healthEntityId,
+    saludSistema,
+    isaprePlan,
+    isapreUf,
+    apv,
+    cargasFamiliares,
+    incomeTaxApplies: isEmployee ? incomeTaxApplies : false,
+    incomeTaxNote: isEmployee && !incomeTaxApplies ? incomeTaxNote : '',
+    banco: cleanText(payroll?.banco, ''),
+    tipoCuenta: cleanText(payroll?.tipoCuenta, ''),
+    numeroCuenta: cleanText(payroll?.numeroCuenta, ''),
+    gratificacion: normalizeMoney(payroll?.gratificacion || 0),
+    bonoColacion: normalizeMoney(payroll?.bonoColacion || 0),
+    bonoMovilizacion: normalizeMoney(payroll?.bonoMovilizacion || 0),
+    descuentoPrestamo: normalizeMoney(payroll?.descuentoPrestamo || 0),
+  }
+
+  if (!isEmployee && !hasPayrollData(normalized)) return null
+
+  return normalized
+}
+
+function normalizeCreateUserPayload(userData = {}) {
+  const role = normalizeRole(userData?.role)
+
+  return {
+    firstName: cleanText(userData?.firstName, '') || '',
+    lastName: cleanText(userData?.lastName, '') || '',
+    email: cleanText(userData?.email, '')?.toLowerCase() || '',
+    password: userData?.password || '',
+    rut: cleanText(userData?.rut, null),
+    role,
+    company: cleanText(userData?.company, null),
+    workSchedule: cleanText(userData?.workSchedule, null),
+    phone: cleanText(userData?.phone, null),
+    emergencyContact: cleanText(userData?.emergencyContact, null),
+    address: {
+      line1: cleanText(userData?.address?.line1, '') || '',
+      commune: cleanText(userData?.address?.commune, '') || '',
+      city: cleanText(userData?.address?.city, '') || '',
+      region: cleanText(userData?.address?.region, '') || '',
+    },
+    permissions: Array.isArray(userData?.permissions) ? userData.permissions : [],
+    payroll: normalizePayroll(userData?.payroll, role),
+    invite: Boolean(userData?.invite),
+  }
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -61,7 +160,8 @@ export const useUserStore = defineStore('user', {
       this.error = null
 
       try {
-        const res = await secureAxios.post(`${API_URL}/users`, userData)
+        const payload = normalizeCreateUserPayload(userData)
+        const res = await secureAxios.post(`${API_URL}/users`, payload)
         const data = res?.data
 
         // Define qué consideras "OK"
