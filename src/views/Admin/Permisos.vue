@@ -771,183 +771,143 @@ const onModeChange = () => {
 </script>
 
 <style scoped>
-/* ===== Layout 100vh con scrolls internos ===== */
-.rk-perm {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-attachment: fixed;
-}
-.rk-head {
-  flex: 0 0 auto;
-  padding: 12px 10px;
-  border-radius: 16px;
-  margin: 12px;
-  margin-bottom: 8px;
-  background: linear-gradient(
-    180deg,
-    rgba(120, 120, 120, 0.1),
-    rgba(120, 120, 120, 0.03)
-  );
-  backdrop-filter: blur(10px) saturate(1.15);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
+/* ── Variables de tema ───────────────────────────────────────────── */
 .rk-banner {
-  flex: 0 0 auto;
-  margin: 0 12px 8px;
+  --b-bg:      #ffffff;
+  --b-border:  rgba(6,182,212,.14);
+  --b-shadow:  0 4px 16px rgba(6,182,212,.07), 0 1px 4px rgba(0,0,0,.04);
+  --b-divider: rgba(6,182,212,.18);
+  --b-title:   rgba(15,23,42,.85);
+  --b-muted:   rgba(15,23,42,.48);
+  --b-icon:    #06b6d4;
+  --b-h:       44px;
+}
+.body--dark .rk-banner {
+  --b-bg:      rgba(10,16,28,.97);
+  --b-border:  rgba(6,182,212,.18);
+  --b-shadow:  0 4px 20px rgba(0,0,0,.35);
+  --b-divider: rgba(6,182,212,.22);
+  --b-title:   rgba(255,255,255,.90);
+  --b-muted:   rgba(255,255,255,.45);
+  --b-icon:    #22d3ee;
+}
+
+/* ── Banner card ─────────────────────────────────────────────────── */
+.rk-banner {
   border-radius: 18px;
-  border: 1px solid rgba(127, 127, 127, 0.12);
-  background: linear-gradient(
-    180deg,
-    rgba(127, 127, 127, 0.05),
-    rgba(127, 127, 127, 0.02)
-  );
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--b-border);
+  background: var(--b-bg);
+  box-shadow: var(--b-shadow);
+  margin-bottom: 10px;
 }
-.rk-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 0 12px 12px;
+
+/* ── Row y grupos ────────────────────────────────────────────────── */
+.rk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: var(--b-h);
 }
-.rk-col-side,
-.rk-col-main {
+.rk-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Divisor vertical ────────────────────────────────────────────── */
+.rk-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--b-divider);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ── Toggle de modo ──────────────────────────────────────────────── */
+.rk-modes :deep(.q-btn) {
+  border-radius: 10px;
+  font-size: .82rem;
+  font-weight: 700;
+  height: 36px;
+  min-height: 36px;
+}
+.rk-modes :deep(.q-btn--active) {
+  box-shadow: 0 4px 12px rgba(6,182,212,.25);
+}
+
+/* ── Chips ───────────────────────────────────────────────────────── */
+.rk-chip {
+  height: 34px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.rk-chip-empty {
+  color: var(--b-muted);
+  border-color: var(--b-divider);
+}
+.rk-chip :deep(.q-chip__content) { gap: 4px; }
+
+/* ── Inline rename ───────────────────────────────────────────────── */
+.rk-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rk-inline :deep(.q-field__control) {
+  height: 36px;
+  min-height: 36px;
+  border-radius: 10px;
+  font-size: .83rem;
+}
+.rk-inline-name { width: 190px; }
+
+/* ── Leyenda ─────────────────────────────────────────────────────── */
+.rk-legend {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.rk-badge {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Separador vertical ──────────────────────────────────────────── */
+.rk-sep { opacity: .3; background: var(--b-divider); }
+
+/* ── Botones de acción ───────────────────────────────────────────── */
+.rk-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+}
+.rk-btn-main {
+  padding: 0 20px;
+  font-weight: 700;
+}
+.rk-btn-save-inline {
+  width: 36px;
+  height: 36px;
+}
+
+/* ── Layout cuerpo ───────────────────────────────────────────────── */
+.rk-body { flex: 1 1 auto; min-height: 0; padding: 0 0 12px; }
+.rk-col-side, .rk-col-main {
   height: 100%;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-.rk-modes :deep(.q-btn) {
-  border-radius: 12px;
-}
-.rk-modes :deep(.q-btn--active) {
-  box-shadow: 0 6px 14px rgba(33, 150, 243, 0.25);
-}
-
-/* Decoración y microinteracciones */
-.rk-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: radial-gradient(
-    circle at 30% 20%,
-    rgba(33, 150, 243, 0.38),
-    rgba(33, 150, 243, 0) 68%
-  );
-  border: 1px solid rgba(33, 150, 243, 0.28);
-  color: var(--q-primary);
-  box-shadow: inset 0 0 16px rgba(33, 150, 243, 0.15);
-}
-.rk-sub {
-  font-size: 0.8rem;
-  opacity: 0.82;
-  margin-top: -1px;
-}
-.rk-ghost {
-  border-radius: 10px;
-  transition: transform 0.08s ease, background 0.15s ease;
-}
-.rk-ghost:hover {
-  transform: translateY(-1px);
-  background: rgba(127, 127, 127, 0.06);
-}
-.rk-divider {
-  width: 1px;
-  height: 24px;
-  background: rgba(127, 127, 127, 0.18);
-  margin: 0 6px;
-}
-.rk-tight {
-  padding: 2px 8px;
-}
-.rk-inline-name {
-  width: 220px;
-}
-
-/* Leyenda */
-.rk-legend :deep(.q-badge) {
-  border-radius: 8px;
-  backdrop-filter: saturate(1.1);
-}
-
-/* Theming */
-.body--light .rk-head {
-  background: linear-gradient(
-    180deg,
-    rgba(33, 150, 243, 0.08),
-    rgba(33, 150, 243, 0.02)
-  );
-}
-.body--dark .rk-head {
-  background: linear-gradient(
-    180deg,
-    rgba(33, 150, 243, 0.12),
-    rgba(33, 150, 243, 0.04)
-  );
-}
-
-/* ===== CONFIG DE ALTURA UNIFORME ===== */
-.rk-bar { --rk-h: 40px; }               /* alto total de la barra */
-.rk-bar .rk-row {
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-}
-.rk-bar .rk-group { display:flex; align-items:center; gap:12px; }
-.rk-divider { width:1px; height:24px; background:rgba(255,255,255,.15); border-radius:1px; }
-
-/* ===== Forzar altura y centrado en TODO ===== */
-.rk-bar :deep(.rk-item),
-.rk-bar :deep(.q-btn),
-.rk-bar :deep(.q-btn-toggle),
-.rk-bar :deep(.q-chip),
-.rk-bar :deep(.q-input),
-.rk-bar :deep(.q-field),
-.rk-bar :deep(.q-field__control) {
-  height: var(--rk-h) !important;
-  min-height: var(--rk-h) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  margin: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 1 !important;
-  vertical-align: middle !important;
-}
-
-/* Contenido interno realmente centrado */
-.rk-bar :deep(.q-btn__content,
-              .q-btn-toggle__content,
-              .q-chip__content,
-              .q-field__native,
-              .q-field__control,
-              .q-icon,
-              .rk-center) {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
-}
-
-/* Botón Guardar: elimina el “bajón” por min-height en em */
-.rk-bar :deep(.q-btn.q-btn--rectangle) { min-height: var(--rk-h) !important; }
-.rk-bar :deep(.rk-btn-main) { padding-inline:18px; transform: translateY(0) !important; }
-
-/* ===== Badges (que se veían bajos) ===== */
-.rk-bar :deep(.rk-legend) { display:flex; gap:8px; }
-.rk-bar :deep(.rk-badge) {
-  height: var(--rk-h) !important;      /* mismos 40px para alinear baseline */
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  padding:0 12px !important;
-  line-height:1 !important;
-  border-radius:999px !important;
-}
-
-/* Separador vertical al centro */
-.rk-bar :deep(.rk-sep) { align-self:center; height: var(--rk-h) !important; opacity:.35; }
-
-/* Renombrado inline */
-.rk-inline { display:flex; align-items:center; gap:8px; }
-.rk-inline .q-input { width: 190px; }
-
 </style>

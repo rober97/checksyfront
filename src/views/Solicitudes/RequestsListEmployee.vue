@@ -1,26 +1,33 @@
 <template>
-  <q-page class="q-pa-md" :class="pageBgClass">
-    <!-- ===== Header unificado ===== -->
-    <PageHeader
-      icon="assignment_turned_in"
-      title="Mis Solicitudes"
-      help-text="AYUDA"
-      :help-to="{ name: 'help.requests' }"
-    >
-      <template #subtitle>
-        Revisa y gestiona tus solicitudes creadas.
-      </template>
-      <template #right>
-        <q-btn
-          color="primary"
-          unelevated
-          icon="add"
-          label="Nueva solicitud"
-          :to="{ name: 'requests.new' }"
-          class="rk-cta"
-        />
-      </template>
-    </PageHeader>
+  <q-page class="q-pa-md rk-requests-page" :class="pageBgClass">
+    <div class="rk-page-bg" aria-hidden="true">
+      <div class="rk-page-orb rk-page-orb--primary"></div>
+      <div class="rk-page-orb rk-page-orb--accent"></div>
+      <div class="rk-page-grid"></div>
+    </div>
+
+    <div class="rk-page-shell">
+      <!-- ===== Header unificado ===== -->
+      <PageHeader
+        icon="assignment_turned_in"
+        title="Mis Solicitudes"
+        help-text="AYUDA"
+        :help-to="{ name: 'help.requests' }"
+      >
+        <template #subtitle>
+          Revisa y gestiona tus solicitudes creadas.
+        </template>
+        <template #right>
+          <q-btn
+            color="primary"
+            unelevated
+            icon="add"
+            label="Nueva solicitud"
+            :to="{ name: 'requests.new' }"
+            class="rk-cta"
+          />
+        </template>
+      </PageHeader>
 
     <!-- ===== Toolbar (sticky) ===== -->
     <div ref="toolbarSentinel" class="rk-sentinel" />
@@ -66,12 +73,14 @@
           outline
           :label="dateRangeLabel"
           icon="event"
+          class="rk-toolbar-dropdown"
+          content-class="rk-toolbar-popup"
         >
-          <div class="q-pa-md" style="min-width: 320px">
+          <div class="q-pa-md rk-date-panel" style="min-width: 320px">
             <div class="text-caption text-weight-medium q-mb-sm">
               Rango de fechas
             </div>
-            <q-date v-model="dateRange" range mask="YYYY-MM-DD">
+            <q-date v-model="dateRange" range mask="YYYY-MM-DD" class="rk-date-picker">
               <div class="row items-center justify-between q-pa-sm">
                 <q-btn
                   flat
@@ -110,12 +119,14 @@
     </div>
 
     <!-- ===== Métricas grandes ===== -->
-    <div class="row q-col-gutter-md q-mb-md">
+    <div class="row q-col-gutter-md q-mb-md rk-metrics-row">
       <div class="col-6 col-md-3">
         <q-card class="rk-metric-card bg-primary-gradient text-white">
           <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-icon name="assignment" size="32px" class="q-mr-sm" />
+            <div class="row items-center no-wrap">
+              <div class="rk-metric-icon-wrap">
+                <q-icon name="assignment" size="28px" />
+              </div>
               <div class="col">
                 <div class="text-h5 text-weight-bold">{{ totalCount }}</div>
                 <div class="text-caption">Total solicitadas</div>
@@ -127,8 +138,10 @@
       <div class="col-6 col-md-3">
         <q-card class="rk-metric-card bg-orange-gradient text-white">
           <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-icon name="schedule" size="32px" class="q-mr-sm" />
+            <div class="row items-center no-wrap">
+              <div class="rk-metric-icon-wrap">
+                <q-icon name="schedule" size="28px" />
+              </div>
               <div class="col">
                 <div class="text-h5 text-weight-bold">{{ pendingCount }}</div>
                 <div class="text-caption">Pendientes</div>
@@ -140,8 +153,10 @@
       <div class="col-6 col-md-3">
         <q-card class="rk-metric-card bg-positive-gradient text-white">
           <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-icon name="check_circle" size="32px" class="q-mr-sm" />
+            <div class="row items-center no-wrap">
+              <div class="rk-metric-icon-wrap">
+                <q-icon name="check_circle" size="28px" />
+              </div>
               <div class="col">
                 <div class="text-h5 text-weight-bold">{{ approvedCount }}</div>
                 <div class="text-caption">Aprobadas</div>
@@ -153,8 +168,10 @@
       <div class="col-6 col-md-3">
         <q-card class="rk-metric-card bg-negative-gradient text-white">
           <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-icon name="cancel" size="32px" class="q-mr-sm" />
+            <div class="row items-center no-wrap">
+              <div class="rk-metric-icon-wrap">
+                <q-icon name="cancel" size="28px" />
+              </div>
               <div class="col">
                 <div class="text-h5 text-weight-bold">{{ rejectedCount }}</div>
                 <div class="text-caption">Rechazadas</div>
@@ -215,6 +232,7 @@
                   dense
                   icon="visibility"
                   label="Ver detalle"
+                  class="rk-inline-action"
                   @click="verDetalle(r)"
                 />
               </q-card-actions>
@@ -223,7 +241,7 @@
 
           <div
             v-if="!rowsView.length"
-            class="full-width column items-center q-pa-xl rk-muted"
+            class="full-width column items-center q-pa-xl rk-muted rk-empty-state"
           >
             <q-icon name="assignment_turned_in" size="56px" class="q-mb-sm" />
             <div class="text-subtitle1 q-mb-xs">No hay solicitudes</div>
@@ -250,7 +268,7 @@
           @request="onRequest"
         >
           <template #no-data>
-            <div class="full-width column items-center q-pa-xl rk-muted">
+            <div class="full-width column items-center q-pa-xl rk-muted rk-empty-state">
               <q-icon name="assignment_turned_in" size="64px" class="q-mb-md" />
               <div class="text-subtitle1 q-mb-xs">No hay solicitudes</div>
               <div class="text-caption">Crea una con “Nueva solicitud”.</div>
@@ -306,6 +324,7 @@
         </DynamicDataTable>
       </q-card-section>
     </q-card>
+    </div>
   </q-page>
 </template>
 
@@ -509,6 +528,20 @@ const formatDuration = (start, end) => {
   return `${days} día${days !== 1 ? "s" : ""}`;
 };
 
+const verDetalle = (row) => {
+  const tipo = row?.tipo || tipoLabel(row?.type) || "Solicitud";
+  const estado = estadoLabel(row?.status) || row?.estado || "Pendiente";
+  const notas = row?.notas || row?.reason || "Sin notas";
+
+  $q.dialog({
+    title: tipo,
+    message: `Estado: ${estado}\nPeríodo: ${formatDate(
+      row?.fechaInicio || row?.startDate
+    )} - ${formatDate(row?.fechaFin || row?.endDate)}\nNotas: ${notas}`,
+    ok: { label: "Cerrar", color: "primary", unelevated: true },
+  });
+};
+
 /* Data fetch */
 const fetchServer = async () => {
   await store.fetchRequests({
@@ -537,33 +570,99 @@ onMounted(async () => {
 <style scoped>
 /* ===== Tokens mínimos ===== */
 :root {
-  --rk-border: rgba(0, 0, 0, 0.08);
-  --rk-card: #fff;
-  --rk-soft: #f5f7fb;
-  --rk-muted: #667085;
+  --rk-border: rgba(15, 23, 42, 0.08);
+  --rk-card: rgba(255, 255, 255, 0.88);
+  --rk-card-solid: #ffffff;
+  --rk-soft: #f3f8fb;
+  --rk-soft-2: #eef5f9;
+  --rk-soft-3: #e2edf5;
+  --rk-muted: #64748b;
+  --rk-title: #0f172a;
+  --rk-subtle-text: #334155;
+  --rk-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 .body--dark {
-  --rk-border: rgba(255, 255, 255, 0.08);
-  --rk-card: #101318;
-  --rk-soft: #0f1216;
-  --rk-muted: #9aa3b2;
+  --rk-border: rgba(148, 163, 184, 0.14);
+  --rk-card: rgba(15, 23, 42, 0.82);
+  --rk-card-solid: #0f172a;
+  --rk-soft: #111827;
+  --rk-soft-2: #172033;
+  --rk-soft-3: #1e293b;
+  --rk-muted: #94a3b8;
+  --rk-title: #e2e8f0;
+  --rk-subtle-text: #cbd5e1;
+  --rk-shadow: 0 24px 55px rgba(2, 6, 23, 0.36);
 }
 .rk-muted {
   color: var(--rk-muted);
 }
 
+.rk-requests-page {
+  position: relative;
+  overflow: hidden;
+}
+
+.rk-page-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rk-page-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.rk-page-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: 0.9;
+}
+
+.rk-page-orb--primary {
+  top: -80px;
+  right: -40px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.18), rgba(14, 165, 233, 0));
+}
+
+.rk-page-orb--accent {
+  left: -100px;
+  top: 180px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.14), rgba(16, 185, 129, 0));
+}
+
+.rk-page-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 78%);
+}
+
 /* ===== Gradientes y tonos ===== */
 .bg-primary-gradient {
-  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
 }
 .bg-orange-gradient {
-  background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+  background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%);
 }
 .bg-positive-gradient {
-  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  background: linear-gradient(135deg, #059669 0%, #34d399 100%);
 }
 .bg-negative-gradient {
-  background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
 }
 
 /* ===== Toolbar ===== */
@@ -572,55 +671,158 @@ onMounted(async () => {
 }
 .rk-toolbar {
   border: 1px solid var(--rk-border);
-  border-radius: 14px;
-  padding: 12px;
-  background: radial-gradient(
-      120% 120% at 0% 0%,
-      color-mix(in oklab, var(--q-primary) 8%, transparent),
-      transparent 60%
-    ),
+  border-radius: 20px;
+  padding: 14px 16px;
+  background:
+    radial-gradient(120% 160% at 0% 0%, rgba(14, 165, 233, 0.1), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.82)),
     var(--rk-card);
-  backdrop-filter: saturate(1.1) blur(6px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s;
+  backdrop-filter: saturate(1.15) blur(14px);
+  box-shadow: var(--rk-shadow);
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
 }
 .rk-toolbar.is-sticky {
   position: sticky;
   top: 56px;
-  z-index: 5;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  z-index: 8;
+  border-color: rgba(6, 182, 212, 0.22);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
+}
+.rk-toolbar :deep(.q-btn),
+.rk-toolbar :deep(.q-field__control) {
+  box-shadow: none;
 }
 .rk-modes :deep(.q-btn) {
+  min-height: 38px;
   border-radius: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--rk-subtle-text);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 .rk-modes :deep(.q-btn--active) {
-  box-shadow: 0 6px 14px rgba(33, 150, 243, 0.22);
+  background: linear-gradient(135deg, #0284c7, #06b6d4);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(8, 145, 178, 0.28);
 }
 .rk-mini-search {
-  min-width: 240px;
+  min-width: 260px;
 }
 .rk-pill :deep(.q-field__control) {
-  border-radius: 12px !important;
-  background: color-mix(in oklab, var(--rk-soft) 80%, transparent);
+  border-radius: 14px !important;
+  background: color-mix(in oklab, var(--rk-soft) 88%, transparent);
+}
+
+.rk-pill :deep(.q-field__control:before) {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+.rk-pill :deep(.q-field--focused .q-field__control:before),
+.rk-pill :deep(.q-field--focused .q-field__control:hover:before) {
+  border-color: rgba(6, 182, 212, 0.42) !important;
+}
+
+.rk-pill :deep(.q-field__native),
+.rk-pill :deep(.q-field__prepend) {
+  color: var(--rk-title);
+}
+
+.rk-metrics {
+  flex-wrap: wrap;
+}
+
+.rk-metrics :deep(.q-chip) {
+  border-radius: 999px;
+  padding-inline: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+.rk-toolbar-dropdown :deep(.q-btn) {
+  min-height: 42px;
+  border-radius: 14px;
+  padding-inline: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--rk-title);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+:deep(.rk-toolbar-popup) {
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
+}
+
+.rk-date-panel {
+  color: var(--rk-title);
+}
+
+.rk-date-picker {
+  border-radius: 18px;
+  background: transparent;
+}
+
+.rk-date-picker :deep(.q-date__header) {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.95), rgba(6, 182, 212, 0.92));
+  border-radius: 18px 18px 0 0;
+}
+
+.rk-date-picker :deep(.q-date__view),
+.rk-date-picker :deep(.q-date__calendar) {
+  background: transparent;
+}
+
+.rk-date-picker :deep(.q-date__calendar-item .q-btn) {
+  border-radius: 12px;
 }
 
 /* ===== Cards & tabla ===== */
 .rk-card {
-  border-radius: 16px;
+  border-radius: 24px;
   border: 1px solid var(--rk-border);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.92)),
+    var(--rk-card-solid);
+  box-shadow: var(--rk-shadow);
+  overflow: hidden;
 }
 .rk-item-card {
-  border-radius: 16px;
+  border-radius: 22px;
   overflow: hidden;
   position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96)),
+    var(--rk-card-solid);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.rk-item-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(6, 182, 212, 0.22);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
 }
 .rk-type-badge,
 .rk-status-badge {
-  border-radius: 8px;
+  border-radius: 999px;
   font-weight: 600;
-  padding: 6px 10px;
+  padding: 7px 12px;
   font-size: 0.8rem;
+}
+
+.rk-type-badge {
+  background: rgba(2, 132, 199, 0.1);
+  color: #0369a1;
+  border: 1px solid rgba(2, 132, 199, 0.12);
+}
+
+.rk-status-badge {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Strip lateral por estado */
@@ -635,47 +837,260 @@ onMounted(async () => {
   border-bottom-left-radius: 16px;
 }
 .rk-strip--ok::before {
-  background: #4caf50;
+  background: linear-gradient(180deg, #10b981, #34d399);
 }
 .rk-strip--bad::before {
-  background: #f44336;
+  background: linear-gradient(180deg, #ef4444, #f97316);
 }
 .rk-strip--pending::before {
-  background: #ff9800;
+  background: linear-gradient(180deg, #f59e0b, #fb923c);
 }
 
 /* Métricas */
+.rk-metrics-row {
+  position: relative;
+  z-index: 1;
+}
+
 .rk-metric-card {
-  border-radius: 16px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+}
+
+.rk-metric-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -30% -40% auto;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 72%);
+}
+
+.rk-metric-icon-wrap {
+  width: 48px;
+  height: 48px;
+  margin-right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
 }
 
 /* Tabla */
 .rk-compact :deep(thead tr) {
   background: #f8fafc;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
 }
 .body--dark .rk-compact :deep(thead tr) {
-  background: #1e293b;
-  border-bottom: 2px solid #475569;
+  background: #172033;
+  border-bottom: 1px solid #334155;
 }
 .rk-compact :deep(tbody tr:hover) {
   background: #f1f5f9;
 }
 .body--dark .rk-compact :deep(tbody tr:hover) {
-  background: #334155;
+  background: #1e293b;
+}
+
+.rk-compact :deep(th) {
+  color: var(--rk-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rk-compact :deep(td) {
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+.rk-compact :deep(.q-table__middle) {
+  background: transparent;
+}
+
+.rk-card :deep(.q-table__container) {
+  background: transparent;
+}
+
+.rk-card :deep(.q-table__middle),
+.rk-card :deep(.q-table__top),
+.rk-card :deep(.q-table__bottom) {
+  background: transparent;
+}
+
+.rk-card :deep(.q-table__bottom) {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  color: var(--rk-muted);
 }
 
 /* Utilidades */
 .rk-cta {
-  border-radius: 12px;
-  padding: 8px 12px;
+  min-height: 46px;
+  border-radius: 14px;
+  padding: 8px 16px;
+  box-shadow: 0 14px 28px rgba(6, 182, 212, 0.18);
 }
+
+.rk-inline-action {
+  border-radius: 12px;
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.rk-inline-action:hover {
+  background: rgba(2, 132, 199, 0.08);
+}
+
 .rk-notes-text {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
+  color: var(--rk-title);
+}
+
+.rk-empty-state {
+  min-height: 260px;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.72), rgba(241, 245, 249, 0.68));
+}
+
+.rk-empty-state .q-icon {
+  color: rgba(2, 132, 199, 0.7);
+}
+
+.soft-card {
+  backdrop-filter: blur(12px);
+}
+
+.body--dark .rk-toolbar {
+  background:
+    radial-gradient(120% 160% at 0% 0%, rgba(6, 182, 212, 0.16), transparent 38%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(17, 24, 39, 0.88)),
+    var(--rk-card);
+}
+
+.body--dark .rk-toolbar.is-sticky {
+  border-color: rgba(34, 211, 238, 0.22);
+  box-shadow: 0 22px 48px rgba(2, 6, 23, 0.4);
+}
+
+.body--dark .rk-card,
+.body--dark .rk-item-card {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.94)),
+    var(--rk-card-solid);
+}
+
+.body--dark .rk-metrics :deep(.q-chip) {
+  background: rgba(15, 23, 42, 0.76);
+}
+
+.body--dark .rk-modes :deep(.q-btn) {
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--rk-subtle-text);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+.body--dark .rk-pill :deep(.q-field__control) {
+  background: rgba(15, 23, 42, 0.78);
+}
+
+.body--dark .rk-pill :deep(.q-field__control:before) {
+  border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+.body--dark .rk-toolbar-dropdown :deep(.q-btn) {
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--rk-title);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.body--dark :deep(.rk-toolbar-popup) {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 30px 70px rgba(2, 6, 23, 0.55);
+}
+
+.body--dark .rk-pill :deep(.q-field__native),
+.body--dark .rk-pill :deep(.q-field__prepend),
+.body--dark .rk-notes-text {
+  color: #e2e8f0;
+}
+
+.body--dark .rk-date-panel {
+  color: var(--rk-title);
+}
+
+.body--dark .rk-type-badge {
+  background: rgba(14, 165, 233, 0.16);
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.18);
+}
+
+.body--dark .rk-inline-action {
+  color: #67e8f9;
+}
+
+.body--dark .rk-inline-action:hover {
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.body--dark .rk-empty-state {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(17, 24, 39, 0.68));
+}
+
+.body--dark .rk-empty-state .q-icon {
+  color: rgba(103, 232, 249, 0.76);
+}
+
+.body--dark .rk-card :deep(.q-table__bottom) {
+  border-top-color: rgba(148, 163, 184, 0.14);
+}
+
+@media (max-width: 1023px) {
+  .rk-toolbar {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .rk-page-shell {
+    gap: 16px;
+  }
+
+  .rk-toolbar {
+    border-radius: 18px;
+  }
+
+  .rk-mini-search {
+    min-width: 100%;
+  }
+
+  .rk-metric-card {
+    border-radius: 18px;
+  }
+
+  .rk-card {
+    border-radius: 20px;
+  }
+
+  .rk-item-card {
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-item-card,
+  .rk-toolbar,
+  .rk-cta {
+    transition: none;
+  }
 }
 </style>

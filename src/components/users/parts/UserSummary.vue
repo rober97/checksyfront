@@ -193,16 +193,13 @@ const initials = computed(() => {
 })
 
 const roleLabel = computed(() => {
-  if (form.tipo === 'admin') return 'Admin'
   if (form.tipo === 'empresa') return 'Empresa'
   if (form.tipo === 'empleado') return 'Empleado'
   return '—'
 })
 
 const roleColor = computed(() => {
-  return form.tipo === 'admin'
-    ? 'deep-purple-5'
-    : form.tipo === 'empresa'
+  return form.tipo === 'empresa'
     ? 'indigo-6'
     : form.tipo === 'empleado'
     ? 'teal-6'
@@ -232,7 +229,7 @@ const contractNice = computed(() => {
 /* Completitud dinámica */
 const completeness = computed(() => {
   const reqBase = ['firstName', 'lastName', 'email', 'password', 'tipo']
-  const reqCompany = form.tipo !== 'admin' ? ['empresa'] : []
+  const reqCompany = ['empresa']
   const reqEmp = form.tipo === 'empleado' ? ['rut', 'horarioLaboralId'] : []
   const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afpEntityId', 'payroll.healthEntityId']
 

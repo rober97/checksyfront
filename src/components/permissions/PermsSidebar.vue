@@ -332,81 +332,212 @@ const initials = (label = '') => {
 </script>
 
 <style scoped>
-/* ===== Card ===== */
-.rk-side{
-  flex:1 1 auto; min-height:0;
-  border-radius:18px;
-  border:1px solid rgba(127,127,127,.12);
-  background: linear-gradient(180deg,#2b2e33,#262a2f);
-  box-shadow:0 8px 24px rgba(0,0,0,.22);
+/* ── Variables de tema ───────────────────────────────────────────── */
+.rk-side {
+  --s-bg:          #ffffff;
+  --s-bg-soft:     rgba(6,182,212,.04);
+  --s-border:      rgba(6,182,212,.14);
+  --s-border-hover:rgba(6,182,212,.28);
+  --s-title:       rgba(15,23,42,.88);
+  --s-muted:       rgba(15,23,42,.52);
+  --s-help:        rgba(15,23,42,.48);
+  --s-item-hover:  rgba(6,182,212,.06);
+  --s-item-active: rgba(6,182,212,.11);
+  --s-item-ring:   rgba(6,182,212,.35);
+  --s-icon:        #06b6d4;
+  --s-input-r:     14px;
+  --s-shadow:      0 8px 28px rgba(6,182,212,.08), 0 2px 8px rgba(0,0,0,.05);
+}
+.body--dark .rk-side {
+  --s-bg:          rgba(10,16,28,.96);
+  --s-bg-soft:     rgba(6,182,212,.06);
+  --s-border:      rgba(6,182,212,.18);
+  --s-border-hover:rgba(6,182,212,.35);
+  --s-title:       rgba(255,255,255,.92);
+  --s-muted:       rgba(255,255,255,.48);
+  --s-help:        rgba(255,255,255,.42);
+  --s-item-hover:  rgba(6,182,212,.08);
+  --s-item-active: rgba(6,182,212,.16);
+  --s-item-ring:   rgba(6,182,212,.4);
+  --s-icon:        #22d3ee;
+  --s-shadow:      0 8px 32px rgba(0,0,0,.35);
 }
 
-/* Títulos */
-.rk-section-title{ color:#e9eaf0; font-weight:700; letter-spacing:.2px }
-.rk-section-help{ color:#aeb5c0; font-size:.9rem; line-height:1.35 }
-
-/* Campos */
-.rk-field :deep(.q-field),
-.rk-field :deep(.q-field__control){
-  --h: 44px; height:var(--h); min-height:var(--h);
-  border-radius:14px !important;
-}
-.rk-field :deep(.q-field__native){ padding:0 12px !important; line-height:1 !important }
-.rk-iconbtn{ opacity:.9 }
-.rk-iconbtn:hover{ background:rgba(255,255,255,.06) }
-
-/* Lista */
-.rk-list{ max-height:58vh }
-.rk-scroll{ overflow:auto; max-height:58vh; scroll-behavior:smooth }
-.rk-item{ border-radius:12px; padding:10px 10px !important; margin:4px 0 }
-.rk-item:hover{ background:rgba(255,255,255,.05) }
-.rk-item.q-item--active{ background:rgba(59,130,246,.12); outline:1px solid rgba(59,130,246,.35) }
-
-/* Sugerencias */
-.rk-menu{ border-radius:14px; overflow:hidden }
-.rk-suggest{ min-width:280px; max-height:50vh; overflow:auto }
-.rk-suggest-item{ padding:8px 10px }
-.rk-suggest-item:hover{ background:rgba(255,255,255,.06) }
-
-/* === Aplicar perfil: chip + botón + leyenda ========================= */
-.rk-apply-card{
-  border-radius:14px; padding:12px;
-  background:rgba(255,255,255,.035);
-  border:1px solid rgba(255,255,255,.08);
-}
-.rk-apply-row{
-  display:flex; align-items:center; gap:12px;
-}
-.rk-chip-grow{ flex:1 1 auto; min-width:0 }        /* el chip ocupa el resto y trunca */
-.ellipsis{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-
-.rk-apply-legend{
-  margin-top:8px; color:#aeb5c0; font-size:.92rem; line-height:1.25;
+/* ── Card base ───────────────────────────────────────────────────── */
+.rk-side {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 18px;
+  border: 1px solid var(--s-border);
+  background: var(--s-bg);
+  box-shadow: var(--s-shadow);
+  transition: border-color .2s;
 }
 
-/* Chip y botón */
-.rk-chip--selected{
-  border-radius:999px; padding:6px 10px;
-  box-shadow:0 3px 10px rgba(37,99,235,.2);
+/* ── Encabezados de sección ──────────────────────────────────────── */
+.rk-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--s-icon);
 }
-.rk-btn--pill{ border-radius:999px !important; }
-.rk-btn--xs{ height:36px !important; min-height:36px !important; padding:0 16px !important; font-weight:700; letter-spacing:.2px; white-space:nowrap }
-.rk-btn-apply{ flex:0 0 auto; min-width:112px }     /* nunca colapsa ni pone puntos */
-
-/* Toggles */
-.rk-toggles :deep(.q-toggle){ height:32px; display:inline-flex; align-items:center }
-.rk-toggles :deep(.q-toggle__inner){ transform:scale(.94) }
-.rk-toggles :deep(.q-toggle__thumb){ box-shadow:0 2px 6px rgba(0,0,0,.35) }
-
-/* Vacío */
-.rk-empty-mini{ padding:8px 10px; opacity:.85; border-radius:10px; background:rgba(255,255,255,.04) }
-
-/* Responsive: si no cabe, el botón baja abajo del chip de forma limpia */
-@media (max-width: 520px){
-  .rk-apply-row{ flex-wrap:wrap }
-  .rk-btn-apply{ width:100%; }
+.rk-section-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: .7;
+  flex-shrink: 0;
 }
-@media (min-height:900px){
-  .rk-list, .rk-scroll{ max-height:70vh }
+.rk-section-help {
+  font-size: .86rem;
+  line-height: 1.45;
+  color: var(--s-help);
+}
+
+/* ── Campos de búsqueda ──────────────────────────────────────────── */
+.rk-field :deep(.q-field__control) {
+  height: 44px;
+  min-height: 44px;
+  border-radius: var(--s-input-r) !important;
+  background: var(--s-bg-soft);
+  border-color: var(--s-border) !important;
+  transition: border-color .2s, box-shadow .2s;
+}
+.rk-field :deep(.q-field__control:hover) {
+  border-color: var(--s-border-hover) !important;
+}
+.rk-field :deep(.q-field--focused .q-field__control) {
+  border-color: var(--s-icon) !important;
+  box-shadow: 0 0 0 3px rgba(6,182,212,.12);
+}
+.rk-field :deep(.q-field__native) { padding: 0 4px; line-height: 1; }
+.rk-field :deep(.q-field__prepend), .rk-field :deep(.q-field__append) {
+  color: var(--s-icon);
+}
+
+/* ── Botón ícono ─────────────────────────────────────────────────── */
+.rk-iconbtn {
+  color: var(--s-muted);
+  border-radius: 10px;
+  transition: background .15s, color .15s;
+}
+.rk-iconbtn:hover {
+  background: var(--s-item-hover);
+  color: var(--s-icon);
+}
+
+/* ── Lista de usuarios / perfiles ────────────────────────────────── */
+.rk-list   { max-height: 52vh; }
+.rk-scroll { overflow: auto; max-height: 52vh; scroll-behavior: smooth; padding: 2px 0; }
+.rk-scroll::-webkit-scrollbar { width: 5px; }
+.rk-scroll::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 4px; }
+
+.rk-item {
+  border-radius: 12px;
+  padding: 10px 10px !important;
+  margin: 3px 0;
+  transition: background .15s, outline .15s;
+  outline: 1px solid transparent;
+}
+.rk-item :deep(.q-item__label) { color: var(--s-title); }
+.rk-item :deep(.q-item__label--caption) { color: var(--s-muted); }
+.rk-item:hover { background: var(--s-item-hover); }
+.rk-item.q-item--active {
+  background: var(--s-item-active);
+  outline: 1px solid var(--s-item-ring);
+}
+.rk-item .q-avatar { background: linear-gradient(135deg, #06b6d4, #14b8a6); }
+
+/* ── Menú de sugerencias ─────────────────────────────────────────── */
+.rk-menu { border-radius: 14px; overflow: hidden; border: 1px solid var(--s-border); }
+.rk-suggest { min-width: 280px; max-height: 50vh; overflow: auto; }
+.rk-suggest-item { padding: 8px 12px; transition: background .12s; }
+.rk-suggest-item :deep(.q-item__label) { color: var(--s-title); }
+.rk-suggest-item:hover { background: var(--s-item-hover); }
+
+/* ── Card "Aplicar perfil" ───────────────────────────────────────── */
+.rk-apply-card {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--s-bg-soft);
+  border: 1px solid var(--s-border);
+  transition: border-color .2s;
+}
+.rk-apply-card:hover { border-color: var(--s-border-hover); }
+.rk-apply-row { display: flex; align-items: center; gap: 10px; }
+.rk-chip-grow { flex: 1 1 auto; min-width: 0; }
+.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.rk-apply-legend { margin-top: 8px; font-size: .85rem; line-height: 1.4; color: var(--s-help); }
+
+.rk-apply-emptyline {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: .85rem;
+  color: var(--s-muted);
+  line-height: 1.4;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--s-bg-soft);
+  border: 1px dashed var(--s-border);
+}
+
+/* Chip seleccionado */
+.rk-chip--selected {
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 3px 10px rgba(6,182,212,.2);
+}
+
+/* Botón Aplicar */
+.rk-btn { border-radius: 999px; }
+.rk-btn--pill { border-radius: 999px !important; }
+.rk-btn--xs {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  font-weight: 700;
+  letter-spacing: .2px;
+  white-space: nowrap;
+}
+.rk-btn-apply { flex: 0 0 auto; min-width: 108px; }
+
+/* ── Toggles de highlight ────────────────────────────────────────── */
+.rk-toggles { flex-wrap: wrap; }
+.rk-toggles :deep(.q-toggle) { height: 34px; display: inline-flex; align-items: center; }
+.rk-toggles :deep(.q-toggle__label) { font-size: .88rem; color: var(--s-title); }
+.rk-toggles :deep(.q-toggle__thumb) { box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+
+/* ── Estado vacío ────────────────────────────────────────────────── */
+.rk-empty-mini {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--s-bg-soft);
+  border: 1px dashed var(--s-border);
+  color: var(--s-muted);
+  font-size: .88rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Separador ───────────────────────────────────────────────────── */
+:deep(.q-separator) { background: var(--s-border); }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .rk-apply-row { flex-wrap: wrap; }
+  .rk-btn-apply { width: 100%; }
+}
+@media (min-height: 900px) {
+  .rk-list, .rk-scroll { max-height: 66vh; }
 }
 </style>

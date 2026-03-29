@@ -498,7 +498,7 @@ const formProgress = computed(() => {
   if (f.email) progress += 10;
   if (f.password) progress += 10;
   if (f.tipo) progress += 5;
-  if (f.tipo === "admin" || f.empresa) progress += 5;
+  if (f.empresa) progress += 5;
 
   if (f.payroll?.baseSalary) progress += 10;
   if (f.payroll?.contractType) progress += 5;
@@ -673,7 +673,7 @@ async function submitForm() {
   const ok = await validateForm();
   if (!ok) return toast.error("Revisa los campos requeridos.");
 
-  if (form.value.tipo !== "admin" && !form.value.empresa) {
+  if (!form.value.empresa) {
     toast.error("Debes seleccionar una empresa.");
     tab.value = "basicos";
     return;
@@ -830,7 +830,7 @@ function mapPayload(f) {
     password: f.password || "",
     rut: f.tipo === "empleado" ? f.rut : null,
     role: f.tipo,
-    company: f.tipo !== "admin" ? f.empresa : null,
+    company: f.empresa,
     workSchedule: f.workScheduleChoice.scheduleId,
     phone: f.phone?.trim() || null,
     emergencyContact: f.emergencyContact?.trim() || null,

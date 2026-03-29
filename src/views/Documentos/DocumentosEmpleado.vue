@@ -84,33 +84,63 @@
             mobile-arrows
           >
             <q-tab name="all" icon="folder_open" no-caps>
-              <div class="column items-start q-ml-xs">
-                <div>Todos</div>
-                <div class="text-caption text-grey">{{ rows.length }}</div>
+              <div class="row items-center q-gutter-xs q-ml-xs">
+                <span>Todos</span>
+                <q-badge
+                  v-if="rows.length > 0"
+                  class="rk-tab-badge"
+                  :color="tabType === 'all' ? 'primary' : (isDark ? 'grey-7' : 'grey-5')"
+                  :label="rows.length"
+                  rounded
+                />
               </div>
             </q-tab>
             <q-tab name="payroll" icon="payments" no-caps>
-              <div class="column items-start q-ml-xs">
-                <div>Liquidaciones</div>
-                <div class="text-caption text-grey">{{ countByType("payroll") }}</div>
+              <div class="row items-center q-gutter-xs q-ml-xs">
+                <span>Liquidaciones</span>
+                <q-badge
+                  v-if="countByType('payroll') > 0"
+                  class="rk-tab-badge"
+                  :color="tabType === 'payroll' ? 'primary' : (isDark ? 'grey-7' : 'grey-5')"
+                  :label="countByType('payroll')"
+                  rounded
+                />
               </div>
             </q-tab>
             <q-tab name="contract" icon="feed" no-caps>
-              <div class="column items-start q-ml-xs">
-                <div>Contratos</div>
-                <div class="text-caption text-grey">{{ countByType("contract") }}</div>
+              <div class="row items-center q-gutter-xs q-ml-xs">
+                <span>Contratos</span>
+                <q-badge
+                  v-if="countByType('contract') > 0"
+                  class="rk-tab-badge"
+                  :color="tabType === 'contract' ? 'primary' : (isDark ? 'grey-7' : 'grey-5')"
+                  :label="countByType('contract')"
+                  rounded
+                />
               </div>
             </q-tab>
             <q-tab name="certificate" icon="workspace_premium" no-caps>
-              <div class="column items-start q-ml-xs">
-                <div>Certificados</div>
-                <div class="text-caption text-grey">{{ countByType("certificate") }}</div>
+              <div class="row items-center q-gutter-xs q-ml-xs">
+                <span>Certificados</span>
+                <q-badge
+                  v-if="countByType('certificate') > 0"
+                  class="rk-tab-badge"
+                  :color="tabType === 'certificate' ? 'primary' : (isDark ? 'grey-7' : 'grey-5')"
+                  :label="countByType('certificate')"
+                  rounded
+                />
               </div>
             </q-tab>
             <q-tab name="other" icon="description" no-caps>
-              <div class="column items-start q-ml-xs">
-                <div>Otros</div>
-                <div class="text-caption text-grey">{{ countByType("other") }}</div>
+              <div class="row items-center q-gutter-xs q-ml-xs">
+                <span>Otros</span>
+                <q-badge
+                  v-if="countByType('other') > 0"
+                  class="rk-tab-badge"
+                  :color="tabType === 'other' ? 'primary' : (isDark ? 'grey-7' : 'grey-5')"
+                  :label="countByType('other')"
+                  rounded
+                />
               </div>
             </q-tab>
           </q-tabs>
@@ -349,31 +379,30 @@
               ]"
               @click="tabType = kpi.name"
             >
-              <q-card-section class="row items-center q-pa-md">
-                <q-icon
-                  :name="kpi.icon"
-                  size="28px"
-                  :color="tabType === kpi.name ? kpi.color : (isDark ? 'grey-5' : 'grey-6')"
-                  class="q-mr-sm"
-                />
-                <div class="col">
-                  <div
-                    class="text-caption text-weight-medium"
+              <q-card-section class="rk-kpi-body">
+                <div class="rk-kpi-left">
+                  <q-icon
+                    :name="kpi.icon"
+                    size="24px"
+                    :color="tabType === kpi.name ? kpi.color : (isDark ? 'grey-5' : 'grey-5')"
+                    class="rk-kpi-icon"
+                  />
+                  <span
+                    class="rk-kpi-label text-caption text-weight-medium"
                     :class="isDark ? 'text-grey-4' : 'text-grey-7'"
-                  >
-                    {{ kpi.label }}
-                  </div>
-                  <div class="text-h6 text-weight-bold">
-                    {{ kpi.count }}
-                  </div>
+                  >{{ kpi.label }}</span>
+                </div>
+                <div
+                  class="rk-kpi-count text-weight-bold"
+                  :style="tabType === kpi.name ? `color: var(--kpi-active-color, #06b6d4)` : ''"
+                >
+                  {{ kpi.count }}
                 </div>
               </q-card-section>
-              <q-linear-progress
+              <div
                 v-if="tabType === kpi.name"
-                :color="kpi.color"
-                size="3px"
-                :value="1"
                 class="rk-kpi-indicator"
+                :style="`background: ${kpiColorHex(kpi.color)}`"
               />
             </q-card>
           </div>
@@ -1464,6 +1493,20 @@ function countByType(t) {
   return rows.value.filter((r) => r.type === t).length;
 }
 
+const kpiColorMap = {
+  primary: '#06b6d4',
+  cyan: '#06b6d4',
+  teal: '#14b8a6',
+  green: '#22c55e',
+  orange: '#f97316',
+  purple: '#a855f7',
+  blue: '#3b82f6',
+  red: '#ef4444',
+};
+function kpiColorHex(color) {
+  return kpiColorMap[color] || '#06b6d4';
+}
+
 /* ====== UX helpers ====== */
 function notifyErr(e) {
   const msg = e?.message || store.error || "Ocurrió un error";
@@ -1490,6 +1533,7 @@ function loadingOff() {
 // ===========================
 // Variables y mixins
 // ===========================
+// Paleta del sistema: cyan #06b6d4 · teal #14b8a6 · dark accent #22d3ee
 $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 $transition-spring: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -1619,7 +1663,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 .q-page {
   min-height: 100vh;
   position: relative;
-  
+
   &::before {
     content: '';
     position: fixed;
@@ -1627,10 +1671,10 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     left: 0;
     right: 0;
     height: 320px;
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.08) 0%, 
-      rgba(156, 39, 176, 0.05) 50%,
-      rgba(244, 143, 177, 0.03) 100%
+    background: linear-gradient(135deg,
+      rgba(6, 182, 212, 0.07) 0%,
+      rgba(20, 184, 166, 0.04) 50%,
+      rgba(6, 182, 212, 0.02) 100%
     );
     z-index: 0;
     pointer-events: none;
@@ -1638,10 +1682,10 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .body--dark .q-page::before {
-  background: linear-gradient(135deg, 
-    rgba(25, 118, 210, 0.15) 0%, 
-    rgba(156, 39, 176, 0.1) 50%,
-    rgba(244, 143, 177, 0.05) 100%
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.12) 0%,
+    rgba(20, 184, 166, 0.08) 50%,
+    rgba(6, 182, 212, 0.04) 100%
   );
 }
 
@@ -1649,57 +1693,59 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 // Card principal con efecto glass
 // ===========================
 .rk-docs-card {
-  border-radius: 20px;
+  border-radius: 18px;
   position: relative;
   transition: $transition-smooth;
   box-shadow: $shadow-md;
   overflow: hidden;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  
+
+  // Franja top siempre visible (sutil)
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, 
-      #1976d2 0%, 
-      #9c27b0 50%, 
-      #f48fb1 100%
+    height: 3px;
+    background: linear-gradient(90deg,
+      #06b6d4 0%,
+      #14b8a6 50%,
+      #06b6d4 100%
     );
-    opacity: 0;
+    opacity: 0.6;
     transition: opacity 0.3s ease;
+    z-index: 1;
   }
-  
+
   &:hover::before {
     opacity: 1;
   }
-  
+
   // Header con gradiente sutil
   > .q-card__section:first-child {
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.02) 0%, 
+    background: linear-gradient(135deg,
+      rgba(6, 182, 212, 0.03) 0%,
       transparent 100%
     );
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding: 24px;
   }
 }
 
 .body--dark .rk-docs-card {
-  background: rgba(30, 30, 30, 0.85);
-  @include glass-effect-dark(0.85);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: $shadow-lg, 0 0 0 1px rgba(255, 255, 255, 0.05);
-  
+  background: rgba(10, 16, 28, 0.92);
+  @include glass-effect-dark(0.92);
+  border-color: rgba(6, 182, 212, 0.14);
+  box-shadow: $shadow-lg, 0 0 0 1px rgba(6, 182, 212, 0.06);
+
   > .q-card__section:first-child {
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.08) 0%, 
+    background: linear-gradient(135deg,
+      rgba(6, 182, 212, 0.07) 0%,
       transparent 100%
     );
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(6, 182, 212, 0.1);
   }
 }
 
@@ -1716,7 +1762,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     inset: -2px;
     border-radius: inherit;
     padding: 2px;
-    background: linear-gradient(135deg, #1976d2, #9c27b0);
+    background: linear-gradient(135deg, #06b6d4, #14b8a6);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -1727,6 +1773,20 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   &:hover::after {
     opacity: 1;
   }
+}
+
+// ===========================
+// Tab badge de conteo
+// ===========================
+.rk-tab-badge {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  min-width: 18px;
+  height: 16px;
+  line-height: 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: $transition-smooth;
 }
 
 // ===========================
@@ -1747,22 +1807,22 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.05) 0%, 
-      rgba(156, 39, 176, 0.03) 100%
+    background: linear-gradient(135deg,
+      rgba(6, 182, 212, 0.06) 0%,
+      rgba(20, 184, 166, 0.03) 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
+
   &:hover::before {
     opacity: 1;
   }
-  
+
   .q-icon {
     transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
-  
+
   &:hover .q-icon {
     transform: scale(1.1) rotate(5deg);
   }
@@ -1772,24 +1832,24 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   @include glass-effect(0.8);
   box-shadow: $shadow-sm;
   font-weight: 600;
-  
+
   &::before {
     opacity: 1;
   }
 }
 
 .q-tabs :deep(.q-tabs__arrow) {
-  background: linear-gradient(90deg, 
-    rgba(255, 255, 255, 0.9), 
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.9),
     rgba(255, 255, 255, 0)
   );
 }
 
 .body--dark .q-tabs :deep(.q-tab) {
   &::before {
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.12) 0%, 
-      rgba(156, 39, 176, 0.08) 100%
+    background: linear-gradient(135deg,
+      rgba(6, 182, 212, 0.12) 0%,
+      rgba(20, 184, 166, 0.07) 100%
     );
   }
 }
@@ -1813,29 +1873,29 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
   
   &:hover {
-    border-color: rgba(25, 118, 210, 0.3);
-    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.05);
+    border-color: rgba(6, 182, 212, 0.35);
+    box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.07);
   }
 }
 
 .q-input :deep(.q-field__control--focused),
 .q-select :deep(.q-field__control--focused) {
-  border-color: rgba(25, 118, 210, 0.5) !important;
-  box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1) !important;
+  border-color: rgba(6, 182, 212, 0.55) !important;
+  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.12) !important;
 }
 
 .body--dark .q-input :deep(.q-field__control),
 .body--dark .q-select :deep(.q-field__control) {
   &:hover {
-    border-color: rgba(66, 165, 245, 0.4);
-    box-shadow: 0 0 0 4px rgba(66, 165, 245, 0.1);
+    border-color: rgba(34, 211, 238, 0.4);
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.1);
   }
 }
 
 .body--dark .q-input :deep(.q-field__control--focused),
 .body--dark .q-select :deep(.q-field__control--focused) {
-  border-color: rgba(66, 165, 245, 0.6) !important;
-  box-shadow: 0 0 0 4px rgba(66, 165, 245, 0.15) !important;
+  border-color: rgba(34, 211, 238, 0.6) !important;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.14) !important;
 }
 
 // ===========================
@@ -1866,99 +1926,107 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 // KPI Cards con diseño premium
 // ===========================
 .rk-kpi {
-  border-radius: 16px;
+  border-radius: 14px;
   transition: $transition-spring;
   position: relative;
   overflow: hidden;
   cursor: pointer;
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: $shadow-sm;
-  
+
   // Gradiente de fondo sutil
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.02) 0%, 
-      rgba(156, 39, 176, 0.01) 100%
+    background: linear-gradient(135deg,
+      rgba(6, 182, 212, 0.04) 0%,
+      rgba(20, 184, 166, 0.02) 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
-  // Efecto de brillo en hover
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.3) 50%,
-      transparent 70%
-    );
-    transform: translateX(-100%) translateY(-100%) rotate(45deg);
-    transition: transform 0.6s ease;
-  }
-  
+
   &:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: $shadow-xl;
-    border-color: rgba(25, 118, 210, 0.2);
-    
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: $shadow-lg;
+    border-color: rgba(6, 182, 212, 0.22);
+
     &::before {
       opacity: 1;
     }
-    
-    &::after {
-      transform: translateX(100%) translateY(100%) rotate(45deg);
-    }
-    
-    .q-icon {
-      transform: scale(1.15) rotate(5deg);
-      filter: drop-shadow(0 4px 8px rgba(25, 118, 210, 0.3));
+
+    .rk-kpi-icon {
+      transform: scale(1.15) rotate(6deg);
+      filter: drop-shadow(0 3px 6px rgba(6, 182, 212, 0.4));
     }
   }
-  
+
   &.rk-kpi-active {
-    border: 2px solid currentColor;
-    box-shadow: $shadow-lg, 0 0 0 4px rgba(25, 118, 210, 0.1);
-    transform: scale(1.02);
-    
+    border-color: rgba(6, 182, 212, 0.35);
+    box-shadow: $shadow-md, 0 0 0 3px rgba(6, 182, 212, 0.1);
+
     &::before {
       opacity: 1;
-      background: linear-gradient(135deg, 
-        rgba(25, 118, 210, 0.08) 0%, 
-        rgba(156, 39, 176, 0.05) 100%
+      background: linear-gradient(135deg,
+        rgba(6, 182, 212, 0.07) 0%,
+        rgba(20, 184, 166, 0.04) 100%
       );
     }
-    
-    .q-icon {
-      animation: float 2s ease-in-out infinite;
+
+    .rk-kpi-icon {
+      animation: float 2.5s ease-in-out infinite;
     }
   }
-  
+
   .q-card__section {
     position: relative;
     z-index: 1;
   }
-  
-  .q-icon {
-    transition: $transition-spring;
-  }
-  
-  .text-h6 {
-    font-weight: 700;
-    font-size: 1.8rem;
-    background: linear-gradient(135deg, #1976d2, #9c27b0);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+}
+
+// Layout interno de la KPI card: icono+label izquierda, número derecha
+.rk-kpi-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  gap: 8px;
+}
+
+.rk-kpi-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.rk-kpi-icon {
+  flex-shrink: 0;
+  transition: $transition-spring;
+}
+
+.rk-kpi-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.rk-kpi-count {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 2ch;
+  text-align: right;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: color 0.2s ease;
 }
 
 .rk-kpi-indicator {
@@ -1966,34 +2034,26 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   bottom: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  animation: slideInLeft 0.5s ease;
-  box-shadow: 0 -2px 8px rgba(25, 118, 210, 0.3);
+  height: 3px;
+  animation: slideInLeft 0.4s ease;
+  opacity: 0.85;
 }
 
 .body--dark .rk-kpi {
-  background: rgba(45, 45, 45, 0.6);
-  @include glass-effect-dark(0.6);
-  border-color: rgba(255, 255, 255, 0.08);
-  
-  &::before {
-    background: linear-gradient(135deg, 
-      rgba(25, 118, 210, 0.08) 0%, 
-      rgba(156, 39, 176, 0.05) 100%
-    );
-  }
-  
+  border-color: rgba(6, 182, 212, 0.1);
+
   &:hover {
-    box-shadow: $shadow-2xl, 0 0 0 1px rgba(255, 255, 255, 0.1);
-    border-color: rgba(66, 165, 245, 0.4);
+    box-shadow: $shadow-xl, 0 0 0 1px rgba(6, 182, 212, 0.12);
+    border-color: rgba(34, 211, 238, 0.28);
   }
-  
+
   &.rk-kpi-active {
-    box-shadow: $shadow-xl, 0 0 0 4px rgba(66, 165, 245, 0.15);
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: $shadow-md, 0 0 0 3px rgba(34, 211, 238, 0.1);
   }
-  
-  .text-h6 {
-    background: linear-gradient(135deg, #42a5f5, #ba68c8);
+
+  .rk-kpi-count {
+    background: linear-gradient(135deg, #22d3ee, #2dd4bf);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -2023,19 +2083,19 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      #1976d2 50%, 
+    background: linear-gradient(90deg,
+      transparent 0%,
+      #06b6d4 50%,
       transparent 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
+
   &:hover {
     transform: translateY(-8px) scale(1.02);
     box-shadow: $shadow-2xl;
-    border-color: rgba(25, 118, 210, 0.2);
+    border-color: rgba(6, 182, 212, 0.22);
     
     &::before {
       opacity: 1;
@@ -2081,21 +2141,21 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .body--dark .rk-doc-card {
-  background: rgba(45, 45, 45, 0.7);
-  @include glass-effect-dark(0.7);
-  border-color: rgba(255, 255, 255, 0.08);
-  
+  background: rgba(10, 16, 28, 0.78);
+  @include glass-effect-dark(0.78);
+  border-color: rgba(6, 182, 212, 0.13);
+
   &::before {
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      #42a5f5 50%, 
+    background: linear-gradient(90deg,
+      transparent 0%,
+      #22d3ee 50%,
       transparent 100%
     );
   }
-  
+
   &:hover {
-    box-shadow: $shadow-2xl, 0 0 0 1px rgba(255, 255, 255, 0.1);
-    border-color: rgba(66, 165, 245, 0.3);
+    box-shadow: $shadow-2xl, 0 0 0 1px rgba(6, 182, 212, 0.18);
+    border-color: rgba(34, 211, 238, 0.3);
   }
 }
 
@@ -2166,17 +2226,17 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .q-table :deep(thead tr) {
-  background: linear-gradient(135deg, 
-    rgba(25, 118, 210, 0.04) 0%, 
-    rgba(156, 39, 176, 0.02) 100%
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.05) 0%,
+    rgba(20, 184, 166, 0.03) 100%
   );
 }
 
 .q-table :deep(tbody tr) {
   transition: $transition-smooth;
-  
+
   &:hover {
-    background: rgba(25, 118, 210, 0.03);
+    background: rgba(6, 182, 212, 0.04);
     transform: scale(1.005);
   }
 }
@@ -2186,14 +2246,14 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .body--dark .q-table :deep(thead tr) {
-  background: linear-gradient(135deg, 
-    rgba(25, 118, 210, 0.1) 0%, 
-    rgba(156, 39, 176, 0.06) 100%
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.1) 0%,
+    rgba(20, 184, 166, 0.06) 100%
   );
 }
 
 .body--dark .q-table :deep(tbody tr:hover) {
-  background: rgba(66, 165, 245, 0.08);
+  background: rgba(34, 211, 238, 0.07);
 }
 
 .body--dark .q-table :deep(td) {
@@ -2273,7 +2333,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .q-spinner-gears {
-  filter: drop-shadow(0 4px 12px rgba(25, 118, 210, 0.3));
+  filter: drop-shadow(0 4px 12px rgba(6, 182, 212, 0.35));
 }
 
 // ===========================
@@ -2329,24 +2389,24 @@ kbd {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #1976d2, #9c27b0);
+  background: linear-gradient(135deg, #06b6d4, #14b8a6);
   border-radius: 10px;
-  
+
   &:hover {
-    background: linear-gradient(135deg, #1565c0, #8e24aa);
+    background: linear-gradient(135deg, #0891b2, #0d9488);
   }
 }
 
 .body--dark {
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #42a5f5, #ba68c8);
-    
+    background: linear-gradient(135deg, #22d3ee, #2dd4bf);
+
     &:hover {
-      background: linear-gradient(135deg, #1e88e5, #ab47bc);
+      background: linear-gradient(135deg, #06b6d4, #14b8a6);
     }
   }
 }
@@ -2414,7 +2474,7 @@ kbd {
 // ===========================
 .rk-doc-card:focus-within,
 .rk-kpi:focus-within {
-  outline: 3px solid rgba(25, 118, 210, 0.5);
+  outline: 3px solid rgba(6, 182, 212, 0.5);
   outline-offset: 2px;
 }
 
