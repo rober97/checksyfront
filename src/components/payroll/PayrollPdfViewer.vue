@@ -6,44 +6,42 @@
     persistent
     transition-show="slide-up"
     transition-hide="slide-down"
-    class="rk-pdf-dialog"
   >
-    <div class="rk-pdf-viewer">
-      <!-- PDF Toolbar -->
-      <div class="rk-pdf-toolbar">
-        <div class="rk-pdf-toolbar-content">
-          <div class="rk-pdf-icon">
-            <q-icon name="picture_as_pdf" />
-          </div>
-          <div class="rk-pdf-title-section">
-            <strong class="rk-pdf-title">{{ pdfTitle }}</strong>
-            <span class="rk-pdf-subtitle">Vista previa de liquidación</span>
-          </div>
+    <q-card class="rk-pdf-viewer column no-wrap">
+      <!-- Toolbar -->
+      <q-toolbar class="rk-pdf-toolbar">
+        <q-icon name="picture_as_pdf" color="red" size="24px" class="q-mr-sm" />
+        <div>
+          <div class="text-subtitle1 text-weight-bold">{{ pdfTitle }}</div>
+          <div class="text-caption" style="opacity:.6">Documento emitido</div>
         </div>
+        <q-space />
+        <q-btn
+          flat
+          icon="download"
+          label="Descargar"
+          :disable="!pdfUrl || loading"
+          @click="$emit('download')"
+          class="rk-toolbar-btn"
+        />
+        <q-btn
+          flat
+          icon="close"
+          label="Cerrar"
+          @click="$emit('update:modelValue', false)"
+          class="rk-toolbar-btn"
+        />
+      </q-toolbar>
 
-        <div class="rk-pdf-toolbar-actions">
-          <button
-            class="rk-pdf-action-btn"
-            @click="$emit('download')"
-            :disabled="!pdfUrl || loading"
-          >
-            <q-icon name="download" />
-            <span>Descargar</span>
-          </button>
-          <button class="rk-pdf-action-btn" @click="$emit('update:modelValue', false)">
-            <q-icon name="close" />
-            <span>Cerrar</span>
-          </button>
-        </div>
-      </div>
+      <q-separator />
 
       <!-- PDF Content -->
-      <div class="rk-pdf-content">
+      <div class="col relative-position">
         <q-inner-loading :showing="loading">
-          <div class="rk-pdf-loading">
-            <q-spinner-cube size="80px" color="primary" />
-            <h3 class="rk-pdf-loading-title">Cargando PDF...</h3>
-            <p class="rk-pdf-loading-text">Por favor espera un momento</p>
+          <div class="column items-center">
+            <q-spinner-cube size="60px" color="primary" />
+            <div class="text-subtitle1 text-weight-bold q-mt-lg">Cargando PDF...</div>
+            <div class="text-caption text-grey q-mt-xs">Preparando el documento</div>
           </div>
         </q-inner-loading>
 
@@ -53,7 +51,7 @@
           class="rk-pdf-iframe"
         />
       </div>
-    </div>
+    </q-card>
   </q-dialog>
 </template>
 
@@ -69,146 +67,19 @@ defineEmits(['update:modelValue', 'download']);
 </script>
 
 <style scoped>
-.rk-pdf-dialog :deep(.q-dialog__backdrop) {
-  backdrop-filter: blur(8px);
-  background: rgba(10, 14, 20, 0.8);
-}
-
 .rk-pdf-viewer {
-  width: 100vw;
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #0a0a0a;
+  border-radius: 0;
 }
 
 .rk-pdf-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1.5px solid rgba(6, 182, 212, 0.12);
-  z-index: 10;
+  padding: 12px 20px;
 }
 
-.body--dark .rk-pdf-toolbar {
-  background: rgba(17, 24, 39, 0.95);
-  border-bottom-color: rgba(6, 182, 212, 0.2);
-}
-
-.rk-pdf-toolbar-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.rk-pdf-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(239, 68, 68, 0.12);
-  border-radius: 11px;
-}
-
-.rk-pdf-icon .q-icon {
-  font-size: 24px;
-  color: #ef4444;
-}
-
-.rk-pdf-title {
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: rgba(15, 23, 42, 0.95);
-  margin-bottom: 4px;
-}
-
-.body--dark .rk-pdf-title {
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.rk-pdf-subtitle {
-  display: block;
-  font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.5);
-}
-
-.body--dark .rk-pdf-subtitle {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.rk-pdf-toolbar-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.rk-pdf-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: rgba(6, 182, 212, 0.05);
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
-  border-radius: 10px;
-  color: rgba(15, 23, 42, 0.95);
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.body--dark .rk-pdf-action-btn {
-  background: rgba(6, 182, 212, 0.08);
-  border-color: rgba(6, 182, 212, 0.2);
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.rk-pdf-action-btn:hover:not(:disabled) {
-  background: rgba(6, 182, 212, 0.1);
-  border-color: rgba(6, 182, 212, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
-}
-
-.rk-pdf-action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.rk-pdf-action-btn .q-icon {
-  font-size: 18px;
-}
-
-.rk-pdf-content {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0a0a0a;
-}
-
-.rk-pdf-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.rk-pdf-loading-title {
-  margin-top: 24px;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.rk-pdf-loading-text {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 8px;
+.rk-toolbar-btn {
+  text-transform: none;
+  font-weight: 600;
+  border-radius: 8px;
 }
 
 .rk-pdf-iframe {
@@ -216,24 +87,5 @@ defineEmits(['update:modelValue', 'download']);
   height: 100%;
   border: none;
   background: #fff;
-}
-
-/* Responsive */
-@media (max-width: 767px) {
-  .rk-pdf-toolbar {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  .rk-pdf-toolbar-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .rk-pdf-action-btn {
-    width: 100%;
-    justify-content: center;
-  }
 }
 </style>
