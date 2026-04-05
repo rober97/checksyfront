@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vue-tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm run:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"import.*solicitud\\\\|from.*Solicitud\\\\|import.*request\" /c/Users/ddelt/Documentos/PROYECTOS/ASISTENCIA/asistencia-front/src --include=*.vue --include=*.js)",
+      "Bash(find /c/Users/ddelt/Documentos/PROYECTOS/ASISTENCIA/asistencia-front -path */node_modules -prune -o -type f \\\\\\(-name *solicitud* -o -name *Solicitud* -o -name *request* \\\\\\) -print)"
+    ]
+  }
+}
