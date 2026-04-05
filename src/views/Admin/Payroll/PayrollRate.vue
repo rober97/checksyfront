@@ -527,6 +527,20 @@ function normalizeCustomKey(label) {
     .replace(/^_+|_+$/g, '')
 }
 
+function resolveParamKey() {
+  if (dlg.scope !== 'KEY') return dlg.form.key
+
+  const normalized = normalizeCustomKey(dlg.form.label)
+  if (
+    dlg.type === 'OTHER_DEDUCTION_RATE' &&
+    ['iu', 'impuesto_unico', 'impuesto_a_la_renta', 'impuesto_unico_de_segunda_categoria'].includes(normalized)
+  ) {
+    return 'iu'
+  }
+
+  return normalized
+}
+
 function humanizeKey(key) {
   return String(key || '')
     .replace(/_/g, ' ')
@@ -535,7 +549,7 @@ function humanizeKey(key) {
 
 async function submitUpsert() {
   if (!validate()) return
-  const customKey = dlg.scope === 'KEY' ? normalizeCustomKey(dlg.form.label) : null
+  const customKey = dlg.scope === 'KEY' ? resolveParamKey() : null
   const payload = {
     companyId: null,
     type: dlg.type,

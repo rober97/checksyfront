@@ -268,22 +268,6 @@
                     <UserContactForm v-model="form" />
                   </q-tab-panel>
 
-                  <!-- Panel: Permisos -->
-                  <q-tab-panel name="permisos" class="rk-panel">
-                    <div class="rk-panel-header">
-                      <q-icon
-                        name="admin_panel_settings"
-                        class="rk-panel-icon"
-                      />
-                      <div>
-                        <h4 class="rk-panel-title">Permisos y accesos</h4>
-                        <p class="rk-panel-subtitle">
-                          Configure los niveles de acceso del usuario
-                        </p>
-                      </div>
-                    </div>
-                    <UserPermissionsForm v-model="form.permissions" />
-                  </q-tab-panel>
                 </q-tab-panels>
               </q-form>
             </div>
@@ -420,7 +404,6 @@ import { friendly, statusColor, statusNice } from "@/composables/useUserForm";
 import UserBasicsForm from "./users/parts/UserBasicsForm.vue";
 import UserContractForm from "./users/parts/UserContractForm.vue";
 import UserContactForm from "./users/parts/UserContactForm.vue";
-import UserPermissionsForm from "./users/parts/UserPermissionsForm.vue";
 import UserSummary from "./users/parts/UserSummary.vue";
 
 const $q = useQuasar();
@@ -493,12 +476,6 @@ const tabs = [
     icon: "home",
     desc: "Dirección y teléfono",
   },
-  {
-    value: "permisos",
-    label: "Permisos",
-    icon: "admin_panel_settings",
-    desc: "Niveles de acceso",
-  },
 ];
 
 // ✅ catálogo dinámico desde store
@@ -521,7 +498,7 @@ const formProgress = computed(() => {
   if (f.email) progress += 10;
   if (f.password) progress += 10;
   if (f.tipo) progress += 5;
-  if (f.tipo === "admin" || f.empresa) progress += 5;
+  if (f.empresa) progress += 5;
 
   if (f.payroll?.baseSalary) progress += 10;
   if (f.payroll?.contractType) progress += 5;
@@ -530,8 +507,6 @@ const formProgress = computed(() => {
   if (f.phone) progress += 10;
   if (f.address?.line1) progress += 5;
   if (f.address?.commune) progress += 5;
-
-  if (f.permissions?.length > 0) progress += 20;
 
   return Math.min(Math.round(progress), 100);
 });
@@ -545,8 +520,6 @@ const isTabCompleted = (tabName) => {
       return !!(f.payroll?.baseSalary && f.payroll?.contractType);
     case "contacto":
       return !!(f.phone && f.address?.line1);
-    case "permisos":
-      return (f.permissions?.length || 0) > 0;
     default:
       return false;
   }
@@ -700,7 +673,7 @@ async function submitForm() {
   const ok = await validateForm();
   if (!ok) return toast.error("Revisa los campos requeridos.");
 
-  if (form.value.tipo !== "admin" && !form.value.empresa) {
+  if (!form.value.empresa) {
     toast.error("Debes seleccionar una empresa.");
     tab.value = "basicos";
     return;
@@ -857,7 +830,7 @@ function mapPayload(f) {
     password: f.password || "",
     rut: f.tipo === "empleado" ? f.rut : null,
     role: f.tipo,
-    company: f.tipo !== "admin" ? f.empresa : null,
+    company: f.empresa,
     workSchedule: f.workScheduleChoice.scheduleId,
     phone: f.phone?.trim() || null,
     emergencyContact: f.emergencyContact?.trim() || null,
@@ -867,7 +840,6 @@ function mapPayload(f) {
       city: f.address?.city?.trim() || "",
       region: f.address?.region?.trim() || "",
     },
-    permissions: f.permissions || [],
     payroll: {
       baseSalary: normalizeMoney(f.payroll?.baseSalary || 0),
       contractType: f.payroll?.contractType || "",
@@ -883,6 +855,8 @@ function mapPayload(f) {
       isapreUf: Number(normalizeDecimal(f.payroll?.isapreUf || 0)),
       apv: normalizeMoney(f.payroll?.apv || 0),
       cargasFamiliares: Number(f.payroll?.cargasFamiliares || 0),
+      incomeTaxApplies: f.payroll?.incomeTaxApplies !== false,
+      incomeTaxNote: f.payroll?.incomeTaxNote?.trim() || "",
       banco: f.payroll?.banco || "",
       tipoCuenta: f.payroll?.tipoCuenta || "",
       numeroCuenta: f.payroll?.numeroCuenta || "",
@@ -928,7 +902,6 @@ function getEmptyForm() {
     phone: "",
     emergencyContact: "",
     address: { line1: "", commune: "", city: "", region: "" },
-    permissions: [],
     payroll: {
       baseSalary: 0,
       contractType: "",
@@ -942,6 +915,8 @@ function getEmptyForm() {
       isapreUf: 0,
       apv: 0,
       cargasFamiliares: 0,
+      incomeTaxApplies: true,
+      incomeTaxNote: "",
       banco: "",
       tipoCuenta: "",
       numeroCuenta: "",

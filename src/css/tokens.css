@@ -1,3 +1,10 @@
+/* Forzar paleta Recksy sobre el azul por defecto de Quasar */
+:root {
+  --q-primary:   #06b6d4;
+  --q-accent:    #14b8a6;
+  --q-info:      #22d3ee;
+}
+
 :root {
   --app-font-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
   --app-font-display: "Sora", "DM Sans", system-ui, sans-serif;
@@ -11,10 +18,10 @@
   --app-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
   --app-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05);
 
-  --color-primary: #00b8f1;
-  --color-primary-light: #33c7f5;
-  --color-primary-dark: #0094c2;
-  --color-primary-hover: #00a0d4;
+  --color-primary: #06b6d4;
+  --color-primary-light: #22d3ee;
+  --color-primary-dark: #0891b2;
+  --color-primary-hover: #0ea5e9;
 
   --color-secondary: #ffb400;
   --color-secondary-light: #ffd24d;
@@ -51,10 +58,10 @@ body {
 }
 
 body.body--dark {
-  --color-primary: #00b8f1;
-  --color-primary-light: #4ccdf6;
-  --color-primary-dark: #008abd;
-  --color-primary-hover: #00a0d4;
+  --color-primary: #22d3ee;
+  --color-primary-light: #67e8f9;
+  --color-primary-dark: #06b6d4;
+  --color-primary-hover: #0ea5e9;
 
   --color-secondary: #ffc107;
   --color-secondary-light: #ffe082;

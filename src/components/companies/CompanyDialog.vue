@@ -112,12 +112,29 @@
               </q-tab-panel>
 
               <q-tab-panel name="payroll" class="cd-tab-panel">
-                <CompanyPayrollTab
-                  v-model="form.payrollConfig"
-                  :holidays="form.holidays"
-                  :company-id="props?.editData?._id"
-                  @validity="v => valid.payroll = v"
-                />
+                <template v-if="isEdit">
+                  <CompanyPayrollTab
+                    v-model="form.payrollConfig"
+                    :holidays="form.holidays"
+                    :company-id="props?.editData?._id"
+                    @validity="v => valid.payroll = v"
+                  />
+                </template>
+                <div v-else class="cd-create-payroll">
+                  <div class="cd-create-payroll__icon">
+                    <q-icon name="receipt_long" size="22px" />
+                  </div>
+                  <div class="cd-create-payroll__body">
+                    <div class="cd-create-payroll__title">Configura la nómina después de crear la empresa</div>
+                    <p class="cd-create-payroll__text">
+                      Primero guarda la empresa para generar un <b>companyId</b> válido. Luego podrás volver a abrirla y
+                      administrar conceptos, plantillas y validaciones de liquidación sin errores.
+                    </p>
+                    <p class="cd-create-payroll__text cd-create-payroll__text--muted">
+                      Los demás datos del formulario sí se guardarán ahora mismo.
+                    </p>
+                  </div>
+                </div>
                 <div v-if="autoPublicaSinPlantilla" class="cd-inline-warn">
                   <q-icon name="warning_amber" size="16px" />
                   <span>Publicación automática activa sin plantilla PDF — se usará el diseño por defecto del sistema.</span>
@@ -251,7 +268,9 @@ const isStepDone = (name) => {
 }
 
 const autoPublicaSinPlantilla = computed(() =>
-  form.value?.payrollConfig?.autoPublish && !form.value?.payrollConfig?.templateId
+  isEdit.value &&
+  form.value?.payrollConfig?.autoPublish &&
+  !form.value?.payrollConfig?.templateId
 )
 
 const defaultTimeOff = () => ({ vacation: { accrual: { mode:'DAILY', perYearDays:15, perMonthDays:null, accrueOnBusinessDays:true, startAfterDays:0, prorateFromStartDate:true }, carryOver: { enabled:true, maxCarry:5, resetMonth:1, resetDay:1 }, cap: { enabled:true, maxDays:30 } }, policyVersion:1 })
@@ -418,6 +437,55 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
 .cd-step.is-active {
   background: linear-gradient(135deg, rgba(99,102,241,.22) 0%, rgba(99,102,241,.12) 100%);
   box-shadow: inset 0 0 0 1px rgba(99,102,241,.35), 0 4px 12px rgba(99,102,241,.15);
+}
+
+.cd-create-payroll {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+  color: #0f172a;
+}
+
+.cd-create-payroll__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e0e7ff, #eef2ff);
+  color: #4338ca;
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.14);
+  flex-shrink: 0;
+}
+
+.cd-create-payroll__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cd-create-payroll__title {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.cd-create-payroll__text {
+  margin: 0;
+  font-size: .92rem;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.cd-create-payroll__text--muted {
+  color: #64748b;
 }
 .cd-step.is-active::before {
   content: '';

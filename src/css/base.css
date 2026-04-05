@@ -1,9 +1,9 @@
 :root {
   /* 🎯 Colores principales */
-  --color-primary: #00b8f1;
-  --color-primary-light: #33c7f5;
-  --color-primary-dark: #0094c2;
-  --color-primary-hover: #00a0d4;
+  --color-primary: #06b6d4;
+  --color-primary-light: #22d3ee;
+  --color-primary-dark: #0891b2;
+  --color-primary-hover: #0ea5e9;
 
   /* 🌟 Secundario (puedes usarlo para acentos o botones secundarios) */
   --color-secondary: #ffb400;
@@ -40,10 +40,10 @@
 }
 
 body.body--dark {
-  --color-primary: #00b8f1;
-  --color-primary-light: #4ccdf6;
-  --color-primary-dark: #008abd;
-  --color-primary-hover: #00a0d4;
+  --color-primary: #22d3ee;
+  --color-primary-light: #67e8f9;
+  --color-primary-dark: #06b6d4;
+  --color-primary-hover: #0ea5e9;
 
   --color-secondary: #ffc107;
   --color-secondary-light: #ffe082;

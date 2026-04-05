@@ -472,7 +472,7 @@ const toggleSelectAll = () => {
 /* ── Helpers ─────────────────────────────────────── */
 const normalizeRole = (r) => r === "empresa" ? "company" : r === "empleado" ? "employee" : r || "unknown";
 const roleNice = (r) => ({
-  admin: "Admin", company: "Empresa", employee: "Empleado",
+  company: "Empresa", employee: "Empleado",
   supervisor: "Supervisor", empresa: "Empresa", empleado: "Empleado",
 }[r] || r || "—");
 const statusNice  = (s) => ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido" }[s] || s || "—");
@@ -488,7 +488,6 @@ const AVATAR_COLORS = ["#3d6fff","#8b5cf6","#06b6d4","#10b981","#f59e0b","#ef444
 const avatarColor = (name="") => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
 const roleOptions = [
-  { label: "Admin",      value: "admin"      },
   { label: "Empleado",   value: "employee"   },
   { label: "Supervisor", value: "supervisor" },
   { label: "Empresa",    value: "company"    },

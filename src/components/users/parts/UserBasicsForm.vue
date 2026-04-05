@@ -18,10 +18,6 @@
           <p class="rk-header-subtitle">Información completa del perfil</p>
         </div>
       </div>
-      <div class="rk-role-badge" :class="`rk-role-${local.tipo}`">
-        <q-icon :name="local.tipo === 'admin' ? 'admin_panel_settings' : 'badge'" />
-        <span>{{ local.tipo === 'admin' ? 'Administrador' : 'Empleado' }}</span>
-      </div>
     </div>
 
     <!-- Banner de Ayuda Mejorado -->
@@ -158,52 +154,8 @@
         </div>
       </div>
 
-      <!-- ===== Sección 2: Rol ===== -->
-      <div class="rk-section" data-step="1">
-        <div class="rk-section-header">
-          <div class="rk-section-icon">
-            <q-icon name="supervisor_account" />
-          </div>
-          <div class="rk-section-title-wrap">
-            <h4 class="rk-section-title">Rol del usuario</h4>
-            <p class="rk-section-desc">Define los permisos y accesos</p>
-          </div>
-        </div>
-
-        <div class="rk-role-selector">
-          <div
-            v-for="role in roleOpts"
-            :key="role.value"
-            class="rk-role-card"
-            :class="{ 'selected': local.tipo === role.value }"
-            @click="local.tipo = role.value"
-          >
-            <div class="rk-role-card-icon">
-              <q-icon :name="role.icon" />
-            </div>
-            <div class="rk-role-card-content">
-              <h5 class="rk-role-card-title">{{ role.label }}</h5>
-              <p class="rk-role-card-desc">{{ role.desc }}</p>
-            </div>
-            <div class="rk-role-check">
-              <q-icon name="check_circle" />
-            </div>
-          </div>
-        </div>
-
-        <div v-if="local.tipo === 'admin'" class="rk-admin-note">
-          <div class="rk-note-icon">
-            <q-icon name="verified_user" />
-          </div>
-          <div class="rk-note-content">
-            <strong>Cuenta administrativa</strong>
-            <p>Para administradores, el RUT es opcional y no se requiere empresa ni horario.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== Sección 3: Vinculación (solo empleados) ===== -->
-      <div v-if="local.tipo !== 'admin'" class="rk-section" data-step="2">
+      <!-- ===== Sección 2: Vinculación ===== -->
+      <div class="rk-section" data-step="2">
         <div class="rk-section-header">
           <div class="rk-section-icon">
             <q-icon name="business" />
@@ -437,35 +389,15 @@ const isEqualClean = (a, b) => stableStringify(clean(a)) === stableStringify(cle
 const local = reactive(clean(props.modelValue))
 const showPass = ref(false)
 
-const roleOpts = [
-  { 
-    label: 'Empleado', 
-    value: 'empleado',
-    icon: 'badge',
-    desc: 'Usuario con acceso limitado a sus datos'
-  },
-  { 
-    label: 'Administrador', 
-    value: 'admin',
-    icon: 'admin_panel_settings',
-    desc: 'Acceso completo a toda la plataforma'
-  }
-]
 
 const progressSteps = computed(() => {
-  const steps = ['Identidad', 'Rol']
-  if (local.tipo !== 'admin') {
-    steps.push('Vinculación')
-  }
-  steps.push('Acceso')
-  return steps
+  return ['Identidad', 'Vinculación', 'Acceso']
 })
 
 const currentStep = computed(() => {
   if (!local.firstName || !local.lastName || !local.email || !local.rut) return 0
-  if (!local.tipo) return 1
-  if (local.tipo !== 'admin' && !local.empresa) return 2
-  if (props.requirePassword && (!local.password || !local.passwordConfirm)) return local.tipo === 'admin' ? 2 : 3
+  if (!local.empresa) return 1
+  if (props.requirePassword && (!local.password || !local.passwordConfirm)) return 2
   return progressSteps.value.length
 })
 
@@ -476,11 +408,7 @@ const rutRule = (value) => {
   if (!value) return true
   try { return validarRUT(value) || 'RUT inválido' } catch { return true }
 }
-const rutRules = computed(() =>
-  local.tipo === 'empleado'
-    ? [req, rutRule]
-    : [rutRule]
-)
+const rutRules = computed(() => [req, rutRule])
 
 /* Sincronización Padre -> Hijo */
 watch(
@@ -517,10 +445,6 @@ watch(
     if (nv === ov) return
     emit('tipo-change', nv)
 
-    if (nv === 'admin') {
-      local.empresa = null
-      local.workScheduleChoice = { mode: 'companyDefault', scheduleId: null }
-    }
   }
 )
 

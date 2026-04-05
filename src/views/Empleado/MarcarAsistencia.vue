@@ -76,8 +76,14 @@
             <q-icon :name="form.tipo === 'entrada' ? 'login' : form.tipo === 'salida' ? 'logout' : 'info'" />
           </div>
           <div class="rk-summary-content">
-            <strong class="rk-summary-title">{{ labelTipo || "Selecciona una opción" }}</strong>
-            <span v-if="form.estadoAnimo" class="rk-summary-subtitle"> · {{ labelAnimo }}</span>
+            <div class="rk-summary-kicker">Resumen de asistencia</div>
+            <div class="rk-summary-heading">
+              <strong class="rk-summary-title">{{ labelTipo || "Selecciona una opción" }}</strong>
+              <span v-if="form.estadoAnimo" class="rk-summary-subtitle">{{ labelAnimo }}</span>
+            </div>
+            <div class="rk-summary-help">
+              Revisa los datos y usa el botón principal para confirmar el marcaje.
+            </div>
           </div>
           <div v-if="geoEnabled && location" class="rk-summary-geo">
             <q-icon name="place" size="16px" />
@@ -309,7 +315,10 @@
         <button class="rk-submit-btn" :disabled="!form.tipo || loading" :class="{ loading: loading }" @click="confirmarEnvio">
           <q-icon v-if="!loading" name="check_circle" />
           <q-spinner-hourglass v-else />
-          <span>{{ loading ? "Enviando..." : labelCTA }}</span>
+          <span class="rk-submit-copy">
+            <strong>{{ loading ? "Enviando..." : labelCTA }}</strong>
+            <small>{{ form.tipo ? "Abre el resumen final antes de confirmar" : "Selecciona entrada o salida para continuar" }}</small>
+          </span>
           <div class="rk-submit-shine"></div>
         </button>
       </div>
@@ -366,14 +375,41 @@
       <div class="rk-dialog-card rk-confirm-card">
         <div class="rk-dialog-header">
           <div class="rk-dialog-icon rk-icon-confirm"><q-icon name="task_alt" /></div>
-          <h3 class="rk-dialog-title">Confirmar envío</h3>
+          <div class="rk-dialog-title-wrap">
+            <h3 class="rk-dialog-title">Confirmar asistencia</h3>
+            <p class="rk-dialog-subtitle">Verifica este resumen antes de registrar el marcaje.</p>
+          </div>
         </div>
         <div class="rk-dialog-body">
           <div class="rk-confirm-list">
-            <div class="rk-confirm-item"><q-icon name="swap_horiz" /><div><strong>Tipo:</strong> {{ labelTipo || "—" }}</div></div>
-            <div v-if="form.estadoAnimo" class="rk-confirm-item"><q-icon name="mood" /><div><strong>Estado de ánimo:</strong> {{ labelAnimo || "—" }}</div></div>
-            <div v-if="form.comentario?.trim()" class="rk-confirm-item"><q-icon name="notes" /><div><strong>Comentario:</strong> {{ form.comentario?.trim() || "—" }}</div></div>
-            <div v-if="geoEnabled" class="rk-confirm-item"><q-icon name="place" /><div><strong>Ubicación:</strong> {{ geoTexto }}</div></div>
+            <div class="rk-confirm-item rk-confirm-item--highlight">
+              <q-icon name="swap_horiz" />
+              <div class="rk-confirm-text">
+                <span class="rk-confirm-label">Tipo</span>
+                <strong>{{ labelTipo || "—" }}</strong>
+              </div>
+            </div>
+            <div v-if="form.estadoAnimo" class="rk-confirm-item">
+              <q-icon name="mood" />
+              <div class="rk-confirm-text">
+                <span class="rk-confirm-label">Estado de ánimo</span>
+                <strong>{{ labelAnimo || "—" }}</strong>
+              </div>
+            </div>
+            <div v-if="form.comentario?.trim()" class="rk-confirm-item">
+              <q-icon name="notes" />
+              <div class="rk-confirm-text">
+                <span class="rk-confirm-label">Comentario</span>
+                <strong>{{ form.comentario?.trim() || "—" }}</strong>
+              </div>
+            </div>
+            <div v-if="geoEnabled" class="rk-confirm-item">
+              <q-icon name="place" />
+              <div class="rk-confirm-text">
+                <span class="rk-confirm-label">Ubicación</span>
+                <strong>{{ geoTexto }}</strong>
+              </div>
+            </div>
           </div>
           <div v-if="!isOnline" class="rk-offline-warning">
             <q-icon name="wifi_off" />
@@ -384,7 +420,7 @@
           <button class="rk-dialog-btn" v-close-popup>Cancelar</button>
           <button class="rk-dialog-btn rk-btn-primary" :disabled="loading" @click="enviarAsistencia">
             <q-spinner-hourglass v-if="loading" size="18px" class="q-mr-sm" />
-            <span>{{ loading ? "Enviando..." : "Enviar" }}</span>
+            <span>{{ loading ? "Enviando..." : "Marcar asistencia" }}</span>
           </button>
         </div>
       </div>
@@ -1149,12 +1185,15 @@ function parseHorasToMin(str) {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 18px 24px;
+  padding: 20px 24px;
   margin-bottom: 28px;
-  background: var(--surface-2);
-  border: 1.5px solid var(--border-1);
-  border-left: 4px solid var(--color-primary);
-  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(242, 250, 255, 0.96)),
+    var(--surface-1);
+  border: 1.5px solid rgba(6, 182, 212, 0.18);
+  border-left: 5px solid var(--color-primary);
+  border-radius: 20px;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
   animation: slideDown 0.4s ease;
 }
 
@@ -1178,22 +1217,59 @@ function parseHorasToMin(str) {
 
 .rk-summary-content {
   flex: 1;
-  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   color: var(--text-primary);
 }
 
-.rk-summary-title {
+.rk-summary-kicker {
+  font-size: 0.72rem;
   font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.rk-summary-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rk-summary-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.rk-summary-subtitle {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.18);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.rk-summary-help {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
 }
 
 .rk-summary-geo {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: var(--surface-3);
-  border: 1px solid var(--border-1);
-  border-radius: 10px;
+  max-width: 320px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
@@ -1918,17 +1994,19 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-width: 280px;
-  height: 56px;
-  padding: 0 32px;
+  min-width: 320px;
+  min-height: 72px;
+  padding: 0 28px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border: none;
-  border-radius: 16px;
+  border-radius: 20px;
   color: #fff;
   font-size: 1.05rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow:
+    0 18px 40px rgba(6, 182, 212, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transition: all 0.3s ease;
   overflow: hidden;
   animation: slideUp 0.5s ease 0.1s both;
@@ -1949,6 +2027,26 @@ kbd {
   font-size: 24px;
 }
 
+.rk-submit-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.rk-submit-copy strong {
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.rk-submit-copy small {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.86);
+}
+
 .rk-submit-shine {
   position: absolute;
   top: 0;
@@ -1967,21 +2065,23 @@ kbd {
 
 .rk-dialog-card {
   width: min(500px, 95vw);
-  background: var(--surface-1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 252, 0.98)),
+    var(--surface-1);
   backdrop-filter: blur(20px);
-  border: 1.5px solid var(--border-1);
+  border: 1.5px solid rgba(15, 23, 42, 0.08);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
 }
 
 .rk-dialog-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
   padding: 24px 28px;
-  border-bottom: 1.5px solid var(--border-1);
-  background: var(--surface-2);
+  border-bottom: 1.5px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, rgba(240, 249, 255, 0.95), rgba(255, 255, 255, 0.9));
 }
 
 .rk-dialog-header-content {
@@ -2012,6 +2112,18 @@ kbd {
   margin: 0;
 }
 
+.rk-dialog-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rk-dialog-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
 .rk-dialog-close {
   width: 40px;
   height: 40px;
@@ -2034,6 +2146,7 @@ kbd {
 
 .rk-dialog-body {
   padding: 28px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .rk-empty-queue {
@@ -2150,15 +2263,16 @@ kbd {
   justify-content: flex-end;
   gap: 12px;
   padding: 20px 28px;
-  border-top: 1.5px solid var(--border-1);
-  background: var(--surface-2);
+  border-top: 1.5px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.94));
 }
 
 .rk-dialog-btn {
+  min-height: 48px;
   padding: 11px 24px;
-  background: var(--surface-3);
-  border: 1.5px solid var(--border-1);
-  border-radius: 12px;
+  background: #fff;
+  border: 1.5px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
   color: var(--text-primary);
   font-size: 0.95rem;
   font-weight: 700;
@@ -2167,19 +2281,22 @@ kbd {
 }
 
 .rk-dialog-btn:hover {
-  background: var(--surface-2);
+  background: #f8fafc;
   transform: translateY(-2px);
 }
 
 .rk-dialog-btn.rk-btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  min-width: 200px;
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow:
+    0 14px 30px rgba(6, 182, 212, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .rk-dialog-btn.rk-btn-primary:hover {
-  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 18px 34px rgba(6, 182, 212, 0.34);
 }
 
 .rk-dialog-btn.rk-btn-danger {
@@ -2209,12 +2326,32 @@ kbd {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 14px 16px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-1);
-  border-radius: 12px;
+  padding: 16px 18px;
+  background: rgba(248, 250, 252, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
   font-size: 0.9rem;
   color: var(--text-secondary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.rk-confirm-item--highlight {
+  background: linear-gradient(135deg, rgba(236, 254, 255, 0.96), rgba(240, 249, 255, 0.98));
+  border-color: rgba(6, 182, 212, 0.24);
+}
+
+.rk-confirm-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rk-confirm-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .rk-confirm-item .q-icon {
@@ -2226,6 +2363,7 @@ kbd {
 .rk-confirm-item strong {
   color: var(--text-primary);
   font-weight: 700;
+  line-height: 1.35;
 }
 
 .rk-offline-warning {
@@ -2364,6 +2502,10 @@ kbd {
     gap: 14px;
   }
 
+  .rk-summary-geo {
+    max-width: 100%;
+  }
+
   .rk-form-card {
     padding: 24px 20px;
   }
@@ -2398,6 +2540,7 @@ kbd {
   .rk-submit-btn {
     width: 100%;
     min-width: auto;
+    min-height: 68px;
   }
 
   .rk-dialog-card {
@@ -2466,7 +2609,58 @@ kbd {
   box-shadow: 0 12px 32px rgba(6, 182, 212, 0.5);
 }
 
+.body--dark .rk-summary-banner {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(17, 24, 39, 0.92));
+  border-color: rgba(34, 211, 238, 0.22);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.body--dark .rk-summary-subtitle {
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.22);
+}
+
+.body--dark .rk-summary-geo {
+  background: rgba(15, 23, 42, 0.82);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
 .body--dark .rk-dialog-card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.97));
+  border-color: rgba(148, 163, 184, 0.14);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.body--dark .rk-dialog-header {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.94));
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+
+.body--dark .rk-dialog-body,
+.body--dark .rk-dialog-footer {
+  background: rgba(15, 23, 42, 0.94);
+}
+
+.body--dark .rk-dialog-footer {
+  border-top-color: rgba(148, 163, 184, 0.12);
+}
+
+.body--dark .rk-dialog-btn {
+  background: rgba(30, 41, 59, 0.82);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.body--dark .rk-dialog-btn:hover {
+  background: rgba(51, 65, 85, 0.9);
+}
+
+.body--dark .rk-confirm-item {
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+.body--dark .rk-confirm-item--highlight {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.18), rgba(14, 116, 144, 0.22));
+  border-color: rgba(34, 211, 238, 0.24);
 }
 </style>
