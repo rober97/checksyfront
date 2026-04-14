@@ -331,20 +331,41 @@
                   <div
                     v-for="m in grupo.items" :key="m._id"
                     class="titem"
-                    :class="`titem-${m.tipo}`"
+                    :class="[`titem-${m.tipo}`, { 'titem-modified': m.modified }]"
                   >
                     <div class="titem-icon">
                       <q-icon :name="estadoIcono(m.tipo)" size="16px" />
                     </div>
                     <div class="titem-body">
-                      <div class="titem-tipo">{{ capitalizar(m.tipo || '—') }}</div>
+                      <div class="titem-tipo">
+                        {{ capitalizar(m.tipo || '—') }}
+                        <q-chip
+                          v-if="m.modified"
+                          dense square color="warning" text-color="white"
+                          icon="edit_note" size="sm"
+                        >
+                          Modificado
+                        </q-chip>
+                        <q-chip
+                          v-if="m.workerObjected"
+                          dense square color="negative" text-color="white"
+                          icon="gavel" size="sm"
+                        >
+                          Objetado
+                        </q-chip>
+                      </div>
                       <div class="titem-nota">{{ m.note || 'Sin comentario' }}</div>
                     </div>
                     <div class="titem-right">
                       <div class="titem-hora">{{ horaBonita(m.timestamp) }}</div>
-                      <a v-if="m.ubicacion?.lat" href="#" class="titem-mapa" @click.prevent="openInMaps(m)">
-                        <q-icon name="place" size="12px" />mapa
-                      </a>
+                      <div class="q-gutter-xs">
+                        <a v-if="m.ubicacion?.lat" href="#" class="titem-mapa" @click.prevent="openInMaps(m)">
+                          <q-icon name="place" size="12px" />mapa
+                        </a>
+                        <a href="#" class="titem-mapa" @click.prevent="openModify(m)">
+                          <q-icon name="edit" size="12px" />editar
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -365,13 +386,15 @@
                     <th class="rk-th">Fecha</th>
                     <th class="rk-th">Hora</th>
                     <th class="rk-th">Tipo</th>
-                    <th class="rk-th">Ubicación</th>
+                    <th class="rk-th">Estado</th>
+                    <th class="rk-th">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
                     v-for="m in historialFiltradoYTipado" :key="m._id"
                     class="rk-tr"
+                    :class="{ 'rk-tr-modified': m.modified }"
                   >
                     <td class="rk-td rk-mono">{{ formatFecha(m.timestamp) }}</td>
                     <td class="rk-td rk-mono">{{ horaBonita(m.timestamp) }}</td>
@@ -382,11 +405,23 @@
                       </span>
                     </td>
                     <td class="rk-td">
+                      <q-chip v-if="m.modified" dense color="warning" text-color="white" icon="edit_note">
+                        Modificado
+                      </q-chip>
+                      <q-chip v-if="m.workerObjected" dense color="negative" text-color="white" icon="gavel">
+                        Objetado
+                      </q-chip>
+                      <span v-if="!m.modified && !m.workerObjected" class="rk-muted">—</span>
+                    </td>
+                    <td class="rk-td">
                       <button v-if="m.ubicacion?.lat" class="act-btn act-map" @click="openInMaps(m)">
                         <q-icon name="place" size="14px" />
                         <q-tooltip>Ver en mapa</q-tooltip>
                       </button>
-                      <span v-else class="rk-muted">—</span>
+                      <button class="act-btn act-map" @click="openModify(m)">
+                        <q-icon name="edit" size="14px" />
+                        <q-tooltip>Modificar (registra razón + notifica al trabajador)</q-tooltip>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -419,6 +454,13 @@
       </div>
     </q-dialog>
 
+    <!-- Diálogo de modificación DT (Res. Ex. 38/2024) -->
+    <ModifyAttendanceDialog
+      v-model="modifyOpen"
+      :attendance="modifyTarget"
+      @updated="onAttendanceModified"
+    />
+
   </q-page>
 </template>
 
@@ -426,9 +468,28 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useQuasar, date } from 'quasar';
 import { useAsistenciaStore } from '@/stores/asistenciaStore';
+import ModifyAttendanceDialog from '@/components/dt/ModifyAttendanceDialog.vue';
 
 const $q = useQuasar();
 const asistenciaStore = useAsistenciaStore();
+
+/* ── Modificación DT ──────────────────────── */
+const modifyOpen = ref(false);
+const modifyTarget = ref(null);
+
+function openModify(m) {
+  modifyTarget.value = m;
+  modifyOpen.value = true;
+}
+
+function onAttendanceModified(updated) {
+  if (!updated?._id) return;
+  // Merge visual: encuentra la marca en el historial y marca como modified
+  try {
+    // historial es un computed sobre store; para que vean el cambio recargamos
+    loadData?.();
+  } catch {}
+}
 
 /* ── Dark mode ─────────────────────────────── */
 const isDark = ref($q.dark.isActive);

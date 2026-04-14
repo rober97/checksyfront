@@ -6,7 +6,8 @@
         <div class="header-left">
           <q-icon name="dashboard" size="32px" class="header-icon" />
           <div class="header-text">
-            <h1 class="header-title">Bienvenido {{ nombreRol }}</h1>
+            <h1 class="header-title">Bienvenido, {{ welcomeName }}</h1>
+            <div class="role-chip" v-if="roleLabel">{{ roleLabel }}</div>
             <div class="header-meta">
               <span class="meta-item">
                 <q-icon name="schedule" size="14px" />
@@ -169,9 +170,9 @@
             :badge="solicitudes > 0 ? solicitudes : null"
           />
 
-          <!-- Usuarios Activos (Solo Admin) -->
+          <!-- Usuarios Activos (Superadmin y AdminRrhh) -->
           <KpiCard
-            v-if="roleDisplay === 'Administrador'"
+            v-if="roleDisplay === 'Superadmin' || roleDisplay === 'AdminRrhh'"
             title="Usuarios Activos"
             :value="usuariosActivos"
             icon="people"
@@ -180,16 +181,15 @@
             subtitle="En el sistema"
           />
 
-          <!-- Empresas Registradas (Solo Admin) -->
+          <!-- Empresas Registradas (Solo Superadmin) -->
           <KpiCard
-            v-if="roleDisplay === 'Administrador'"
+            v-if="roleDisplay === 'Superadmin'"
             title="Empresas Registradas"
             :value="empresas"
             icon="apartment"
             icon-gradient="linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)"
             format-type="auto"
             trend="positive"
-            :trend-value="12"
           />
 
           <!-- Días Administrativos (Solo Empleado) -->
@@ -218,17 +218,18 @@
         </div>
       </div>
 
-      <!-- Role-specific Banners -->
+      <!-- Role-specific Banners (modelo 2026) -->
       <transition name="slide-up">
-        <div v-if="roleDisplay === 'Administrador'" class="info-banner admin">
+        <div v-if="roleDisplay === 'Superadmin'" class="info-banner admin">
           <div class="banner-content">
             <div class="banner-icon">
-              <q-icon name="admin_panel_settings" size="32px" />
+              <q-icon name="shield" size="32px" />
             </div>
             <div class="banner-text">
-              <div class="banner-title">Panel de Administración</div>
+              <div class="banner-title">Panel Superadmin — Plataforma</div>
               <div class="banner-description">
-                Gestiona usuarios, permisos y empresas desde el menú lateral
+                Gestiona empresas cliente, administradores RR.HH. y supervisa
+                el cumplimiento DT de toda la plataforma.
               </div>
             </div>
           </div>
@@ -236,23 +237,24 @@
             unelevated
             color="white"
             text-color="primary"
-            label="Ir a Gestión"
-            to="/admin/users"
+            label="Ir a empresas"
+            to="/superadmin/empresas"
             no-caps
           />
         </div>
       </transition>
 
       <transition name="slide-up">
-        <div v-if="roleDisplay === 'Empresa'" class="info-banner company">
+        <div v-if="roleDisplay === 'AdminRrhh'" class="info-banner company">
           <div class="banner-content">
             <div class="banner-icon">
-              <q-icon name="business" size="32px" />
+              <q-icon name="admin_panel_settings" size="32px" />
             </div>
             <div class="banner-text">
-              <div class="banner-title">Panel de Empresa</div>
+              <div class="banner-title">Panel RR.HH. — Tu empresa</div>
               <div class="banner-description">
-                Revisa reportes y administra a tus empleados
+                Administra los empleados de tu empresa, sus horarios, solicitudes
+                y descarga los reportes exigidos por la Dirección del Trabajo.
               </div>
             </div>
           </div>
@@ -260,8 +262,8 @@
             unelevated
             color="white"
             text-color="green"
-            label="Ver Empleados"
-            to="/company/employees"
+            label="Gestionar empleados"
+            to="/rrhh/users"
             no-caps
           />
         </div>
@@ -315,15 +317,45 @@ const companyId = computed(
 );
 const roleRaw = computed(() => auth?.user?.role || "employee");
 
-// Normaliza rol para la UI
+// Nombre real del usuario para el saludo (modelo 2026).
+// Si hay firstName lo usamos; si no, caemos al email o al rol.
+const welcomeName = computed(() => {
+  const u = auth?.user
+  if (!u) return ''
+  const first = (u.firstName || u.first_name || '').trim()
+  const last = (u.lastName || u.last_name || '').trim()
+  if (first) return `${first}${last ? ' ' + last : ''}`
+  if (u.name) return u.name
+  if (u.email) return String(u.email).split('@')[0]
+  return ''
+})
+
+// Normaliza rol a etiqueta visible para la UI (modelo 2026).
+//   superadmin   → Superadmin
+//   admin_rrhh   → Admin RR.HH.
+//   employee     → Empleado
+//   dt_inspector → Fiscalizador DT
+// Mantengo compat para 'admin'/'company' viejos por si aparecen en JWT cacheado.
 const roleDisplay = computed(() => {
   const r = String(roleRaw.value).toLowerCase();
-  if (r === "admin" || r === "administrador") return "Administrador";
-  if (r === "company" || r === "empresa") return "Empresa";
+  if (r === "superadmin") return "Superadmin";
+  if (r === "admin_rrhh") return "AdminRrhh";
+  if (r === "dt_inspector") return "InspectorDT";
+  if (r === "admin" || r === "administrador") return "Superadmin"; // compat
+  if (r === "company" || r === "empresa") return "AdminRrhh"; // compat
   return "Empleado";
 });
 
-const nombreRol = computed(() => roleDisplay.value);
+// Etiqueta amigable (chip arriba del saludo)
+const roleLabel = computed(() => {
+  const m = {
+    Superadmin: 'Superadmin',
+    AdminRrhh: 'Administrador RR.HH.',
+    InspectorDT: 'Fiscalizador DT',
+    Empleado: 'Empleado',
+  }
+  return m[roleDisplay.value] || ''
+});
 
 /* =================== Estado =================== */
 const loading = ref(false);
@@ -423,20 +455,30 @@ function clearCustom() {
   range.value = { from: null, to: null };
 }
 
-/* =================== Accesos rápidos =================== */
+/* =================== Accesos rápidos (modelo 2026) =================== */
 const quickLinks = computed(() => {
-  if (roleDisplay.value === "Administrador") {
+  if (roleDisplay.value === "Superadmin") {
     return [
-      { icon: "manage_accounts", label: "Usuarios", to: "/admin/users" },
-      { icon: "apartment", label: "Empresas", to: "/admin/companies" },
-      { icon: "assessment", label: "KPIs", to: "/admin/kpi" },
+      { icon: "apartment", label: "Empresas", to: "/superadmin/empresas" },
+      { icon: "badge", label: "Admins RR.HH.", to: "/superadmin/admins-rrhh" },
+      { icon: "download", label: "Reportes DT", to: "/superadmin/dt/reportes" },
+      { icon: "history", label: "Auditoría", to: "/superadmin/dt/auditoria" },
     ];
   }
-  if (roleDisplay.value === "Empresa") {
+  if (roleDisplay.value === "AdminRrhh") {
     return [
-      { icon: "group", label: "Empleados", to: "/company/employees" },
-      { icon: "summarize", label: "Reportes", to: "/company/reports" },
-      { icon: "pending_actions", label: "Solicitudes", to: "/company/requests" },
+      { icon: "people", label: "Empleados", to: "/rrhh/users" },
+      { icon: "schedule", label: "Horarios", to: "/rrhh/horarios" },
+      { icon: "assignment", label: "Solicitudes", to: "/rrhh/requests" },
+      { icon: "download", label: "Reportes DT", to: "/rrhh/dt/reportes" },
+    ];
+  }
+  if (roleDisplay.value === "Empleado") {
+    return [
+      { icon: "access_time", label: "Marcar asistencia", to: "/employee/attendance" },
+      { icon: "history", label: "Mi historial", to: "/employee/history" },
+      { icon: "receipt_long", label: "Mis comprobantes DT", to: "/employee/comprobantes" },
+      { icon: "post_add", label: "Nueva solicitud", to: "/employee/create-request" },
     ];
   }
   return [];
@@ -551,10 +593,23 @@ const lastUpdatedText = computed(() =>
   font-size: 1.5rem;
   font-weight: 700;
   color: #2c3e50;
-  
+
   .body--dark & {
     color: #ecf0f1;
   }
+}
+
+.role-chip {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--q-primary);
+  background: rgba(var(--q-primary-rgb), 0.12);
+  border-radius: 10px;
 }
 
 .header-meta {

@@ -7,6 +7,7 @@ import { hasAllPermissions, hasAnyPermission } from '@/utils/permissions'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import CompanyLayout from '@/layouts/EmpresaLayout.vue'
 import EmployeeLayout from '@/layouts/EmpleadoLayout.vue'
+import InspectorLayout from '@/layouts/InspectorLayout.vue'
 
 // ====== Views (lazy: reduce el bundle inicial)
 const HomePublic = () => import(/* webpackChunkName:"public"    */ '@/views/HomePublic.vue')
@@ -40,6 +41,22 @@ const History = () => import(/* webpackChunkName:"empleado"  */ '@/views/Emplead
 const CreateRequest = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/CrearSolicitud.vue')
 const Configuration = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Configuration.vue')
 
+// ====== DT Compliance (Res. Ex. 38/2024 — Dirección del Trabajo)
+const DtReportesDT = () => import(/* webpackChunkName:"dt" */ '@/views/DT/ReportesDT.vue')
+const DtTokensInspector = () => import(/* webpackChunkName:"dt" */ '@/views/DT/TokensInspector.vue')
+const DtAuditoria = () => import(/* webpackChunkName:"dt" */ '@/views/DT/AuditoriaDT.vue')
+const DtLibroAsistencia = () => import(/* webpackChunkName:"dt" */ '@/views/DT/LibroAsistencia.vue')
+const EmpComprobante = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/Comprobante.vue')
+const EmpConsentimiento = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/ConsentimientoDT.vue')
+const VerificarComprobante = () => import(/* webpackChunkName:"public" */ '@/views/Public/VerificarComprobante.vue')
+const InspectorDashboard = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Dashboard.vue')
+const InspectorAsistencias = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Asistencias.vue')
+
+// ====== Superadmin (plataforma)
+const SuperadminDashboard = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Dashboard.vue')
+const SuperadminEmpresas = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Empresas.vue')
+const SuperadminAdminsRrhh = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/AdminsRrhh.vue')
+
 // ====== Utilidades de autorización y navegación
 const BASE = process.env.BASE_URL || '/'
 const APP_TITLE = 'Recksy'
@@ -54,6 +71,8 @@ const hasRequiredRole = (userRole, requiredRoles) => {
 
 const hasPermissions = (auth, requiredPerms = [], mode = DEFAULT_PERMS_MODE) => {
   if (!requiredPerms.length) return true
+  // Superadmin siempre pasa (dueño de la plataforma).
+  if (normalizeRole(auth?.role || auth?.user?.role) === 'superadmin') return true
   const granted = auth?.permissions || auth?.user?.permissions || []
   return mode === 'any'
     ? hasAnyPermission(granted, requiredPerms)
@@ -69,12 +88,21 @@ const safeRedirectOf = (to) => {
   return isInternalPath(val) ? val : null
 }
 
+// Landing por rol (modelo 2026):
+//   superadmin   → /superadmin/dashboard    (plataforma completa)
+//   admin_rrhh   → /rrhh/dashboard          (su empresa)
+//   employee     → /employee/dashboard      (sólo él)
+//   dt_inspector → /inspector/dashboard     (fiscalización DT)
 const roleHome = (role) => {
-  console.log('ROL', role)
   switch (normalizeRole(role)) {
-    case 'admin': return '/admin/dashboard'
-    case 'empresa': return '/company/dashboard'
+    case 'superadmin': return '/superadmin/dashboard'
+    case 'admin_rrhh': return '/rrhh/dashboard'
     case 'employee': return '/employee/dashboard'
+    case 'dt_inspector': return '/inspector/dashboard'
+    // Compat: si el JWT trae roles legacy los mapeamos
+    case 'admin': return '/superadmin/dashboard'
+    case 'empresa': return '/rrhh/dashboard'
+    case 'company': return '/rrhh/dashboard'
     default: return '/'
   }
 }
@@ -86,29 +114,65 @@ const routes = [
   { path: '/login', name: 'Login', component: Login, meta: { public: true, onlyGuests: true, title: 'Iniciar sesión' } },
   { path: '/register', name: 'Register', component: Register, meta: { public: true, onlyGuests: true, title: 'Registro' } },
 
+  // ===== Verificador público DT (Res. Ex. 38/2024) =====
+  // Accesible sin login para que cualquiera (incluida la DT) pueda validar un comprobante por su hash.
+  { path: '/verificar-comprobante', name: 'VerificarComprobante', component: VerificarComprobante, meta: { public: true, title: 'Verificar comprobante' } },
+  { path: '/verificar-comprobante/:hash', name: 'VerificarComprobanteHash', component: VerificarComprobante, props: true, meta: { public: true, title: 'Verificar comprobante' } },
+
   // Perfil/config (cualquier rol autenticado)
   { path: '/configuration', name: 'ConfigurationRoot', component: Configuration, meta: { requiresAuth: true, title: 'Configuración' } },
 
-  // Admin
+  // =====================================================================
+  // SUPERADMIN (plataforma — sólo tú)
+  // =====================================================================
   {
-    path: '/admin',
+    path: '/superadmin',
     component: AdminLayout,
-    meta: { requiresAuth: true, roles: ['admin'] },
+    meta: { requiresAuth: true, roles: ['superadmin'] },
     children: [
-      { path: '', redirect: { name: 'AdminDashboard' } },
-      { path: 'dashboard', name: 'AdminDashboard', component: Dashboard, meta: { title: 'Panel • Admin' } },
-      { path: 'users', name: 'UserManagement', component: UserManagement, meta: { permissions: ['users:read'], title: 'Usuarios' } },
-      { path: 'permissions', name: 'Permissions', component: Permissions, meta: { permissions: ['permissions:read'], title: 'Permisos' } },
-      { path: 'horarios', name: 'HorariosList', component: GestionHorarios, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
-      { path: 'attendance', name: 'AsistenciaList', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },
-      { path: 'companies', name: 'CompanyListAdmin', component: CompanyList, meta: { permissions: ['companies:read'], title: 'Empresas' } },
-      { path: 'company/new', name: 'CompanyFormAdmin', component: CompanyForm, meta: { permissions: ['companies:create'], title: 'Nueva empresa' } },
-      { path: 'company/:id', name: 'CompanyDetailAdmin', component: CompanyDetail, props: true, meta: { permissions: ['companies:read'], title: 'Detalle empresa' } },
-      { path: 'requests', name: 'RequestsAdmin', component: RequestList, props: true, meta: { permissions: ['companies:read'], title: 'Requests' } },
-      { path: "payroll", name: "payroll", component: Payroll, props: true, meta: { permissions: ['companies:read'], title: 'Requests' }},
-      { path: "payrollRates", name: "payrollRate", component: PayrollRate, props: true, meta: { permissions: ['companies:read'], title: 'Requests' }}
+      { path: '', redirect: { name: 'SuperadminDashboard' } },
+      { path: 'dashboard', name: 'SuperadminDashboard', component: SuperadminDashboard, meta: { title: 'Plataforma • Superadmin' } },
+      { path: 'empresas', name: 'SuperadminEmpresas', component: SuperadminEmpresas, meta: { title: 'Empresas (plataforma)' } },
+      { path: 'empresas/new', name: 'SuperadminEmpresaNew', component: CompanyForm, meta: { title: 'Nueva empresa' } },
+      { path: 'empresas/:id', name: 'SuperadminEmpresaDetail', component: CompanyDetail, props: true, meta: { title: 'Detalle empresa' } },
+      { path: 'admins-rrhh', name: 'SuperadminAdminsRrhh', component: SuperadminAdminsRrhh, meta: { title: 'Administradores RR.HH.' } },
+      // Reportes y herramientas DT globales
+      { path: 'dt/reportes', name: 'SuperadminDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT (global)' } },
+      { path: 'dt/libro', name: 'SuperadminDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },
+      { path: 'dt/tokens', name: 'SuperadminDtTokens', component: DtTokensInspector, meta: { title: 'Tokens fiscalizadores' } },
+      { path: 'dt/auditoria', name: 'SuperadminDtAuditoria', component: DtAuditoria, meta: { title: 'Auditoría global' } },
     ]
   },
+
+  // =====================================================================
+  // ADMIN RR.HH. (administrador de RR.HH. de UNA empresa cliente)
+  // Paths antes eran /admin/*, ahora son /rrhh/*. Usa el mismo AdminLayout.
+  // =====================================================================
+  {
+    path: '/rrhh',
+    component: AdminLayout,
+    meta: { requiresAuth: true, roles: ['admin_rrhh'] },
+    children: [
+      { path: '', redirect: { name: 'RrhhDashboard' } },
+      { path: 'dashboard', name: 'RrhhDashboard', component: Dashboard, meta: { title: 'Panel RR.HH.' } },
+      { path: 'users', name: 'RrhhUsers', component: UserManagement, meta: { permissions: ['users:read'], title: 'Empleados' } },
+      { path: 'permissions', name: 'RrhhPermissions', component: Permissions, meta: { permissions: ['permissions:read'], title: 'Permisos' } },
+      { path: 'horarios', name: 'RrhhHorarios', component: GestionHorarios, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
+      { path: 'attendance', name: 'RrhhAttendance', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },
+      { path: 'empresa', name: 'RrhhEmpresa', component: CompanyDetail, props: true, meta: { title: 'Mi empresa' } },
+      { path: 'requests', name: 'RrhhRequests', component: RequestList, props: true, meta: { title: 'Solicitudes' } },
+      { path: 'payroll', name: 'RrhhPayroll', component: Payroll, props: true, meta: { title: 'Liquidaciones' } },
+      { path: 'payrollRates', name: 'RrhhPayrollRate', component: PayrollRate, props: true, meta: { title: 'Config Nómina' } },
+      // DT Compliance de la empresa
+      { path: 'dt/reportes', name: 'RrhhDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT' } },
+      { path: 'dt/libro', name: 'RrhhDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },
+      { path: 'dt/tokens', name: 'RrhhDtTokens', component: DtTokensInspector, meta: { title: 'Fiscalizadores DT' } },
+      { path: 'dt/auditoria', name: 'RrhhDtAuditoria', component: DtAuditoria, meta: { title: 'Bitácora' } },
+    ]
+  },
+
+  // Redirect legacy /admin → /rrhh (simplificado; no hay data vieja)
+  { path: '/admin', redirect: '/rrhh/dashboard' },
 
   // Employee
   {
@@ -120,9 +184,27 @@ const routes = [
       { path: 'dashboard', name: 'EmployeeDashboard', component: Dashboard, meta: { title: 'Panel • Empleado' } },
       { path: 'attendance', name: 'Attendance', component: Attendance, meta: { title: 'Marcar asistencia' } },
       { path: 'history', name: 'History', component: History, meta: { title: 'Historial' } },
+      { path: 'libro', name: 'EmployeeLibro', component: DtLibroAsistencia, meta: { title: 'Mi libro de asistencia' } },
       { path: 'create-request', name: 'CreateRequest', component: CreateRequest, meta: { title: 'Nueva solicitud' } },
       { path: 'documents', name: 'Documents', component: EmployeeDocs, meta: { title: 'Documents' } },
       { path: 'requests', name: 'Requests', component: RequestListEmployee, meta: { title: 'Requests' } },
+      // ===== DT Compliance para el trabajador =====
+      { path: 'comprobantes', name: 'EmpComprobantes', component: EmpComprobante, meta: { title: 'Mis comprobantes DT' } },
+      { path: 'consentimiento', name: 'EmpConsentimiento', component: EmpConsentimiento, meta: { title: 'Consentimiento DT' } },
+    ]
+  },
+
+  // ===== Fiscalizador DT =====
+  {
+    path: '/inspector',
+    component: InspectorLayout,
+    meta: { requiresAuth: true, roles: ['dt_inspector'] },
+    children: [
+      { path: '', redirect: { name: 'InspectorDashboard' } },
+      { path: 'dashboard', name: 'InspectorDashboard', component: InspectorDashboard, meta: { title: 'Fiscalización DT' } },
+      { path: 'attendance', name: 'InspectorAttendance', component: InspectorAsistencias, meta: { title: 'Asistencias — DT' } },
+      { path: 'audit', name: 'InspectorAudit', component: DtAuditoria, meta: { title: 'Bitácora — DT' } },
+      { path: 'reports', name: 'InspectorReports', component: DtReportesDT, meta: { title: 'Reportes DT' } },
     ]
   },
 
