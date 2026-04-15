@@ -350,15 +350,20 @@ watch(() => route.path, () => {
   --rk-beam-strength: .95;
   --rk-beam-blur: 18px;
 
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   position: relative;
-  overflow: hidden; /* SIN SCROLL global */
+  overflow: hidden;
 }
 
 .rk-drawer__content{
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   position: relative;
   z-index: 1;
   height: 100%;
-  overflow: hidden; /* SIN SCROLL en el contenido */
   &.dark{  background: linear-gradient(135deg, var(--rk-dark) 0%, #222 100%); color:#fff; }
   &.light{ background: linear-gradient(135deg, var(--rk-light) 0%, #f7f9fc 100%); color:#111; }
 }
@@ -396,13 +401,19 @@ watch(() => route.path, () => {
 .fade-enter-active,.fade-leave-active{ transition:opacity .12s ease }
 .fade-enter-from,.fade-leave-to{ opacity:0 }
 
-/* ===== Nav (SIN SCROLL) ===== */
+/* ===== Nav ===== */
 .rk-nav{
-  height: calc(100% - 216px); /* header + search + footer aprox. ajusta si cambias alturas */
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 6px 8px 10px;
-  overflow: hidden; /* SIN SCROLL */
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
+  scrollbar-width: thin;
 }
+.rk-nav::-webkit-scrollbar{ width: 8px; }
+.rk-nav::-webkit-scrollbar-thumb{ background: rgba(100,116,139,.25); border-radius: 99px; }
+.rk-nav::-webkit-scrollbar-track{ background: transparent; }
 .rk-nav__group{ padding: 2px 2px 8px }
 .rk-group__head{
   display:flex; align-items:center; gap:.75rem; padding:.6rem .75rem; border-radius:12px; cursor:pointer; transition:.2s;
@@ -505,10 +516,11 @@ watch(() => route.path, () => {
 .rk-drawer__footer{
   padding: 14px 12px;
   border-top: 1px solid var(--rk-border);
-  position: absolute; left:0; right:0; bottom:0;
+  position: relative;
+  flex-shrink: 0;
 }
 .rk-logout{
-  position:relative; width:100%; justify-content:flex-start;
+  position: relative; width:100%; justify-content:flex-start;
   border-radius:10px; padding:.7rem .9rem; transition:.2s; overflow:hidden;
 }
 .rk-logout:hover{ background: rgba(239,68,68,.10); color:#ef4444; transform: translateX(4px) }
