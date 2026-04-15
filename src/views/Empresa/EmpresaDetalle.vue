@@ -353,13 +353,22 @@ async function loadCompanyById(id) {
   }
 }
 
+function pickArray(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data?.users)) return data.users
+  if (Array.isArray(data?.rows)) return data.rows
+  if (Array.isArray(data?.data)) return data.data
+  return []
+}
+
 async function loadEmpleados(companyId) {
   try {
     const { data } = await secureAxios.get(`/users?company=${companyId}&role=employee`)
-    const rows = data?.users || data?.rows || data || []
-    empleados.value = Array.isArray(rows)
-      ? rows.filter((u) => u.role === 'employee' && (u.company === companyId || u.company?._id === companyId || !companyId))
-      : []
+    // Confiamos en el filtro del backend (que ya scopea por company + role).
+    // Sólo nos aseguramos de no mostrar usuarios con otro rol que pudieran
+    // colarse por algún flag legacy.
+    empleados.value = pickArray(data).filter((u) => u.role === 'employee')
   } catch (err) {
     console.error('[EmpresaDetalle] empleados error:', err)
     empleados.value = []

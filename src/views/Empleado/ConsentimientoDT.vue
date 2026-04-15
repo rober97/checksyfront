@@ -1,13 +1,24 @@
 <template>
   <q-page padding>
     <div class="consent-shell">
+      <q-banner v-if="isOnboarding" class="bg-blue-1 q-mb-md">
+        <template #avatar><q-icon name="info" color="primary" /></template>
+        <div class="text-weight-medium">Paso obligatorio antes de usar el sistema</div>
+        <div class="text-caption">
+          Conforme a la Resolución Exenta N°38/2024 de la Dirección del Trabajo,
+          debes registrar tu correo personal y aceptar las condiciones del
+          sistema antes de comenzar a marcar asistencia.
+        </div>
+      </q-banner>
+
       <div class="text-h5 text-weight-bold q-mb-sm">
         <q-icon name="assignment_turned_in" class="text-primary q-mr-sm" />
         Consentimiento DT
       </div>
       <div class="text-subtitle2 text-grey-7 q-mb-md">
-        Antes de usar el sistema de control de asistencia debes aceptar las
-        siguientes condiciones (Res. Ex. N°38/2024, Dirección del Trabajo).
+        {{ alreadyAccepted
+            ? 'Ya aceptaste el consentimiento. Puedes revisarlo o actualizar tu correo personal.'
+            : 'Antes de usar el sistema de control de asistencia debes aceptar las siguientes condiciones (Res. Ex. N°38/2024, Dirección del Trabajo).' }}
       </div>
 
       <q-card flat bordered class="q-mb-md">
@@ -111,22 +122,40 @@
         Aceptaste este consentimiento el
         <b>{{ fmt(currentConsent?.acceptedAt) }}</b>
         (versión {{ currentConsent?.version }}).
+        <q-btn
+          flat dense color="primary" label="Ir al panel"
+          icon-right="arrow_forward" class="q-ml-sm"
+          to="/employee/dashboard"
+        />
       </q-banner>
     </div>
   </q-page>
 </template>
 
 <script setup>
+defineOptions({ name: 'EmpConsentimientoDT' })
+
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import { useDtStore } from '@/stores/dtStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const dt = useDtStore()
+const auth = useAuthStore()
+const router = useRouter()
 const $q = useQuasar()
 
 const personalEmail = ref('')
 const saving = ref(false)
 const currentConsent = ref(null)
+
+// Detecta si el usuario está aquí porque el guard lo redirigió (primer uso)
+// o porque vino voluntariamente (ya tiene consent y solo quiere revisar).
+const isOnboarding = computed(() => {
+  if (auth.role !== 'employee') return false
+  return !auth.user?.dtConsent?.acceptedAt || !auth.user?.personalEmail
+})
 
 const form = reactive({
   version: '1.0',
@@ -154,6 +183,8 @@ function fmt(d) { return d ? new Date(d).toLocaleString('es-CL') : '-' }
 async function savePersonalEmail() {
   try {
     await dt.setPersonalEmail(personalEmail.value.toLowerCase())
+    // Refrescar el user del authStore para que el guard sepa que ya hay personalEmail
+    try { await auth.fetchMe() } catch {}
     $q.notify({ type: 'positive', message: 'Correo personal guardado' })
   } catch (err) {
     $q.notify({ type: 'negative', message: err?.response?.data?.message || 'Error' })
@@ -164,8 +195,19 @@ async function accept() {
   saving.value = true
   try {
     await dt.acceptConsent(form)
-    $q.notify({ type: 'positive', message: 'Consentimiento registrado' })
+    // Refrescar el user del authStore para liberar el gate de consentimiento
+    try { await auth.fetchMe() } catch {}
+    $q.notify({
+      type: 'positive',
+      message: 'Consentimiento registrado. Bienvenido al sistema.',
+      timeout: 2500,
+    })
     await load()
+    // Si era onboarding, llevarlo a su dashboard.
+    // Si vino voluntariamente, lo dejamos donde está.
+    if (auth.user?.dtConsent?.acceptedAt && auth.user?.personalEmail) {
+      setTimeout(() => router.push('/employee/dashboard'), 800)
+    }
   } catch (err) {
     $q.notify({ type: 'negative', message: 'Error' })
   } finally {

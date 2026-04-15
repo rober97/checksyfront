@@ -236,6 +236,30 @@ async function ensureSession() {
   return auth
 }
 
+// DT Compliance: rutas que el empleado SIEMPRE puede visitar incluso sin
+// haber firmado el consentimiento (la pantalla de consent, logout, config).
+const CONSENT_BYPASS_NAMES = new Set([
+  'EmpConsentimiento',
+  'Login',
+  'Register',
+  'Home',
+  'NotFound',
+  'VerificarComprobante',
+  'VerificarComprobanteHash',
+  'ConfigurationRoot',
+])
+
+function employeeNeedsConsent(auth) {
+  if (normalizeRole(auth?.role) !== 'employee') return false
+  const consent = auth?.user?.dtConsent
+  // Necesita consent si:
+  //  - no tiene dtConsent o no aceptó (acceptedAt vacío)
+  //  - o no tiene personalEmail (también obligatorio)
+  if (!consent?.acceptedAt) return true
+  if (!auth?.user?.personalEmail) return true
+  return false
+}
+
 router.beforeEach(async (to, from, next) => {
   const auth = await ensureSession()
 
@@ -273,6 +297,15 @@ router.beforeEach(async (to, from, next) => {
   const requiredPerms = to.matched.flatMap(r => r.meta?.permissions || [])
   if (requiredPerms.length && !hasPermissions(auth, requiredPerms, permMode)) {
     return next({ name: 'NotFound' })
+  }
+
+  // 7) DT Consent gate (Res. Ex. 38/2024): el empleado debe firmar el
+  //    consentimiento ANTES de poder marcar asistencia o usar el sistema.
+  //    Lo redirigimos automáticamente a la pantalla de consentimiento.
+  if (auth.isAuthenticated && employeeNeedsConsent(auth)) {
+    if (!CONSENT_BYPASS_NAMES.has(to.name)) {
+      return next({ name: 'EmpConsentimiento' })
+    }
   }
 
   next()

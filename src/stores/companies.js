@@ -256,6 +256,49 @@ export const useCompaniesStore = defineStore('companies', {
         this.error = this.error || 'Could not create work schedule'
         throw err
       }
+    },
+
+    async updateWorkSchedule(id, scheduleData) {
+      this.error = null
+      try {
+        const res = await secureAxios.patch(`/work-schedules/schedule/${id}`, scheduleData)
+        const ok = res?.data?.success ?? !!res?.data
+        if (!ok) {
+          this.error = res?.data?.message || 'Failed to update schedule'
+          throw new Error(this.error)
+        }
+        const updated = extractCompany(res?.data)
+        const obj = {
+          _id: updated?._id || updated?.id || id,
+          name: updated?.name || '',
+          ...updated
+        }
+        const idx = this.workSchedules.findIndex((s) => s._id === id)
+        if (idx !== -1) this.workSchedules[idx] = obj
+        return obj
+      } catch (err) {
+        console.error('[companies.updateWorkSchedule] error:', err)
+        this.error = this.error || 'Could not update work schedule'
+        throw err
+      }
+    },
+
+    async deleteWorkSchedule(id) {
+      this.error = null
+      try {
+        const res = await secureAxios.delete(`/work-schedules/schedule/${id}`)
+        const ok = res?.data?.success ?? !!res?.data
+        if (!ok) {
+          this.error = res?.data?.message || 'Failed to delete schedule'
+          throw new Error(this.error)
+        }
+        this.workSchedules = this.workSchedules.filter((s) => s._id !== id)
+        return true
+      } catch (err) {
+        console.error('[companies.deleteWorkSchedule] error:', err)
+        this.error = this.error || 'Could not delete work schedule'
+        throw err
+      }
     }
   }
 })
