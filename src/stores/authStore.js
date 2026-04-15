@@ -36,7 +36,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        // Recomendado: el backend setea refresh-token en cookie httpOnly (SameSite=Lax/Strict, Secure)
+        // El backend setea refresh-token en cookie httpOnly (SameSite=Lax/Strict, Secure)
         const res = await publicAxios.post('/auth/login', { email, password })
         if (!res.data?.success) throw new Error(res.data?.message || 'Login fallido')
         const { accessToken, user } = res.data
@@ -45,12 +45,17 @@ export const useAuthStore = defineStore('auth', {
         this.token = accessToken
         this.user = user
 
+        // ⚠️ Persistir el access token en localStorage para que sobreviva al
+        // refresh de la página. Sin esto, restore() no encuentra el token al
+        // recargar y manda al usuario al login.
+        try { localStorage.setItem('token', accessToken) } catch {}
+
         this._applyAuthHeader(accessToken)
       } catch (err) {
         console.error('Login error:', err)
         this.user = null
         this.token = null
-        localStorage.removeItem('token')
+        try { localStorage.removeItem('token') } catch {}
         this.error = err?.message || 'Error de servidor'
         throw err
       } finally {
