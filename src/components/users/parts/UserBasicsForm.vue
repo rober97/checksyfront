@@ -154,6 +154,59 @@
         </div>
       </div>
 
+      <!-- ===== Sección Rol (sólo para superadmin) ===== -->
+      <div v-if="canPickRole" class="rk-section" data-step="1">
+        <div class="rk-section-header">
+          <div class="rk-section-icon">
+            <q-icon name="verified_user" />
+          </div>
+          <div class="rk-section-title-wrap">
+            <h4 class="rk-section-title">Tipo de usuario</h4>
+            <p class="rk-section-desc">Define el nivel de acceso del nuevo usuario</p>
+          </div>
+        </div>
+
+        <div class="rk-role-selector">
+          <div
+            class="rk-role-card"
+            :class="{ selected: local.tipo === 'empleado' }"
+            @click="local.tipo = 'empleado'"
+          >
+            <div class="rk-role-card-icon">
+              <q-icon name="badge" />
+            </div>
+            <div class="rk-role-card-content">
+              <h4 class="rk-role-card-title">Empleado</h4>
+              <p class="rk-role-card-desc">
+                Trabajador de una empresa. Sólo accede a sus propios registros.
+              </p>
+            </div>
+            <div class="rk-role-check">
+              <q-icon name="check" />
+            </div>
+          </div>
+
+          <div
+            class="rk-role-card"
+            :class="{ selected: isAdminRrhh }"
+            @click="local.tipo = 'admin_rrhh'"
+          >
+            <div class="rk-role-card-icon">
+              <q-icon name="admin_panel_settings" />
+            </div>
+            <div class="rk-role-card-content">
+              <h4 class="rk-role-card-title">Admin RR.HH.</h4>
+              <p class="rk-role-card-desc">
+                Administra una o más empresas. Puede gestionar empleados y nómina.
+              </p>
+            </div>
+            <div class="rk-role-check">
+              <q-icon name="check" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== Sección 2: Vinculación ===== -->
       <div class="rk-section" data-step="2">
         <div class="rk-section-header">
@@ -364,6 +417,10 @@ import {
 } from '@/utils/validators'
 import CompanySearchSelect from '@/components/companies/CompanySearchSelect.vue'
 import SchedulePicker from '@/components/users/SchedulePicker.vue'
+import { useAuthStore } from '@/stores/authStore'
+
+const authStore = useAuthStore()
+const canPickRole = computed(() => String(authStore.user?.role || '') === 'superadmin')
 
 /* Props / Emits */
 const props = defineProps({
