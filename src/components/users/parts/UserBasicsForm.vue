@@ -167,7 +167,8 @@
         </div>
 
         <div class="rk-section-grid rk-single-col">
-          <div class="rk-input-wrap">
+          <!-- Empleado / DT / Superadmin: una sola empresa -->
+          <div v-if="!isAdminRrhh" class="rk-input-wrap">
             <CompanySearchSelect
               v-model="local.empresa"
               :rules="[req]"
@@ -175,6 +176,30 @@
               @created="onCompanyCreated"
               class="rk-input"
             />
+          </div>
+
+          <!-- admin_rrhh: múltiples empresas (multi-select) -->
+          <div v-else class="rk-input-wrap">
+            <q-select
+              v-model="local.empresas"
+              :options="empresaOptions"
+              option-value="id"
+              option-label="name"
+              emit-value
+              map-options
+              multiple
+              use-chips
+              dense
+              outlined
+              label="Empresas administradas"
+              hint="El administrador podrá cambiar entre ellas. La primera será la empresa activa por defecto."
+              :rules="[arrayReq]"
+              class="rk-input"
+            >
+              <template #prepend>
+                <q-icon name="business" class="rk-input-icon" />
+              </template>
+            </q-select>
           </div>
 
           <div v-if="local.tipo === 'empleado'" class="rk-input-wrap">
@@ -355,6 +380,7 @@ const EMPTY = () => ({
   email: '',
   tipo: 'empleado',
   empresa: null,
+  empresas: [],
   rut: '',
   horarioLaboralId: null,
   workScheduleChoice: { mode: 'companyDefault', scheduleId: null },
@@ -371,6 +397,7 @@ const clean = (v = {}) => {
   x.email     = s.email     ?? ''
   x.tipo      = s.tipo      ?? 'empleado'
   x.empresa   = s.empresa   ?? null
+  x.empresas  = Array.isArray(s.empresas) ? s.empresas.slice() : []
   x.rut       = s.rut       ?? ''
   x.horarioLaboralId = s.horarioLaboralId ?? null
   x.workScheduleChoice = {
@@ -520,6 +547,45 @@ const passStrengthClass = computed(() => {
   if (v > 0) return 'weak'
   return 'none'
 })
+
+/* admin_rrhh con multi-empresa */
+const isAdminRrhh = computed(() => ['admin_rrhh', 'admin', 'rrhh', 'empresa'].includes(String(local.tipo)))
+
+const empresaOptions = computed(() =>
+  (props.empresasRaw || []).map(e => ({ id: e.id || e._id, name: e.name }))
+)
+
+const arrayReq = (v) => (Array.isArray(v) && v.length > 0) || 'Selecciona al menos una empresa'
+
+// Mantén sincronizado empresa ↔ empresas[] para admin_rrhh:
+// la primera del array es la "empresa activa".
+watch(
+  () => local.empresas,
+  (arr) => {
+    if (!isAdminRrhh.value) return
+    const first = Array.isArray(arr) && arr.length ? arr[0] : null
+    if (first !== local.empresa) local.empresa = first
+  },
+  { deep: true }
+)
+
+// Cuando cambia el rol, limpia lo irrelevante
+watch(
+  () => local.tipo,
+  (t) => {
+    if (['admin_rrhh', 'admin', 'rrhh', 'empresa'].includes(String(t))) {
+      if (local.empresa && !local.empresas.includes(local.empresa)) {
+        local.empresas = [local.empresa, ...local.empresas]
+      }
+    } else {
+      // empleado / dt → una sola empresa
+      if (local.empresas.length > 0 && !local.empresa) {
+        local.empresa = local.empresas[0]
+      }
+      local.empresas = local.empresa ? [local.empresa] : []
+    }
+  }
+)
 
 /* Datos de empresa */
 const companyObj = computed(() => {

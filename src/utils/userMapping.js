@@ -8,6 +8,9 @@ export function mapUIRoleToApi(ui) {
 
 // API → UI (para hidratar formularios)
 export function mapFromApi(u = {}) {
+    const empresas = Array.isArray(u.companies)
+        ? u.companies.map(c => c?._id || c).filter(Boolean)
+        : []
     return {
         firstName: u.firstName || "",
         lastName: u.lastName || "",
@@ -15,6 +18,7 @@ export function mapFromApi(u = {}) {
         password: "", // no se edita aquí
         tipo: mapApiRoleToUI(u.role),
         empresa: u.company?._id || u.company || null,
+        empresas,
         rut: u.rut || "",
         horarioLaboralId: u.workSchedule?._id || u.workSchedule || null,
         status: u.status || "active",
@@ -62,6 +66,10 @@ export function buildApiPatch(patchUI = {}) {
     if ("empresa" in out) {
         out.company = out.empresa;
         delete out.empresa;
+    }
+    if ("empresas" in out) {
+        out.companies = Array.isArray(out.empresas) ? out.empresas.filter(Boolean) : [];
+        delete out.empresas;
     }
     if ("horarioLaboralId" in out) {
         out.workSchedule = out.horarioLaboralId;

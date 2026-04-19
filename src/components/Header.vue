@@ -51,6 +51,9 @@
 
       <!-- Right Section -->
       <div class="rk-header-right">
+        <!-- Company Switcher (solo admin_rrhh multi-empresa) -->
+        <CompanySwitcher />
+
         <!-- Search Button -->
         <button class="rk-action-btn" @click="openCommand">
           <q-icon name="search" />
@@ -240,6 +243,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Dark, useQuasar } from "quasar";
 import UserAvatarMenu from "@/components/UserAvatarMenu.vue";
+import CompanySwitcher from "@/components/CompanySwitcher.vue";
 import { useThemeStore } from "@/stores/themeStore";
 
 defineEmits(["toggle-drawer"]);

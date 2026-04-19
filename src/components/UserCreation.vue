@@ -673,7 +673,15 @@ async function submitForm() {
   const ok = await validateForm();
   if (!ok) return toast.error("Revisa los campos requeridos.");
 
-  if (!form.value.empresa) {
+  const isAdminRole = ["admin_rrhh", "admin", "rrhh", "empresa"].includes(String(form.value.tipo))
+
+  if (isAdminRole) {
+    if (!Array.isArray(form.value.empresas) || form.value.empresas.length === 0) {
+      toast.error("Debes seleccionar al menos una empresa.");
+      tab.value = "basicos";
+      return;
+    }
+  } else if (!form.value.empresa) {
     toast.error("Debes seleccionar una empresa.");
     tab.value = "basicos";
     return;
@@ -823,6 +831,10 @@ function mapPayload(f) {
   const saludSistema = payrollCatalogStore.getHealthSlugById(
     f.payroll?.healthEntityId,
   );
+  const isAdminRole = ["admin_rrhh", "admin", "rrhh", "empresa"].includes(String(f.tipo))
+  const companies = isAdminRole
+    ? (Array.isArray(f.empresas) ? f.empresas : []).filter(Boolean)
+    : (f.empresa ? [f.empresa] : [])
   return {
     firstName: f.firstName?.trim() || "",
     lastName: f.lastName?.trim() || "",
@@ -830,7 +842,8 @@ function mapPayload(f) {
     password: f.password || "",
     rut: f.tipo === "empleado" ? f.rut : null,
     role: f.tipo,
-    company: f.empresa,
+    company: f.empresa || companies[0] || null,
+    companies,
     workSchedule: f.workScheduleChoice.scheduleId,
     phone: f.phone?.trim() || null,
     emergencyContact: f.emergencyContact?.trim() || null,
@@ -895,6 +908,7 @@ function getEmptyForm() {
     password: "",
     tipo: "empleado",
     empresa: null,
+    empresas: [],
     rut: "",
     horarioLaboralId: null,
     workScheduleChoice: { mode: "companyDefault", scheduleId: null },

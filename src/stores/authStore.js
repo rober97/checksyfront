@@ -27,7 +27,10 @@ export const useAuthStore = defineStore('auth', {
     hasPermission: (s) => (perm) => hasPermission(s.user?.permissions, perm),
     hasAnyPermission: (s) => (perms) => hasAnyPermission(s.user?.permissions, perms),
     hasAllPermissions: (s) => (perms) => hasAllPermissions(s.user?.permissions, perms),
-    getUser: (s) => s.user
+    getUser: (s) => s.user,
+    activeCompany: (s) => s.user?.company || null,
+    assignedCompanies: (s) => Array.isArray(s.user?.companies) ? s.user.companies : [],
+    hasMultipleCompanies: (s) => Array.isArray(s.user?.companies) && s.user.companies.length > 1,
   },
 
   actions: {
@@ -106,6 +109,27 @@ export const useAuthStore = defineStore('auth', {
     },
 
 
+
+    /**
+     * Cambia la empresa activa del admin_rrhh.
+     * Llama al backend para re-emitir el JWT (porque companyId va en el token)
+     * y actualiza el user en el store.
+     */
+    async switchCompany(companyId) {
+      if (!companyId) throw new Error('companyId requerido')
+      const res = await secureAxios.post('/auth/switch-company', { companyId })
+      if (!res.data?.success) {
+        throw new Error(res.data?.message || 'No se pudo cambiar de empresa')
+      }
+      const { accessToken, user } = res.data
+      if (accessToken) {
+        this.token = accessToken
+        try { localStorage.setItem('token', accessToken) } catch {}
+        this._applyAuthHeader(accessToken)
+      }
+      if (user) this.user = user
+      return user
+    },
 
     // Obtiene el perfil actual desde el backend usando el access token
     async fetchMe() {
