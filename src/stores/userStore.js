@@ -87,6 +87,7 @@ function normalizeCreateUserPayload(userData = {}) {
     role,
     company: cleanText(userData?.company, null),
     workSchedule: cleanText(userData?.workSchedule, null),
+    workScheduleChoice: userData?.workScheduleChoice || null,
     phone: cleanText(userData?.phone, null),
     emergencyContact: cleanText(userData?.emergencyContact, null),
     address: {
@@ -183,10 +184,19 @@ export const useUserStore = defineStore('user', {
         if (!msg) {
           if (err.response) {
             // Errores HTTP (4xx, 5xx) con payload del backend
-            const { data, status, statusText } = err.response
+            const { data } = err.response
 
-            const text = data?.message + data?.error
-            msg = text
+            const rawMessage = data?.message || data?.error
+            const missing = Array.isArray(data?.details?.missing) ? data.details.missing : []
+
+            if (rawMessage === 'Payroll setup incompleto' || missing.length) {
+              const detail = missing[0]
+              msg = detail
+                ? `Configuración de nómina incompleta: ${detail} Pídele al administrador que complete la configuración en "Config Nómina" antes de crear empleados.`
+                : 'Configuración de nómina incompleta. Completa los parámetros en "Config Nómina" antes de crear empleados.'
+            } else {
+              msg = rawMessage || 'No se pudo crear el usuario.'
+            }
           } else if (err.request) {
             // No hubo respuesta del servidor
             msg = 'No se pudo contactar al servidor. Revisa tu conexión o inténtalo nuevamente.'

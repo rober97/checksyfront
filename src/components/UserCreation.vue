@@ -2,25 +2,16 @@
   <q-dialog
     v-model="dialogVisible"
     persistent
-    transition-show="scale"
-    transition-hide="scale"
-    maximized
+    transition-show="fade"
+    transition-hide="fade"
     class="rk-user-dialog-wrapper"
   >
-    <q-card class="rk-user-dialog">
-      <!-- Decorative Background -->
-      <div class="rk-dialog-bg">
-        <div class="rk-grid-pattern"></div>
-        <div class="rk-glow-orb rk-orb-1"></div>
-        <div class="rk-glow-orb rk-orb-2"></div>
-      </div>
-
-      <!-- Header Premium -->
+    <q-card class="rk-user-dialog" :class="{ 'is-dark': $q.dark.isActive }">
+      <!-- Header -->
       <div class="rk-header">
         <div class="rk-header-content">
           <div class="rk-header-icon">
             <q-icon :name="isEditMode ? 'manage_accounts' : 'person_add'" />
-            <div class="rk-icon-pulse"></div>
           </div>
           <div class="rk-header-text">
             <h3 class="rk-header-title">{{ dialogTitle }}</h3>
@@ -268,6 +259,25 @@
                     <UserContactForm v-model="form" />
                   </q-tab-panel>
 
+                  <!-- Panel: Turnos (solo turnos por demanda, en edición) -->
+                  <q-tab-panel v-if="showShiftsTab" name="turnos" class="rk-panel">
+                    <div class="rk-panel-header">
+                      <q-icon name="event_available" class="rk-panel-icon" />
+                      <div>
+                        <h4 class="rk-panel-title">Turnos programados</h4>
+                        <p class="rk-panel-subtitle">
+                          Empleado con turnos por demanda · agenda fechas y horas específicas.
+                          Se enviarán recordatorios automáticos en su app móvil.
+                        </p>
+                      </div>
+                    </div>
+                    <ShiftCalendar
+                      :user-id="props.userId"
+                      :company-id="form.empresa"
+                      :schedule-id="form.workScheduleChoice?.scheduleId"
+                    />
+                  </q-tab-panel>
+
                 </q-tab-panels>
               </q-form>
             </div>
@@ -405,6 +415,7 @@ import UserBasicsForm from "./users/parts/UserBasicsForm.vue";
 import UserContractForm from "./users/parts/UserContractForm.vue";
 import UserContactForm from "./users/parts/UserContactForm.vue";
 import UserSummary from "./users/parts/UserSummary.vue";
+import ShiftCalendar from "./users/ShiftCalendar.vue";
 
 const $q = useQuasar();
 const toast = useToast();
@@ -457,26 +468,34 @@ const empresasRaw = ref([]);
 
 const form = ref(getEmptyForm());
 
-const tabs = [
-  {
-    value: "basicos",
-    label: "Básicos",
-    icon: "badge",
-    desc: "Datos personales",
-  },
-  {
-    value: "contrato",
-    label: "Contrato",
-    icon: "work",
-    desc: "Información laboral",
-  },
-  {
-    value: "contacto",
-    label: "Contacto",
-    icon: "home",
-    desc: "Dirección y teléfono",
-  },
-];
+// Tipo de horario actual (sólo poblado en modo edición)
+const currentScheduleType = ref(null);
+
+// Empleado oncall en modo edición → habilitamos el tab "Turnos"
+const showShiftsTab = computed(
+  () =>
+    isEditMode.value &&
+    form.value?.tipo === "empleado" &&
+    !!props.userId &&
+    currentScheduleType.value === "oncall"
+);
+
+const tabs = computed(() => {
+  const base = [
+    { value: "basicos",  label: "Básicos",  icon: "badge", desc: "Datos personales" },
+    { value: "contrato", label: "Contrato", icon: "work",  desc: "Información laboral" },
+    { value: "contacto", label: "Contacto", icon: "home",  desc: "Dirección y teléfono" },
+  ];
+  if (showShiftsTab.value) {
+    base.push({
+      value: "turnos",
+      label: "Turnos",
+      icon: "event_available",
+      desc: "Programar fechas",
+    });
+  }
+  return base;
+});
 
 // ✅ catálogo dinámico desde store
 const loadingCatalog = computed(() => payrollCatalogStore.loading);
@@ -590,14 +609,36 @@ async function hydrateEditUser() {
     return;
   }
 
+  // Detectar tipo de horario (oncall vs weekly/etc.) desde el populate del backend.
+  // Si no viene populado, lo pedimos a /work-schedule.
+  let wsType = currentUser.workSchedule?.type || null;
+  let wsOncall = currentUser.workSchedule?.oncall || null;
+  const wsId = currentUser.workSchedule?._id || currentUser.workSchedule || null;
+
+  if (wsId && !wsType) {
+    try {
+      const { data } = await import("@/utils/secureRequest").then((m) =>
+        m.default.get("/work-schedule", { params: { active: true } })
+      );
+      const found = (data?.items || []).find((x) => String(x._id) === String(wsId));
+      if (found) {
+        wsType = found.type;
+        wsOncall = found.oncall || null;
+      }
+    } catch {}
+  }
+
+  currentScheduleType.value = wsType || null;
+
   form.value = {
     ...getEmptyForm(),
     ...mapFromApi(currentUser),
     password: "",
     passwordConfirm: "",
     workScheduleChoice: {
-      mode: "companyDefault",
-      scheduleId: currentUser.workSchedule?._id || currentUser.workSchedule || null,
+      mode: wsType === "oncall" ? "oncall" : "fixed",
+      scheduleId: wsId,
+      oncall: wsType === "oncall" ? (wsOncall || { defaultDays: [], allowAnyDay: true }) : null,
     },
   };
 
@@ -688,8 +729,10 @@ async function submitForm() {
   }
 
   if (form.value.tipo === "empleado") {
-    if (!form.value.workScheduleChoice?.scheduleId) {
-      toast.error("Selecciona un horario laboral.");
+    const wc = form.value.workScheduleChoice || {};
+    const oncallOk = wc.mode === "oncall";
+    if (!oncallOk && !wc.scheduleId) {
+      toast.error("Selecciona un horario laboral o usa el modo de turnos por demanda.");
       tab.value = "basicos";
       return;
     }
@@ -844,7 +887,8 @@ function mapPayload(f) {
     role: f.tipo,
     company: f.empresa || companies[0] || null,
     companies,
-    workSchedule: f.workScheduleChoice.scheduleId,
+    workSchedule: f.workScheduleChoice?.scheduleId || null,
+    workScheduleChoice: f.workScheduleChoice || null,
     phone: f.phone?.trim() || null,
     emergencyContact: f.emergencyContact?.trim() || null,
     address: {
@@ -911,7 +955,7 @@ function getEmptyForm() {
     empresas: [],
     rut: "",
     horarioLaboralId: null,
-    workScheduleChoice: { mode: "companyDefault", scheduleId: null },
+    workScheduleChoice: { mode: "fixed", scheduleId: null, oncall: null },
     status: "active",
     phone: "",
     emergencyContact: "",
@@ -1000,1052 +1044,804 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 </script>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap");
-
-:root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
-}
-
-.rk-catalog-error {
-  margin-top: 14px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  background: rgba(239, 68, 68, 0.06);
-}
-.rk-catalog-error .q-icon {
-  color: #ef4444;
-  font-size: 20px;
-  margin-top: 2px;
-}
-.rk-catalog-error p {
-  margin: 4px 0 0 0;
-  opacity: 0.75;
-}
-
-/* Theme Variables */
+/* ══════════════════════════════════════════════════
+   DESIGN TOKENS — single source of truth
+   Paleta neutra + un único color de acento (indigo)
+   alineado con la página padre (GestionUsuarios).
+══════════════════════════════════════════════════ */
 .rk-user-dialog {
-  --dialog-bg: rgba(255, 255, 255, 0.98);
-  --surface-1: rgba(6, 182, 212, 0.03);
-  --surface-2: rgba(6, 182, 212, 0.06);
-  --surface-3: rgba(6, 182, 212, 0.1);
-  --text-primary: rgba(15, 23, 42, 0.95);
-  --text-secondary: rgba(15, 23, 42, 0.7);
-  --text-muted: rgba(15, 23, 42, 0.5);
-  --border-1: rgba(6, 182, 212, 0.12);
-  --border-2: rgba(6, 182, 212, 0.2);
-  --shadow-sm: 0 2px 8px rgba(6, 182, 212, 0.08);
-  --shadow-md: 0 4px 16px rgba(6, 182, 212, 0.12);
-  --shadow-lg: 0 8px 32px rgba(6, 182, 212, 0.15);
+  --rk-bg:           #ffffff;
+  --rk-surface:      #f7f8fc;
+  --rk-surface-2:    #eef0f6;
+  --rk-border:       rgba(15, 17, 23, 0.08);
+  --rk-border-2:     rgba(15, 17, 23, 0.14);
+  --rk-text:         #0f1117;
+  --rk-text-2:       #5a6482;
+  --rk-text-3:       #9aa1b9;
+  --rk-accent:       #6366f1;
+  --rk-accent-hover: #4f46e5;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
+  --rk-success:      #16a34a;
+  --rk-success-soft: rgba(22, 163, 74, 0.12);
+  --rk-warn:         #d97706;
+  --rk-warn-soft:    rgba(217, 119, 6, 0.12);
+  --rk-err:          #dc2626;
+  --rk-err-soft:     rgba(220, 38, 38, 0.10);
+  --rk-shadow:
+    0 28px 64px -16px rgba(15, 17, 23, 0.32),
+    0 8px 20px -4px rgba(15, 17, 23, 0.16);
+  --rk-radius:       16px;
+  --rk-radius-sm:    10px;
+  --rk-ff:           'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  --rk-ff-mono:      ui-monospace, 'JetBrains Mono', monospace;
 }
 
-.body--dark .rk-user-dialog {
-  --dialog-bg: rgba(10, 14, 20, 0.98);
-  --surface-1: rgba(6, 182, 212, 0.05);
-  --surface-2: rgba(6, 182, 212, 0.08);
-  --surface-3: rgba(6, 182, 212, 0.12);
-  --text-primary: rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
-  --border-1: rgba(6, 182, 212, 0.15);
-  --border-2: rgba(6, 182, 212, 0.25);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+.rk-user-dialog.is-dark {
+  --rk-bg:           #141720;
+  --rk-surface:      #1a1e2a;
+  --rk-surface-2:    #232838;
+  --rk-border:       rgba(255, 255, 255, 0.08);
+  --rk-border-2:     rgba(255, 255, 255, 0.16);
+  --rk-text:         #e8eaf2;
+  --rk-text-2:       #8b92ad;
+  --rk-text-3:       #555d78;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
+  --rk-success-soft: rgba(22, 163, 74, 0.18);
+  --rk-warn-soft:    rgba(217, 119, 6, 0.20);
+  --rk-err-soft:     rgba(220, 38, 38, 0.18);
+  --rk-shadow:
+    0 32px 80px -12px rgba(0, 0, 0, 0.65),
+    0 12px 24px -8px rgba(0, 0, 0, 0.50);
 }
 
-/* Dialog Wrapper */
+/* ══════════════════════════════════════════════════
+   BACKDROP — fuerte, para que se vea el modal
+══════════════════════════════════════════════════ */
 .rk-user-dialog-wrapper :deep(.q-dialog__backdrop) {
-  backdrop-filter: blur(8px);
-  background: rgba(10, 14, 20, 0.7);
+  backdrop-filter: blur(6px);
+  background: rgba(8, 10, 16, 0.55);
+}
+.body--dark .rk-user-dialog-wrapper :deep(.q-dialog__backdrop) {
+  background: rgba(0, 0, 0, 0.72);
 }
 
-/* Dialog Container */
+/* Quasar pone max-width: 560px por defecto en el wrapper interno
+   cuando el dialog no está maximizado. Lo neutralizamos para que
+   nuestro q-card pueda usar todo el ancho que definimos. */
+.rk-user-dialog-wrapper :deep(.q-dialog__inner) {
+  padding: 16px;
+}
+.rk-user-dialog-wrapper :deep(.q-dialog__inner--minimized > div),
+.rk-user-dialog-wrapper :deep(.q-dialog__inner > div) {
+  max-width: none;
+  max-height: none;
+}
+
+/* ══════════════════════════════════════════════════
+   DIALOG CONTAINER — flotante, con borde y sombra
+══════════════════════════════════════════════════ */
 .rk-user-dialog {
   position: relative;
-  width: 95vw;
-  max-width: 1400px;
-  height: 90vh;
-  max-height: 900px;
-  border-radius: 24px;
-  background: var(--dialog-bg);
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-lg);
-  border: 1.5px solid var(--border-1);
+  width: min(1180px, 96vw);
+  height: min(88vh, 860px);
+  max-width: none;
+  max-height: none;
+  border-radius: var(--rk-radius);
+  background: var(--rk-bg);
+  color: var(--rk-text);
+  box-shadow: var(--rk-shadow);
+  border: 1px solid var(--rk-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: "Sora", -apple-system, sans-serif;
+  font-family: var(--rk-ff);
 }
 
-/* Background Effects */
-.rk-dialog-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.rk-grid-pattern {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(var(--border-1) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-1) 1px, transparent 1px);
-  background-size: 50px 50px;
-  opacity: 0.3;
-}
-
-.rk-glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.08;
-}
-
-.rk-orb-1 {
-  width: 350px;
-  height: 350px;
-  top: -100px;
-  right: -100px;
-  background: radial-gradient(circle, var(--color-primary), transparent 60%);
-}
-
-.rk-orb-2 {
-  width: 300px;
-  height: 300px;
-  bottom: -80px;
-  left: -80px;
-  background: radial-gradient(circle, var(--color-accent), transparent 60%);
-}
-
-/* Header */
+/* ══════════════════════════════════════════════════
+   HEADER — compacto, sin gradientes
+══════════════════════════════════════════════════ */
 .rk-header {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 32px;
-  background: var(--surface-1);
-  border-bottom: 1.5px solid var(--border-1);
-  z-index: 10;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rk-border);
+  background: var(--rk-bg);
 }
 
 .rk-header-content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rk-header-icon {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.rk-header-icon .q-icon { font-size: 20px; }
+
+.rk-header-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.2px;
+  color: var(--rk-text);
+  line-height: 1.25;
+}
+
+.rk-header-subtitle {
+  font-size: 12px;
+  color: var(--rk-text-2);
+  margin: 2px 0 0 0;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .rk-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.rk-header-icon {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
-}
-
-.rk-header-icon .q-icon {
-  font-size: 26px;
-  color: #fff;
-  z-index: 1;
-}
-
-.rk-icon-pulse {
-  position: absolute;
-  inset: -4px;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  border-radius: 16px;
-  opacity: 0;
-  filter: blur(8px);
-  animation: iconPulse 3s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.2);
-  }
-}
-
-.rk-header-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-}
-
-.rk-header-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin: 0;
-  font-weight: 500;
-}
-
-.rk-close-btn {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border: 1.5px solid var(--border-1);
-  border-radius: 11px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.3s ease;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .rk-header-btn {
-  border-radius: 11px;
-  border: 1px solid var(--border-1);
-  background: var(--surface-2);
-  color: var(--text-primary);
+  border-radius: 8px !important;
+  border: 1px solid var(--rk-border) !important;
+  background: var(--rk-surface) !important;
+  color: var(--rk-text) !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
 }
 
-.rk-status-chip {
-  font-weight: 700;
-}
+.rk-status-chip { font-weight: 600; }
 
-.rk-audit-strip {
-  position: relative;
-  z-index: 8;
+.rk-close-btn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 10px 32px;
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--border-1);
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--rk-border);
+  border-radius: 8px;
+  color: var(--rk-text-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+.rk-close-btn:hover {
+  background: var(--rk-err-soft);
+  border-color: rgba(220, 38, 38, 0.28);
+  color: var(--rk-err);
+}
+.rk-close-btn .q-icon { font-size: 17px; }
 
+/* ══════════════════════════════════════════════════
+   AUDIT STRIP
+══════════════════════════════════════════════════ */
+.rk-audit-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 20px;
+  background: var(--rk-surface);
+  border-bottom: 1px solid var(--rk-border);
+}
 .rk-audit-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
+  background: var(--rk-bg);
+  border: 1px solid var(--rk-border);
+  color: var(--rk-text-2);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.rk-audit-item .q-icon {
+  font-size: 13px;
+  color: var(--rk-text-3);
 }
 
-.rk-close-btn:hover {
-  background: var(--surface-3);
-  border-color: var(--border-2);
-  color: var(--text-primary);
-  transform: rotate(90deg);
-}
-
-.rk-close-btn .q-icon {
-  font-size: 20px;
-}
-
-/* Progress Bar */
+/* ══════════════════════════════════════════════════
+   PROGRESS BAR — sutil, una sola línea
+══════════════════════════════════════════════════ */
 .rk-progress-container {
-  position: relative;
-  padding: 16px 32px;
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--border-1);
-  z-index: 9;
+  padding: 10px 20px 12px;
+  background: var(--rk-bg);
+  border-bottom: 1px solid var(--rk-border);
 }
-
 .rk-progress-bar {
-  height: 6px;
-  background: var(--surface-2);
-  border-radius: 3px;
+  height: 4px;
+  background: var(--rk-surface-2);
+  border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
-
 .rk-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-  border-radius: 3px;
+  background: var(--rk-accent);
+  border-radius: 999px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
 }
-
 .rk-progress-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 10.5px;
 }
-
 .rk-progress-label span {
-  color: var(--text-muted);
+  color: var(--rk-text-3);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
-
 .rk-progress-label strong {
-  font-weight: 800;
-  color: var(--color-primary);
-  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  color: var(--rk-accent);
+  font-family: var(--rk-ff-mono);
 }
 
-.body--dark .rk-progress-label strong {
-  color: var(--color-primary-light);
-}
-
-/* Body */
+/* ══════════════════════════════════════════════════
+   BODY + SPLITTER
+══════════════════════════════════════════════════ */
 .rk-body {
   flex: 1;
   position: relative;
   overflow: hidden;
-  z-index: 1;
+  background: var(--rk-bg);
+  min-height: 0;
 }
-
 .rk-splitter {
   height: 100%;
   background: transparent;
 }
-
 .rk-splitter :deep(.q-splitter__separator) {
   width: 1px;
-  background: var(--border-1);
+  background: var(--rk-border);
 }
-
 .rk-splitter :deep(.q-splitter__before),
 .rk-splitter :deep(.q-splitter__after) {
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-/* Form Container */
+/* Scrollbars unificados para TODOS los contenedores con scroll
+   dentro del modal (splitter, paneles de tabs, summary). */
+.rk-user-dialog :deep(*)::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.rk-user-dialog :deep(*)::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rk-user-dialog :deep(*)::-webkit-scrollbar-thumb {
+  background: var(--rk-border-2);
+  border-radius: 999px;
+  border: 2px solid var(--rk-bg);
+  background-clip: padding-box;
+}
+.rk-user-dialog :deep(*)::-webkit-scrollbar-thumb:hover {
+  background: var(--rk-text-3);
+  background-clip: padding-box;
+  border: 2px solid var(--rk-bg);
+}
+.rk-user-dialog :deep(*) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rk-border-2) transparent;
+}
+
+/* ══════════════════════════════════════════════════
+   FORM CONTAINER + TABS — limpio, sin gradientes
+══════════════════════════════════════════════════ */
 .rk-form-container {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: var(--rk-bg);
 }
 
-/* Tabs Premium */
 .rk-tabs-wrapper {
-  padding: 20px 32px 0;
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--border-1);
+  padding: 10px 20px 0;
+  background: var(--rk-bg);
+  border-bottom: 1px solid var(--rk-border);
 }
 
 .rk-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
 }
 
 .rk-tab {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 10px 12px;
   background: transparent;
-  border: 1.5px solid transparent;
-  border-radius: 12px 12px 0 0;
+  border: none;
+  border-radius: 8px 8px 0 0;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  transition: background 0.15s;
+  text-align: left;
 }
-
-.rk-tab::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--surface-2);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.rk-tab:hover::before {
-  opacity: 1;
-}
-
-.rk-tab.active {
-  background: var(--dialog-bg);
-  border-color: var(--border-2);
-  border-bottom-color: transparent;
-}
-
-.rk-tab.active::before {
-  opacity: 0;
-}
+.rk-tab:hover { background: var(--rk-surface); }
+.rk-tab.active { background: var(--rk-surface); }
 
 .rk-tab-icon {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-2);
-  border-radius: 10px;
+  background: var(--rk-surface-2);
+  color: var(--rk-text-2);
+  border-radius: 8px;
   flex-shrink: 0;
-  transition: all 0.3s ease;
-  z-index: 1;
+  transition: background 0.15s, color 0.15s;
 }
-
 .rk-tab.active .rk-tab-icon {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
 }
-
-.rk-tab-icon .q-icon {
-  font-size: 20px;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
-}
-
-.rk-tab.active .rk-tab-icon .q-icon {
-  color: #fff;
-}
+.rk-tab-icon .q-icon { font-size: 16px; }
 
 .rk-tab-check {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 18px;
-  height: 18px;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #22c55e;
+  background: var(--rk-success);
+  border: 2px solid var(--rk-bg);
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
 }
-
-.body--dark .rk-tab-check {
-  background: #4ade80;
-}
-
 .rk-tab-check .q-icon {
-  font-size: 12px;
+  font-size: 8px;
   color: #fff;
 }
 
-.rk-tab-content {
-  flex: 1;
-  text-align: left;
-  z-index: 1;
-}
-
+.rk-tab-content { flex: 1; min-width: 0; }
 .rk-tab-label {
   display: block;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 2px;
-  transition: color 0.3s ease;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rk-text-2);
+  line-height: 1.25;
 }
-
-.rk-tab.active .rk-tab-label {
-  color: var(--text-primary);
-}
-
+.rk-tab.active .rk-tab-label { color: var(--rk-text); }
 .rk-tab-desc {
   display: block;
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--rk-text-3);
   font-weight: 500;
+  margin-top: 1px;
 }
 
 .rk-tab-indicator {
   position: absolute;
   bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--rk-accent);
+  border-radius: 2px 2px 0 0;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s;
 }
+.rk-tab.active .rk-tab-indicator { opacity: 1; }
 
-.rk-tab.active .rk-tab-indicator {
-  opacity: 1;
-}
-
-/* Form */
+/* ══════════════════════════════════════════════════
+   PANELS
+══════════════════════════════════════════════════ */
 .rk-form {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
-
 .rk-panels {
   background: transparent;
   height: 100%;
+  flex: 1;
+  min-height: 0;
 }
-
-.rk-panels :deep(.q-panel) {
-  overflow-y: auto;
-}
-
-.rk-panel {
-  padding: 28px 32px;
-}
+.rk-panels :deep(.q-panel) { overflow-y: auto; }
+.rk-panel { padding: 16px 20px; }
 
 .rk-panel-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1.5px solid var(--border-1);
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rk-border);
 }
-
 .rk-panel-icon {
-  width: 48px;
-  height: 48px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  border-radius: 12px;
-  font-size: 24px;
-  color: #fff;
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+  border-radius: 9px;
+  font-size: 17px;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
 }
-
 .rk-panel-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-}
-
-.rk-panel-subtitle {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
   margin: 0;
+  color: var(--rk-text);
+  letter-spacing: -0.1px;
+  line-height: 1.25;
+}
+.rk-panel-subtitle {
+  font-size: 11.5px;
+  color: var(--rk-text-2);
+  margin: 2px 0 0 0;
   font-weight: 500;
 }
 
-/* Password Card Premium */
+/* ══════════════════════════════════════════════════
+   PASSWORD CARD — compacta
+══════════════════════════════════════════════════ */
 .rk-password-card {
-  margin-top: 24px;
-  padding: 20px;
-  background: var(--surface-1);
-  border: 1.5px solid var(--border-1);
-  border-radius: 16px;
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: 12px;
 }
-
 .rk-password-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
-
 .rk-password-icon {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  border-radius: 11px;
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+  border-radius: 9px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
-
-.rk-password-icon .q-icon {
-  font-size: 22px;
-  color: #fff;
-}
-
-.rk-password-info {
-  flex: 1;
-}
-
+.rk-password-icon .q-icon { font-size: 17px; }
+.rk-password-info { flex: 1; min-width: 0; }
 .rk-password-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: var(--rk-text);
 }
-
 .rk-password-strength {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
-
 .rk-strength-bar-container {
   flex: 1;
-  max-width: 180px;
-  height: 6px;
-  background: var(--surface-2);
-  border-radius: 3px;
+  max-width: 160px;
+  height: 4px;
+  background: var(--rk-surface-2);
+  border-radius: 999px;
   overflow: hidden;
 }
-
 .rk-strength-bar {
   height: 100%;
-  border-radius: 3px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 999px;
+  transition: width 0.3s, background 0.3s;
 }
-
-.rk-strength-weak {
-  background: linear-gradient(90deg, #ef4444, #f87171);
-}
-.rk-strength-medium {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-}
-.rk-strength-good {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-}
-.rk-strength-excellent {
-  background: linear-gradient(90deg, #22c55e, #4ade80);
-}
+.rk-strength-bar.rk-strength-weak     { background: var(--rk-err); }
+.rk-strength-bar.rk-strength-medium   { background: var(--rk-warn); }
+.rk-strength-bar.rk-strength-good     { background: var(--rk-accent); }
+.rk-strength-bar.rk-strength-excellent{ background: var(--rk-success); }
 
 .rk-strength-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  font-size: 11.5px;
+  font-weight: 600;
 }
-
-.rk-strength-weak {
-  color: #ef4444;
-}
-.rk-strength-medium {
-  color: #f59e0b;
-}
-.rk-strength-good {
-  color: var(--color-primary);
-}
-.body--dark .rk-strength-good {
-  color: var(--color-primary-light);
-}
-.rk-strength-excellent {
-  color: #22c55e;
-}
-.body--dark .rk-strength-excellent {
-  color: #4ade80;
-}
+.rk-strength-label.rk-strength-weak     { color: var(--rk-err); }
+.rk-strength-label.rk-strength-medium   { color: var(--rk-warn); }
+.rk-strength-label.rk-strength-good     { color: var(--rk-accent); }
+.rk-strength-label.rk-strength-excellent{ color: var(--rk-success); }
 
 .rk-generate-btn {
-  border-radius: 10px;
-  font-weight: 700;
-  padding: 10px 20px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-  transition: all 0.3s ease;
-}
-
-.rk-generate-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 6px 12px;
 }
 
 .rk-invite-toggle {
-  padding: 16px;
-  background: var(--surface-2);
-  border-radius: 12px;
-  border: 1px solid var(--border-1);
+  padding: 10px 12px;
+  background: var(--rk-bg);
+  border-radius: 10px;
+  border: 1px solid var(--rk-border);
 }
-
 .rk-checkbox :deep(.q-checkbox__inner) {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
-
 .rk-checkbox-content {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-left: 8px;
+  gap: 10px;
+  margin-left: 6px;
 }
-
 .rk-checkbox-icon {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-3);
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
   border-radius: 8px;
   flex-shrink: 0;
 }
-
-.rk-checkbox-icon .q-icon {
-  font-size: 18px;
-  color: var(--color-primary-light);
-}
-
+.rk-checkbox-icon .q-icon { font-size: 14px; }
 .rk-checkbox-content strong {
   display: block;
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--rk-text);
 }
-
 .rk-checkbox-content p {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 11.5px;
+  color: var(--rk-text-2);
   margin: 0;
   line-height: 1.4;
 }
 
-/* Summary Container */
-.rk-summary-container {
-  height: 100%;
-  padding: 28px;
-  background: var(--surface-1);
-  border-left: 1.5px solid var(--border-1);
-  overflow-y: auto;
+/* ══════════════════════════════════════════════════
+   CATALOG ERROR
+══════════════════════════════════════════════════ */
+.rk-catalog-error {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  background: var(--rk-err-soft);
+  color: var(--rk-text);
+}
+.rk-catalog-error .q-icon {
+  color: var(--rk-err);
+  font-size: 17px;
+  margin-top: 1px;
+}
+.rk-catalog-error strong {
+  font-size: 12.5px;
+  color: var(--rk-text);
+}
+.rk-catalog-error p {
+  margin: 4px 0 0 0;
+  font-size: 11.5px;
+  color: var(--rk-text-2);
 }
 
+/* ══════════════════════════════════════════════════
+   SUMMARY (right pane)
+══════════════════════════════════════════════════ */
+.rk-summary-container {
+  height: 100%;
+  padding: 16px 20px;
+  background: var(--rk-surface);
+  border-left: 1px solid var(--rk-border);
+  overflow-y: auto;
+}
 .rk-summary-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1.5px solid var(--border-1);
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rk-border);
 }
-
 .rk-summary-icon {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  border-radius: 11px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+  border-radius: 9px;
+  flex-shrink: 0;
 }
-
-.rk-summary-icon .q-icon {
-  font-size: 22px;
-  color: #fff;
-}
-
+.rk-summary-icon .q-icon { font-size: 17px; }
 .rk-summary-title {
-  font-size: 1.15rem;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-}
-
-.rk-summary-subtitle {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
   margin: 0;
+  color: var(--rk-text);
+  letter-spacing: -0.1px;
+  line-height: 1.25;
+}
+.rk-summary-subtitle {
+  font-size: 11.5px;
+  color: var(--rk-text-2);
+  margin: 2px 0 0 0;
   font-weight: 500;
 }
 
-/* Footer */
+/* ══════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════ */
 .rk-footer {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
-  background: var(--surface-1);
-  border-top: 1.5px solid var(--border-1);
-  z-index: 10;
+  gap: 12px;
+  padding: 10px 20px;
+  background: var(--rk-bg);
+  border-top: 1px solid var(--rk-border);
 }
-
 .rk-footer-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 11.5px;
+  color: var(--rk-text-3);
   font-weight: 500;
 }
-
 .rk-footer-info .q-icon {
-  font-size: 18px;
-  color: var(--color-primary-light);
+  font-size: 15px;
+  color: var(--rk-text-3);
 }
-
 .rk-footer-info kbd {
-  padding: 4px 8px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-1);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-family: var(--rk-ff-mono);
+  font-weight: 600;
+  color: var(--rk-text-2);
+  margin: 0 2px;
 }
-
 .rk-footer-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .rk-footer-btn {
-  border-radius: 11px;
-  font-weight: 700;
-  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 7px 14px;
   text-transform: none;
-  font-size: 0.95rem;
-  letter-spacing: 0.3px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
 }
-
-.rk-btn-cancel {
-  color: var(--text-secondary);
-  border: 1.5px solid var(--border-1);
-  background: var(--surface-2);
-}
-
+.rk-btn-cancel { color: var(--rk-text-2) !important; }
 .rk-btn-cancel:hover {
-  background: var(--surface-3);
-  border-color: var(--border-2);
-  color: var(--text-primary);
+  background: var(--rk-surface) !important;
+  color: var(--rk-text) !important;
 }
 
 .rk-btn-secondary {
-  color: var(--color-primary);
-  border: 1.5px solid var(--border-2);
-  background: var(--surface-2);
+  color: var(--rk-accent) !important;
+  border: 1px solid var(--rk-border-2) !important;
+  background: var(--rk-bg) !important;
 }
-
-.body--dark .rk-btn-secondary {
-  color: var(--color-primary-light);
-}
-
 .rk-btn-secondary:hover {
-  background: var(--surface-3);
-  border-color: var(--color-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+  background: var(--rk-accent-soft) !important;
+  border-color: var(--rk-accent) !important;
 }
 
 .rk-btn-primary {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
-  overflow: hidden;
+  background: var(--rk-accent) !important;
+  color: #fff !important;
 }
-
 .rk-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.30);
+}
+.rk-btn-shine { display: none; }
+
+/* ══════════════════════════════════════════════════
+   QUASAR FIELD HARMONIZATION (todos los inputs)
+══════════════════════════════════════════════════ */
+.rk-user-dialog :deep(.q-field--outlined .q-field__control) {
+  border-radius: 9px;
+  min-height: 40px;
+  background: var(--rk-bg);
+}
+.rk-user-dialog :deep(.q-field--outlined .q-field__control::before) {
+  border-color: var(--rk-border);
+}
+.rk-user-dialog :deep(.q-field--outlined:hover .q-field__control::before) {
+  border-color: var(--rk-border-2);
+}
+.rk-user-dialog :deep(.q-field--outlined.q-field--focused .q-field__control::after) {
+  border-color: var(--rk-accent);
+  border-width: 1.5px;
+}
+.rk-user-dialog :deep(.q-field__label) {
+  color: var(--rk-text-2);
+  font-weight: 500;
+  font-size: 12.5px;
+}
+.rk-user-dialog :deep(.q-field__native),
+.rk-user-dialog :deep(.q-field__input) {
+  color: var(--rk-text);
+  font-size: 13px;
+}
+.rk-user-dialog :deep(.q-field__messages) { font-size: 10.5px; }
+.rk-user-dialog :deep(.q-field__prepend),
+.rk-user-dialog :deep(.q-field__append) {
+  color: var(--rk-text-3);
 }
 
-.rk-btn-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  transition: left 0.6s ease;
-}
-
-.rk-btn-primary:hover .rk-btn-shine {
-  left: 100%;
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-  .rk-user-dialog {
-    width: 98vw;
-    height: 95vh;
-  }
-
-  .rk-tabs {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════ */
 @media (max-width: 1023px) {
-  .rk-summary-container {
-    display: none;
-  }
-
-  .rk-header {
-    padding: 20px 24px;
-  }
-
-  .rk-progress-container {
-    padding: 14px 24px;
-  }
-
-  .rk-tabs-wrapper {
-    padding: 16px 24px 0;
-  }
-
-  .rk-panel {
-    padding: 24px;
-  }
-
-  .rk-footer {
-    padding: 16px 24px;
-  }
+  .rk-summary-container { display: none; }
 }
 
 @media (max-width: 767px) {
   .rk-user-dialog {
     width: 100vw;
     height: 100vh;
-    max-height: 100vh;
     border-radius: 0;
+    border: none;
   }
-
-  .rk-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px 20px;
-  }
-
-  .rk-header-content {
-    width: 100%;
-  }
-
-  .rk-close-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-  }
-
-  .rk-progress-container {
-    padding: 12px 20px;
-  }
-
-  .rk-tabs-wrapper {
-    padding: 12px 20px 0;
-  }
-
-  .rk-tabs {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .rk-tab {
-    border-radius: 12px;
-    border-bottom-color: var(--border-1);
-  }
-
-  .rk-tab.active {
-    border-bottom-color: var(--border-2);
-  }
-
-  .rk-tab-indicator {
-    display: none;
-  }
-
-  .rk-panel {
-    padding: 20px;
-  }
-
-  .rk-password-header {
-    flex-wrap: wrap;
-  }
-
-  .rk-generate-btn {
-    width: 100%;
-  }
-
+  .rk-header { padding: 12px 14px; }
+  .rk-audit-strip { padding: 8px 14px; }
+  .rk-progress-container { padding: 8px 14px 10px; }
+  .rk-tabs-wrapper { padding: 8px 14px 0; }
+  .rk-tabs { grid-template-columns: 1fr; gap: 4px; }
+  .rk-tab { border-radius: 8px; }
+  .rk-tab-indicator { display: none; }
+  .rk-panel { padding: 12px 14px; }
+  .rk-summary-container { padding: 12px 14px; }
   .rk-footer {
     flex-direction: column;
-    gap: 12px;
-    padding: 16px 20px;
+    align-items: stretch;
+    padding: 10px 14px;
   }
-
-  .rk-footer-info {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .rk-footer-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .rk-footer-btn {
-    width: 100%;
-    justify-content: center;
-  }
+  .rk-footer-info { justify-content: center; text-align: center; }
+  .rk-footer-actions { justify-content: stretch; }
+  .rk-footer-btn { flex: 1; justify-content: center; }
 }
 
-@media (max-width: 599px) {
-  .rk-header-icon {
-    width: 44px;
-    height: 44px;
-  }
-
-  .rk-header-icon .q-icon {
-    font-size: 22px;
-  }
-
-  .rk-header-title {
-    font-size: 1.3rem;
-  }
-
-  .rk-tab-icon {
-    width: 38px;
-    height: 38px;
-  }
-
-  .rk-tab-icon .q-icon {
-    font-size: 18px;
-  }
-
-  .rk-panel-icon {
-    width: 42px;
-    height: 42px;
-    font-size: 22px;
-  }
+@media (max-width: 480px) {
+  .rk-header-title { font-size: 14px; }
+  .rk-header-subtitle { display: none; }
+  .rk-password-header { flex-wrap: wrap; }
+  .rk-generate-btn { width: 100%; }
 }
 </style>

@@ -7,12 +7,10 @@
         </div>
         <div class="col">
           <h1 class="rk-module-title">
-            {{ isMyCompany ? 'Mi empresa' : 'Detalle de empresa' }}
+            {{ headerTitle }}
           </h1>
           <p class="rk-module-subtitle">
-            {{ isMyCompany
-                ? 'Datos de tu empresa. Puedes actualizar los datos de contacto.'
-                : 'Vista ejecutiva de una empresa cliente de la plataforma.' }}
+            {{ headerSubtitle }}
           </p>
         </div>
         <div class="rk-module-actions">
@@ -30,6 +28,7 @@
           />
         </div>
       </section>
+
 
       <div v-if="loading" class="q-pa-xl text-center">
         <q-spinner size="40px" color="primary" />
@@ -264,12 +263,35 @@ const isMyCompany = computed(() => {
   return route.path.startsWith('/rrhh/empresa') || (!route.params.id && auth.user?.company)
 })
 
+// Lista de empresas asignadas al admin_rrhh (vacía si es superadmin u otro rol)
+const assignedCompanies = computed(() => {
+  if (auth.role !== 'admin_rrhh') return []
+  const arr = Array.isArray(auth.user?.companies) ? auth.user.companies : []
+  return arr.map(c => (typeof c === 'object' && c?._id) ? c : { _id: c, name: '' })
+})
+
+const headerTitle = computed(() => {
+  if (!isMyCompany.value) return 'Detalle de empresa'
+  if (assignedCompanies.value.length > 1) return 'Empresa activa'
+  return 'Mi empresa'
+})
+
+const headerSubtitle = computed(() => {
+  if (!isMyCompany.value) return 'Vista ejecutiva de una empresa cliente de la plataforma.'
+  if (assignedCompanies.value.length > 1) {
+    const total = assignedCompanies.value.length
+    const name = empresa.value?.name || '—'
+    return `Estás viendo "${name}" (1 de ${total} empresas asignadas). Cambia con el switcher del header.`
+  }
+  return 'Datos de tu empresa. Puedes actualizar los datos de contacto.'
+})
+
 const canEdit = computed(() => {
   if (!empresa.value?._id) return false
   if (auth.role === 'superadmin') return true
   if (auth.role === 'admin_rrhh') {
-    const myCompany = auth.user?.company?._id || auth.user?.company
-    return String(myCompany) === String(empresa.value._id)
+    const ids = assignedCompanies.value.map(c => String(c._id || c.id))
+    return ids.includes(String(empresa.value._id))
   }
   return false
 })

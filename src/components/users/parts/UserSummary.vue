@@ -230,7 +230,11 @@ const contractNice = computed(() => {
 const completeness = computed(() => {
   const reqBase = ['firstName', 'lastName', 'email', 'password', 'tipo']
   const reqCompany = ['empresa']
-  const reqEmp = form.tipo === 'empleado' ? ['rut', 'horarioLaboralId'] : []
+  // Empleado on-call no requiere horarioLaboralId — el horario se crea automáticamente al guardar
+  const isOncall = form?.workScheduleChoice?.mode === 'oncall'
+  const reqEmp = form.tipo === 'empleado'
+    ? (isOncall ? ['rut'] : ['rut', 'horarioLaboralId'])
+    : []
   const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afpEntityId', 'payroll.healthEntityId']
 
   const required = [...reqBase, ...reqCompany, ...reqEmp, ...reqPayroll]
@@ -278,70 +282,109 @@ function copy(text) {
 </script>
 
 <style scoped>
+/* ══════════════════════════════════════════════════
+   TOKENS — heredan del modal padre
+══════════════════════════════════════════════════ */
 .rk-summary-wrap {
-  color: var(--rk-text-dim);
+  --rk-bg:           #ffffff;
+  --rk-surface:      #f7f8fc;
+  --rk-border:       rgba(15, 17, 23, 0.08);
+  --rk-text:         #0f1117;
+  --rk-text-2:       #5a6482;
+  --rk-text-3:       #9aa1b9;
+  --rk-accent:       #6366f1;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
+  --rk-success:      #16a34a;
+  --rk-warn:         #d97706;
+  color: var(--rk-text);
 }
-.rk-head .ellipsis {
-  max-width: 180px;
+
+.body--dark .rk-summary-wrap {
+  --rk-bg:           #141720;
+  --rk-surface:      #1a1e2a;
+  --rk-border:       rgba(255, 255, 255, 0.08);
+  --rk-text:         #e8eaf2;
+  --rk-text-2:       #8b92ad;
+  --rk-text-3:       #555d78;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
 }
+
+/* Header */
+.rk-head .ellipsis { max-width: 180px; }
 .rk-avatar {
-  background: rgba(0,0,0,.06);
-  color: #2a2f3a;
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+  font-weight: 700;
 }
-.body--dark .rk-avatar {
-  background: rgba(255,255,255,.08);
-  color: #e7e9ef;
+
+/* Texto auxiliar — sustituye text-grey-7 que no se ve bien en dark */
+.rk-summary-wrap :deep(.text-grey-7) {
+  color: var(--rk-text-2) !important;
 }
 
 /* chips/badges */
 .rk-chip {
-  background: transparent;
+  background: var(--rk-surface);
   border: 1px solid var(--rk-border);
-  color: var(--rk-text-dim);
+  color: var(--rk-text-2);
+  font-weight: 500;
 }
 
 /* KPIs grid */
 .rk-kpis {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 6px 10px;
+  gap: 8px 12px;
+  padding: 4px 0;
 }
-.rk-kpi { padding: 6px 0; }
+.rk-kpi {
+  padding: 6px 8px;
+  background: var(--rk-bg);
+  border: 1px solid var(--rk-border);
+  border-radius: 8px;
+}
 .rk-kpi-label {
-  font-size: 11px;
-  color: var(--rk-text-dim);
-  letter-spacing: .2px;
+  font-size: 10.5px;
+  color: var(--rk-text-3);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 .rk-kpi-value {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
+  color: var(--rk-text);
+  margin-top: 2px;
 }
 
-/* compact hint/isapre */
+/* hint compacta (Isapre / exención) */
 .rk-compact {
-  margin-top: 6px;
+  margin-top: 8px;
+  padding: 6px 8px;
   display: flex;
   align-items: center;
-  color: var(--rk-text-dim);
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: 8px;
+  color: var(--rk-text-2);
+  font-size: 11.5px;
 }
+.rk-compact .q-icon { color: var(--rk-accent); }
 
 /* missing badges */
-.rk-miss-list { }
 .rk-miss-items { margin-top: 4px; }
 .rk-miss-badge {
   margin: 2px 4px 0 0;
-  border-color: #f5c04c !important;
+  border-color: var(--rk-warn) !important;
+  color: var(--rk-warn) !important;
+  font-weight: 600;
 }
 
-/* theme tokens */
-:root {
-  --rk-border: rgba(0,0,0,.06);
-  --rk-text-dim: #5f6470;
-}
-.body--dark {
-  --rk-border: rgba(255,255,255,.08);
-  --rk-text-dim: #b6bbc6;
+/* hint final */
+.rk-summary-hint {
+  color: var(--rk-text-3);
+  line-height: 1.5;
 }
 
 @media (min-width: 1200px) {

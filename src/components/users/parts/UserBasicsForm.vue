@@ -1,56 +1,5 @@
 <template>
   <div class="rk-user-card">
-    <!-- Background Effects -->
-    <div class="rk-card-bg">
-      <div class="rk-grid-subtle"></div>
-      <div class="rk-glow-orb"></div>
-    </div>
-
-    <!-- Encabezado Premium -->
-    <div class="rk-user-header">
-      <div class="rk-header-left">
-        <div class="rk-header-icon">
-          <q-icon name="person_add" />
-          <div class="rk-icon-pulse"></div>
-        </div>
-        <div class="rk-header-content">
-          <h3 class="rk-header-title">Datos del usuario</h3>
-          <p class="rk-header-subtitle">Información completa del perfil</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Banner de Ayuda Mejorado -->
-    <div class="rk-help-banner">
-      <div class="rk-help-icon">
-        <q-icon name="lightbulb" />
-      </div>
-      <div class="rk-help-content">
-        <p class="rk-help-text">
-          Completa los datos requeridos. Puedes generar una contraseña segura automáticamente.
-        </p>
-      </div>
-    </div>
-
-    <!-- Progress Steps -->
-    <div class="rk-progress-steps">
-      <div 
-        v-for="(step, idx) in progressSteps" 
-        :key="idx"
-        class="rk-step"
-        :class="{ 
-          'active': currentStep === idx,
-          'completed': currentStep > idx 
-        }"
-      >
-        <div class="rk-step-number">
-          <q-icon v-if="currentStep > idx" name="check" />
-          <span v-else>{{ idx + 1 }}</span>
-        </div>
-        <span class="rk-step-label">{{ step }}</span>
-      </div>
-    </div>
-
     <!-- GRID DE FORMULARIO -->
     <div class="rk-form-sections">
       
@@ -261,7 +210,6 @@
               :company-id="local.empresa"
               :company="companyObj"
               :disable="!local.empresa"
-              @preview="onPreviewSchedule"
               @created="onScheduleCreated"
               class="rk-input"
             />
@@ -428,7 +376,7 @@ const props = defineProps({
   empresasRaw: { type: Array, default: () => [] },
   requirePassword: { type: Boolean, default: true }
 })
-const emit = defineEmits(['update:modelValue', 'tipo-change', 'preview-schedule'])
+const emit = defineEmits(['update:modelValue', 'tipo-change'])
 
 /* Estado base */
 const EMPTY = () => ({
@@ -440,7 +388,7 @@ const EMPTY = () => ({
   empresas: [],
   rut: '',
   horarioLaboralId: null,
-  workScheduleChoice: { mode: 'companyDefault', scheduleId: null },
+  workScheduleChoice: { mode: 'fixed', scheduleId: null, oncall: null },
   password: '',
   passwordConfirm: ''
 })
@@ -458,8 +406,16 @@ const clean = (v = {}) => {
   x.rut       = s.rut       ?? ''
   x.horarioLaboralId = s.horarioLaboralId ?? null
   x.workScheduleChoice = {
-    mode: w.mode ?? 'companyDefault',
-    scheduleId: w.scheduleId ?? null
+    mode: w.mode ?? 'fixed',
+    scheduleId: w.scheduleId ?? null,
+    oncall: w.oncall
+      ? {
+          name: w.oncall.name ?? '',
+          defaultDays: Array.isArray(w.oncall.defaultDays) ? w.oncall.defaultDays.slice() : [],
+          allowAnyDay: w.oncall.allowAnyDay !== false,
+          minNoticeHours: Number.isFinite(+w.oncall.minNoticeHours) ? +w.oncall.minNoticeHours : 0,
+        }
+      : null,
   }
   x.password  = s.password  ?? ''
   x.passwordConfirm = s.passwordConfirm ?? ''
@@ -473,17 +429,6 @@ const isEqualClean = (a, b) => stableStringify(clean(a)) === stableStringify(cle
 const local = reactive(clean(props.modelValue))
 const showPass = ref(false)
 
-
-const progressSteps = computed(() => {
-  return ['Identidad', 'Vinculación', 'Acceso']
-})
-
-const currentStep = computed(() => {
-  if (!local.firstName || !local.lastName || !local.email || !local.rut) return 0
-  if (!local.empresa) return 1
-  if (props.requirePassword && (!local.password || !local.passwordConfirm)) return 2
-  return progressSteps.value.length
-})
 
 let syncing = false
 
@@ -538,7 +483,7 @@ watch(
   (nv, ov) => {
     if (syncing) return
     if (nv !== ov) {
-      local.workScheduleChoice = { mode: 'companyDefault', scheduleId: null }
+      local.workScheduleChoice = { mode: 'fixed', scheduleId: null, oncall: null }
     }
   }
 )
@@ -654,834 +599,353 @@ const companyObj = computed(() => {
 
 /* Eventos hijos */
 function onCompanyCreated (company) { if (company?._id) local.empresa = company._id }
-function onPreviewSchedule (id) { if (id) emit('preview-schedule', id) }
 function onScheduleCreated () { /* opcional */ }
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
-
-:root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
-}
-
-/* Theme Variables */
+/* ══════════════════════════════════════════════════
+   TOKENS — heredan visualmente del modal padre
+══════════════════════════════════════════════════ */
 .rk-user-card {
-  /* Light Mode (Default) */
-  --card-bg: rgba(255, 255, 255, 0.95);
-  --card-border: rgba(6, 182, 212, 0.15);
-  --text-primary: rgba(15, 23, 42, 0.95);
-  --text-secondary: rgba(15, 23, 42, 0.65);
-  --text-muted: rgba(15, 23, 42, 0.5);
-  --surface-1: rgba(6, 182, 212, 0.04);
-  --surface-2: rgba(6, 182, 212, 0.08);
-  --surface-3: rgba(6, 182, 212, 0.12);
-  --border-1: rgba(6, 182, 212, 0.12);
-  --border-2: rgba(6, 182, 212, 0.2);
-  --shadow-color: rgba(6, 182, 212, 0.15);
+  --rk-bg:           #ffffff;
+  --rk-surface:      #f7f8fc;
+  --rk-surface-2:    #eef0f6;
+  --rk-border:       rgba(15, 17, 23, 0.08);
+  --rk-border-2:     rgba(15, 17, 23, 0.14);
+  --rk-text:         #0f1117;
+  --rk-text-2:       #5a6482;
+  --rk-text-3:       #9aa1b9;
+  --rk-accent:       #6366f1;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
+  --rk-success:      #16a34a;
+  --rk-success-soft: rgba(22, 163, 74, 0.12);
+  --rk-warn:         #d97706;
+  --rk-warn-soft:    rgba(217, 119, 6, 0.12);
+  --rk-err:          #dc2626;
+  --rk-err-soft:     rgba(220, 38, 38, 0.10);
 }
 
-/* Dark Mode */
 .body--dark .rk-user-card {
-  --card-bg: rgba(10, 14, 20, 0.95);
-  --card-border: rgba(6, 182, 212, 0.2);
-  --text-primary: rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
-  --surface-1: rgba(6, 182, 212, 0.06);
-  --surface-2: rgba(6, 182, 212, 0.1);
-  --surface-3: rgba(6, 182, 212, 0.15);
-  --border-1: rgba(6, 182, 212, 0.15);
-  --border-2: rgba(6, 182, 212, 0.3);
-  --shadow-color: rgba(6, 182, 212, 0.2);
+  --rk-bg:           #141720;
+  --rk-surface:      #1a1e2a;
+  --rk-surface-2:    #232838;
+  --rk-border:       rgba(255, 255, 255, 0.08);
+  --rk-border-2:     rgba(255, 255, 255, 0.16);
+  --rk-text:         #e8eaf2;
+  --rk-text-2:       #8b92ad;
+  --rk-text-3:       #555d78;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
+  --rk-success-soft: rgba(22, 163, 74, 0.18);
+  --rk-warn-soft:    rgba(217, 119, 6, 0.20);
+  --rk-err-soft:     rgba(220, 38, 38, 0.18);
 }
 
-/* Card Container */
+/* Container — sin padding propio: el panel del modal ya lo da */
 .rk-user-card {
   position: relative;
-  border-radius: 24px;
-  border: 1.5px solid var(--card-border);
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  padding: 32px;
-  overflow: hidden;
-  font-family: 'Sora', -apple-system, sans-serif;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  background: transparent;
+  color: var(--rk-text);
 }
 
-/* Background Effects */
-.rk-card-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.rk-grid-subtle {
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(6, 182, 212, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.5;
-}
-
-.rk-glow-orb {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  top: -100px;
-  right: -100px;
-  background: radial-gradient(circle, var(--color-primary), transparent 60%);
-  filter: blur(80px);
-  opacity: 0.08;
-}
-
-/* Header */
-.rk-user-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 32px;
-  position: relative;
-  z-index: 1;
-}
-
-.rk-header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.rk-header-icon {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
-}
-
-.rk-header-icon .q-icon {
-  font-size: 28px;
-  color: #fff;
-  z-index: 1;
-}
-
-.rk-icon-pulse {
-  position: absolute;
-  inset: -4px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 16px;
-  opacity: 0;
-  filter: blur(8px);
-  animation: iconPulse 3s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.2);
-  }
-}
-
-.rk-header-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-}
-
-.rk-header-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin: 0;
-  font-weight: 500;
-}
-
-/* Role Badge */
-.rk-role-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-}
-
-.rk-role-admin {
-  background: rgba(139, 92, 246, 0.12);
-  border: 1.5px solid rgba(139, 92, 246, 0.3);
-  color: #a78bfa;
-}
-
-.body--dark .rk-role-admin {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.4);
-  color: #c4b5fd;
-}
-
-.rk-role-empleado {
-  background: rgba(6, 182, 212, 0.12);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
-  color: var(--color-primary);
-}
-
-.body--dark .rk-role-empleado {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.35);
-  color: var(--color-primary-light);
-}
-
-.rk-role-badge .q-icon {
-  font-size: 18px;
-}
-
-/* Help Banner */
-.rk-help-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px 18px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-1);
-  border-left: 4px solid var(--color-primary);
-  border-radius: 12px;
-  margin-bottom: 28px;
-  position: relative;
-  z-index: 1;
-}
-
-.rk-help-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.rk-help-icon .q-icon {
-  font-size: 18px;
-  color: var(--color-primary-light);
-}
-
-.rk-help-text {
-  font-size: 0.92rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0;
-  font-weight: 500;
-}
-
-/* Progress Steps */
-.rk-progress-steps {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 32px;
-  padding: 20px;
-  background: var(--surface-1);
-  border-radius: 16px;
-  position: relative;
-  z-index: 1;
-  overflow-x: auto;
-}
-
-.rk-step {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: fit-content;
-}
-
-.rk-step-number {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border: 2px solid var(--border-1);
-  border-radius: 50%;
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: var(--text-muted);
-  transition: all 0.3s ease;
-}
-
-.rk-step.active .rk-step-number {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-color: var(--color-primary);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
-}
-
-.rk-step.completed .rk-step-number {
-  background: rgba(34, 197, 94, 0.15);
-  border-color: #22c55e;
-  color: #22c55e;
-}
-
-.body--dark .rk-step.completed .rk-step-number {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
-}
-
-.rk-step-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  transition: color 0.3s ease;
-}
-
-.rk-step.active .rk-step-label,
-.rk-step.completed .rk-step-label {
-  color: var(--text-primary);
-}
-
-/* Form Sections */
+/* ══════════════════════════════════════════════════
+   FORM SECTIONS — separadas por aire, sin cards anidadas
+══════════════════════════════════════════════════ */
 .rk-form-sections {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  position: relative;
-  z-index: 1;
+  gap: 18px;
 }
 
-/* Section */
 .rk-section {
-  padding: 28px;
-  background: var(--surface-1);
-  border: 1.5px solid var(--border-1);
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  background: transparent;
+}
+.rk-section + .rk-section {
+  padding-top: 18px;
+  border-top: 1px dashed var(--rk-border);
 }
 
-.rk-section:hover {
-  border-color: var(--border-2);
-  background: var(--surface-2);
-}
-
+/* Section header */
 .rk-section-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .rk-section-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 12px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
-}
-
-.rk-section-icon .q-icon {
-  font-size: 24px;
-  color: #fff;
-}
-
-.rk-section-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-}
-
-.rk-section-desc {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  margin: 0;
-  font-weight: 500;
-}
-
-/* Section Grid */
-.rk-section-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.rk-single-col {
-  grid-template-columns: 1fr;
-}
-
-.rk-input-wrap {
-  position: relative;
-}
-
-/* Input Styling */
-.rk-input :deep(.q-field__control) {
-  background: var(--surface-1);
-  border-color: var(--border-1);
-  transition: all 0.3s ease;
-}
-
-.rk-input :deep(.q-field__control):hover {
-  background: var(--surface-2);
-  border-color: var(--border-2);
-}
-
-.rk-input :deep(.q-field--focused .q-field__control) {
-  background: var(--surface-2);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
-}
-
-.rk-input :deep(.q-field__label) {
-  color: var(--text-secondary);
-}
-
-.rk-input :deep(.q-field__native) {
-  color: var(--text-primary);
-}
-
-.rk-input-icon {
-  color: var(--color-primary-light) !important;
-}
-
-.rk-info-btn,
-.rk-action-btn {
-  color: var(--color-primary);
-  transition: all 0.3s ease;
-}
-
-.body--dark .rk-info-btn,
-.body--dark .rk-action-btn {
-  color: var(--color-primary-light);
-}
-
-.rk-info-btn:hover,
-.rk-action-btn:hover {
-  color: var(--color-primary-light);
-  background: var(--surface-2);
-}
-
-/* Role Selector */
-.rk-role-selector {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.rk-role-card {
-  position: relative;
-  padding: 24px;
-  background: var(--surface-1);
-  border: 2px solid var(--border-1);
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-
-.rk-role-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.rk-role-card:hover {
-  border-color: var(--border-2);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px var(--shadow-color);
-}
-
-.rk-role-card.selected {
-  border-color: var(--color-primary);
-  background: var(--surface-2);
-  box-shadow: 0 8px 24px var(--shadow-color);
-}
-
-.rk-role-card.selected::before {
-  opacity: 0.05;
-}
-
-.rk-role-card-icon {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
-  position: relative;
-  z-index: 1;
-}
-
-.rk-role-card-icon .q-icon {
-  font-size: 28px;
-  color: #fff;
-}
-
-.rk-role-card-content {
-  position: relative;
-  z-index: 1;
-}
-
-.rk-role-card-title {
-  font-size: 1.1rem;
-  font-weight: 800;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.rk-role-card-desc {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.rk-role-check {
-  position: absolute;
-  top: 16px;
-  right: 16px;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(34, 197, 94, 0.15);
-  border-radius: 50%;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 2;
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.rk-section-icon .q-icon { font-size: 15px; }
+
+.rk-section-title-wrap { min-width: 0; }
+.rk-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--rk-text);
+  letter-spacing: -0.1px;
+  line-height: 1.25;
+}
+.rk-section-desc {
+  font-size: 11.5px;
+  color: var(--rk-text-2);
+  margin: 1px 0 0 0;
+  font-weight: 500;
 }
 
-.body--dark .rk-role-check {
-  background: rgba(34, 197, 94, 0.2);
+/* Section grid */
+.rk-section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 12px;
+}
+.rk-single-col {
+  grid-template-columns: 1fr;
+}
+.rk-input-wrap {
+  position: relative;
 }
 
-.rk-role-card.selected .rk-role-check {
-  opacity: 1;
-  transform: scale(1);
+/* Inputs — usan los estilos heredados del modal padre.
+   Aquí solo afinamos color de iconos prepend. */
+.rk-input-icon {
+  color: var(--rk-text-3) !important;
+}
+.rk-input :deep(.q-field--focused .q-field__prepend .rk-input-icon) {
+  color: var(--rk-accent) !important;
 }
 
-.rk-role-check .q-icon {
-  font-size: 18px;
-  color: #22c55e;
+.rk-info-btn,
+.rk-action-btn {
+  color: var(--rk-text-3);
+  transition: color 0.15s, background 0.15s;
+}
+.rk-info-btn:hover,
+.rk-action-btn:hover {
+  color: var(--rk-accent);
+  background: var(--rk-accent-soft);
 }
 
-.body--dark .rk-role-check .q-icon {
-  color: #4ade80;
+/* ══════════════════════════════════════════════════
+   ROLE SELECTOR — tarjetas tipo "radio card" sobrias
+══════════════════════════════════════════════════ */
+.rk-role-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
-/* Admin Note */
-.rk-admin-note {
+.rk-role-card {
+  position: relative;
+  padding: 12px 14px;
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 16px 18px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-left: 4px solid #8b5cf6;
-  border-radius: 12px;
-  margin-top: 20px;
+  gap: 12px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.rk-role-card:hover {
+  border-color: var(--rk-border-2);
+  background: var(--rk-surface-2);
+}
+.rk-role-card.selected {
+  border-color: var(--rk-accent);
+  background: var(--rk-accent-soft);
 }
 
-.body--dark .rk-admin-note {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.3);
-}
-
-.rk-note-icon {
+.rk-role-card-icon {
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.15);
+  background: var(--rk-bg);
+  color: var(--rk-text-2);
+  border: 1px solid var(--rk-border);
   border-radius: 8px;
   flex-shrink: 0;
 }
-
-.body--dark .rk-note-icon {
-  background: rgba(139, 92, 246, 0.2);
+.rk-role-card.selected .rk-role-card-icon {
+  background: var(--rk-accent);
+  color: #fff;
+  border-color: var(--rk-accent);
 }
+.rk-role-card-icon .q-icon { font-size: 17px; }
 
-.rk-note-icon .q-icon {
-  font-size: 18px;
-  color: #a78bfa;
-}
-
-.body--dark .rk-note-icon .q-icon {
-  color: #c4b5fd;
-}
-
-.rk-note-content strong {
-  display: block;
-  font-size: 0.95rem;
+.rk-role-card-content { flex: 1; min-width: 0; padding-right: 22px; }
+.rk-role-card-title {
+  font-size: 12.5px;
   font-weight: 700;
-  margin-bottom: 6px;
-  color: #8b5cf6;
+  margin: 0 0 2px 0;
+  color: var(--rk-text);
+  line-height: 1.25;
 }
-
-.body--dark .rk-note-content strong {
-  color: #a78bfa;
-}
-
-.rk-note-content p {
-  font-size: 0.88rem;
-  color: rgba(139, 92, 246, 0.8);
+.rk-role-card-desc {
+  font-size: 11px;
+  color: var(--rk-text-2);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
-.body--dark .rk-note-content p {
-  color: rgba(167, 139, 250, 0.85);
+.rk-role-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rk-accent);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.rk-role-card.selected .rk-role-check {
+  opacity: 1;
+  transform: scale(1);
+}
+.rk-role-check .q-icon {
+  font-size: 12px;
+  color: #fff;
 }
 
-/* Password Strength */
+/* ══════════════════════════════════════════════════
+   PASSWORD — fortaleza + match
+══════════════════════════════════════════════════ */
 .rk-password-wrap {
   grid-column: 1 / -1;
 }
 
 .rk-password-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .rk-password-strength {
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--surface-1);
-  border-radius: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: 8px;
 }
 
 .rk-strength-bar {
-  height: 6px;
-  background: var(--surface-2);
-  border-radius: 3px;
+  height: 4px;
+  background: var(--rk-surface-2);
+  border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .rk-strength-fill {
   height: 100%;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 3px;
+  transition: width 0.3s, background 0.3s;
+  border-radius: 999px;
 }
-
-.rk-strength-weak { background: linear-gradient(90deg, #ef4444, #f87171); }
-.rk-strength-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.rk-strength-good { background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); }
-.rk-strength-excellent { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.rk-strength-fill.rk-strength-weak      { background: var(--rk-err); }
+.rk-strength-fill.rk-strength-medium    { background: var(--rk-warn); }
+.rk-strength-fill.rk-strength-good      { background: var(--rk-accent); }
+.rk-strength-fill.rk-strength-excellent { background: var(--rk-success); }
 
 .rk-strength-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  font-size: 11px;
 }
-
 .rk-strength-label span {
-  color: var(--text-secondary);
+  color: var(--rk-text-3);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
+.rk-strength-label strong { font-weight: 700; }
+.rk-strength-label strong.rk-strength-weak      { color: var(--rk-err); }
+.rk-strength-label strong.rk-strength-medium    { color: var(--rk-warn); }
+.rk-strength-label strong.rk-strength-good      { color: var(--rk-accent); }
+.rk-strength-label strong.rk-strength-excellent { color: var(--rk-success); }
 
-.rk-strength-label strong {
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-
-.rk-strength-weak strong { color: #ef4444; }
-.rk-strength-medium strong { color: #f59e0b; }
-.rk-strength-good strong { color: var(--color-primary); }
-.body--dark .rk-strength-good strong { color: var(--color-primary-light); }
-.rk-strength-excellent strong { color: #22c55e; }
-.body--dark .rk-strength-excellent strong { color: #4ade80; }
-
-/* Match Indicator */
 .rk-match-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: var(--surface-1);
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
   border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--rk-text-2);
 }
 
-/* Warning Banner */
+/* ══════════════════════════════════════════════════
+   WARNING BANNER
+══════════════════════════════════════════════════ */
 .rk-warning-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  border-left: 4px solid #f59e0b;
-  border-radius: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--rk-warn-soft);
+  border: 1px solid rgba(217, 119, 6, 0.28);
+  border-left: 3px solid var(--rk-warn);
+  border-radius: 10px;
+  margin-top: 10px;
+  grid-column: 1 / -1;
 }
-
-.body--dark .rk-warning-banner {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
 .rk-warning-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(245, 158, 11, 0.15);
-  border-radius: 8px;
+  background: rgba(217, 119, 6, 0.18);
+  color: var(--rk-warn);
+  border-radius: 6px;
   flex-shrink: 0;
 }
-
-.body--dark .rk-warning-icon {
-  background: rgba(245, 158, 11, 0.2);
-}
-
-.rk-warning-icon .q-icon {
-  font-size: 16px;
-  color: #f59e0b;
-}
-
-.body--dark .rk-warning-icon .q-icon {
-  color: #fbbf24;
-}
-
+.rk-warning-icon .q-icon { font-size: 14px; }
 .rk-warning-banner p {
-  font-size: 0.88rem;
-  color: #d97706;
+  font-size: 11.5px;
+  color: var(--rk-warn);
   margin: 0;
   font-weight: 600;
 }
 
-.body--dark .rk-warning-banner p {
-  color: #fbbf24;
-}
-
-/* Tooltip */
+/* ══════════════════════════════════════════════════
+   TOOLTIP
+══════════════════════════════════════════════════ */
 .rk-tooltip {
-  background: rgba(6, 182, 212, 0.95);
-  backdrop-filter: blur(10px);
-  font-size: 0.85rem;
-  padding: 8px 12px;
-  border-radius: 8px;
+  background: var(--rk-text);
+  color: var(--rk-bg);
+  font-size: 11.5px;
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 
-/* Responsive */
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════ */
 @media (max-width: 1023px) {
-  .rk-user-card {
-    padding: 24px;
-  }
-
-  .rk-section-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .rk-role-selector {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 767px) {
-  .rk-user-card {
-    padding: 20px;
-    border-radius: 20px;
-  }
-
-  .rk-user-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .rk-header-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .rk-header-icon .q-icon {
-    font-size: 24px;
-  }
-
-  .rk-header-title {
-    font-size: 1.3rem;
-  }
-
-  .rk-progress-steps {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .rk-step {
-    padding: 12px;
-    background: rgba(6, 182, 212, 0.04);
-    border-radius: 10px;
-  }
-
-  .rk-section {
-    padding: 20px;
-  }
-
-  .rk-section-icon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .rk-section-icon .q-icon {
-    font-size: 20px;
-  }
-
-  .rk-role-card-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .rk-role-card-icon .q-icon {
-    font-size: 24px;
-  }
+  .rk-section-grid { grid-template-columns: 1fr; }
+  .rk-role-selector { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 599px) {
-  .rk-user-card {
-    padding: 16px;
-  }
-
-  .rk-section {
-    padding: 16px;
-  }
-
-  .rk-password-actions {
-    flex-wrap: wrap;
-  }
+  .rk-password-actions { flex-wrap: wrap; }
 }
 </style>

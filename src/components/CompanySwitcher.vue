@@ -1,9 +1,10 @@
 <template>
   <div v-if="showSwitcher" class="rk-company-switcher">
-    <button
+    <div
       class="rk-switcher-trigger"
-      :disabled="switching"
-      @click="menuOpen = !menuOpen"
+      :class="{ 'is-disabled': switching }"
+      role="button"
+      tabindex="0"
     >
       <q-icon name="business" class="rk-switcher-icon" />
       <div class="rk-switcher-text">
@@ -19,6 +20,7 @@
         self="top right"
         :offset="[0, 8]"
         class="rk-switcher-menu"
+        :disable="switching"
       >
         <div class="rk-menu-header">
           <q-icon name="business" />
@@ -29,6 +31,7 @@
             v-for="c in companies"
             :key="c._id || c.id"
             clickable
+            v-close-popup
             :active="isActive(c)"
             :disable="switching"
             @click="onPick(c)"
@@ -46,7 +49,7 @@
           </q-item>
         </q-list>
       </q-menu>
-    </button>
+    </div>
   </div>
 </template>
 
@@ -125,15 +128,23 @@ async function onPick(c) {
   max-width: 260px;
 }
 
-.rk-switcher-trigger:hover:not(:disabled) {
+.rk-switcher-trigger:hover:not(.is-disabled) {
   background: rgba(6, 182, 212, 0.14);
   border-color: rgba(6, 182, 212, 0.4);
 }
 
-.rk-switcher-trigger:disabled {
+.rk-switcher-trigger:focus-visible {
+  outline: 2px solid rgba(6, 182, 212, 0.5);
+  outline-offset: 2px;
+}
+
+.rk-switcher-trigger.is-disabled {
   opacity: 0.6;
   cursor: progress;
+  pointer-events: none;
 }
+
+.rk-switcher-trigger { user-select: none; }
 
 .rk-switcher-icon {
   font-size: 18px;

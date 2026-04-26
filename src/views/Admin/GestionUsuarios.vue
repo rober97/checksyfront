@@ -220,11 +220,30 @@
               </div>
             </td>
 
-            <!-- Empresa -->
+            <!-- Empresa(s) -->
             <td class="rk-td">
-              <div v-if="row.company?.name" class="cell-company">
-                <q-icon name="apartment" size="13px" class="q-mr-xs" />
-                {{ row.company.name }}
+              <div v-if="userCompanies(row).length" class="cell-companies">
+                <span
+                  v-for="(c, i) in visibleUserCompanies(row)"
+                  :key="i"
+                  class="company-chip"
+                  :class="{ 'is-active': c.isActive }"
+                >
+                  <q-icon
+                    :name="c.isActive ? 'star' : 'apartment'"
+                    size="11px"
+                    class="q-mr-xs"
+                  />
+                  {{ c.name }}
+                </span>
+                <span v-if="hiddenUserCompanies(row) > 0" class="company-chip more-chip">
+                  +{{ hiddenUserCompanies(row) }}
+                  <q-tooltip class="rk-companies-tooltip">
+                    <div v-for="(c, i) in userCompanies(row).slice(MAX_USER_COMPANY_CHIPS)" :key="i">
+                      {{ c.name }}
+                    </div>
+                  </q-tooltip>
+                </span>
               </div>
               <span v-else class="rk-muted">—</span>
             </td>
@@ -402,9 +421,14 @@ const filteredRows = computed(() => {
   if (filters.value.role)
     rows = rows.filter(r => r.role === filters.value.role || r.tipo === filters.value.role);
 
-  // Empresa
-  if (filters.value.company)
-    rows = rows.filter(r => r.company?._id === filters.value.company || r.company?.id === filters.value.company);
+  // Empresa (matchea contra company activa O cualquiera del array companies[])
+  if (filters.value.company) {
+    const target = String(filters.value.company)
+    rows = rows.filter(r => {
+      const ids = userCompanies(r).map(c => String(c.id))
+      return ids.includes(target)
+    })
+  }
 
   // Ordenación
   rows = [...rows].sort((a, b) => {
@@ -469,12 +493,59 @@ const toggleSelectAll = () => {
   }
 };
 
+/* ── Helpers de empresas (multi) ─────────────────── */
+const MAX_USER_COMPANY_CHIPS = 2;
+
+function resolveCompanyName(id) {
+  if (!id) return null
+  // 1) lista local cargada
+  const fromEmpresas = empresas.value?.find(e => String(e._id || e.id) === String(id))?.name
+  if (fromEmpresas) return fromEmpresas
+  // 2) store global de empresas
+  const fromStore = companiesStore.companies?.find(c => String(c._id || c.id) === String(id))?.name
+  if (fromStore) return fromStore
+  return null
+}
+
+function userCompanies(row) {
+  const arr = Array.isArray(row?.companies) && row.companies.length
+    ? row.companies
+    : (row?.company ? [row.company] : []);
+  const activeId = String(row?.company?._id || row?.company || '');
+  return arr
+    .map(c => {
+      const id = String(c?._id || c || '');
+      const name = c?.name || resolveCompanyName(id) || (id ? id.slice(0, 8) + '…' : 'Empresa');
+      return { id, name, isActive: id === activeId };
+    })
+    .filter(c => c.id)
+    .sort((a, b) => (a.isActive ? -1 : 0) - (b.isActive ? -1 : 0));
+}
+function visibleUserCompanies(row) {
+  return userCompanies(row).slice(0, MAX_USER_COMPANY_CHIPS);
+}
+function hiddenUserCompanies(row) {
+  return Math.max(0, userCompanies(row).length - MAX_USER_COMPANY_CHIPS);
+}
+
 /* ── Helpers ─────────────────────────────────────── */
-const normalizeRole = (r) => r === "empresa" ? "company" : r === "empleado" ? "employee" : r || "unknown";
+// Normaliza el rol a un slug CSS-safe usado en `badge-role-${slug}`
+const normalizeRole = (r) => {
+  const x = String(r || '').toLowerCase()
+  if (x === 'empresa') return 'company'
+  if (x === 'empleado') return 'employee'
+  if (x === 'admin_rrhh' || x === 'rrhh' || x === 'admin') return 'rrhh'
+  if (x === 'superadmin') return 'superadmin'
+  if (x === 'dt_inspector') return 'inspector'
+  return x || 'unknown'
+}
 const roleNice = (r) => ({
   company: "Empresa", employee: "Empleado",
   supervisor: "Supervisor", empresa: "Empresa", empleado: "Empleado",
-}[r] || r || "—");
+  admin_rrhh: "Admin RR.HH.", rrhh: "Admin RR.HH.", admin: "Admin RR.HH.",
+  superadmin: "Superadmin",
+  dt_inspector: "Inspector DT",
+}[String(r || '').toLowerCase()] || r || "—");
 const statusNice  = (s) => ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido" }[s] || s || "—");
 const initials    = (fn="", ln="") => ((fn?.[0]||"") + (ln?.[0]||"") || "U").toUpperCase();
 const formatDate  = (d) => {
@@ -559,7 +630,7 @@ const exportExcel = () => {
       RUT:               u.rut   || "",
       Rol:               roleNice(u.role || u.tipo),
       Estado:            statusNice(u.status),
-      Empresa:           u.company?.name || "",
+      Empresa:           userCompanies(u).map(c => c.name).join(', '),
       "Último acceso":   u.lastLogin ? new Date(u.lastLogin) : "",
     }));
     const ws = XLSX.utils.json_to_sheet(data, { cellDates: true });
@@ -586,7 +657,13 @@ const stickyToolbar   = ref(false);
 let observer;
 
 onMounted(async () => {
-  await reload();
+  // En paralelo: usuarios + catálogo de empresas (necesario para resolver
+  // nombres de empresa cuando el populate del backend falle por algún motivo,
+  // p.ej. cache de mongoose o referencias huérfanas).
+  await Promise.allSettled([
+    reload(),
+    companiesStore.fetchCompanies?.(),
+  ]);
   observer = new IntersectionObserver(
     (entries) => { stickyToolbar.value = !entries[0].isIntersecting; },
     { root: null, threshold: 0 }
@@ -900,6 +977,38 @@ onBeforeUnmount(() => {
 /* Cell: empresa */
 .cell-company { display:inline-flex; align-items:center; font-size:12.5px; color:var(--c-text2); }
 
+/* Chips de empresas (multi-empresa) */
+.cell-companies { display:flex; flex-wrap:wrap; gap:5px; align-items:center; max-width:240px; }
+.company-chip {
+  display:inline-flex; align-items:center;
+  padding:3px 9px; border-radius:999px;
+  background:var(--c-all-l); color:var(--c-all);
+  font-size:11px; font-weight:600;
+  border:1px solid transparent;
+  white-space:nowrap;
+  max-width:160px;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.company-chip.is-active {
+  background:linear-gradient(135deg, #06b6d4, #0d9488);
+  color:#fff;
+  box-shadow:0 2px 6px rgba(6,182,212,0.35);
+}
+.company-chip.more-chip {
+  background:var(--c-surface2);
+  color:var(--c-text2);
+  border-color:var(--c-border);
+  cursor:default;
+}
+.rk-companies-tooltip {
+  background:rgba(15,17,23,0.95) !important;
+  color:#fff;
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.5;
+}
+
 /* Badges rol */
 .rk-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:0.2px; }
 .badge-dot { width:6px; height:6px; border-radius:50%; }
@@ -913,11 +1022,14 @@ onBeforeUnmount(() => {
 .badge-suspended .badge-dot { background:var(--c-err); }
 
 /* Rol */
-.badge-role-admin      { background:var(--c-purple-l); color:var(--c-purple); }
-.badge-role-company    { background:var(--c-all-l);    color:var(--c-all);    }
-.badge-role-employee   { background:var(--c-teal-l);   color:var(--c-teal);   }
-.badge-role-supervisor { background:var(--c-primary-l);color:var(--c-primary);}
-.badge-role-unknown    { background:var(--c-border);   color:var(--c-text3);  }
+.badge-role-admin       { background:var(--c-purple-l); color:var(--c-purple); }
+.badge-role-rrhh        { background:var(--c-purple-l); color:var(--c-purple); }
+.badge-role-superadmin  { background:rgba(236,72,153,0.12); color:#ec4899; }
+.badge-role-company     { background:var(--c-all-l);    color:var(--c-all);    }
+.badge-role-employee    { background:var(--c-teal-l);   color:var(--c-teal);   }
+.badge-role-supervisor  { background:var(--c-primary-l);color:var(--c-primary);}
+.badge-role-inspector   { background:var(--c-warn-l);   color:var(--c-warn);   }
+.badge-role-unknown     { background:var(--c-border);   color:var(--c-text3);  }
 
 /* Acciones */
 .cell-actions { display:inline-flex; align-items:center; gap:4px; }

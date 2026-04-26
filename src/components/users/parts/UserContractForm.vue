@@ -443,101 +443,144 @@ watch(
 </script>
 
 <style scoped>
+/* ══════════════════════════════════════════════════
+   TOKENS — heredan paleta del modal padre
+══════════════════════════════════════════════════ */
 .rk-contract-grid {
+  --rk-bg:           #ffffff;
+  --rk-surface:      #f7f8fc;
+  --rk-surface-2:    #eef0f6;
+  --rk-border:       rgba(15, 17, 23, 0.08);
+  --rk-border-2:     rgba(15, 17, 23, 0.14);
+  --rk-text:         #0f1117;
+  --rk-text-2:       #5a6482;
+  --rk-text-3:       #9aa1b9;
+  --rk-accent:       #6366f1;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
   align-items: start;
+  color: var(--rk-text);
 }
 
+.body--dark .rk-contract-grid {
+  --rk-bg:           #141720;
+  --rk-surface:      #1a1e2a;
+  --rk-surface-2:    #232838;
+  --rk-border:       rgba(255, 255, 255, 0.08);
+  --rk-border-2:     rgba(255, 255, 255, 0.16);
+  --rk-text:         #e8eaf2;
+  --rk-text-2:       #8b92ad;
+  --rk-text-3:       #555d78;
+  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
+}
+
+/* ══════════════════════════════════════════════════
+   SECTIONS — sobrias, sin gradientes
+══════════════════════════════════════════════════ */
 .rk-form-section {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 18px;
-  padding: 16px;
-  background:
-    radial-gradient(circle at top right, rgba(34, 211, 238, 0.08), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--rk-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--rk-surface);
+  transition: border-color 0.15s, background 0.15s;
+}
+.rk-form-section:hover {
+  border-color: var(--rk-border-2);
 }
 
 .rk-form-section__header {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 14px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .rk-form-section__icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #0f766e;
-  background: linear-gradient(135deg, rgba(204, 251, 241, 0.92), rgba(153, 246, 228, 0.72));
-  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.12);
+  color: var(--rk-accent);
+  background: var(--rk-accent-soft);
+  font-size: 16px;
 }
-
-.rk-form-section__icon--mint {
-  color: #0f766e;
-  background: linear-gradient(135deg, rgba(209, 250, 229, 0.92), rgba(167, 243, 208, 0.78));
-}
-
+/* Las variantes mint/gold ya no hacen falta, pero las dejamos
+   neutralizadas por si quedan referencias en el template. */
+.rk-form-section__icon--mint,
 .rk-form-section__icon--gold {
-  color: #92400e;
-  background: linear-gradient(135deg, rgba(254, 240, 138, 0.9), rgba(253, 224, 71, 0.7));
+  color: var(--rk-accent);
+  background: var(--rk-accent-soft);
 }
 
 .rk-form-section__title {
-  font-size: 0.98rem;
-  font-weight: 800;
-  line-height: 1.3;
-  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--rk-text);
+  letter-spacing: -0.1px;
 }
 
 .rk-form-section__subtitle {
-  margin-top: 2px;
-  font-size: 0.84rem;
-  line-height: 1.5;
-  color: #64748b;
+  margin-top: 1px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--rk-text-2);
+  font-weight: 500;
 }
 
+/* ══════════════════════════════════════════════════
+   FIELDS — alineados con el sistema del modal
+══════════════════════════════════════════════════ */
 .rk-field :deep(.q-field__control) {
-  min-height: 52px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.9);
-  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  min-height: 40px;
+  border-radius: 9px;
+  background: var(--rk-bg);
 }
-
+.rk-field :deep(.q-field__control::before) {
+  border-color: var(--rk-border);
+}
+.rk-field:hover :deep(.q-field__control::before) {
+  border-color: var(--rk-border-2);
+}
+.rk-field :deep(.q-field--focused .q-field__control::after) {
+  border-color: var(--rk-accent);
+  border-width: 1.5px;
+}
 .rk-field :deep(.q-field__native),
 .rk-field :deep(.q-field__input) {
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 500;
+  color: var(--rk-text);
+  font-size: 13px;
 }
-
 .rk-field :deep(.q-field__label) {
-  color: #64748b;
-  font-weight: 600;
+  color: var(--rk-text-2);
+  font-weight: 500;
+  font-size: 12.5px;
 }
-
 .rk-field :deep(.q-field__prepend),
 .rk-field :deep(.q-field__append) {
-  color: #0f766e;
+  color: var(--rk-text-3);
+}
+.rk-field :deep(.q-field--focused .q-field__prepend),
+.rk-field :deep(.q-field--focused .q-field__append) {
+  color: var(--rk-accent);
+}
+.rk-field :deep(.q-field__messages) { font-size: 10.5px; }
+.rk-field :deep(.q-field__hint) {
+  color: var(--rk-text-3);
+  font-size: 10.5px;
 }
 
-.rk-field:hover :deep(.q-field__control) {
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-}
-
-.rk-field :deep(.q-field--focused .q-field__control) {
-  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.14);
-}
-
+/* ══════════════════════════════════════════════════
+   TAX BOX — destacado pero neutro
+══════════════════════════════════════════════════ */
 .rk-tax-box {
-  border: 1px solid rgba(37, 99, 235, 0.16);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(248, 250, 252, 0.95));
-  padding: 16px;
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.06);
+  border: 1px solid var(--rk-border);
+  border-radius: 12px;
+  background: var(--rk-surface);
+  padding: 14px 16px;
 }
 
 .rk-tax-box__head {
@@ -545,46 +588,69 @@ watch(
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 12px;
-  color: #1e3a8a;
+  color: var(--rk-text);
+}
+.rk-tax-box__head .q-icon {
+  color: var(--rk-accent);
+  margin-top: 1px;
 }
 
 .rk-tax-box__title {
   font-weight: 700;
   line-height: 1.25;
+  font-size: 13px;
+  color: var(--rk-text);
 }
 
 .rk-tax-box__subtitle {
-  font-size: 0.82rem;
-  line-height: 1.45;
-  color: #475569;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--rk-text-2);
+  margin-top: 1px;
+  font-weight: 500;
 }
 
 .rk-tax-box__controls {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(220px, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(220px, 260px) minmax(220px, 1fr);
+  gap: 10px 12px;
   align-items: center;
 }
-
-.rk-extra-box {
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.95));
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  padding: 8px 12px;
+.rk-tax-box__controls :deep(.q-toggle__label) {
+  font-size: 12.5px;
+  color: var(--rk-text);
+  font-weight: 500;
 }
 
+/* ══════════════════════════════════════════════════
+   EXTRA BOX (haberes/descuentos)
+══════════════════════════════════════════════════ */
+.rk-extra-box {
+  border-radius: 12px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  padding: 4px 12px;
+}
 .rk-extra-box :deep(.q-item) {
   padding-left: 4px;
   padding-right: 4px;
+  min-height: 40px;
+  color: var(--rk-text);
+}
+.rk-extra-box :deep(.q-item__label) {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.rk-extra-box :deep(.q-icon) {
+  color: var(--rk-accent);
 }
 
 @media (max-width: 768px) {
   .rk-tax-box__controls {
     grid-template-columns: 1fr;
   }
-
   .rk-form-section {
-    padding: 14px;
+    padding: 12px 14px;
   }
 }
 </style>

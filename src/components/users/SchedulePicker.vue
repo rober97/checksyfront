@@ -1,154 +1,180 @@
 <template>
   <div class="rk-ws" :class="{ 'rk-ws--disabled': disable }">
-    <div class="rk-label q-mb-xs">Horario laboral</div>
+    <div class="rk-head q-mb-sm">
+      <div class="rk-label">Horario laboral</div>
+      <div class="rk-help">¿Cómo trabaja este empleado?</div>
+    </div>
 
-    <!-- MODOS -->
-    <q-option-group
-      v-model="mode"
-      type="radio"
-      :options="modeOpts"
-      inline
-      class="q-mb-sm rk-modes"
-      :disable="disable || !companyId"
-    />
+    <!-- MODOS (cards) -->
+    <div class="rk-modes-grid q-mb-md">
+      <button
+        v-for="m in modeCards"
+        :key="m.value"
+        type="button"
+        class="rk-mode-card"
+        :class="{
+          'is-active': mode === m.value,
+          'is-disabled': m.disabled,
+        }"
+        :disabled="m.disabled"
+        @click="!m.disabled && (mode = m.value)"
+      >
+        <div class="rk-mode-icon">
+          <q-icon :name="m.icon" size="20px" />
+        </div>
+        <div class="rk-mode-body">
+          <div class="rk-mode-title">{{ m.title }}</div>
+          <div class="rk-mode-desc">{{ m.desc }}</div>
+          <div
+            v-if="m.disabled && m.disabledReason"
+            class="rk-mode-reason"
+          >
+            <q-icon name="lock" size="11px" class="q-mr-xs" />
+            {{ m.disabledReason }}
+          </div>
+          <div v-else-if="m.example" class="rk-mode-eg">{{ m.example }}</div>
+        </div>
+        <q-icon
+          v-if="mode === m.value"
+          name="check_circle"
+          class="rk-mode-check"
+          size="18px"
+        />
+      </button>
+    </div>
 
-    <!-- DEFAULT EMPRESA -->
-    <q-banner
-      v-if="mode === 'companyDefault'"
-      class="rk-section rk-banner row items-center justify-between q-mb-sm"
+    <!-- HORARIO FIJO (fusión: elegir plantilla existente o crear una nueva) -->
+    <div
+      v-if="mode === 'fixed'"
+      class="rk-detail q-mb-sm"
     >
-      <div class="text-caption">
-        Usar horario por defecto de
-        <b>{{ company?.name || 'la empresa' }}</b>.
-        <span v-if="!companyDefaultId" class="text-negative">
-          (la empresa no tiene horario por defecto)
-        </span>
+      <div class="rk-detail-row q-mb-sm">
+        <q-icon name="schedule" class="rk-detail-icon" />
+        <div class="rk-detail-text">
+          Selecciona un horario ya guardado en la empresa o crea uno nuevo.
+        </div>
       </div>
 
-      <q-btn
-        v-if="companyDefaultId"
-        dense
-        flat
-        color="primary"
-        icon="visibility"
-        label="Ver detalle"
-        :disable="disable"
-        @click="preview(companyDefaultId)"
-      />
-    </q-banner>
+      <div class="row q-col-gutter-sm">
+        <div class="col-12 col-sm-8">
+          <q-select
+            ref="selRef"
+            v-model="selectedId"
+            :disable="disable || !companyId"
+            label="Buscar plantilla guardada"
+            :options="options"
+            option-value="_id"
+            option-label="name"
+            dense
+            outlined
+            clearable
+            use-input
+            emit-value
+            map-options
+            :loading="loading"
+            :input-debounce="200"
+            :display-value="displayValue"
+            @filter="onFilter"
+            @popup-show="onMenuOpen"
+            @popup-hide="onMenuHide"
+          >
+            <template #prepend><q-icon name="search" /></template>
 
-    <!-- ELEGIR PLANTILLA -->
-    <div
-      v-if="mode === 'pickTemplate'"
-      class="row q-col-gutter-sm q-mb-sm"
-    >
-      <div class="col-12 col-sm-8">
-        <q-select
-          ref="selRef"
-          v-model="selectedId"
-          :disable="disable || !companyId"
-          label="Seleccionar plantilla"
-          :options="options"
-          option-value="_id"
-          option-label="name"
-          dense
-          outlined
-          clearable
-          use-input
-          emit-value
-          map-options
-          :loading="loading"
-          :input-debounce="200"
-          :display-value="displayValue"
-          @filter="onFilter"
-          @popup-show="onMenuOpen"
-          @popup-hide="onMenuHide"
-        >
-          <template #prepend><q-icon name="schedule" /></template>
-
-          <template #option="s">
-            <q-item v-bind="s.itemProps">
-              <q-item-section>
-                <q-item-label class="text-weight-medium">
-                  {{ s.opt.name }}
-                </q-item-label>
-                <q-item-label caption class="rk-mono">
-                  {{ s.opt.type || 'weekly' }} ·
-                  {{ s.opt.timezone || 'America/Santiago' }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </template>
-
-          <!-- Sin resultados / aún sin escribir -->
-          <template #no-option>
-            <div class="q-pa-xs column q-gutter-xs">
-              <div class="text-caption text-grey-7">
-                {{
-                  !companyId
-                    ? 'Selecciona una empresa para ver horarios.'
-                    : hasQuery
-                    ? `Sin resultados para «${qDisplay}»`
-                    : 'Escribe para buscar horarios…'
-                }}
-              </div>
-
-              <!-- Crear rápido desde lo escrito -->
-              <q-item
-                v-if="companyId && (hasQuery || !options.length)"
-                clickable
-                class="rk-create-item"
-                @click.stop="openQuickFromQuery()"
-              >
-                <q-item-section avatar>
-                  <q-avatar square size="24px" class="rk-create-avatar">
-                    <q-icon name="add_alarm" />
-                  </q-avatar>
-                </q-item-section>
+            <template #option="s">
+              <q-item v-bind="s.itemProps">
                 <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold">
-                    Crear «{{ qDisplay || 'Nuevo horario' }}»
+                  <q-item-label class="text-weight-medium">
+                    {{ s.opt.name }}
                   </q-item-label>
-                  <q-item-label caption>
-                    Se asignará a la empresa seleccionada
+                  <q-item-label caption class="rk-mono">
+                    {{ s.opt.type || 'weekly' }} ·
+                    {{ s.opt.timezone || 'America/Santiago' }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
-            </div>
-          </template>
-        </q-select>
-      </div>
+            </template>
 
-      <div class="col-12 col-sm-4">
-        <q-btn
-          outline
-          class="full-width"
-          color="primary"
-          icon="visibility"
-          label="Vista previa"
-          :disable="disable || !selectedId"
-          @click="preview(selectedId)"
-        />
+            <template #no-option>
+              <div class="q-pa-sm">
+                <div class="text-caption text-grey-7">
+                  {{
+                    !companyId
+                      ? 'Selecciona una empresa primero.'
+                      : hasQuery
+                      ? `Sin resultados para «${qDisplay}». Crea uno nuevo →`
+                      : 'Aún no hay horarios guardados. Crea uno nuevo →'
+                  }}
+                </div>
+              </div>
+            </template>
+          </q-select>
+        </div>
+
+        <div class="col-12 col-sm-4">
+          <q-btn
+            outline
+            class="full-width"
+            color="primary"
+            icon="add"
+            label="Crear nuevo"
+            :disable="disable || !companyId"
+            @click="openQuickFromQuery()"
+          />
+        </div>
       </div>
     </div>
 
-    <!-- CREAR RÁPIDO -->
-    <q-banner
-      v-if="mode === 'createQuick'"
-      class="rk-section rk-banner row items-center justify-between q-mb-sm"
+    <!-- TURNOS POR DEMANDA -->
+    <div
+      v-if="mode === 'oncall'"
+      class="rk-detail q-mb-sm"
     >
-      <div class="text-caption">
-        Crea una plantilla rápida (L–V 09:00–18:00 con 1h de colación — editable).
+      <div class="rk-detail-row">
+        <q-icon name="event_repeat" class="rk-detail-icon" />
+        <div class="rk-detail-text">
+          Sin horario semanal fijo. Tras crear al empleado podrás programar
+          turnos puntuales (fecha + hora) desde su ficha. Las notificaciones
+          móviles se ajustan a cada turno.
+        </div>
       </div>
-      <q-btn
-        color="primary"
-        dense
-        icon="add"
-        label="Configurar y crear"
-        :disable="disable || !companyId"
-        @click="openQuick()"
-      />
-    </q-banner>
+
+      <div class="rk-oncall-form q-mt-sm">
+        <q-input
+          v-model="oncall.name"
+          label="Nombre del horario (opcional)"
+          dense
+          outlined
+          :placeholder="oncallPlaceholder"
+          class="q-mb-sm"
+        />
+
+        <div class="rk-field-label q-mb-xs">
+          Disponibilidad típica
+          <span class="rk-field-hint">— informativo, no obliga turno</span>
+        </div>
+        <div class="row q-gutter-xs q-mb-sm">
+          <q-chip
+            v-for="d in dayChips"
+            :key="d.value"
+            clickable
+            :outline="!oncall.defaultDays.includes(d.value)"
+            :color="oncall.defaultDays.includes(d.value) ? 'primary' : undefined"
+            :text-color="oncall.defaultDays.includes(d.value) ? 'white' : undefined"
+            dense
+            size="sm"
+            @click="toggleOncallDay(d.value)"
+          >
+            {{ d.label }}
+          </q-chip>
+        </div>
+
+        <q-toggle
+          v-model="oncall.allowAnyDay"
+          label="Puede recibir turnos cualquier día"
+          dense
+        />
+      </div>
+    </div>
 
     <!-- DIALOGO CREAR -->
     <q-dialog v-model="quickOpen" persistent>
@@ -207,16 +233,26 @@
               :rules="[hhmm]"
             />
 
-            <q-toggle
-              v-model="quick.saturday"
-              label="Trabaja sábado"
-              class="col-6"
-            />
-            <q-toggle
-              v-model="quick.sunday"
-              label="Trabaja domingo"
-              class="col-6"
-            />
+            <div class="col-12">
+              <div class="rk-field-label q-mb-xs">
+                Días que trabaja
+                <span class="rk-field-hint">— toca para activar o desactivar</span>
+              </div>
+              <div class="row q-gutter-xs">
+                <q-chip
+                  v-for="d in dayChips"
+                  :key="d.value"
+                  clickable
+                  :outline="!quick.days.includes(d.value)"
+                  :color="quick.days.includes(d.value) ? 'primary' : undefined"
+                  :text-color="quick.days.includes(d.value) ? 'white' : undefined"
+                  dense
+                  @click="toggleQuickDay(d.value)"
+                >
+                  {{ d.label }}
+                </q-chip>
+              </div>
+            </div>
           </div>
         </q-card-section>
 
@@ -228,7 +264,7 @@
             color="primary"
             label="Crear y asignar"
             :loading="savingQuick"
-            :disable="disable || !companyId"
+            :disable="disable || !companyId || !quick.days.length"
             @click="createQuick"
           />
         </q-card-actions>
@@ -247,21 +283,25 @@ const props = defineProps({
   company: { type: Object, default: null },
   modelValue: {
     type: Object,
-    default: () => ({ mode: 'companyDefault', scheduleId: null })
+    default: () => ({ mode: 'fixed', scheduleId: null })
   },
   disable: { type: Boolean, default: false }
 })
-const emit = defineEmits(['update:modelValue', 'preview', 'created'])
+const emit = defineEmits(['update:modelValue', 'created'])
 
 /* ===== util ===== */
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
 /* ===== state v-model ===== */
-const state = ref({ ...props.modelValue })
+const state = ref({
+  ...props.modelValue,
+  mode: normalizeIncomingMode(props.modelValue?.mode),
+})
 watch(
   () => props.modelValue,
   (v) => {
-    if (!isEqual(v, state.value)) state.value = { ...v }
+    const incoming = { ...v, mode: normalizeIncomingMode(v?.mode) }
+    if (!isEqual(incoming, state.value)) state.value = incoming
   },
   { deep: true }
 )
@@ -274,7 +314,7 @@ watch(
 )
 
 const mode = computed({
-  get: () => state.value.mode || 'companyDefault',
+  get: () => state.value.mode || 'fixed',
   set: (v) => (state.value.mode = v)
 })
 const selectedId = computed({
@@ -285,31 +325,85 @@ const companyDefaultId = computed(
   () => props.company?.defaultWorkScheduleId || null
 )
 
-/* Opciones de modo (radios) */
-const modeOpts = computed(() => [
+/* Opciones de modo — 2 tarjetas con descripción */
+const noCompany = computed(() => !props.companyId)
+
+const modeCards = computed(() => [
   {
-    label: 'Por defecto empresa',
-    value: 'companyDefault',
-    disable: props.disable || !props.companyId || !companyDefaultId.value
+    value: 'fixed',
+    title: 'Horario fijo',
+    desc: 'Elegir una plantilla existente o crear una nueva.',
+    example: 'Ej.: «Turno mañana», jornada parcial L–V',
+    icon: 'schedule',
+    disabled: props.disable || noCompany.value,
+    disabledReason: noCompany.value ? 'Selecciona una empresa primero' : '',
   },
   {
-    label: 'Elegir plantilla',
-    value: 'pickTemplate',
-    disable: props.disable || !props.companyId
+    value: 'oncall',
+    title: 'Turnos por demanda',
+    desc: 'Sin horario fijo. Programa fechas puntuales luego.',
+    example: 'Para fines de semana variables o llamados ad-hoc',
+    icon: 'event_repeat',
+    disabled: props.disable || noCompany.value,
+    disabledReason: noCompany.value ? 'Selecciona una empresa primero' : '',
   },
-  {
-    label: 'Crear horario rápido',
-    value: 'createQuick',
-    disable: props.disable || !props.companyId
-  }
 ])
 
-/* Si no hay horario por defecto, evitamos dejar al usuario en companyDefault */
+/**
+ * Compatibilidad con valores antiguos del v-model.
+ * Cualquier modo distinto de 'oncall' se mapea a 'fixed' (incluido 'companyDefault',
+ * 'pickTemplate' y 'createQuick' de versiones previas).
+ */
+function normalizeIncomingMode (m) {
+  return m === 'oncall' ? 'oncall' : 'fixed'
+}
+
+/* ===== oncall config (sin horario fijo) ===== */
+const dayChips = [
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mié' },
+  { value: 4, label: 'Jue' },
+  { value: 5, label: 'Vie' },
+  { value: 6, label: 'Sáb' },
+  { value: 7, label: 'Dom' }
+]
+const oncall = computed({
+  get: () => state.value.oncall || { name: '', defaultDays: [], allowAnyDay: true },
+  set: (v) => { state.value.oncall = v }
+})
+const oncallPlaceholder = computed(
+  () => `Turnos por demanda · ${props.company?.name || 'empleado'}`
+)
+function toggleOncallDay (v) {
+  const cur = Array.isArray(oncall.value.defaultDays)
+    ? oncall.value.defaultDays.slice()
+    : []
+  const i = cur.indexOf(v)
+  if (i >= 0) cur.splice(i, 1)
+  else cur.push(v)
+  cur.sort((a, b) => a - b)
+  state.value.oncall = { ...(state.value.oncall || {}), defaultDays: cur }
+}
+
+/* Cuando entramos a 'oncall', limpiamos scheduleId y aseguramos config base */
+watch(mode, (m) => {
+  if (m === 'oncall') {
+    selectedId.value = null
+    if (!state.value.oncall) {
+      state.value.oncall = { name: '', defaultDays: [], allowAnyDay: true }
+    }
+  }
+})
+
+/* Auto-seleccionar la plantilla por defecto de la empresa cuando estamos en
+ * modo 'fixed' y aún no hay un scheduleId elegido: si la empresa tiene un
+ * horario por defecto, se aplica sin que el usuario abra el selector. */
 watch(
-  companyDefaultId,
-  (id) => {
-    if (!id && props.companyId && mode.value === 'companyDefault') {
-      mode.value = 'pickTemplate'
+  [companyDefaultId, () => mode.value, () => props.companyId],
+  ([defaultId, m]) => {
+    if (m === 'fixed' && defaultId && !selectedId.value) {
+      selectedId.value = defaultId
     }
   },
   { immediate: true }
@@ -413,26 +507,16 @@ watch(
     if (controller) controller.abort()
 
     if (!newId) {
-      // sin empresa -> reseteamos todo
-      mode.value = 'companyDefault'
+      mode.value = 'fixed'
       selectedId.value = null
       return
     }
 
-    // al cambiar de empresa, olvidamos horario anterior
+    // al cambiar de empresa, olvidamos horario anterior; el watcher de
+    // auto-select del default lo repondrá si la nueva empresa tiene uno.
     selectedId.value = null
-
-    // si esta empresa no tiene default y estamos en companyDefault, empujamos a plantillas
-    if (!companyDefaultId.value && mode.value === 'companyDefault') {
-      mode.value = 'pickTemplate'
-    }
   }
 )
-
-/* preview */
-function preview (id) {
-  if (id) emit('preview', id)
-}
 
 /* ===== quick create ===== */
 const quickOpen = ref(false)
@@ -443,12 +527,20 @@ const quick = ref({
   lunchStart: '13:00',
   lunchEnd: '14:00',
   end: '18:00',
-  saturday: false,
-  sunday: false
+  days: [1, 2, 3, 4, 5], // 1=Lun ... 7=Dom
 })
 const hhmm = (v) =>
   /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) || 'Formato HH:mm'
 const hhmmOpt = (v) => !v || hhmm(v) || 'Formato HH:mm'
+
+function toggleQuickDay (v) {
+  const cur = Array.isArray(quick.value.days) ? quick.value.days.slice() : []
+  const i = cur.indexOf(v)
+  if (i >= 0) cur.splice(i, 1)
+  else cur.push(v)
+  cur.sort((a, b) => a - b)
+  quick.value = { ...quick.value, days: cur }
+}
 
 function openQuick () {
   quickOpen.value = true
@@ -458,18 +550,18 @@ function openQuickFromQuery () {
   quickOpen.value = true
 }
 
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+
 function buildWeekly (q) {
   const seg = (a, b) => (a && b ? [{ start: a, end: b }] : [])
   const col = (a, b) => (a && b ? [{ start: a, end: b }] : [])
-  return {
-    mon: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
-    tue: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
-    wed: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
-    thu: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
-    fri: [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)],
-    sat: q.saturday ? seg(q.start, q.end) : [],
-    sun: q.sunday ? seg(q.start, q.end) : []
-  }
+  const daySegs = [...seg(q.start, q.end), ...col(q.lunchStart, q.lunchEnd)]
+  const days = Array.isArray(q.days) ? q.days : []
+  const out = {}
+  DAY_KEYS.forEach((key, idx) => {
+    out[key] = days.includes(idx + 1) ? daySegs : []
+  })
+  return out
 }
 
 async function createQuick () {
@@ -480,7 +572,8 @@ async function createQuick () {
   const lunchOk =
     hhmmOpt(quick.value.lunchStart) === true &&
     hhmmOpt(quick.value.lunchEnd) === true
-  if (!baseOk || !lunchOk) return
+  const daysOk = Array.isArray(quick.value.days) && quick.value.days.length > 0
+  if (!baseOk || !lunchOk || !daysOk) return
 
   savingQuick.value = true
   try {
@@ -493,7 +586,7 @@ async function createQuick () {
     const { data } = await secureAxios.post('/work-schedule', payload)
     const item = data?.item || data?.schedule || data
     if (item?._id) {
-      mode.value = 'pickTemplate'
+      mode.value = 'fixed'
       selectedId.value = item._id
 
       // Asegura que el nombre del seleccionado esté disponible para display-value
@@ -528,6 +621,13 @@ async function createQuick () {
 .rk-ws--disabled {
   opacity: 0.6;
 }
+.rk-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .rk-label {
   font-size: 12px;
   color: var(--rk-muted);
@@ -535,6 +635,147 @@ async function createQuick () {
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
+.rk-help {
+  font-size: 12px;
+  color: var(--rk-muted);
+}
+
+/* ===== Modes grid ===== */
+.rk-modes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .rk-modes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rk-mode-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: 10px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease,
+    background 0.12s ease, transform 0.08s ease;
+}
+.rk-mode-card:hover:not(.is-disabled) {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: var(--rk-soft);
+  transform: translateY(-1px);
+}
+.rk-mode-card.is-active {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+.rk-mode-card.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.rk-mode-icon {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+.rk-mode-card.is-active .rk-mode-icon {
+  background: #6366f1;
+  color: white;
+}
+
+.rk-mode-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rk-mode-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--q-primary, #1f2937);
+  line-height: 1.2;
+}
+.rk-mode-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--rk-muted);
+  line-height: 1.35;
+}
+.rk-mode-eg {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6366f1;
+  font-style: italic;
+  line-height: 1.2;
+}
+.rk-mode-reason {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #b45309;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+}
+.body--dark .rk-mode-reason {
+  color: #fbbf24;
+}
+
+.rk-mode-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #6366f1;
+}
+
+/* ===== Detail box (debajo de las cards) ===== */
+.rk-detail {
+  background: var(--rk-soft);
+  border: 1px solid var(--rk-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.rk-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rk-detail-icon {
+  flex: 0 0 auto;
+  color: #6366f1;
+  font-size: 22px;
+}
+.rk-detail-text {
+  flex: 1 1 auto;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--q-primary, #1f2937);
+}
+.rk-oncall-form {
+  border-top: 1px dashed var(--rk-border);
+  padding-top: 10px;
+}
+.rk-field-label {
+  font-size: 12px;
+  color: var(--rk-muted);
+  font-weight: 600;
+}
+.rk-field-hint {
+  font-weight: 400;
+  color: var(--rk-muted);
+}
+
 .rk-section {
   background: var(--rk-soft);
   border: 1px solid var(--rk-border);
@@ -600,5 +841,18 @@ async function createQuick () {
 .body--dark .rk-create-avatar {
   background: #12243f;
   color: #8ab6ff;
+}
+.body--dark .rk-mode-card {
+  background: #101318;
+}
+.body--dark .rk-mode-card:hover:not(.is-disabled) {
+  background: #161b24;
+}
+.body--dark .rk-mode-card.is-active {
+  background: rgba(99, 102, 241, 0.18);
+}
+.body--dark .rk-mode-title,
+.body--dark .rk-detail-text {
+  color: #e5e7eb;
 }
 </style>
