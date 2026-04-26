@@ -231,8 +231,14 @@ const filteredFlat = computed(() => {
 const expandedGroups = ref({})
 const LS_KEYS = { groups: 'rk_nav_groups' }
 function loadExpandedGroups(){
-  const saved = JSON.parse(localStorage.getItem(LS_KEYS.groups) || '{}')
-  expandedGroups.value = saved
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEYS.groups) || '{}')
+    // sanitize: drop legacy "undefined" key from older versions when groups had no id
+    if (saved && typeof saved === 'object') delete saved.undefined
+    expandedGroups.value = saved || {}
+  } catch (_) {
+    expandedGroups.value = {}
+  }
 }
 function persistExpandedGroups(){
   localStorage.setItem(LS_KEYS.groups, JSON.stringify(expandedGroups.value))
@@ -326,8 +332,12 @@ function onKeydownNav(e){
 
 /* Lifecycle */
 onMounted(() => {
-  visibleMenu.value.forEach(g => { if (expandedGroups.value[g.id] == null) expandedGroups.value[g.id] = true })
+  // load persisted state first, then default any new groups to expanded
   loadExpandedGroups()
+  visibleMenu.value.forEach(g => {
+    if (g.id && expandedGroups.value[g.id] == null) expandedGroups.value[g.id] = true
+  })
+  persistExpandedGroups()
   window.addEventListener('keydown', onGlobalKey)
 })
 onBeforeUnmount(() => { window.removeEventListener('keydown', onGlobalKey) })
@@ -364,9 +374,15 @@ watch(() => route.path, () => {
   position: relative;
   z-index: 1;
   height: 100%;
+  /* override Quasar default to avoid double-scroll competing with .rk-nav */
+  overflow: hidden !important;
   &.dark{  background: linear-gradient(135deg, var(--rk-dark) 0%, #222 100%); color:#fff; }
   &.light{ background: linear-gradient(135deg, var(--rk-light) 0%, #f7f9fc 100%); color:#111; }
 }
+
+/* Header & footer must not shrink so .rk-nav gets the remaining space */
+.rk-drawer__header{ flex: 0 0 auto; }
+.rk-drawer__footer{ flex: 0 0 auto; }
 
 /* ===== Header ===== */
 .rk-drawer__header{

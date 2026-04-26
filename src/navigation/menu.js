@@ -13,6 +13,7 @@ export const MENU = [
   // SUPERADMIN — plataforma
   // ============================================================
   {
+    id: 'sa-platform',
     label: 'Plataforma',
     icon: 'shield',
     access: { roles: ['superadmin'] },
@@ -23,6 +24,7 @@ export const MENU = [
     ]
   },
   {
+    id: 'sa-dt',
     label: 'Dirección del Trabajo (global)',
     icon: 'gavel',
     access: { roles: ['superadmin'] },
@@ -38,6 +40,7 @@ export const MENU = [
   // ADMIN RR.HH. — sólo su empresa
   // ============================================================
   {
+    id: 'rh',
     label: 'Recursos Humanos',
     icon: 'admin_panel_settings',
     access: { roles: ['admin_rrhh'] },
@@ -54,6 +57,7 @@ export const MENU = [
     ]
   },
   {
+    id: 'rh-dt',
     label: 'Dirección del Trabajo',
     icon: 'gavel',
     access: { roles: ['admin_rrhh'] },
@@ -69,6 +73,7 @@ export const MENU = [
   // EMPLEADO — su espacio
   // ============================================================
   {
+    id: 'emp',
     label: 'Mi espacio',
     icon: 'person',
     access: { roles: ['employee'] },
