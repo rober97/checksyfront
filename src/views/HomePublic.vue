@@ -530,7 +530,7 @@
         <div class="rk-container rk-footer__bottom-inner">
           <span>© {{ year }} Recksy · Todos los derechos reservados.</span>
           <span class="rk-footer__legal">
-            <a href="/privacy">Privacidad</a> · <a href="/terms">Términos</a> · <a href="/cookies">Cookies</a>
+            <router-link to="/legal/terms">Privacidad</router-link> · <router-link to="/legal/terms">Términos</router-link>
           </span>
         </div>
       </div>
@@ -653,6 +653,10 @@ const footerLinks = [
     { label: 'Nosotros',  to: '/about' },
     { label: 'Carreras',  to: '/careers' },
     { label: 'Contacto',  to: '#contacto' },
+  ]},
+  { title: 'Legal',     links: [
+    { label: 'Términos y Privacidad', to: '/legal/terms' },
+    { label: 'Verificar comprobante', to: '/verificar-comprobante' },
   ]},
 ]
 

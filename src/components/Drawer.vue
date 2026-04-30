@@ -21,7 +21,7 @@
         </q-avatar>
 
         <div v-if="!mini" class="rk-user__info">
-          <div class="rk-user__name ellipsis">{{ user?.name || 'Usuario' }}</div>
+          <div class="rk-user__name ellipsis">{{ fullName }}</div>
           <q-badge :color="roleBadge.color" :text-color="roleBadge.textColor" class="rk-user__role">
             {{ role || 'Usuario' }}
           </q-badge>
@@ -186,13 +186,23 @@ const drawerContentClass = computed(() => {
 
 /* User block */
 const user = computed(() => auth.user)
+const fullName = computed(() => {
+  const fn = (user.value?.firstName || '').trim()
+  const ln = (user.value?.lastName || '').trim()
+  const composed = `${fn} ${ln}`.trim()
+  return composed || user.value?.name || user.value?.email || 'Usuario'
+})
 const initials = computed(() => {
-  const n = auth.user?.name || auth.user?.email || ''
+  const fn = user.value?.firstName || ''
+  const ln = user.value?.lastName || ''
+  const fromNames = ((fn[0] || '') + (ln[0] || '')).toUpperCase()
+  if (fromNames) return fromNames
+  const n = user.value?.name || user.value?.email || ''
   return n.trim().split(/\s+/).slice(0,2).map(s => (s[0]||'').toUpperCase()).join('')
 })
 const avatarColorClass = computed(() => {
   const colors = ['primary','secondary','accent','info','warning']
-  const idx = (user.value?.name?.length || 0) % colors.length
+  const idx = (fullName.value?.length || 0) % colors.length
   return `avatar-${colors[idx]}`
 })
 const roleBadge = computed(() => {

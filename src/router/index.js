@@ -49,6 +49,7 @@ const DtLibroAsistencia = () => import(/* webpackChunkName:"dt" */ '@/views/DT/L
 const EmpComprobante = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/Comprobante.vue')
 const EmpConsentimiento = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/ConsentimientoDT.vue')
 const VerificarComprobante = () => import(/* webpackChunkName:"public" */ '@/views/Public/VerificarComprobante.vue')
+const PrivacyTerms = () => import(/* webpackChunkName:"public" */ '@/views/Public/PrivacyTerms.vue')
 const InspectorDashboard = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Dashboard.vue')
 const InspectorAsistencias = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Asistencias.vue')
 
@@ -118,6 +119,11 @@ const routes = [
   // Accesible sin login para que cualquiera (incluida la DT) pueda validar un comprobante por su hash.
   { path: '/verificar-comprobante', name: 'VerificarComprobante', component: VerificarComprobante, meta: { public: true, title: 'Verificar comprobante' } },
   { path: '/verificar-comprobante/:hash', name: 'VerificarComprobanteHash', component: VerificarComprobante, props: true, meta: { public: true, title: 'Verificar comprobante' } },
+
+  // ===== Términos y Privacidad (público) — requerido para App Store =====
+  { path: '/legal/terms', name: 'PrivacyTerms', component: PrivacyTerms, meta: { public: true, title: 'Términos y Privacidad' } },
+  { path: '/legal/privacy', redirect: '/legal/terms' },
+  { path: '/privacidad', redirect: '/legal/terms' },
 
   // Perfil/config (cualquier rol autenticado)
   { path: '/configuration', name: 'ConfigurationRoot', component: Configuration, meta: { requiresAuth: true, title: 'Configuración' } },
