@@ -7,11 +7,13 @@
     :loading="loggingOut"
     @click="toggleMenu"
   >
-    <q-avatar size="28px">
+    <q-avatar size="28px" color="primary" text-color="white">
       <img
-        v-if="user?.profilePicture"
-        :src="user.profilePicture"
+        v-if="avatarSrc && !avatarBroken"
+        :src="avatarSrc"
         alt="Avatar"
+        referrerpolicy="no-referrer"
+        @error="avatarBroken = true"
       />
       <span v-else>{{ initials(user?.firstName, user?.lastName) }}</span>
     </q-avatar>
@@ -32,9 +34,11 @@
         <div class="row items-center q-pa-sm q-gutter-sm">
           <q-avatar size="42px" color="primary" text-color="white">
             <img
-              v-if="user?.profilePicture"
-              :src="user.profilePicture"
+              v-if="avatarSrc && !avatarBroken"
+              :src="avatarSrc"
               alt="Avatar"
+              referrerpolicy="no-referrer"
+              @error="avatarBroken = true"
             />
             <span v-else>{{ initials(user?.firstName, user?.lastName) }}</span>
           </q-avatar>
@@ -84,20 +88,6 @@
 
         <q-separator spaced />
 
-        <q-item tag="label" class="cursor-pointer">
-          <q-item-section avatar>
-            <q-icon :name="$q.dark.isActive ? 'dark_mode' : 'light_mode'" />
-          </q-item-section>
-          <q-item-section>Cambiar tema</q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="isDark"
-              dense
-              @update:model-value="toggleTheme"
-            />
-          </q-item-section>
-        </q-item>
-
         <q-item clickable v-ripple @click="copyEmail">
           <q-item-section avatar><q-icon name="content_copy" /></q-item-section>
           <q-item-section>Copiar correo</q-item-section>
@@ -128,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuasar, copyToClipboard as quasarCopy } from "quasar";
@@ -138,8 +128,8 @@ const router = useRouter();
 const auth = useAuthStore();
 
 const loggingOut = ref(false);
-const isDark = ref(false);
 const menuRef = ref(null); // 👈 control directo del menú
+const avatarBroken = ref(false);
 let lastEvt = null; // guarda el evento click para posicionamiento correcto
 
 /* Datos */
@@ -153,23 +143,27 @@ const companyName = computed(
   () => user.value?.company?.name || user.value?.companyName || ""
 );
 
+// Misma foto que la app móvil: avatarUrl viene de /profile/me (S3 firmado).
+// Fallback a profilePicture si ya es una URL http directa.
+const avatarSrc = computed(() => {
+  const u = user.value;
+  if (!u) return null;
+  if (u.avatarUrl) return u.avatarUrl;
+  const pic = u.profilePicture;
+  if (pic && /^https?:\/\//i.test(pic)) return pic;
+  return null;
+});
+
 const canSwitchEmpresa = computed(() => {
   const role = user.value?.role;
   return role === "admin" || role === "company";
 });
 
-/* Tema */
-onMounted(() => {
-  isDark.value = $q.dark.isActive;
-});
-function toggleTheme(val) {
-  $q.dark.set(!!val);
-  $q.notify({
-    message: `Tema ${val ? "oscuro" : "claro"}`,
-    color: "primary",
-    timeout: 800,
-  });
-}
+// Reintenta resolver el avatarUrl si aún no está cargado al abrir el menú
+// (p. ej. tras login el fetch corre en background).
+watch(user, (u) => {
+  if (u && !u.avatarUrl) auth.fetchAvatarUrl?.().catch(() => {});
+}, { immediate: true });
 
 /* Abrir/cerrar de forma robusta */
 function toggleMenu(ev) {
@@ -190,13 +184,16 @@ function onHide() {
 
 /* Navegación */
 function goToPerfil() {
-  //router.push({ path: "/configuration", query: { tab: "profile" } });
+  menuRef.value?.hide();
+  router.push("/profile");
 }
 function goToConfig() {
-  //router.push({ path: "/configuration", query: { tab: "preferences" } });
+  menuRef.value?.hide();
+  router.push("/configuration");
 }
 function goToEmpresas() {
- router.push("/admin/companies");
+  menuRef.value?.hide();
+  router.push("/admin/companies");
 }
 
 /* Logout */

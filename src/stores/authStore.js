@@ -54,6 +54,7 @@ export const useAuthStore = defineStore('auth', {
         try { localStorage.setItem('token', accessToken) } catch {}
 
         this._applyAuthHeader(accessToken)
+        this.fetchAvatarUrl().catch(() => {})
       } catch (err) {
         console.error('Login error:', err)
         this.user = null
@@ -137,11 +138,26 @@ export const useAuthStore = defineStore('auth', {
         const res = await secureAxios.get('/auth/me')
         if (!res.data?.success) throw new Error(res.data?.message || 'No autorizado')
         this.user = res.data.user
+        // Resuelve avatarUrl firmado (mismo que usa la app móvil) en background
+        this.fetchAvatarUrl().catch(() => {})
         return this.user
       } catch (err) {
         console.warn('fetchMe error:', err?.message)
         this.user = null
         throw err
+      }
+    },
+
+    // /profile/me devuelve avatarUrl ya resuelto (firma S3 si la foto vive en S3).
+    // Lo usamos para que el front muestre la misma foto que la app móvil.
+    async fetchAvatarUrl() {
+      try {
+        const res = await secureAxios.get('/profile/me')
+        const url = res?.data?.user?.avatarUrl || null
+        if (this.user) this.user = { ...this.user, avatarUrl: url }
+        return url
+      } catch (err) {
+        return null
       }
     },
 

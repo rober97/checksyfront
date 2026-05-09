@@ -121,11 +121,17 @@ async function onPick(c) {
   background: rgba(6, 182, 212, 0.08);
   border: 1.5px solid rgba(6, 182, 212, 0.22);
   border-radius: 12px;
-  color: inherit;
+  color: rgba(15, 23, 42, 0.95);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.25s ease;
   max-width: 260px;
+}
+
+.body--dark .rk-switcher-trigger {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(6, 182, 212, 0.14);
+  border-color: rgba(6, 182, 212, 0.3);
 }
 
 .rk-switcher-trigger:hover:not(.is-disabled) {
@@ -161,19 +167,30 @@ async function onPick(c) {
 
 .rk-switcher-label {
   font-size: 0.66rem;
-  font-weight: 600;
-  opacity: 0.6;
+  font-weight: 700;
+  opacity: 0.7;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  color: #0e7490;
+}
+
+.body--dark .rk-switcher-label {
+  color: #67e8f9;
+  opacity: 0.85;
 }
 
 .rk-switcher-name {
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
+  color: rgba(15, 23, 42, 0.95);
+}
+
+.body--dark .rk-switcher-name {
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .rk-switcher-chevron {

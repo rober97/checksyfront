@@ -113,7 +113,11 @@
                   v-for="n in notifications"
                   :key="n.id"
                   class="rk-notif-item"
-                  :class="{ 'rk-notif-unread': !n.read }"
+                  :class="{
+                    'rk-notif-unread': !n.read,
+                    'rk-notif-pending': n.action === 'confirm-missed-exit' && !n.resolved,
+                    'rk-notif-resolved': n.action === 'confirm-missed-exit' && n.resolved,
+                  }"
                   @click="openNotif(n)"
                 >
                   <div class="rk-notif-item-icon">
@@ -122,16 +126,56 @@
                   <div class="rk-notif-item-content">
                     <h5 class="rk-notif-item-title">{{ n.title }}</h5>
                     <p class="rk-notif-item-body">{{ n.body }}</p>
-                    <span class="rk-notif-item-time">{{ n.time || 'Hace un momento' }}</span>
+                    <div class="rk-notif-item-meta">
+                      <span class="rk-notif-item-time">{{ n.time || 'Hace un momento' }}</span>
+                      <span
+                        v-if="n.action === 'confirm-missed-exit' && !n.resolved"
+                        class="rk-notif-tag rk-notif-tag-warning"
+                      >
+                        <q-icon name="error" size="12px" />
+                        Salida pendiente
+                      </span>
+                      <span
+                        v-else-if="n.action === 'confirm-missed-exit' && n.resolved"
+                        class="rk-notif-tag rk-notif-tag-success"
+                      >
+                        <q-icon name="check_circle" size="12px" />
+                        Resuelta
+                      </span>
+                    </div>
                   </div>
                   <div v-if="!n.read" class="rk-notif-item-dot"></div>
                 </div>
 
-                <div v-if="notifications.length === 0" class="rk-notif-empty">
+                <div
+                  v-if="notifications.length === 0 && !notifLoading && !notifError"
+                  class="rk-notif-empty"
+                >
                   <div class="rk-empty-icon">
                     <q-icon name="notifications_off" />
                   </div>
                   <p class="rk-empty-text">No tienes notificaciones</p>
+                </div>
+
+                <div v-if="notifLoading && notifications.length === 0" class="rk-notif-empty">
+                  <q-spinner color="primary" size="24px" />
+                  <p class="rk-empty-text">Cargando...</p>
+                </div>
+
+                <div v-if="notifError && notifications.length === 0" class="rk-notif-empty">
+                  <div class="rk-empty-icon">
+                    <q-icon name="error_outline" />
+                  </div>
+                  <p class="rk-empty-text">No se pudieron cargar</p>
+                  <q-btn
+                    flat
+                    dense
+                    no-caps
+                    color="primary"
+                    icon="refresh"
+                    label="Reintentar"
+                    @click="tryFetchNotifications"
+                  />
                 </div>
               </div>
             </div>
@@ -239,12 +283,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Dark, useQuasar } from "quasar";
+import { storeToRefs } from "pinia";
 import UserAvatarMenu from "@/components/UserAvatarMenu.vue";
 import CompanySwitcher from "@/components/CompanySwitcher.vue";
 import { useThemeStore } from "@/stores/themeStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useNotificationsStore } from "@/stores/notificationsStore";
 
 defineEmits(["toggle-drawer"]);
 
@@ -293,39 +340,46 @@ function goHome() {
 
 /* Notifications */
 const notifOpen = ref(false);
-const notifications = ref([
-  {
-    id: 1,
-    title: "Liquidación disponible",
-    body: "Tu liquidación de diciembre está lista para descargar.",
-    icon: "receipt_long",
-    read: false,
-    time: "Hace 2 horas",
-  },
-  {
-    id: 2,
-    title: "Documento firmado",
-    body: "El contrato anexo ha sido firmado exitosamente.",
-    icon: "edit_document",
-    read: true,
-    time: "Hace 1 día",
-  },
-  {
-    id: 3,
-    title: "Solicitud aprobada",
-    body: "Tu solicitud de vacaciones ha sido aprobada.",
-    icon: "check_circle",
-    read: false,
-    time: "Hace 3 horas",
-  },
-]);
+const notificationsStore = useNotificationsStore();
+const authStore = useAuthStore();
+const {
+  items: notifications,
+  unreadCount,
+  loading: notifLoading,
+  error: notifError,
+} = storeToRefs(notificationsStore);
 
-const unreadCount = computed(
-  () => notifications.value.filter((n) => !n.read).length
+let notifPoll = null;
+
+function tryFetchNotifications() {
+  if (!authStore.user?.id && !authStore.user?._id) return;
+  notificationsStore.fetchLatest().catch(() => {});
+}
+
+onMounted(() => {
+  tryFetchNotifications();
+  notifPoll = setInterval(tryFetchNotifications, 60_000);
+});
+
+onBeforeUnmount(() => {
+  if (notifPoll) clearInterval(notifPoll);
+});
+
+watch(
+  () => authStore.user?.id || authStore.user?._id,
+  (uid) => {
+    if (uid) tryFetchNotifications();
+    else notificationsStore.reset();
+  },
+  { immediate: true }
 );
 
-function markAllRead() {
-  notifications.value = notifications.value.map((n) => ({ ...n, read: true }));
+watch(notifOpen, (open) => {
+  if (open) tryFetchNotifications();
+});
+
+async function markAllRead() {
+  await notificationsStore.markAllAsRead();
   $q.notify({
     type: "positive",
     message: "Todas las notificaciones marcadas como leídas",
@@ -334,9 +388,24 @@ function markAllRead() {
 }
 
 function openNotif(n) {
-  n.read = true;
+  if (!n.read) notificationsStore.markAsRead(n.id).catch(() => {});
   notifOpen.value = false;
-  $q.notify({ type: "info", message: n.title });
+  if (n.action === "confirm-missed-exit" && !n.resolved) {
+    $q.notify({
+      type: "warning",
+      message: n.title,
+      caption: "Confirma la salida olvidada desde la app móvil.",
+      icon: "phone_iphone",
+      timeout: 5000,
+    });
+    return;
+  }
+  $q.notify({
+    type: n.resolved ? "positive" : "info",
+    message: n.title,
+    caption: n.body,
+    icon: n.icon,
+  });
 }
 
 /* Command Palette */
@@ -345,64 +414,96 @@ const query = ref("");
 const hi = ref(0);
 const isMac = (navigator?.platform || "").toUpperCase().includes("MAC");
 
-const baseCommands = computed(() => [
-  {
-    key: "home",
-    icon: "home",
-    label: "Inicio",
-    desc: "Ir a la página principal",
-    to: "/",
-  },
-  {
-    key: "docs",
-    icon: "description",
-    label: "Mis documentos",
-    desc: "Ver y descargar documentos",
-    to: "/documentos",
-  },
-  {
-    key: "perfil",
-    icon: "person",
-    label: "Mi perfil",
-    desc: "Editar información personal",
-    to: "/perfil",
-  },
-  {
-    key: "usuarios",
-    icon: "group",
-    label: "Usuarios",
-    desc: "Gestionar usuarios del sistema",
-    to: "/usuarios",
-  },
-  {
-    key: "empresas",
-    icon: "business",
-    label: "Empresas",
-    desc: "Administrar empresas",
-    to: "/empresas",
-  },
-  {
-    key: "nomina",
-    icon: "request_quote",
-    label: "Nómina",
-    desc: "Procesar y revisar nómina",
-    to: "/nomina",
-  },
-  {
-    key: "ayuda",
-    icon: "help",
-    label: "Ayuda",
-    desc: "Centro de ayuda y documentación",
-    to: "/ayuda",
-  },
-  {
-    key: "config",
-    icon: "settings",
-    label: "Configuración",
-    desc: "Ajustes del sistema",
-    to: "/configuracion",
-  },
-]);
+// Comandos disponibles según el rol del usuario activo. Se resuelven en
+// runtime contra las rutas reales del router (ver src/router/index.js).
+const baseCommands = computed(() => {
+  const role = (authStore.user?.role || "").toLowerCase();
+  const home = roleHomeFor(role);
+
+  const cmds = [
+    {
+      key: "home",
+      icon: "home",
+      label: "Inicio",
+      desc: "Ir a tu panel",
+      to: home,
+    },
+    {
+      key: "perfil",
+      icon: "person",
+      label: "Mi perfil",
+      desc: "Editar información personal",
+      to: "/profile",
+    },
+    {
+      key: "config",
+      icon: "settings",
+      label: "Configuración",
+      desc: "Ajustes y preferencias",
+      to: "/configuration",
+    },
+  ];
+
+  if (role === "admin_rrhh") {
+    cmds.push(
+      { key: "rrhh-empleados", icon: "group", label: "Empleados", desc: "Gestionar empleados", to: "/rrhh/users" },
+      { key: "rrhh-permisos", icon: "lock", label: "Permisos", desc: "Roles y permisos", to: "/rrhh/permissions" },
+      { key: "rrhh-horarios", icon: "schedule", label: "Horarios", desc: "Gestión de horarios", to: "/rrhh/horarios" },
+      { key: "rrhh-asistencias", icon: "fact_check", label: "Asistencias", desc: "Asistencias por empleado", to: "/rrhh/attendance" },
+      { key: "rrhh-empresa", icon: "business", label: "Mi empresa", desc: "Datos de tu empresa", to: "/rrhh/empresa" },
+      { key: "rrhh-solicitudes", icon: "assignment", label: "Solicitudes", desc: "Solicitudes de empleados", to: "/rrhh/requests" },
+      { key: "rrhh-payroll", icon: "request_quote", label: "Liquidaciones", desc: "Procesar nómina", to: "/rrhh/payroll" },
+      { key: "rrhh-payroll-rates", icon: "tune", label: "Config Nómina", desc: "Tarifas y conceptos", to: "/rrhh/payrollRates" },
+      { key: "rrhh-dt-reportes", icon: "summarize", label: "Reportes DT", desc: "Reportes Dirección del Trabajo", to: "/rrhh/dt/reportes" },
+      { key: "rrhh-dt-libro", icon: "menu_book", label: "Libro de Asistencia", desc: "Libro DT", to: "/rrhh/dt/libro" },
+      { key: "rrhh-dt-tokens", icon: "vpn_key", label: "Fiscalizadores DT", desc: "Tokens DT", to: "/rrhh/dt/tokens" },
+      { key: "rrhh-dt-auditoria", icon: "history", label: "Bitácora", desc: "Auditoría de cambios", to: "/rrhh/dt/auditoria" },
+    );
+  } else if (role === "superadmin" || role === "admin") {
+    cmds.push(
+      { key: "sa-empresas", icon: "business", label: "Empresas (plataforma)", desc: "Listado global", to: "/superadmin/empresas" },
+      { key: "sa-empresa-new", icon: "add_business", label: "Nueva empresa", desc: "Crear empresa", to: "/superadmin/empresas/new" },
+      { key: "sa-admins-rrhh", icon: "admin_panel_settings", label: "Administradores RR.HH.", desc: "Gestionar admins", to: "/superadmin/admins-rrhh" },
+      { key: "sa-dt-reportes", icon: "summarize", label: "Reportes DT (global)", desc: "Reportes plataforma", to: "/superadmin/dt/reportes" },
+      { key: "sa-dt-libro", icon: "menu_book", label: "Libro de Asistencia", desc: "Libro DT global", to: "/superadmin/dt/libro" },
+      { key: "sa-dt-tokens", icon: "vpn_key", label: "Tokens fiscalizadores", desc: "Tokens DT", to: "/superadmin/dt/tokens" },
+      { key: "sa-dt-auditoria", icon: "history", label: "Auditoría global", desc: "Bitácora de plataforma", to: "/superadmin/dt/auditoria" },
+    );
+  } else if (role === "employee") {
+    cmds.push(
+      { key: "emp-attendance", icon: "fingerprint", label: "Marcar asistencia", desc: "Registrar entrada/salida", to: "/employee/attendance" },
+      { key: "emp-history", icon: "history", label: "Historial", desc: "Mis marcas anteriores", to: "/employee/history" },
+      { key: "emp-libro", icon: "menu_book", label: "Mi libro de asistencia", desc: "Libro DT", to: "/employee/libro" },
+      { key: "emp-create-request", icon: "add_circle", label: "Nueva solicitud", desc: "Crear solicitud", to: "/employee/create-request" },
+      { key: "emp-requests", icon: "assignment", label: "Mis solicitudes", desc: "Estado de solicitudes", to: "/employee/requests" },
+      { key: "emp-documents", icon: "description", label: "Mis documentos", desc: "Documentos personales", to: "/employee/documents" },
+      { key: "emp-comprobantes", icon: "receipt_long", label: "Mis comprobantes DT", desc: "Comprobantes Res. 38/2024", to: "/employee/comprobantes" },
+      { key: "emp-consent", icon: "verified_user", label: "Consentimiento DT", desc: "Firma de consentimiento", to: "/employee/consentimiento" },
+    );
+  } else if (role === "dt_inspector") {
+    cmds.push(
+      { key: "ins-attendance", icon: "fact_check", label: "Asistencias — DT", desc: "Revisar asistencias", to: "/inspector/attendance" },
+      { key: "ins-audit", icon: "history", label: "Bitácora — DT", desc: "Auditoría", to: "/inspector/audit" },
+      { key: "ins-reports", icon: "summarize", label: "Reportes DT", desc: "Reportes de fiscalización", to: "/inspector/reports" },
+    );
+  }
+
+  return cmds;
+});
+
+// Mismo mapping que el router (roleHome) pero local al header.
+function roleHomeFor(role) {
+  switch (String(role || "").toLowerCase()) {
+    case "superadmin": return "/superadmin/dashboard";
+    case "admin_rrhh": return "/rrhh/dashboard";
+    case "employee": return "/employee/dashboard";
+    case "dt_inspector": return "/inspector/dashboard";
+    case "admin": return "/superadmin/dashboard";
+    case "empresa":
+    case "company": return "/rrhh/dashboard";
+    default: return "/";
+  }
+}
 
 const results = computed(() => {
   const q = (query.value || "").toLowerCase();
@@ -970,6 +1071,47 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
+.rk-notif-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.rk-notif-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.rk-notif-tag-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #b45309;
+}
+
+.rk-notif-tag-success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #047857;
+}
+
+.rk-notif-pending {
+  border-left: 3px solid #f59e0b;
+}
+
+.rk-notif-resolved {
+  border-left: 3px solid #10b981;
+}
+
 .rk-notif-item-dot {
   width: 8px;
   height: 8px;
@@ -1296,6 +1438,329 @@ onBeforeUnmount(() => {
 
   .rk-action-btn .q-icon {
     font-size: 18px;
+  }
+}
+</style>
+
+<!--
+  Estilos no-scoped para el command palette y el menú de notificaciones.
+  Quasar teletransporta q-dialog/q-menu fuera del componente, por lo que
+  los estilos `scoped` (y los CSS vars definidos sólo dentro de .rk-header)
+  no aplican al contenido renderizado. Aquí usamos colores directos.
+-->
+<style>
+/* ===== Command palette (q-dialog teletransportado) ===== */
+.rk-command-dialog .q-dialog__backdrop {
+  backdrop-filter: blur(8px);
+  background: rgba(10, 14, 20, 0.6);
+}
+
+.rk-command-palette {
+  width: min(640px, 95vw);
+  background: #ffffff;
+  border: 1.5px solid rgba(6, 182, 212, 0.18);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  font-family: 'Sora', -apple-system, sans-serif;
+  color: rgba(15, 23, 42, 0.95);
+}
+
+.body--dark .rk-command-palette {
+  background: #0f172a;
+  border-color: rgba(6, 182, 212, 0.25);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.rk-command-header {
+  padding: 18px 20px;
+  border-bottom: 1.5px solid rgba(15, 23, 42, 0.08);
+}
+
+.body--dark .rk-command-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.rk-command-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rk-command-search .rk-search-icon {
+  font-size: 22px;
+  color: #06b6d4;
+  flex-shrink: 0;
+}
+
+.rk-command-search .rk-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: inherit;
+  font-family: 'Sora', -apple-system, sans-serif;
+}
+
+.rk-command-search .rk-search-input::placeholder {
+  color: rgba(15, 23, 42, 0.45);
+  font-weight: 500;
+}
+
+.body--dark .rk-command-search .rk-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.rk-command-search .rk-search-kbd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(15, 23, 42, 0.5);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.body--dark .rk-command-search .rk-search-kbd {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.rk-command-search .rk-search-kbd kbd {
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: inherit;
+}
+
+.body--dark .rk-command-search .rk-search-kbd kbd {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rk-command-results {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.rk-results-section {
+  padding: 10px;
+}
+
+.rk-results-label {
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.body--dark .rk-results-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.rk-command-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.rk-command-item:hover,
+.rk-command-item.active {
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.body--dark .rk-command-item:hover,
+.body--dark .rk-command-item.active {
+  background: rgba(6, 182, 212, 0.14);
+}
+
+.rk-command-item-icon {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 182, 212, 0.10);
+  border-radius: 10px;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.body--dark .rk-command-item-icon {
+  background: rgba(6, 182, 212, 0.18);
+}
+
+.rk-command-item.active .rk-command-item-icon {
+  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+}
+
+.rk-command-item-icon .q-icon {
+  font-size: 20px;
+  color: rgba(15, 23, 42, 0.7);
+  transition: color 0.15s ease;
+}
+
+.body--dark .rk-command-item-icon .q-icon {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.rk-command-item.active .rk-command-item-icon .q-icon {
+  color: #fff;
+}
+
+.rk-command-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.rk-command-item-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 2px 0;
+  color: inherit;
+}
+
+.rk-command-item-desc {
+  font-size: 0.83rem;
+  color: rgba(15, 23, 42, 0.6);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.body--dark .rk-command-item-desc {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rk-command-kbd {
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.body--dark .rk-command-kbd {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rk-command-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.rk-command-empty .rk-empty-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 182, 212, 0.08);
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.rk-command-empty .rk-empty-icon .q-icon {
+  font-size: 32px;
+  color: rgba(15, 23, 42, 0.4);
+}
+
+.body--dark .rk-command-empty .rk-empty-icon .q-icon {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.rk-command-empty .rk-empty-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.7);
+  margin: 0 0 4px 0;
+}
+
+.body--dark .rk-command-empty .rk-empty-text {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rk-command-empty .rk-empty-hint {
+  font-size: 0.85rem;
+  color: rgba(15, 23, 42, 0.45);
+  margin: 0;
+}
+
+.body--dark .rk-command-empty .rk-empty-hint {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.rk-command-footer {
+  padding: 12px 20px;
+  border-top: 1.5px solid rgba(15, 23, 42, 0.08);
+  background: rgba(6, 182, 212, 0.05);
+}
+
+.body--dark .rk-command-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.rk-command-hints {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.rk-hint-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: rgba(15, 23, 42, 0.55);
+  font-weight: 600;
+}
+
+.body--dark .rk-hint-item {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.rk-hint-item kbd {
+  padding: 3px 7px;
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.85);
+}
+
+.body--dark .rk-hint-item kbd {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 767px) {
+  .rk-command-palette {
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
+    border: none;
   }
 }
 </style>

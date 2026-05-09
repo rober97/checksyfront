@@ -40,6 +40,7 @@ const Attendance = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empl
 const History = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/Historial.vue')
 const CreateRequest = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/CrearSolicitud.vue')
 const Configuration = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Configuration.vue')
+const Profile = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Profile.vue')
 
 // ====== DT Compliance (Res. Ex. 38/2024 — Dirección del Trabajo)
 const DtReportesDT = () => import(/* webpackChunkName:"dt" */ '@/views/DT/ReportesDT.vue')
@@ -125,8 +126,26 @@ const routes = [
   { path: '/legal/privacy', redirect: '/legal/terms' },
   { path: '/privacidad', redirect: '/legal/terms' },
 
-  // Perfil/config (cualquier rol autenticado)
-  { path: '/configuration', name: 'ConfigurationRoot', component: Configuration, meta: { requiresAuth: true, title: 'Configuración' } },
+  // ===== Cuenta del usuario (perfil + configuración) =====
+  // Cualquier rol autenticado. Reusan AdminLayout (Header + Drawer) para que
+  // no se pierda la navegación al entrar. El Drawer filtra el menú por rol
+  // automáticamente, así que sirve para superadmin/admin_rrhh/employee.
+  {
+    path: '/profile',
+    component: AdminLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', name: 'ProfileRoot', component: Profile, meta: { title: 'Mi perfil' } },
+    ],
+  },
+  {
+    path: '/configuration',
+    component: AdminLayout,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', name: 'ConfigurationRoot', component: Configuration, meta: { title: 'Configuración' } },
+    ],
+  },
 
   // =====================================================================
   // SUPERADMIN (plataforma — sólo tú)
