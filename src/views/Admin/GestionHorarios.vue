@@ -596,4 +596,20 @@ onMounted(async () => {
   }
   .rk-day-hours { text-align: left; }
 }
+
+/* ---------- Dark mode ---------- */
+.body--dark .rk-days-editor {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #0f1216;
+}
+.body--dark .rk-day-row {
+  background: #161b24;
+}
+.body--dark .rk-day-row--off {
+  background: #11151c;
+  opacity: 0.7;
+}
+.body--dark .rk-weekly-hours {
+  color: #e5e7eb;
+}
 </style>
