@@ -18,7 +18,7 @@ const Dashboard = () => import(/* webpackChunkName:"dashboard" */ '@/views/Dashb
 
 const Permissions = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/Permisos.vue')
 const UserManagement = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionUsuarios.vue')
-const GestionHorarios = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionHorarios.vue')
+const HorariosModule = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/HorariosModule.vue')
 const AsistenciasEmp = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
 const Payroll = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollModule.vue")
 const PayrollRate = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollRate.vue")
@@ -182,7 +182,8 @@ const routes = [
       { path: 'dashboard', name: 'RrhhDashboard', component: Dashboard, meta: { title: 'Panel RR.HH.' } },
       { path: 'users', name: 'RrhhUsers', component: UserManagement, meta: { permissions: ['users:read'], title: 'Empleados' } },
       { path: 'permissions', name: 'RrhhPermissions', component: Permissions, meta: { permissions: ['permissions:read'], title: 'Permisos' } },
-      { path: 'horarios', name: 'RrhhHorarios', component: GestionHorarios, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
+      { path: 'horarios', name: 'RrhhHorarios', component: HorariosModule, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
+      { path: 'programacion-mensual', redirect: { name: 'RrhhHorarios', query: { vista: 'mensual' } } },
       { path: 'attendance', name: 'RrhhAttendance', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },
       { path: 'empresa', name: 'RrhhEmpresa', component: CompanyDetail, props: true, meta: { title: 'Mi empresa' } },
       { path: 'requests', name: 'RrhhRequests', component: RequestList, props: true, meta: { title: 'Solicitudes' } },

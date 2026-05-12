@@ -230,11 +230,9 @@ const contractNice = computed(() => {
 const completeness = computed(() => {
   const reqBase = ['firstName', 'lastName', 'email', 'password', 'tipo']
   const reqCompany = ['empresa']
-  // Empleado on-call no requiere horarioLaboralId — el horario se crea automáticamente al guardar
-  const isOncall = form?.workScheduleChoice?.mode === 'oncall'
-  const reqEmp = form.tipo === 'empleado'
-    ? (isOncall ? ['rut'] : ['rut', 'horarioLaboralId'])
-    : []
+  // La asignación de plantilla es opcional al crear el empleado:
+  // se puede dejar para Programación mensual o asignar luego desde la ficha.
+  const reqEmp = form.tipo === 'empleado' ? ['rut'] : []
   const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afpEntityId', 'payroll.healthEntityId']
 
   const required = [...reqBase, ...reqCompany, ...reqEmp, ...reqPayroll]
@@ -263,7 +261,6 @@ function humanizeField(f) {
     tipo: 'Tipo de usuario',
     empresa: 'Empresa',
     rut: 'RUT',
-    horarioLaboralId: 'Horario laboral',
     'payroll.baseSalary': 'Sueldo base',
     'payroll.contractType': 'Tipo contrato',
     'payroll.jornada': 'Jornada',

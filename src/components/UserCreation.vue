@@ -729,13 +729,6 @@ async function submitForm() {
   }
 
   if (form.value.tipo === "empleado") {
-    const wc = form.value.workScheduleChoice || {};
-    const oncallOk = wc.mode === "oncall";
-    if (!oncallOk && !wc.scheduleId) {
-      toast.error("Selecciona un horario laboral o usa el modo de turnos por demanda.");
-      tab.value = "basicos";
-      return;
-    }
     if (!form.value.rut || !validarRUT(form.value.rut)) {
       toast.error("RUT inválido.");
       tab.value = "basicos";

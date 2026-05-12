@@ -12,12 +12,13 @@
         v-if="!readonly"
         color="primary"
         icon="add"
-        label="Agregar turno"
+        label="Programar turno puntual"
         :disable="!userId"
         @click="openCreate()"
         dense
         unelevated
         size="sm"
+        no-caps
       />
     </div>
 
@@ -28,7 +29,7 @@
     >
       <template #avatar><q-icon name="info" /></template>
       No hay turnos programados próximos.
-      <span v-if="!readonly">Usa «Agregar turno» para programar uno.</span>
+      <span v-if="!readonly">Usa «Programar turno puntual» para agregar uno (override de plantilla u on-call).</span>
     </q-banner>
 
     <q-spinner v-if="loading" color="primary" />

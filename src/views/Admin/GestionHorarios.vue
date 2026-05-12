@@ -1,21 +1,6 @@
 <template>
-  <q-page>
-    <div class="rk-module-shell">
-      <section class="rk-module-header">
-        <div class="rk-module-icon">
-          <q-icon name="schedule" size="28px" />
-        </div>
-        <div class="col">
-          <h1 class="rk-module-title">Horarios laborales</h1>
-          <p class="rk-module-subtitle">
-            Centraliza los turnos por empresa con la misma línea visual del módulo de asistencias.
-          </p>
-        </div>
-        <div class="rk-module-actions">
-          <q-btn unelevated color="primary" icon="add" label="Nuevo horario" @click="openNewScheduleDialog" />
-        </div>
-      </section>
-
+  <div class="rk-tab-content">
+    <div class="rk-module-shell rk-module-shell--embedded">
       <section class="rk-module-grid rk-module-grid--2">
         <div class="rk-module-stat">
           <div class="rk-module-stat__icon">
@@ -42,7 +27,7 @@
         <div class="rk-module-panel__section">
           <div class="row items-center q-col-gutter-md q-mb-md">
             <div class="col-12 col-md">
-              <div class="rk-module-panel__title">Listado de horarios</div>
+              <div class="rk-module-panel__title">Listado de plantillas</div>
               <p class="rk-module-panel__caption">
                 Revisa la jornada configurada por empresa y mantén el catálogo ordenado.
               </p>
@@ -59,6 +44,9 @@
                   <q-icon name="search" />
                 </template>
               </q-input>
+            </div>
+            <div class="col-12 col-md-auto">
+              <q-btn unelevated color="primary" icon="add" label="Nueva plantilla" no-caps @click="openNewScheduleDialog" />
             </div>
           </div>
 
@@ -97,6 +85,62 @@
                     Sin jornada
                   </q-chip>
                 </div>
+              </q-td>
+            </template>
+
+            <template #body-cell-assignments="props">
+              <q-td :props="props">
+                <div v-if="props.row.assignments?.length" class="rk-assign-cell">
+                  <div class="rk-assign-avatars">
+                    <q-avatar
+                      v-for="emp in props.row.assignments.slice(0, 3)"
+                      :key="emp._id"
+                      size="26px"
+                      color="primary"
+                      text-color="white"
+                      class="rk-assign-avatar"
+                    >
+                      <img v-if="emp.profilePicture" :src="emp.profilePicture" />
+                      <span v-else>{{ initialsOf(emp) }}</span>
+                    </q-avatar>
+                    <q-avatar
+                      v-if="props.row.assignments.length > 3"
+                      size="26px"
+                      color="grey-4"
+                      text-color="grey-9"
+                      class="rk-assign-avatar"
+                    >
+                      +{{ props.row.assignments.length - 3 }}
+                    </q-avatar>
+                  </div>
+                  <q-btn
+                    flat
+                    dense
+                    no-caps
+                    size="sm"
+                    class="rk-assign-link"
+                    :label="`${props.row.assignments.length} ${props.row.assignments.length === 1 ? 'empleado' : 'empleados'}`"
+                  >
+                    <q-menu anchor="bottom left" self="top left">
+                      <q-list dense style="min-width: 220px">
+                        <q-item-label header>Asignaciones activas</q-item-label>
+                        <q-item v-for="emp in props.row.assignments" :key="emp._id">
+                          <q-item-section avatar>
+                            <q-avatar size="24px" color="primary" text-color="white">
+                              <img v-if="emp.profilePicture" :src="emp.profilePicture" />
+                              <span v-else>{{ initialsOf(emp) }}</span>
+                            </q-avatar>
+                          </q-item-section>
+                          <q-item-section>
+                            <q-item-label>{{ emp.firstName }} {{ emp.lastName }}</q-item-label>
+                            <q-item-label caption>{{ emp.email }}</q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
+                <span v-else class="text-grey-6 text-caption">Sin asignaciones</span>
               </q-td>
             </template>
 
@@ -181,30 +225,59 @@
                 :label="day.label"
                 class="rk-day-toggle"
               />
-              <div class="rk-day-times">
-                <q-input
-                  v-model="scheduleForm.weekly[day.key].start"
-                  mask="##:##"
-                  dense
-                  outlined
-                  placeholder="09:00"
-                  :disable="!scheduleForm.weekly[day.key].enabled"
-                  style="width: 110px"
+              <div class="rk-day-segments">
+                <div
+                  v-for="(seg, idx) in scheduleForm.weekly[day.key].segments"
+                  :key="idx"
+                  class="rk-day-times"
                 >
-                  <template #prepend><q-icon name="login" size="16px" /></template>
-                </q-input>
-                <span class="text-grey-6">—</span>
-                <q-input
-                  v-model="scheduleForm.weekly[day.key].end"
-                  mask="##:##"
+                  <q-input
+                    v-model="seg.start"
+                    mask="##:##"
+                    dense
+                    outlined
+                    placeholder="09:00"
+                    :disable="!scheduleForm.weekly[day.key].enabled"
+                    style="width: 110px"
+                  >
+                    <template #prepend><q-icon name="login" size="16px" /></template>
+                  </q-input>
+                  <span class="text-grey-6">—</span>
+                  <q-input
+                    v-model="seg.end"
+                    mask="##:##"
+                    dense
+                    outlined
+                    placeholder="19:00"
+                    :disable="!scheduleForm.weekly[day.key].enabled"
+                    style="width: 110px"
+                  >
+                    <template #prepend><q-icon name="logout" size="16px" /></template>
+                  </q-input>
+                  <q-btn
+                    v-if="scheduleForm.weekly[day.key].segments.length > 1"
+                    flat
+                    dense
+                    round
+                    size="sm"
+                    icon="close"
+                    :disable="!scheduleForm.weekly[day.key].enabled"
+                    @click="removeSegment(day.key, idx)"
+                  >
+                    <q-tooltip>Quitar tramo</q-tooltip>
+                  </q-btn>
+                </div>
+                <q-btn
+                  flat
                   dense
-                  outlined
-                  placeholder="19:00"
+                  no-caps
+                  size="sm"
+                  icon="add"
+                  label="Añadir tramo"
+                  class="rk-add-segment"
                   :disable="!scheduleForm.weekly[day.key].enabled"
-                  style="width: 110px"
-                >
-                  <template #prepend><q-icon name="logout" size="16px" /></template>
-                </q-input>
+                  @click="addSegment(day.key)"
+                />
               </div>
               <div class="rk-day-hours">
                 <q-chip
@@ -234,7 +307,7 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-  </q-page>
+  </div>
 </template>
 
 <script setup>
@@ -266,9 +339,24 @@ const dayDefs = [
 
 function emptyWeekly() {
   return dayDefs.reduce((acc, d) => {
-    acc[d.key] = { enabled: false, start: '09:00', end: '18:00' }
+    acc[d.key] = { enabled: false, segments: [{ start: '09:00', end: '18:00' }] }
     return acc
   }, {})
+}
+
+function addSegment(dayKey) {
+  const day = scheduleForm.value.weekly[dayKey]
+  const last = day.segments[day.segments.length - 1]
+  // Si el último tramo terminó en algo razonable, sugerimos un tramo nuevo después de
+  // una pausa típica (1h de colación). Si no, valores por defecto.
+  const fallbackStart = last?.end || '14:00'
+  day.segments.push({ start: fallbackStart, end: '18:00' })
+}
+
+function removeSegment(dayKey, index) {
+  const day = scheduleForm.value.weekly[dayKey]
+  if (day.segments.length <= 1) return
+  day.segments.splice(index, 1)
 }
 
 const scheduleForm = ref({
@@ -293,21 +381,28 @@ function diffHours(start, end) {
 }
 function dayHours(key) {
   const d = scheduleForm.value.weekly[key]
-  return diffHours(d.start, d.end)
+  if (!d?.segments?.length) return 0
+  return +d.segments.reduce((sum, s) => sum + diffHours(s.start, s.end), 0).toFixed(2)
 }
 const totalFormHours = computed(() => {
   return dayDefs.reduce((sum, d) => {
     const day = scheduleForm.value.weekly[d.key]
-    return sum + (day.enabled ? diffHours(day.start, day.end) : 0)
+    if (!day.enabled) return sum
+    return sum + day.segments.reduce((s, seg) => s + diffHours(seg.start, seg.end), 0)
   }, 0).toFixed(1)
 })
 
-/* ---------- Visualización: agrupar días contiguos con mismo horario ---------- */
+/* ---------- Visualización: agrupar días contiguos con mismo horario ----------
+   Para días partidos (ej. 09-13 / 15-19), el "time signature" del día es la
+   concatenación de todos sus tramos, separados por " / ". Se agrupan días
+   contiguos sólo si su firma completa coincide. */
 function buildSummaryGroups(weekly) {
   const entries = dayDefs.map((d) => {
-    const seg = Array.isArray(weekly?.[d.key]) ? weekly[d.key][0] : null
-    if (!seg || !seg.start || !seg.end) return { day: d, time: null }
-    return { day: d, time: `${seg.start}-${seg.end}` }
+    const segs = Array.isArray(weekly?.[d.key]) ? weekly[d.key] : []
+    const valid = segs.filter((s) => s?.start && s?.end)
+    if (!valid.length) return { day: d, time: null }
+    const time = valid.map((s) => `${s.start}-${s.end}`).join(' / ')
+    return { day: d, time }
   })
 
   const groups = []
@@ -328,9 +423,8 @@ function buildSummaryGroups(weekly) {
 
 function calcTotalHours(weekly) {
   return dayDefs.reduce((sum, d) => {
-    const seg = Array.isArray(weekly?.[d.key]) ? weekly[d.key][0] : null
-    if (!seg) return sum
-    return sum + diffHours(seg.start, seg.end)
+    const segs = Array.isArray(weekly?.[d.key]) ? weekly[d.key] : []
+    return sum + segs.reduce((s, seg) => s + diffHours(seg?.start, seg?.end), 0)
   }, 0).toFixed(1)
 }
 
@@ -350,6 +444,8 @@ function normalizeRow(schedule, companyName) {
     weekly,
     summaryGroups: buildSummaryGroups(weekly),
     totalHours: calcTotalHours(weekly),
+    assignments: [],
+    assignmentsCount: 0,
   }
 }
 
@@ -358,9 +454,16 @@ const tableColumns = [
   { name: 'company', label: 'Empresa', field: 'companyName', align: 'left', sortable: true },
   { name: 'name', label: 'Horario', field: 'name', align: 'left', sortable: true },
   { name: 'summary', label: 'Jornada semanal', field: 'name', align: 'left' },
+  { name: 'assignments', label: 'Asignaciones', field: 'assignmentsCount', align: 'left', sortable: true },
   { name: 'hours', label: 'Horas', field: 'totalHours', align: 'right', sortable: true },
   { name: 'actions', label: '', field: 'actions', align: 'right' },
 ]
+
+function initialsOf(emp) {
+  const f = (emp?.firstName || '').trim()
+  const l = (emp?.lastName || '').trim()
+  return ((f[0] || '') + (l[0] || '')).toUpperCase() || '?'
+}
 
 const filteredSchedules = computed(() => {
   const query = filter.value.trim().toLowerCase()
@@ -375,11 +478,11 @@ function applyPreset(kind) {
   const fresh = emptyWeekly()
   if (kind === 'weekdays') {
     ;['mon', 'tue', 'wed', 'thu', 'fri'].forEach((k) => {
-      fresh[k] = { enabled: true, start: '09:00', end: '19:00' }
+      fresh[k] = { enabled: true, segments: [{ start: '09:00', end: '19:00' }] }
     })
   } else if (kind === 'montosat') {
     ;['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].forEach((k) => {
-      fresh[k] = { enabled: true, start: '09:00', end: '18:00' }
+      fresh[k] = { enabled: true, segments: [{ start: '09:00', end: '18:00' }] }
     })
   }
   scheduleForm.value.weekly = fresh
@@ -389,7 +492,10 @@ function copyMondayToAll() {
   const mon = scheduleForm.value.weekly.mon
   dayDefs.forEach((d) => {
     if (d.key === 'mon') return
-    scheduleForm.value.weekly[d.key] = { ...mon }
+    scheduleForm.value.weekly[d.key] = {
+      enabled: mon.enabled,
+      segments: mon.segments.map((s) => ({ ...s })),
+    }
   })
 }
 
@@ -413,9 +519,13 @@ function openEditScheduleDialog(row) {
   editingId.value = row._id
   const weekly = emptyWeekly()
   dayDefs.forEach((d) => {
-    const seg = Array.isArray(row.weekly?.[d.key]) ? row.weekly[d.key][0] : null
-    if (seg && seg.start && seg.end) {
-      weekly[d.key] = { enabled: true, start: seg.start, end: seg.end }
+    const segs = Array.isArray(row.weekly?.[d.key]) ? row.weekly[d.key] : []
+    const valid = segs.filter((s) => s?.start && s?.end)
+    if (valid.length) {
+      weekly[d.key] = {
+        enabled: true,
+        segments: valid.map((s) => ({ start: s.start, end: s.end })),
+      }
     }
   })
   scheduleForm.value = {
@@ -429,10 +539,13 @@ function openEditScheduleDialog(row) {
 /* ---------- Guardar ---------- */
 function buildWeeklyPayload() {
   const out = {}
+  const hhmm = /^\d{2}:\d{2}$/
   dayDefs.forEach((d) => {
     const day = scheduleForm.value.weekly[d.key]
-    out[d.key] = day.enabled && day.start && day.end
-      ? [{ start: day.start, end: day.end }]
+    out[d.key] = day.enabled
+      ? day.segments
+          .filter((s) => hhmm.test(s.start) && hhmm.test(s.end))
+          .map((s) => ({ start: s.start, end: s.end }))
       : []
   })
   return out
@@ -514,9 +627,18 @@ async function loadSchedulesForAllCompanies() {
         scheduleList.value.push(normalizeRow(schedule, company.name))
       })
     }
+    // Cargar asignaciones en paralelo (no bloquea la primera pintada de la tabla)
+    await Promise.all(scheduleList.value.map(loadAssignmentsForRow))
   } finally {
     loading.value = false
   }
+}
+
+async function loadAssignmentsForRow(row) {
+  if (!row?._id) return
+  const items = await companiesStore.fetchAssignmentsBySchedule(row._id)
+  row.assignments = items
+  row.assignmentsCount = items.length
 }
 
 onMounted(async () => {
@@ -566,9 +688,9 @@ onMounted(async () => {
 .rk-day-row {
   display: grid;
   grid-template-columns: 140px 1fr auto;
-  align-items: center;
+  align-items: start;
   gap: 12px;
-  padding: 6px 8px;
+  padding: 8px;
   border-radius: 8px;
   background: #fff;
   transition: background 0.15s;
@@ -579,15 +701,53 @@ onMounted(async () => {
 }
 .rk-day-toggle {
   font-weight: 500;
+  padding-top: 6px;
+}
+.rk-day-segments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 .rk-day-times {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+.rk-add-segment {
+  align-self: flex-start;
+  font-size: 12px;
+  margin-top: 2px;
 }
 .rk-day-hours {
   min-width: 64px;
   text-align: right;
+  padding-top: 6px;
+}
+.rk-assign-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rk-assign-avatars {
+  display: inline-flex;
+}
+.rk-assign-avatar {
+  margin-left: -6px;
+  border: 2px solid #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.rk-assign-avatar:first-child {
+  margin-left: 0;
+}
+.rk-assign-link {
+  font-size: 12px;
+}
+.body--dark .rk-assign-avatar {
+  border-color: #11151c;
 }
 @media (max-width: 600px) {
   .rk-day-row {

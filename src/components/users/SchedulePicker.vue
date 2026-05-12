@@ -1,8 +1,13 @@
 <template>
   <div class="rk-ws" :class="{ 'rk-ws--disabled': disable }">
     <div class="rk-head q-mb-sm">
-      <div class="rk-label">Horario laboral</div>
-      <div class="rk-help">¿Cómo trabaja este empleado?</div>
+      <div class="rk-label">
+        Plantilla de horario
+        <span class="rk-label-optional">(opcional)</span>
+      </div>
+      <div class="rk-help">
+        Asigna ahora una plantilla, o configúrala más adelante desde Programación mensual.
+      </div>
     </div>
 
     <!-- MODOS (cards) -->
@@ -638,6 +643,14 @@ async function createQuick () {
 .rk-help {
   font-size: 12px;
   color: var(--rk-muted);
+}
+.rk-label-optional {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--rk-muted);
+  opacity: 0.8;
+  margin-left: 4px;
 }
 
 /* ===== Modes grid ===== */

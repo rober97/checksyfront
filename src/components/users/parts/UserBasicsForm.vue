@@ -164,7 +164,7 @@
           </div>
           <div class="rk-section-title-wrap">
             <h4 class="rk-section-title">Vinculación empresarial</h4>
-            <p class="rk-section-desc">Asigna empresa y horario laboral</p>
+            <p class="rk-section-desc">Asigna la empresa del empleado</p>
           </div>
         </div>
 
@@ -205,14 +205,10 @@
           </div>
 
           <div v-if="local.tipo === 'empleado'" class="rk-input-wrap">
-            <SchedulePicker
-              v-model="local.workScheduleChoice"
-              :company-id="local.empresa"
-              :company="companyObj"
-              :disable="!local.empresa"
-              @created="onScheduleCreated"
-              class="rk-input"
-            />
+            <q-banner dense rounded class="rk-schedule-hint">
+              <template #avatar><q-icon name="schedule" color="primary" /></template>
+              El horario laboral se asigna desde <strong>Horarios → Asignaciones</strong> una vez creado el empleado. Así la creación queda enfocada en los datos de la persona.
+            </q-banner>
           </div>
         </div>
       </div>
@@ -364,7 +360,6 @@ import {
   passMin
 } from '@/utils/validators'
 import CompanySearchSelect from '@/components/companies/CompanySearchSelect.vue'
-import SchedulePicker from '@/components/users/SchedulePicker.vue'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
@@ -589,17 +584,8 @@ watch(
   }
 )
 
-/* Datos de empresa */
-const companyObj = computed(() => {
-  const id = String(local.empresa || '')
-  if (!id) return null
-  const arr = props.empresasRaw || []
-  return arr.find(e => String(e.id || e._id) === id) || null
-})
-
 /* Eventos hijos */
 function onCompanyCreated (company) { if (company?._id) local.empresa = company._id }
-function onScheduleCreated () { /* opcional */ }
 </script>
 
 <style scoped>

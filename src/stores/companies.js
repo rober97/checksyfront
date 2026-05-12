@@ -299,6 +299,57 @@ export const useCompaniesStore = defineStore('companies', {
         this.error = this.error || 'Could not delete work schedule'
         throw err
       }
+    },
+
+    async fetchAssignmentsBySchedule(scheduleId) {
+      if (!scheduleId) return []
+      try {
+        const res = await secureAxios.get(`/work-schedules/schedule/${scheduleId}/assignments`)
+        const ok = res?.data?.success ?? true
+        if (!ok) return []
+        return asArray(res?.data?.items)
+      } catch (err) {
+        console.error('[companies.fetchAssignmentsBySchedule] error:', err)
+        return []
+      }
+    },
+
+    // ========== ASSIGNMENTS (empleado ↔ plantilla) ==========
+    async fetchAssignmentsByCompany(companyId) {
+      try {
+        const res = await secureAxios.get('/work-schedules/assignments', {
+          params: companyId ? { companyId } : {},
+        })
+        const ok = res?.data?.success ?? true
+        if (!ok) return { assignments: [], unassigned: [] }
+        return {
+          assignments: asArray(res?.data?.assignments),
+          unassigned: asArray(res?.data?.unassigned),
+        }
+      } catch (err) {
+        console.error('[companies.fetchAssignmentsByCompany] error:', err)
+        return { assignments: [], unassigned: [] }
+      }
+    },
+
+    async createAssignment(userId, { companyId, scheduleId = null, validFrom = null } = {}) {
+      const res = await secureAxios.post(`/work-schedules/${userId}`, {
+        companyId,
+        scheduleId,
+        ...(validFrom ? { validFrom } : {}),
+      })
+      if (!(res?.data?.success ?? true)) {
+        throw new Error(res?.data?.message || 'No se pudo crear la asignación')
+      }
+      return res?.data?.item
+    },
+
+    async endAssignment(userId, assignmentId) {
+      const res = await secureAxios.patch(`/work-schedules/${userId}/${assignmentId}/end`, {})
+      if (!(res?.data?.success ?? true)) {
+        throw new Error(res?.data?.message || 'No se pudo finalizar la asignación')
+      }
+      return res?.data?.item
     }
   }
 })
