@@ -478,7 +478,17 @@ async function refresh() {
   await planStore.fetchPlan({ companyId: companyId.value, year: year.value, month: month.value })
 }
 
-watch([companyId, year, month], () => refresh())
+// Un único watcher cubre la carga inicial (companyId pasa de null al valor que
+// setea loadCompanies) y los cambios manuales. Deduplica si la misma terna
+// (companyId+year+month) se solicita dos veces seguidas.
+let pendingKey = null
+watch([companyId, year, month], ([cid, y, m]) => {
+  if (!cid) return
+  const key = `${cid}|${y}|${m}`
+  if (pendingKey === key) return
+  pendingKey = key
+  refresh().finally(() => { if (pendingKey === key) pendingKey = null })
+})
 
 /* ---------- Acciones de mes ---------- */
 function shiftMonth(delta) {
@@ -650,8 +660,8 @@ function formatLongDate(yyyymmdd) {
 
 /* ---------- Mount ---------- */
 onMounted(async () => {
+  // loadCompanies setea companyId → el watcher dispara el refresh
   await loadCompanies()
-  await refresh()
 })
 </script>
 

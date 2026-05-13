@@ -601,8 +601,8 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
   --rk-text:         #0f1117;
   --rk-text-2:       #5a6482;
   --rk-text-3:       #9aa1b9;
-  --rk-accent:       #6366f1;
-  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
+  --rk-accent:       #06b6d4;
+  --rk-accent-soft:  rgba(6, 182, 212, 0.10);
   --rk-success:      #16a34a;
   --rk-success-soft: rgba(22, 163, 74, 0.12);
   --rk-warn:         #d97706;
@@ -620,7 +620,7 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
   --rk-text:         #e8eaf2;
   --rk-text-2:       #8b92ad;
   --rk-text-3:       #555d78;
-  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
+  --rk-accent-soft:  rgba(6, 182, 212, 0.18);
   --rk-success-soft: rgba(22, 163, 74, 0.18);
   --rk-warn-soft:    rgba(217, 119, 6, 0.20);
   --rk-err-soft:     rgba(220, 38, 38, 0.18);

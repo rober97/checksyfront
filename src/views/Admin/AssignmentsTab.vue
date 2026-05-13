@@ -92,7 +92,7 @@
                 >{{ props.row.assignment.scheduleId.name || 'Plantilla' }}</q-chip>
                 <q-chip
                   v-else-if="props.row.assignment"
-                  dense square color="indigo-4" text-color="white" icon="event_repeat"
+                  dense square color="cyan-6" text-color="white" icon="event_repeat"
                 >Turnos por demanda</q-chip>
                 <q-chip
                   v-else
@@ -135,11 +135,11 @@
 
     <!-- Diálogo: asignar / cambiar plantilla -->
     <q-dialog v-model="assignDialog.open" persistent>
-      <q-card style="min-width: min(640px, 94vw)">
+      <q-card class="rk-assign-dialog" style="min-width: min(640px, 94vw)">
         <q-card-section class="row items-center justify-between q-pb-none">
           <div>
-            <div class="text-h6">Asignar plantilla de horario</div>
-            <div class="text-caption text-grey-6">{{ assignDialog.userName }}</div>
+            <div class="rk-assign-title">Asignar plantilla de horario</div>
+            <div class="rk-assign-subtitle">{{ assignDialog.userName }}</div>
           </div>
           <q-btn flat round icon="close" v-close-popup />
         </q-card-section>
@@ -262,7 +262,16 @@ async function refresh() {
   }
 }
 
-watch(companyId, () => refresh())
+// Un único watcher cubre el caso inicial (companyId pasa de null al valor real
+// que setea loadCompanies) y los cambios manuales del selector. Evita el
+// segundo fetch redundante que provocaba el patrón "onMounted + refresh".
+let pendingFetch = null
+watch(companyId, (id) => {
+  if (!id) { assignments.value = []; unassigned.value = []; return }
+  if (pendingFetch === id) return
+  pendingFetch = id
+  refresh().finally(() => { pendingFetch = null })
+})
 
 /* ---------- asignar / cambiar ---------- */
 const assignDialog = reactive({
@@ -325,7 +334,25 @@ function confirmEnd(row) {
 }
 
 onMounted(async () => {
+  // loadCompanies setea companyId → el watcher dispara el refresh
   await loadCompanies()
-  await refresh()
 })
 </script>
+
+<style scoped>
+.rk-assign-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+  color: #0f1117;
+}
+.rk-assign-subtitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-top: 2px;
+  color: #5a6482;
+}
+.body--dark .rk-assign-title { color: #e8eaf2; }
+.body--dark .rk-assign-subtitle { color: #9aa3b2; }
+</style>

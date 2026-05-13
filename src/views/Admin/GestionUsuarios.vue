@@ -555,7 +555,7 @@ const formatDate  = (d) => {
 };
 
 // Color avatar determinístico
-const AVATAR_COLORS = ["#3d6fff","#8b5cf6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899"];
+const AVATAR_COLORS = ["#3d6fff","#0ea5e9","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899"];
 const avatarColor = (name="") => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
 const roleOptions = [
@@ -695,10 +695,10 @@ onBeforeUnmount(() => {
   --c-warn-l:    rgba(217,119,6,0.12);
   --c-err:       #dc2626;
   --c-err-l:     rgba(220,38,38,0.12);
-  --c-all:       #6366f1;
-  --c-all-l:     rgba(99,102,241,0.12);
-  --c-purple:    #8b5cf6;
-  --c-purple-l:  rgba(139,92,246,0.12);
+  --c-all:       #06b6d4;
+  --c-all-l:     rgba(6,182,212,0.12);
+  --c-purple:    #0891b2;
+  --c-purple-l:  rgba(8,145,178,0.12);
   --c-teal:      #0d9488;
   --c-teal-l:    rgba(13,148,136,0.12);
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
@@ -731,8 +731,8 @@ onBeforeUnmount(() => {
   --c-ok-l:      rgba(22,163,74,0.18);
   --c-warn-l:    rgba(217,119,6,0.18);
   --c-err-l:     rgba(220,38,38,0.18);
-  --c-all-l:     rgba(99,102,241,0.18);
-  --c-purple-l:  rgba(139,92,246,0.18);
+  --c-all-l:     rgba(6,182,212,0.18);
+  --c-purple-l:  rgba(8,145,178,0.18);
   --c-teal-l:    rgba(13,148,136,0.18);
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
   --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
@@ -764,7 +764,7 @@ onBeforeUnmount(() => {
   width:52px; height:52px; border-radius:16px;
   background:var(--c-all); color:#fff;
   display:flex; align-items:center; justify-content:center;
-  box-shadow:0 8px 24px rgba(99,102,241,0.35); flex-shrink:0;
+  box-shadow:0 8px 24px rgba(6,182,212,0.35); flex-shrink:0;
 }
 .rk-title { font-family:var(--ff-display); font-size:26px; font-weight:700; letter-spacing:-0.5px; margin:0 0 2px; line-height:1.2; }
 .rk-subtitle { font-size:13.5px; color:var(--c-text2); margin:0; line-height:1.4; }
@@ -880,11 +880,11 @@ onBeforeUnmount(() => {
   padding:7px 16px; border-radius:10px; border:none;
   background:var(--c-all); color:#fff;
   font-size:13px; font-weight:600; font-family:var(--ff-body);
-  cursor:pointer; box-shadow:0 4px 14px rgba(99,102,241,0.35);
+  cursor:pointer; box-shadow:0 4px 14px rgba(6,182,212,0.35);
   transition:transform 0.15s, box-shadow 0.15s;
   white-space:nowrap;
 }
-.rk-btn-new:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,0.4); }
+.rk-btn-new:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(6,182,212,0.4); }
 
 /* ══════════════════════════════════════════════════
    TABLA WRAP

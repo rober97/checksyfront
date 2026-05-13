@@ -1039,7 +1039,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 <style scoped>
 /* ══════════════════════════════════════════════════
    DESIGN TOKENS — single source of truth
-   Paleta neutra + un único color de acento (indigo)
+   Paleta neutra + un único color de acento (cyan)
    alineado con la página padre (GestionUsuarios).
 ══════════════════════════════════════════════════ */
 .rk-user-dialog {
@@ -1051,9 +1051,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   --rk-text:         #0f1117;
   --rk-text-2:       #5a6482;
   --rk-text-3:       #9aa1b9;
-  --rk-accent:       #6366f1;
-  --rk-accent-hover: #4f46e5;
-  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
+  --rk-accent:       #06b6d4;
+  --rk-accent-hover: #0891b2;
+  --rk-accent-soft:  rgba(6, 182, 212, 0.10);
   --rk-success:      #16a34a;
   --rk-success-soft: rgba(22, 163, 74, 0.12);
   --rk-warn:         #d97706;
@@ -1078,7 +1078,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   --rk-text:         #e8eaf2;
   --rk-text-2:       #8b92ad;
   --rk-text-3:       #555d78;
-  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
+  --rk-accent-soft:  rgba(6, 182, 212, 0.18);
   --rk-success-soft: rgba(22, 163, 74, 0.18);
   --rk-warn-soft:    rgba(217, 119, 6, 0.20);
   --rk-err-soft:     rgba(220, 38, 38, 0.18);
@@ -1760,7 +1760,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 }
 .rk-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.30);
+  box-shadow: 0 6px 14px rgba(6, 182, 212, 0.30);
 }
 .rk-btn-shine { display: none; }
 

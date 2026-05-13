@@ -200,7 +200,7 @@ const roleLabel = computed(() => {
 
 const roleColor = computed(() => {
   return form.tipo === 'empresa'
-    ? 'indigo-6'
+    ? 'cyan-6'
     : form.tipo === 'empleado'
     ? 'teal-6'
     : 'grey-6'
@@ -289,8 +289,8 @@ function copy(text) {
   --rk-text:         #0f1117;
   --rk-text-2:       #5a6482;
   --rk-text-3:       #9aa1b9;
-  --rk-accent:       #6366f1;
-  --rk-accent-soft:  rgba(99, 102, 241, 0.10);
+  --rk-accent:       #06b6d4;
+  --rk-accent-soft:  rgba(6, 182, 212, 0.10);
   --rk-success:      #16a34a;
   --rk-warn:         #d97706;
   color: var(--rk-text);
@@ -303,7 +303,7 @@ function copy(text) {
   --rk-text:         #e8eaf2;
   --rk-text-2:       #8b92ad;
   --rk-text-3:       #555d78;
-  --rk-accent-soft:  rgba(99, 102, 241, 0.18);
+  --rk-accent-soft:  rgba(6, 182, 212, 0.18);
 }
 
 /* Header */
