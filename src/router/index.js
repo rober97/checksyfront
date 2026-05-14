@@ -16,7 +16,6 @@ const Register = () => import(/* webpackChunkName:"public"    */ '@/views/Regist
 const NotFound = () => import(/* webpackChunkName:"misc"      */ '@/views/NotFound.vue')
 const Dashboard = () => import(/* webpackChunkName:"dashboard" */ '@/views/Dashboard.vue')
 
-const Permissions = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/Permisos.vue')
 const UserManagement = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionUsuarios.vue')
 const HorariosModule = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/HorariosModule.vue')
 const AsistenciasEmp = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
@@ -180,8 +179,8 @@ const routes = [
     children: [
       { path: '', redirect: { name: 'RrhhDashboard' } },
       { path: 'dashboard', name: 'RrhhDashboard', component: Dashboard, meta: { title: 'Panel RR.HH.' } },
+      { path: 'marcar-asistencia', name: 'RrhhMarcarAsistencia', component: Attendance, meta: { title: 'Marcar asistencia' } },
       { path: 'users', name: 'RrhhUsers', component: UserManagement, meta: { permissions: ['users:read'], title: 'Empleados' } },
-      { path: 'permissions', name: 'RrhhPermissions', component: Permissions, meta: { permissions: ['permissions:read'], title: 'Permisos' } },
       { path: 'horarios', name: 'RrhhHorarios', component: HorariosModule, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
       { path: 'programacion-mensual', redirect: { name: 'RrhhHorarios', query: { vista: 'mensual' } } },
       { path: 'attendance', name: 'RrhhAttendance', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },

@@ -71,17 +71,25 @@
 
         <!-- Notifications -->
         <div class="rk-notif-wrapper">
-          <button class="rk-action-btn" @click="notifOpen = !notifOpen">
+          <button
+            class="rk-action-btn rk-notif-btn"
+            :class="{ 'has-unread': unreadCount > 0, 'has-pending': unreadCount === 0 && pendingActionCount > 0 }"
+            @click="notifOpen = !notifOpen"
+          >
             <q-icon name="notifications" />
             <div v-if="unreadCount > 0" class="rk-notif-badge">
               <span>{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
               <div class="rk-badge-pulse"></div>
+            </div>
+            <div v-else-if="pendingActionCount > 0" class="rk-notif-dot">
+              <div class="rk-notif-dot-pulse"></div>
             </div>
           </button>
 
           <!-- Notifications Menu -->
           <q-menu
             v-model="notifOpen"
+            no-parent-event
             anchor="bottom right"
             self="top right"
             :offset="[0, 8]"
@@ -347,7 +355,10 @@ const {
   unreadCount,
   loading: notifLoading,
   error: notifError,
+  pendingMissedExits,
 } = storeToRefs(notificationsStore);
+
+const pendingActionCount = computed(() => pendingMissedExits.value.length);
 
 let notifPoll = null;
 
@@ -447,7 +458,6 @@ const baseCommands = computed(() => {
   if (role === "admin_rrhh") {
     cmds.push(
       { key: "rrhh-empleados", icon: "group", label: "Empleados", desc: "Gestionar empleados", to: "/rrhh/users" },
-      { key: "rrhh-permisos", icon: "lock", label: "Permisos", desc: "Roles y permisos", to: "/rrhh/permissions" },
       { key: "rrhh-horarios", icon: "schedule", label: "Horarios", desc: "Gestión de horarios", to: "/rrhh/horarios" },
       { key: "rrhh-asistencias", icon: "fact_check", label: "Asistencias", desc: "Asistencias por empleado", to: "/rrhh/attendance" },
       { key: "rrhh-empresa", icon: "business", label: "Mi empresa", desc: "Datos de tu empresa", to: "/rrhh/empresa" },
@@ -911,6 +921,57 @@ onBeforeUnmount(() => {
     opacity: 0.6;
     transform: scale(1.5);
   }
+}
+
+/* Punto ámbar para acciones pendientes (no leídas = 0, pero hay tareas sin resolver) */
+.rk-notif-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  background: #f59e0b;
+  border: 2px solid var(--header-bg);
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.rk-notif-dot-pulse {
+  position: absolute;
+  inset: -2px;
+  background: #f59e0b;
+  border-radius: 50%;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+/* Glow del icono cuando hay notificaciones que atender */
+.rk-notif-btn.has-unread .q-icon {
+  color: #ef4444;
+  animation: bellShake 2.4s ease-in-out infinite;
+}
+
+.rk-notif-btn.has-unread {
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  animation: bellGlow 2.4s ease-in-out infinite;
+}
+
+.rk-notif-btn.has-pending .q-icon {
+  color: #f59e0b;
+}
+
+@keyframes bellGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.18);
+  }
+}
+
+@keyframes bellShake {
+  0%, 50%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(-10deg); }
+  20%, 40% { transform: rotate(10deg); }
 }
 
 /* Notifications Menu */

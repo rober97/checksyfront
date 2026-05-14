@@ -308,9 +308,9 @@
     <div class="rk-dock">
       <div class="rk-dock-content">
         <div class="rk-dock-links">
-          <router-link to="/employee/attendance/history" class="rk-dock-link"><q-icon name="history" /><span>Historial</span></router-link>
-          <router-link to="/employee/requests" class="rk-dock-link"><q-icon name="event_note" /><span>Solicitudes</span></router-link>
-          <router-link to="/employee/analytics" class="rk-dock-link"><q-icon name="insights" /><span>Estadísticas</span></router-link>
+          <router-link :to="dockLinks.historial" class="rk-dock-link"><q-icon name="history" /><span>Historial</span></router-link>
+          <router-link :to="dockLinks.solicitudes" class="rk-dock-link"><q-icon name="event_note" /><span>Solicitudes</span></router-link>
+          <router-link :to="dockLinks.estadisticas" class="rk-dock-link"><q-icon name="insights" /><span>Estadísticas</span></router-link>
         </div>
         <button class="rk-submit-btn" :disabled="!form.tipo || loading" :class="{ loading: loading }" @click="confirmarEnvio">
           <q-icon v-if="!loading" name="check_circle" />
@@ -465,6 +465,22 @@ const currentUserId = computed(() => auth?.user?.id || userStore?.currentUser?._
 const labelTipo = computed(() => form.tipo === "entrada" ? "Entrada" : form.tipo === "salida" ? "Salida" : "");
 const labelAnimo = computed(() => moods.find((m) => m.value === form.estadoAnimo)?.label || "");
 const labelCTA = computed(() => form.tipo ? `Marcar ${labelTipo.value.toLowerCase()}` : "Marcar asistencia");
+
+const dockLinks = computed(() => {
+  const role = String(auth?.role || "").toLowerCase();
+  if (role === "admin_rrhh") {
+    return {
+      historial: "/rrhh/attendance",
+      solicitudes: "/rrhh/requests",
+      estadisticas: "/rrhh/dashboard",
+    };
+  }
+  return {
+    historial: "/employee/history",
+    solicitudes: "/employee/requests",
+    estadisticas: "/employee/dashboard",
+  };
+});
 
 const horaActual = ref("--:--:--");
 const fechaBonita = ref(new Intl.DateTimeFormat("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date()));

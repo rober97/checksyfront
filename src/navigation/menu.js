@@ -46,8 +46,8 @@ export const MENU = [
     access: { roles: ['admin_rrhh'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/rrhh/dashboard', exact: true },
+      { label: 'Marcar asistencia', icon: 'access_time', to: '/rrhh/marcar-asistencia' },
       { label: 'Empleados', icon: 'people', to: '/rrhh/users' },
-      { label: 'Permisos', icon: 'lock', to: '/rrhh/permissions' },
       { label: 'Horarios', icon: 'schedule', to: '/rrhh/horarios' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/rrhh/attendance' },
       { label: 'Mi empresa', icon: 'apartment', to: '/rrhh/empresa' },

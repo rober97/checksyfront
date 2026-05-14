@@ -3,15 +3,11 @@
     <!-- Page Header -->
     <PayrollPageHeader
       v-model:mode="mode"
-      v-model:selectedCompany="selectedCompany"
-      :company-options="companyOptions"
-      :current-company-data="currentCompanyData"
       :current-period="mode === 'detail' ? periodSelected : periodInput"
       :period-count="periodRows.length"
       :pending-count="pendingCount"
       :loading="store.loading"
       @reload="reload"
-      @company-change="onCompanyChange"
     />
 
     <!-- Main Content with Transition -->
@@ -86,8 +82,7 @@ import {
   isValidPeriod,
   normalizePeriodValue,
 } from "@/utils/payrollPeriod.js";
-import { useUserStore } from "@/stores/userStore";
-import { useCompaniesStore } from "@/stores/companies";
+import { useAuthStore } from "@/stores/authStore";
 
 import PayrollPageHeader from "@/components/payroll/PayrollPageHeader.vue";
 import PayrollPeriodView from "@/components/payroll/PayrollPeriodView.vue";
@@ -97,12 +92,10 @@ import PayrollPdfViewer from "@/components/payroll/PayrollPdfViewer.vue";
 
 const $q = useQuasar();
 const store = usePayrollStore();
-const userStore = useUserStore();
-const companiesStore = useCompaniesStore();
+const authStore = useAuthStore();
 
 // State
 const mode = ref("periods");
-const selectedCompany = ref(null);
 const periodInput = ref(lastMonthPeriod());
 const periodSelected = ref(lastMonthPeriod());
 const q = ref("");
@@ -117,19 +110,6 @@ const pdfUrl = ref("");
 const pdfTitle = ref("Liquidación");
 
 // Computed
-const companyOptions = computed(() => {
-  const companies = companiesStore.items || companiesStore.empresas || companiesStore.list || [];
-  return companies.filter((company) => {
-    const normalizedStatus = String(company.status || "").toLowerCase();
-    return !normalizedStatus || normalizedStatus === "active";
-  });
-});
-
-const currentCompanyData = computed(() => {
-  if (!selectedCompany.value) return null;
-  return companyOptions.value.find(c => c._id === selectedCompany.value) || null;
-});
-
 const periodRows = computed(() => store.periods || []);
 const payslips = computed(() => store.payslips || []);
 const pendingCount = computed(() => {
@@ -144,8 +124,9 @@ const totalLiquido = computed(() => {
 
 // Utility Functions
 function companyId() {
-  if (selectedCompany.value) return selectedCompany.value;
-  return userStore?.user?.companyId || userStore?.user?.company?._id || userStore?.user?.company || null;
+  const u = authStore.user;
+  if (!u) return null;
+  return u.companyId || u.company?._id || u.company || null;
 }
 
 function normalizePeriod(period) {
@@ -178,53 +159,18 @@ function findPayslipById(payslipId) {
   return payslips.value.find((row) => row.id === payslipId || row._id === payslipId) || null;
 }
 
-// Company Management
-async function onCompanyChange() {
-  if (!selectedCompany.value) return;
-  localStorage.setItem('lastSelectedCompany', selectedCompany.value);
-  q.value = "";
-  status.value = null;
-  resetDetailState();
-  resetPdfState();
-  await reload();
-  $q.notify({
-    type: "info",
-    message: `Empresa: ${currentCompanyData.value?.name || 'Sin nombre'}`,
-    icon: "business",
-    position: "top"
-  });
-}
-
 // Initialization
 async function initializeComponent() {
-  try {
-    await companiesStore.fetchCompanies();
-  } catch (error) {
-    console.error("Error loading companies:", error);
-  }
-
-  const lastCompanyId = localStorage.getItem('lastSelectedCompany');
-  const userCompanyId = userStore?.user?.companyId || userStore?.user?.company?._id || userStore?.user?.company;
-
-  if (lastCompanyId && companyOptions.value.some(c => c._id === lastCompanyId)) {
-    selectedCompany.value = lastCompanyId;
-  } else if (userCompanyId && companyOptions.value.some(c => c._id === userCompanyId)) {
-    selectedCompany.value = userCompanyId;
-  } else if (companyOptions.value.length > 0) {
-    selectedCompany.value = companyOptions.value[0]._id;
-  }
-
-  if (!selectedCompany.value) {
+  if (!companyId()) {
     $q.notify({
       type: "warning",
-      message: "No hay empresas activas disponibles",
-      caption: "Crea o activa una empresa primero",
+      message: "No hay empresa activa",
+      caption: "Selecciona una empresa desde el menú superior",
       icon: "warning",
       position: "top"
     });
     return;
   }
-
   await reload();
 }
 

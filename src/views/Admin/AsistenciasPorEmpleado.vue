@@ -169,6 +169,15 @@
             <!-- RUT -->
             <td class="rk-td rk-mono">{{ row.rut || '—' }}</td>
 
+            <!-- Empresa -->
+            <td class="rk-td">
+              <span v-if="row.empresa" class="empresa-chip">
+                <q-icon name="business" size="13px" />
+                {{ row.empresa }}
+              </span>
+              <span v-else class="rk-muted">—</span>
+            </td>
+
             <!-- Total -->
             <td class="rk-td">
               <div class="cell-total">
@@ -254,6 +263,10 @@
                 <div class="mstat-num">{{ conteos.salidas }}</div>
                 <div class="mstat-lbl">Salidas</div>
               </div>
+              <div v-if="conteos.pendientes > 0" class="mstat mstat-pending" :title="`${conteos.pendientes} entrada(s) sin salida registrada`">
+                <div class="mstat-num">{{ conteos.pendientes }}</div>
+                <div class="mstat-lbl">Pendientes</div>
+              </div>
             </div>
             <button class="modal-close" v-close-popup aria-label="Cerrar">
               <q-icon name="close" size="18px" />
@@ -310,6 +323,17 @@
         <!-- Contenido del modal -->
         <div class="rk-modal-body">
 
+          <!-- Aviso de salidas olvidadas -->
+          <div v-if="!isFetching && conteos.pendientes > 0" class="pending-banner">
+            <div class="pending-banner-icon">
+              <q-icon name="warning_amber" size="20px" />
+            </div>
+            <div class="pending-banner-text">
+              <strong>{{ conteos.pendientes }} {{ conteos.pendientes === 1 ? 'salida olvidada' : 'salidas olvidadas' }}.</strong>
+              Hay {{ conteos.pendientes === 1 ? 'una entrada sin salida registrada' : 'entradas sin salida registrada' }} en días anteriores. Usa <em>editar</em> sobre la marca pendiente para corregirla.
+            </div>
+          </div>
+
           <!-- Loading -->
           <div v-if="isFetching" class="modal-loading">
             <div class="modal-spinner" />
@@ -331,7 +355,7 @@
                   <div
                     v-for="m in grupo.items" :key="m._id"
                     class="titem"
-                    :class="[`titem-${m.tipo}`, { 'titem-modified': m.modified }]"
+                    :class="[`titem-${m.tipo}`, { 'titem-modified': m.modified, 'titem-pending': m.pending }]"
                   >
                     <div class="titem-icon">
                       <q-icon :name="estadoIcono(m.tipo)" size="16px" />
@@ -339,6 +363,13 @@
                     <div class="titem-body">
                       <div class="titem-tipo">
                         {{ capitalizar(m.tipo || '—') }}
+                        <q-chip
+                          v-if="m.pending"
+                          dense square color="orange" text-color="white"
+                          icon="warning_amber" size="sm"
+                        >
+                          Salida pendiente
+                        </q-chip>
                         <q-chip
                           v-if="m.modified"
                           dense square color="warning" text-color="white"
@@ -394,7 +425,7 @@
                   <tr
                     v-for="m in historialFiltradoYTipado" :key="m._id"
                     class="rk-tr"
-                    :class="{ 'rk-tr-modified': m.modified }"
+                    :class="{ 'rk-tr-modified': m.modified, 'rk-tr-pending': m.pending }"
                   >
                     <td class="rk-td rk-mono">{{ formatFecha(m.timestamp) }}</td>
                     <td class="rk-td rk-mono">{{ horaBonita(m.timestamp) }}</td>
@@ -405,13 +436,16 @@
                       </span>
                     </td>
                     <td class="rk-td">
+                      <q-chip v-if="m.pending" dense color="orange" text-color="white" icon="warning_amber">
+                        Salida pendiente
+                      </q-chip>
                       <q-chip v-if="m.modified" dense color="warning" text-color="white" icon="edit_note">
                         Modificado
                       </q-chip>
                       <q-chip v-if="m.workerObjected" dense color="negative" text-color="white" icon="gavel">
                         Objetado
                       </q-chip>
-                      <span v-if="!m.modified && !m.workerObjected" class="rk-muted">—</span>
+                      <span v-if="!m.modified && !m.workerObjected && !m.pending" class="rk-muted">—</span>
                     </td>
                     <td class="rk-td">
                       <button v-if="m.ubicacion?.lat" class="act-btn act-map" @click="openInMaps(m)">
@@ -591,6 +625,7 @@ const sortIcon = col => {
 const columns = [
   { name: 'nombre',  label: 'Colaborador',  align: 'left',   sortable: true  },
   { name: 'rut',     label: 'RUT',          align: 'left',   sortable: true  },
+  { name: 'empresa', label: 'Empresa',      align: 'left',   sortable: true  },
   { name: 'total',   label: 'Asistencias',  align: 'left',   sortable: true  },
   { name: 'actions', label: '',             align: 'right',  sortable: false },
 ];
@@ -679,11 +714,44 @@ const historialFiltrado = computed(() => {
   });
 });
 
+/* IDs de entradas sin salida posterior antes de la siguiente entrada.
+   Se calcula sobre el historial COMPLETO (no filtrado) para que el pareo
+   entrada→salida sea correcto aunque el usuario filtre por tipo o rango. */
+const entradasPendientesIds = computed(() => {
+  const all = historialEmpleado.value?.asistencias || [];
+  const sorted = [...all].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const pending = new Set();
+  const hoyKey = date.formatDate(new Date(), 'YYYY-MM-DD');
+
+  for (let i = 0; i < sorted.length; i++) {
+    const m = sorted[i];
+    if (m.tipo !== 'entrada') continue;
+
+    let hasExit = false;
+    for (let j = i + 1; j < sorted.length; j++) {
+      const nxt = sorted[j];
+      if (nxt.tipo === 'salida') { hasExit = true; break; }
+      if (nxt.tipo === 'entrada') break;
+    }
+
+    if (!hasExit) {
+      const entradaKey = date.formatDate(m.timestamp, 'YYYY-MM-DD');
+      // Si la entrada es de un día anterior a hoy → salida olvidada.
+      // Si es de hoy, asumimos que la jornada sigue en curso.
+      if (entradaKey < hoyKey) pending.add(String(m._id));
+    }
+  }
+
+  return pending;
+});
+
 const historialFiltradoYTipado = computed(() => {
   const base = filtroTipo.value
     ? historialFiltrado.value.filter(a => a.tipo === filtroTipo.value)
     : historialFiltrado.value;
-  return [...base].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return [...base]
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .map(m => ({ ...m, pending: entradasPendientesIds.value.has(String(m._id)) }));
 });
 
 const gruposPorDia = computed(() => {
@@ -694,9 +762,11 @@ const gruposPorDia = computed(() => {
       const fechaLarga = new Intl.DateTimeFormat('es-ES', {
         weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
       }).format(new Date(m.timestamp));
-      map.set(clave, { fechaClave: clave, fechaLarga, items: [] });
+      map.set(clave, { fechaClave: clave, fechaLarga, items: [], hasPending: false });
     }
-    map.get(clave).items.push(m);
+    const dia = map.get(clave);
+    dia.items.push(m);
+    if (m.pending) dia.hasPending = true;
   }
   return Array.from(map.values());
 });
@@ -707,7 +777,12 @@ const conteos = computed(() => {
     if (m.tipo === 'entrada') entradas++;
     else if (m.tipo === 'salida') salidas++;
   }
-  return { entradas, salidas, total: historialFiltradoYTipado.value.length };
+  return {
+    entradas,
+    salidas,
+    total: historialFiltradoYTipado.value.length,
+    pendientes: entradasPendientesIds.value.size,
+  };
 });
 
 /* ── Helpers ────────────────────────────────── */
@@ -974,6 +1049,13 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .user-avatar { width:36px; height:36px; border-radius:11px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; }
 .user-name  { font-weight:600; }
 
+.empresa-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px; border-radius:999px;
+  background:var(--c-primary-l); color:var(--c-primary);
+  font-size:12px; font-weight:600;
+}
+
 .cell-total { display:flex; align-items:center; gap:6px; }
 .total-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; background:var(--c-ok-l); color:var(--c-ok); font-size:12.5px; font-weight:700; }
 .total-label { font-size:12px; color:var(--c-text3); }
@@ -1073,6 +1155,39 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .mstat-lbl  { font-size:10px; opacity:0.75; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
 .mstat-in  .mstat-num { color:#6ee7b7; }
 .mstat-out .mstat-num { color:#fca5a5; }
+.mstat-pending .mstat-num { color:#fbbf24; }
+.mstat-pending { background:rgba(251,191,36,0.18); }
+
+/* Aviso de salidas olvidadas */
+.pending-banner {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px 14px; margin:16px 24px 0;
+  background:rgba(251,191,36,0.10);
+  border:1px solid rgba(251,191,36,0.45);
+  border-left:4px solid #f59e0b;
+  border-radius:10px;
+  color:var(--c-text);
+  font-size:13px; line-height:1.45;
+}
+.pending-banner-icon {
+  display:flex; align-items:center; justify-content:center;
+  width:32px; height:32px; flex-shrink:0;
+  border-radius:8px;
+  background:rgba(245,158,11,0.18);
+  color:#d97706;
+}
+.pending-banner-text strong { color:#b45309; }
+.body--dark .pending-banner-text strong { color:#fcd34d; }
+.pending-banner-text em { font-style:normal; font-weight:600; color:var(--c-primary); }
+
+/* Marca de salida pendiente — timeline */
+.titem-pending {
+  background:rgba(251,191,36,0.08) !important;
+  border-color:rgba(245,158,11,0.45) !important;
+}
+
+/* Marca de salida pendiente — tabla */
+.rk-tr-pending { background:rgba(251,191,36,0.06); }
 
 /* Filtros modal */
 .rk-modal-filters { padding:16px 24px; border-bottom:1px solid var(--c-border); background:var(--c-surface2); flex-shrink:0; }
