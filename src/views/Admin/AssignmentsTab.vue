@@ -5,19 +5,6 @@
       <section class="rk-module-panel">
         <div class="rk-module-panel__section">
           <div class="row items-center q-col-gutter-md">
-            <div v-if="companyOptions.length > 1" class="col-12 col-md-4">
-              <q-select
-                v-model="companyId"
-                :options="companyOptions"
-                option-value="id"
-                option-label="name"
-                emit-value
-                map-options
-                label="Empresa"
-                dense
-                outlined
-              />
-            </div>
             <div class="col-12 col-md">
               <div class="rk-module-panel__title">Asignaciones de plantilla</div>
               <p class="rk-module-panel__caption">
@@ -178,9 +165,6 @@ const toast = useToast()
 const companiesStore = useCompaniesStore()
 const authStore = useAuthStore()
 
-const isSuperadmin = computed(() => authStore.user?.role === 'superadmin')
-
-const companyOptions = ref([])
 const companyId = ref(null)
 const companyObj = computed(() => companiesStore.companies.find((c) => c._id === companyId.value) || { _id: companyId.value })
 
@@ -234,20 +218,13 @@ function formatDate(d) {
 }
 
 /* ---------- carga ---------- */
+// Lee la empresa activa del JWT (la setea el CompanySwitcher del header).
+// fetchCompanies sólo se hace para resolver el objeto completo que usa
+// SchedulePicker; el filtrado por empresa vive en el backend.
 async function loadCompanies() {
-  try {
-    await companiesStore.fetchCompanies()
-    companyOptions.value = (companiesStore.companies || []).map((c) => ({ id: c._id, name: c.name }))
-  } catch { companyOptions.value = [] }
-
-  const active = authStore.user?.company || null
-  if (active && companyOptions.value.some((c) => c.id === active)) {
-    companyId.value = active
-  } else if (companyOptions.value.length) {
-    companyId.value = companyOptions.value[0].id
-  } else {
-    companyId.value = active // último recurso (admin con 1 empresa que no vino en el listado)
-  }
+  try { await companiesStore.fetchCompanies() } catch { /* noop */ }
+  const u = authStore.user
+  companyId.value = u?.company?._id || u?.company || u?.companyId || null
 }
 
 async function refresh() {

@@ -9,51 +9,19 @@
           <div class="rk-btn-ripple"></div>
         </button>
 
-        <!-- Brand -->
-        <button class="rk-brand" @click="goHome">
-          <div class="rk-brand-icon">
-            <q-icon name="precision_manufacturing" />
-            <div class="rk-brand-pulse"></div>
-          </div>
-          <span class="rk-brand-text">Recksy</span>
-          <div class="rk-brand-badge">v2.0</div>
+        <!-- Compact Recksy home icon -->
+        <button class="rk-home-btn" @click="goHome" aria-label="Recksy · Inicio">
+          <q-icon name="precision_manufacturing" />
+          <div class="rk-home-pulse"></div>
+          <q-tooltip class="rk-tooltip">Recksy v2.0 · Inicio</q-tooltip>
         </button>
-      </div>
 
-      <!-- Center: Breadcrumbs -->
-      <nav class="rk-breadcrumbs">
-        <div class="rk-breadcrumb-container">
-          <div
-            v-for="(b, i) in breadcrumbs"
-            :key="i"
-            class="rk-breadcrumb-item"
-          >
-            <button
-              v-if="b.to && i < breadcrumbs.length - 1"
-              class="rk-breadcrumb-link"
-              @click="router.push(b.to)"
-            >
-              <q-icon v-if="b.icon" :name="b.icon" />
-              <span>{{ b.label }}</span>
-            </button>
-            <div v-else class="rk-breadcrumb-current">
-              <q-icon v-if="b.icon" :name="b.icon" />
-              <span>{{ b.label }}</span>
-            </div>
-            <q-icon
-              v-if="i < breadcrumbs.length - 1"
-              name="chevron_right"
-              class="rk-breadcrumb-separator"
-            />
-          </div>
-        </div>
-      </nav>
+        <!-- Company contextual brand (replaces old static brand) -->
+        <CompanySwitcher />
+      </div>
 
       <!-- Right Section -->
       <div class="rk-header-right">
-        <!-- Company Switcher (solo admin_rrhh multi-empresa) -->
-        <CompanySwitcher />
-
         <!-- Search Button -->
         <button class="rk-action-btn" @click="openCommand">
           <q-icon name="search" />
@@ -292,7 +260,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { Dark, useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import UserAvatarMenu from "@/components/UserAvatarMenu.vue";
@@ -305,7 +273,6 @@ defineEmits(["toggle-drawer"]);
 
 const $q = useQuasar();
 const router = useRouter();
-const route = useRoute();
 const themeStore = useThemeStore();
 
 /* Theme */
@@ -327,20 +294,6 @@ function toggleDark() {
     icon: v ? "dark_mode" : "light_mode",
   });
 }
-
-/* Breadcrumbs */
-const breadcrumbs = computed(() => {
-  const m = route.matched || [];
-  const parts = [];
-  m.forEach((r) => {
-    const bc = r.meta?.breadcrumb;
-    if (Array.isArray(bc)) parts.push(...bc);
-    else if (r.meta?.title) parts.push({ label: r.meta.title, to: r.path, icon: r.meta.icon });
-  });
-  if (parts.length)
-    parts[parts.length - 1] = { ...parts[parts.length - 1], to: null };
-  return parts.length ? parts : [{ label: "Inicio", to: null, icon: "home" }];
-});
 
 function goHome() {
   router.push("/");
@@ -498,6 +451,27 @@ const baseCommands = computed(() => {
     );
   }
 
+  // Cambio de empresa (admin_rrhh multi-empresa) — accesible desde ⌘K
+  if (role === "admin_rrhh") {
+    const all = Array.isArray(authStore.assignedCompanies) ? authStore.assignedCompanies : [];
+    if (all.length > 1) {
+      const a = authStore.activeCompany;
+      const activeId = typeof a === "object" ? String(a?._id || a?.id || "") : String(a || "");
+      all.forEach((c) => {
+        const cid = String(c?._id || c?.id || "");
+        if (!cid || cid === activeId) return;
+        cmds.push({
+          key: `switch-company:${cid}`,
+          icon: "business",
+          label: `Cambiar a ${c.name || "empresa"}`,
+          desc: c.rut ? `Empresa · RUT ${c.rut}` : "Cambiar empresa activa",
+          switchCompanyId: cid,
+          switchCompanyName: c.name || "",
+        });
+      });
+    }
+  }
+
   return cmds;
 });
 
@@ -544,8 +518,26 @@ function activate() {
   if (it) exec(it);
 }
 
-function exec(opt) {
+async function exec(opt) {
   commandOpen.value = false;
+  if (opt.switchCompanyId) {
+    try {
+      await authStore.switchCompany(opt.switchCompanyId);
+      $q.notify({
+        type: "positive",
+        message: `Empresa activa: ${opt.switchCompanyName || ""}`.trim(),
+        icon: "business",
+      });
+      window.location.reload();
+    } catch (e) {
+      $q.notify({
+        type: "negative",
+        message: e?.message || "No se pudo cambiar de empresa",
+        icon: "error",
+      });
+    }
+    return;
+  }
   if (opt.to) router.push(opt.to);
 }
 
@@ -605,13 +597,13 @@ onBeforeUnmount(() => {
 /* Theme Variables */
 .rk-header {
   --header-bg: rgba(255, 255, 255, 0.92);
-  --header-border: rgba(6, 182, 212, 0.12);
+  --header-border: color-mix(in srgb, var(--color-primary, #06b6d4) 12%, transparent);
   --text-primary: rgba(15, 23, 42, 0.95);
   --text-secondary: rgba(15, 23, 42, 0.7);
   --text-muted: rgba(15, 23, 42, 0.5);
-  --surface-1: rgba(6, 182, 212, 0.05);
-  --surface-2: rgba(6, 182, 212, 0.08);
-  --border-1: rgba(6, 182, 212, 0.15);
+  --surface-1: color-mix(in srgb, var(--color-primary, #06b6d4) 6%, transparent);
+  --surface-2: color-mix(in srgb, var(--color-primary, #06b6d4) 10%, transparent);
+  --border-1: color-mix(in srgb, var(--color-primary, #06b6d4) 18%, transparent);
   backdrop-filter: saturate(1.2) blur(16px);
   border-bottom: 1.5px solid var(--header-border);
   background: var(--header-bg);
@@ -620,13 +612,13 @@ onBeforeUnmount(() => {
 
 .body--dark .rk-header {
   --header-bg: rgba(10, 14, 20, 0.92);
-  --header-border: rgba(6, 182, 212, 0.2);
+  --header-border: color-mix(in srgb, var(--color-primary, #06b6d4) 22%, transparent);
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-muted: rgba(255, 255, 255, 0.5);
-  --surface-1: rgba(6, 182, 212, 0.08);
-  --surface-2: rgba(6, 182, 212, 0.12);
-  --border-1: rgba(6, 182, 212, 0.2);
+  --surface-1: color-mix(in srgb, var(--color-primary, #06b6d4) 10%, transparent);
+  --surface-2: color-mix(in srgb, var(--color-primary, #06b6d4) 16%, transparent);
+  --border-1: color-mix(in srgb, var(--color-primary, #06b6d4) 24%, transparent);
 }
 
 /* Header Bar */
@@ -687,153 +679,52 @@ onBeforeUnmount(() => {
   transform: scale(1);
 }
 
-/* Brand */
-.rk-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+/* Compact home button (Recksy logo) */
+.rk-home-btn {
   position: relative;
-}
-
-.rk-brand:hover {
-  background: var(--surface-1);
-}
-
-.rk-brand-icon {
-  position: relative;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 9px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary, #06b6d4) 30%, transparent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
-.rk-brand-icon .q-icon {
+.rk-home-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary, #06b6d4) 45%, transparent);
+}
+
+.rk-home-btn:active {
+  transform: translateY(0);
+}
+
+.rk-home-btn .q-icon {
   font-size: 20px;
   color: #fff;
   z-index: 1;
 }
 
-.rk-brand-pulse {
+.rk-home-pulse {
   position: absolute;
   inset: -3px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  border-radius: 11px;
+  border-radius: 12px;
   opacity: 0;
   filter: blur(6px);
   animation: brandPulse 3s ease-in-out infinite;
 }
 
 @keyframes brandPulse {
-  0%, 100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.15);
-  }
-}
-
-.rk-brand-text {
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  color: var(--text-primary);
-}
-
-.rk-brand-badge {
-  padding: 3px 8px;
-  background: rgba(6, 182, 212, 0.12);
-  border: 1px solid rgba(6, 182, 212, 0.25);
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: 0.3px;
-}
-
-.body--dark .rk-brand-badge {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.35);
-  color: var(--color-primary-light);
-}
-
-/* Breadcrumbs */
-.rk-breadcrumbs {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.rk-breadcrumb-container {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow: hidden;
-}
-
-.rk-breadcrumb-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.rk-breadcrumb-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.rk-breadcrumb-link:hover {
-  background: var(--surface-1);
-  color: var(--color-primary-light);
-}
-
-.rk-breadcrumb-link .q-icon {
-  font-size: 16px;
-}
-
-.rk-breadcrumb-current {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.rk-breadcrumb-current .q-icon {
-  font-size: 16px;
-  color: var(--color-primary-light);
-}
-
-.rk-breadcrumb-separator {
-  font-size: 14px;
-  color: var(--text-muted);
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.15); }
 }
 
 /* Right Section */
@@ -1431,34 +1322,10 @@ onBeforeUnmount(() => {
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
-  .rk-breadcrumbs {
-    max-width: 400px;
-  }
-}
-
-@media (max-width: 1023px) {
-  .rk-breadcrumbs {
-    max-width: 300px;
-  }
-}
-
 @media (max-width: 767px) {
   .rk-header-bar {
     padding: 10px 16px;
     min-height: 56px;
-  }
-
-  .rk-breadcrumbs {
-    display: none;
-  }
-
-  .rk-brand-text {
-    font-size: 1rem;
-  }
-
-  .rk-brand-badge {
-    display: none;
   }
 
   .rk-notif-panel {
@@ -1483,12 +1350,12 @@ onBeforeUnmount(() => {
     gap: 8px;
   }
 
-  .rk-brand-icon {
-    width: 32px;
-    height: 32px;
+  .rk-home-btn {
+    width: 34px;
+    height: 34px;
   }
 
-  .rk-brand-icon .q-icon {
+  .rk-home-btn .q-icon {
     font-size: 18px;
   }
 

@@ -27,6 +27,7 @@
           :loading="store.loading"
           @generate="generatePeriod"
           @open-period="openPeriod"
+          @delete-period="deletePeriodRow"
         />
 
         <!-- Employee Detail View -->
@@ -47,6 +48,7 @@
           @open-detail="openDetail"
           @issue-one="issueOne"
           @void-one="voidOne"
+          @delete-one="deletePayslipRow"
           @open-pdf="openPdf"
         />
       </transition>
@@ -59,6 +61,7 @@
       :period-selected="periodSelected"
       @issue="issueOne"
       @void="voidOne"
+      @delete="deletePayslipRow"
       @open-pdf="openPdf"
     />
 
@@ -328,6 +331,62 @@ async function voidOne(row) {
   }
 }
 
+async function deletePayslipRow(row) {
+  if (!row) return;
+  const employeeName = row.employeeName || "este empleado";
+  const confirmed = await confirmDialog({
+    title: "Eliminar liquidación",
+    message: `Se eliminará la liquidación de ${employeeName}. Esta acción no se puede deshacer.`,
+    okLabel: "Eliminar",
+    okColor: "negative",
+  });
+  if (!confirmed) return;
+
+  try {
+    await store.deletePayslip({ payslipId: row.id || row._id });
+    $q.notify({
+      type: "positive",
+      message: "Liquidación eliminada",
+      icon: "delete",
+      position: "top",
+    });
+    dialogDetail.value = false;
+    await reload();
+  } catch {
+    $q.notify({ type: "negative", message: store.error || "Error al eliminar", icon: "error", position: "top" });
+  }
+}
+
+async function deletePeriodRow(period) {
+  const cid = companyId();
+  if (!cid || !period) return;
+
+  const confirmed = await confirmDialog({
+    title: "Eliminar período",
+    message: `Se eliminarán todos los borradores y anulaciones del período ${period}. Las liquidaciones emitidas no se tocan.`,
+    okLabel: "Eliminar",
+    okColor: "negative",
+  });
+  if (!confirmed) return;
+
+  try {
+    const res = await store.deletePeriod({ companyId: cid, period });
+    $q.notify({
+      type: "positive",
+      message: `Período ${period} eliminado`,
+      caption: `Liquidaciones eliminadas: ${res?.deleted ?? 0}`,
+      icon: "delete",
+      position: "top",
+    });
+    if (periodSelected.value === period) {
+      goToPeriods();
+    }
+    await reload();
+  } catch {
+    $q.notify({ type: "negative", message: store.error || "Error al eliminar período", icon: "error", position: "top" });
+  }
+}
+
 async function issueSelected() {
   if (selected.value.length === 0) return;
   const draftCount = selected.value.filter(r => r.status === "DRAFT").length;
@@ -409,6 +468,21 @@ function promptReason() {
       ok: { label: "Anular", color: "negative", unelevated: true },
       persistent: true,
     }).onOk(resolve).onCancel(() => resolve(""));
+  });
+}
+
+function confirmDialog({ title, message, okLabel = "Confirmar", okColor = "primary" }) {
+  return new Promise((resolve) => {
+    $q.dialog({
+      title,
+      message,
+      cancel: { label: "Cancelar", flat: true },
+      ok: { label: okLabel, color: okColor, unelevated: true },
+      persistent: true,
+    })
+      .onOk(() => resolve(true))
+      .onCancel(() => resolve(false))
+      .onDismiss(() => resolve(false));
   });
 }
 </script>

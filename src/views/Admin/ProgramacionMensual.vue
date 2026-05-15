@@ -19,20 +19,6 @@
                 icon="edit_note"
               >Borrador</q-chip>
             </div>
-            <div v-if="companyOptions.length > 1" class="col-12 col-md-4">
-              <q-select
-                v-model="companyId"
-                :options="companyOptions"
-                option-value="id"
-                option-label="name"
-                emit-value
-                map-options
-                label="Empresa"
-                dense
-                outlined
-              />
-            </div>
-
             <div class="col-12 col-md-4">
               <div class="rk-month-nav">
                 <q-btn flat dense round icon="chevron_left" @click="shiftMonth(-1)">
@@ -131,7 +117,7 @@
       <section v-if="!companyId" class="rk-module-panel q-mt-md">
         <div class="rk-module-panel__section text-center q-py-lg">
           <q-icon name="apartment" size="32px" class="text-grey-6" />
-          <p class="text-grey-7 q-mt-sm">Selecciona una empresa para ver su programación mensual.</p>
+          <p class="text-grey-7 q-mt-sm">No hay empresa activa. Selecciona una desde el menú superior.</p>
         </div>
       </section>
 
@@ -333,14 +319,12 @@ const companiesStore = useCompaniesStore()
 const planStore = useMonthlyPlanStore()
 const authStore = useAuthStore()
 
-const companyOptions = ref([])
 const companyId = ref(null)
 
 const today = new Date()
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth() + 1) // 1..12
 
-const isSuperadmin = computed(() => authStore.user?.role === 'superadmin')
 const canEdit = computed(() => ['superadmin', 'admin_rrhh'].includes(authStore.user?.role))
 
 /* ---------- Estado del store ---------- */
@@ -457,20 +441,12 @@ function toMinutes(hhmm) {
 }
 
 /* ---------- Carga ---------- */
+// Lee la empresa activa del JWT (la setea el CompanySwitcher del header).
+// Mantenemos fetchCompanies por si algún sub-componente lo necesita.
 async function loadCompanies() {
-  try {
-    await companiesStore.fetchCompanies()
-    companyOptions.value = (companiesStore.companies || []).map((c) => ({ id: c._id, name: c.name }))
-  } catch { companyOptions.value = [] }
-
-  const active = authStore.user?.company || null
-  if (active && companyOptions.value.some((c) => c.id === active)) {
-    companyId.value = active
-  } else if (companyOptions.value.length) {
-    companyId.value = companyOptions.value[0].id
-  } else {
-    companyId.value = active
-  }
+  try { await companiesStore.fetchCompanies() } catch { /* noop */ }
+  const u = authStore.user
+  companyId.value = u?.company?._id || u?.company || u?.companyId || null
 }
 
 async function refresh() {

@@ -6,16 +6,36 @@
         <div class="rk-control-group">
           <label class="rk-label">Período</label>
           <q-input
-            :model-value="periodInput"
-            @update:model-value="updatePeriod"
+            :model-value="periodDisplay"
+            readonly
             dense
             outlined
-            type="month"
-            class="rk-input"
+            class="rk-input rk-input-clickable"
           >
             <template #prepend>
               <q-icon name="calendar_today" size="18px" />
             </template>
+            <template #append>
+              <q-icon name="expand_more" size="18px" />
+            </template>
+            <q-popup-proxy
+              cover
+              transition-show="scale"
+              transition-hide="scale"
+            >
+              <q-date
+                :model-value="periodDatePicker"
+                @update:model-value="onPickPeriod"
+                default-view="Months"
+                emit-immediately
+                mask="YYYY-MM"
+                minimal
+              >
+                <div class="row items-center justify-end q-gutter-sm">
+                  <q-btn v-close-popup label="Cerrar" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
           </q-input>
         </div>
 
@@ -93,13 +113,28 @@
 
           <template #body-cell-actions="props">
             <q-td :props="props" class="text-right">
-              <q-btn
-                flat dense
-                color="primary"
-                icon="open_in_new"
-                label="Ver empleados"
-                @click="$emit('open-period', props.row.period)"
-              />
+              <div class="rk-row-actions">
+                <q-btn
+                  flat dense
+                  color="primary"
+                  icon="open_in_new"
+                  label="Ver empleados"
+                  @click="$emit('open-period', props.row.period)"
+                />
+                <q-btn
+                  flat dense
+                  color="negative"
+                  icon="delete"
+                  :disable="(props.row.issued || 0) > 0 || loading"
+                  @click="$emit('delete-period', props.row.period)"
+                >
+                  <q-tooltip>
+                    {{ (props.row.issued || 0) > 0
+                      ? 'No se puede eliminar: hay liquidaciones emitidas'
+                      : 'Eliminar período' }}
+                  </q-tooltip>
+                </q-btn>
+              </div>
             </q-td>
           </template>
 
@@ -124,13 +159,19 @@ import {
   normalizePeriodValue,
 } from "@/utils/payrollPeriod.js";
 
+function periodToDateMask(period) {
+  const normalized = normalizePeriodValue(period);
+  if (!isValidPeriodValue(normalized)) return "";
+  return normalized;
+}
+
 const props = defineProps({
   periodInput: { type: String, required: true },
   periodRows: { type: Array, required: true },
   loading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:periodInput', 'generate', 'open-period']);
+const emit = defineEmits(['update:periodInput', 'generate', 'open-period', 'delete-period']);
 
 const columns = [
   { name: "period", label: "Período", field: "period", sortable: true, align: "left" },
@@ -140,6 +181,14 @@ const columns = [
 ];
 
 const isValidPeriod = computed(() => isValidPeriodValue(props.periodInput));
+
+const periodDisplay = computed(() => formatPeriodLabel(props.periodInput) || "Selecciona un período");
+const periodDatePicker = computed(() => periodToDateMask(props.periodInput));
+
+function onPickPeriod(value) {
+  if (!value) return;
+  emit("update:periodInput", normalizePeriodValue(value));
+}
 
 const stats = computed(() => [
   { icon: "folder", color: "primary", value: props.periodRows.length, label: "Períodos" },
@@ -154,10 +203,6 @@ function countStatus(status) {
 
 function formatPeriod(period) {
   return formatPeriodLabel(period);
-}
-
-function updatePeriod(value) {
-  emit("update:periodInput", normalizePeriodValue(value));
 }
 
 function statusColor(status) {
@@ -219,6 +264,18 @@ function statusLabel(status) {
 .rk-input :deep(.q-field__control) {
   border-radius: 8px;
   min-height: 38px;
+}
+
+.rk-input-clickable :deep(.q-field__control),
+.rk-input-clickable :deep(.q-field__native) {
+  cursor: pointer;
+}
+
+.rk-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
 }
 
 .rk-generate-btn {

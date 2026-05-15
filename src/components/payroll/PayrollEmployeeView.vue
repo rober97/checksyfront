@@ -164,6 +164,18 @@
                   class="rk-action-btn"
                 />
 
+                <!-- DRAFT: secondary action is Eliminar -->
+                <q-btn
+                  v-if="props.row.status === 'DRAFT'"
+                  flat dense
+                  color="negative"
+                  icon="delete"
+                  :disable="loading"
+                  @click="$emit('delete-one', props.row)"
+                >
+                  <q-tooltip>Eliminar borrador</q-tooltip>
+                </q-btn>
+
                 <!-- ISSUED: primary action is Ver PDF -->
                 <q-btn
                   v-if="props.row.status === 'ISSUED'"
@@ -185,7 +197,19 @@
                   :disable="loading"
                   @click="$emit('void-one', props.row)"
                 >
-                  <q-tooltip>Anular liquidacion</q-tooltip>
+                  <q-tooltip>Anular liquidación</q-tooltip>
+                </q-btn>
+
+                <!-- VOID: allow delete -->
+                <q-btn
+                  v-if="props.row.status === 'VOID'"
+                  flat dense
+                  color="negative"
+                  icon="delete"
+                  :disable="loading"
+                  @click="$emit('delete-one', props.row)"
+                >
+                  <q-tooltip>Eliminar liquidación anulada</q-tooltip>
                 </q-btn>
 
                 <!-- Detail button for all -->
@@ -239,6 +263,7 @@ const emit = defineEmits([
   'open-detail',
   'issue-one',
   'void-one',
+  'delete-one',
   'open-pdf',
 ]);
 

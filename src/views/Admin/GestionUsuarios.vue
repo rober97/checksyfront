@@ -98,16 +98,6 @@
           <q-icon name="expand_more" size="14px" class="rk-select-arrow" />
         </div>
 
-        <!-- Empresa -->
-        <div class="rk-select-wrap rk-select-wide">
-          <q-icon name="business" size="14px" class="rk-select-icon" />
-          <select v-model="filters.company" class="rk-select" @change="onFilterInput">
-            <option value="">Todas las empresas</option>
-            <option v-for="e in empresas" :key="e.id" :value="e.id">{{ e.name }}</option>
-          </select>
-          <q-icon name="expand_more" size="14px" class="rk-select-arrow" />
-        </div>
-
         <div style="flex:1" />
 
         <!-- Acciones -->
@@ -365,7 +355,7 @@ const sortBy         = ref("createdAt");
 const sortDesc       = ref(true);
 const activeStatusFilter = ref("all");
 
-const filters = ref({ q: "", role: "", company: "" });
+const filters = ref({ q: "", role: "" });
 
 /* ── Datos ───────────────────────────────────────── */
 const empresas = ref([]);
@@ -417,17 +407,10 @@ const filteredRows = computed(() => {
       .some(s => String(s).toLowerCase().includes(q))
   );
 
-  // Rol
-  if (filters.value.role)
-    rows = rows.filter(r => r.role === filters.value.role || r.tipo === filters.value.role);
-
-  // Empresa (matchea contra company activa O cualquiera del array companies[])
-  if (filters.value.company) {
-    const target = String(filters.value.company)
-    rows = rows.filter(r => {
-      const ids = userCompanies(r).map(c => String(c.id))
-      return ids.includes(target)
-    })
+  // Rol (compara contra valor crudo o tipo legacy)
+  if (filters.value.role) {
+    const target = filters.value.role
+    rows = rows.filter(r => (r.role || r.tipo) === target)
   }
 
   // Ordenación
@@ -445,7 +428,7 @@ const filteredRows = computed(() => {
   return rows;
 });
 
-watch([() => filters.value.q, () => filters.value.role, () => filters.value.company, activeStatusFilter], () => {
+watch([() => filters.value.q, () => filters.value.role, activeStatusFilter], () => {
   currentPage.value = 1;
 });
 
@@ -559,9 +542,8 @@ const AVATAR_COLORS = ["#3d6fff","#0ea5e9","#06b6d4","#10b981","#f59e0b","#ef444
 const avatarColor = (name="") => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
 const roleOptions = [
-  { label: "Empleado",   value: "employee"   },
-  { label: "Supervisor", value: "supervisor" },
-  { label: "Empresa",    value: "company"    },
+  { label: "Empleado",     value: "employee"   },
+  { label: "Admin RR.HH.", value: "admin_rrhh" },
 ];
 
 /* ── Debounce ────────────────────────────────────── */
@@ -622,22 +604,15 @@ const eliminarUsuario = async (id) => {
   }
 };
 
-const exportExcel = () => {
+const exportExcel = async () => {
   try {
-    const data = filteredRows.value.map(u => ({
-      Nombre:            `${u.firstName||""} ${u.lastName||""}`.trim(),
-      Email:             u.email || "",
-      RUT:               u.rut   || "",
-      Rol:               roleNice(u.role || u.tipo),
-      Estado:            statusNice(u.status),
-      Empresa:           userCompanies(u).map(c => c.name).join(', '),
-      "Último acceso":   u.lastLogin ? new Date(u.lastLogin) : "",
-    }));
-    const ws = XLSX.utils.json_to_sheet(data, { cellDates: true });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Usuarios");
-    XLSX.writeFile(wb, `usuarios_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  } catch {
+    await userStore.exportUsersExcel({
+      q: filters.value.q || undefined,
+      role: filters.value.role || undefined,
+    });
+    $q.notify({ type: "positive", message: "Exportación iniciada", position: "top-right" });
+  } catch (e) {
+    console.error("[exportExcel] error:", e);
     $q.notify({ type: "negative", message: "No se pudo exportar a Excel" });
   }
 };
@@ -853,6 +828,11 @@ onBeforeUnmount(() => {
   border:none; background:transparent; outline:none;
   font-size:13px; color:var(--c-text); font-family:var(--ff-body);
   flex:1; min-width:0; cursor:pointer; appearance:none;
+}
+/* Asegura legibilidad del popup nativo en modo oscuro. */
+.rk-select option {
+  background:var(--c-surface);
+  color:var(--c-text);
 }
 
 /* Botones toolbar */

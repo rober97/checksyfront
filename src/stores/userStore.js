@@ -137,6 +137,27 @@ export const useUserStore = defineStore('user', {
       }
     },
 
+    async exportUsersExcel({ q, role } = {}) {
+      const params = {}
+      if (q) params.q = q
+      if (role) params.role = role
+      const res = await secureAxios.get(`${API_URL}/users/export`, {
+        params,
+        responseType: 'blob',
+      })
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `usuarios_${new Date().toISOString().slice(0, 10)}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    },
+
     async fetchUserById(id) {
       try {
         this.loading = true

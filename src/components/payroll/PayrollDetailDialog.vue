@@ -134,6 +134,14 @@
           label="Anular"
           @click="$emit('void', current)"
         />
+        <q-btn
+          v-if="current && current.status !== 'ISSUED'"
+          flat
+          color="negative"
+          icon="delete"
+          label="Eliminar"
+          @click="$emit('delete', current)"
+        />
         <q-btn flat label="Cerrar" @click="$emit('update:modelValue', false)" />
       </q-card-actions>
     </q-card>
@@ -149,7 +157,7 @@ defineProps({
   periodSelected: { type: String, default: "" },
 });
 
-defineEmits(["update:modelValue", "issue", "void", "open-pdf"]);
+defineEmits(["update:modelValue", "issue", "void", "delete", "open-pdf"]);
 
 function getInitials(name) {
   if (!name) return "?";

@@ -314,6 +314,45 @@ export const usePayrollStore = defineStore("payroll", {
       }
     },
 
+    async deletePayslip({ payslipId }) {
+      if (!payslipId) throw new Error("payslipId requerido");
+
+      this._startLoading();
+      this.error = "";
+      try {
+        const { data } = await secureAxios.delete(`${baseUrl}/${payslipId}`);
+        this.payslips = this.payslips.filter(
+          (row) => row.id !== payslipId && row._id !== payslipId
+        );
+        return data;
+      } catch (error) {
+        this._setError(error, "Error eliminando liquidación");
+        throw error;
+      } finally {
+        this._stopLoading();
+      }
+    },
+
+    async deletePeriod({ companyId, period }) {
+      if (!companyId) throw new Error("companyId requerido");
+      if (!period) throw new Error("period requerido");
+
+      this._startLoading();
+      this.error = "";
+      try {
+        const { data } = await secureAxios.delete(`${baseUrl}/periods/${period}`, {
+          params: toQuery({ companyId }),
+        });
+        this.periods = this.periods.filter((row) => row.period !== period);
+        return data;
+      } catch (error) {
+        this._setError(error, "Error eliminando período");
+        throw error;
+      } finally {
+        this._stopLoading();
+      }
+    },
+
     async getPdfUrl({ payslipId }) {
       if (!payslipId) throw new Error("payslipId requerido");
 

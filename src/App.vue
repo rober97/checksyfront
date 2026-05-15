@@ -7,4 +7,8 @@
 </template>
 
 <script setup>
+import { useCompanyTheme } from '@/composables/useCompanyTheme'
+
+// Tinte global del accent según la empresa activa.
+useCompanyTheme()
 </script>

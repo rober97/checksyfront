@@ -65,7 +65,7 @@
 
           <q-btn
             :disable="!selection.length"
-            unelevated
+            outline
             dense
             icon="task_alt"
             :label="`Aprobar${selection.length ? ` (${selection.length})` : ''}`"
@@ -79,7 +79,7 @@
 
           <q-btn
             :disable="!selection.length"
-            unelevated
+            outline
             dense
             icon="block"
             :label="`Rechazar${selection.length ? ` (${selection.length})` : ''}`"
@@ -236,15 +236,17 @@
 
     <!-- ===== Métricas Visuales ===== -->
     <div class="rk-metrics-row q-mb-lg">
-      <q-card 
-        v-for="metric in metrics" 
+      <q-card
+        v-for="metric in metrics"
         :key="metric.label"
-        class="rk-metric-card text-white cursor-pointer"
+        class="rk-metric-card cursor-pointer"
         :class="metric.cardClass"
         @click="filterByMetric(metric)"
       >
         <q-card-section class="rk-metric-card__inner">
-          <q-icon :name="metric.icon" size="28px" class="rk-metric-card__icon" />
+          <div class="rk-metric-card__icon">
+            <q-icon :name="metric.icon" size="22px" />
+          </div>
           <div class="rk-metric-card__data">
             <div class="rk-metric-card__value">{{ metric.value }}</div>
             <div class="rk-metric-card__label">{{ metric.label }}</div>
@@ -1166,53 +1168,56 @@ onMounted(async () => {
   gap: 14px;
 }
 
-.bg-primary-gradient {
-  background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%);
-}
-.bg-orange-gradient {
-  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-}
-.bg-positive-gradient {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-}
-.bg-negative-gradient {
-  background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
-}
+/* Acento por métrica: define color principal y tono de fondo del icono.
+   El fondo del card se mantiene neutro (rk-surface) para no saturar la UI. */
+.bg-primary-gradient  { --metric-c: #0891b2; --metric-cl: rgba(8, 145, 178, 0.10); }
+.bg-orange-gradient   { --metric-c: #d97706; --metric-cl: rgba(217, 119, 6, 0.10); }
+.bg-positive-gradient { --metric-c: #059669; --metric-cl: rgba(5, 150, 105, 0.10); }
+.bg-negative-gradient { --metric-c: #dc2626; --metric-cl: rgba(220, 38, 38, 0.10); }
 
 .rk-metric-card {
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
   border-radius: var(--rk-radius-sm);
   box-shadow: var(--rk-shadow-xs);
-  transition: transform var(--rk-transition), box-shadow var(--rk-transition);
+  transition: transform var(--rk-transition), box-shadow var(--rk-transition), border-color var(--rk-transition);
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--rk-text);
 }
 
-.rk-metric-card::after {
+.rk-metric-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.25);
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--metric-c);
+  opacity: 0.85;
 }
 
 .rk-metric-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--rk-shadow-md);
+  border-color: color-mix(in srgb, var(--metric-c) 35%, var(--rk-border));
 }
 
 .rk-metric-card__inner {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 20px !important;
+  padding: 16px 18px !important;
 }
 
 .rk-metric-card__icon {
-  opacity: 0.85;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--metric-cl);
+  color: var(--metric-c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rk-metric-card__data {
@@ -1220,17 +1225,20 @@ onMounted(async () => {
 }
 
 .rk-metric-card__value {
-  font-size: 1.6rem;
-  font-weight: 800;
+  font-size: 1.55rem;
+  font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
+  color: var(--rk-text);
 }
 
 .rk-metric-card__label {
-  font-size: 0.75rem;
-  opacity: 0.85;
-  letter-spacing: 0.02em;
-  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  color: var(--rk-text-muted);
 }
 
 /* ══════════════════════════════════════════════════
