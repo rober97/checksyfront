@@ -232,18 +232,37 @@ async function onPick(c) {
 }
 
 .rk-pill-chevron {
-  font-size: 16px;
-  opacity: 0.45;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 18px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.08);
+  color: rgba(15, 23, 42, 0.75);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   margin-right: 2px;
 }
 
-.rk-pill-trigger.is-clickable:hover .rk-pill-chevron,
-.rk-pill-trigger.is-open .rk-pill-chevron {
-  opacity: 0.85;
+.body--dark .rk-pill-chevron {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.rk-pill-trigger.is-clickable:hover .rk-pill-chevron {
+  background: rgba(15, 23, 42, 0.14);
+  color: rgba(15, 23, 42, 0.95);
+}
+
+.body--dark .rk-pill-trigger.is-clickable:hover .rk-pill-chevron {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
 .rk-pill-trigger.is-open .rk-pill-chevron {
+  background: var(--color-primary, #06b6d4);
+  color: #ffffff;
   transform: rotate(180deg);
 }
 

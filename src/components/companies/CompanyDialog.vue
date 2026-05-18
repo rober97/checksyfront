@@ -141,6 +141,13 @@
                 </div>
               </q-tab-panel>
 
+              <q-tab-panel v-if="isEdit" name="mutual" class="cd-tab-panel">
+                <CompanyMutualTab
+                  v-model="form.mutual"
+                  @validity="v => valid.mutual = v"
+                />
+              </q-tab-panel>
+
               <q-tab-panel name="politica" class="cd-tab-panel">
                 <CompanyTimeOffTab
                   v-model="form.timeOffPolicy"
@@ -158,6 +165,8 @@
                   v-model:logo="form.logo"
                   v-model:file="logoFile"
                   v-model:preview="logoPreview"
+                  v-model:brand-color="form.brandColor"
+                  :company-name="form.name"
                   @validity="v => valid.logo = v"
                 />
               </q-tab-panel>
@@ -211,6 +220,7 @@ import CompanyTimeOffTab  from './tabs/CompanyTimeOffTab.vue'
 import CompanyHolidaysTab from './tabs/CompanyHolidaysTab.vue'
 import CompanyLogoTab     from './tabs/CompanyLogoTab.vue'
 import CompanyPayrollTab  from './tabs/CompanyPayrollTab.vue'
+import CompanyMutualTab   from './tabs/CompanyMutualTab.vue'
 import CompanyConceptsTab from './tabs/CompanyConceptsTab.vue'
 
 const props = defineProps({ modelValue: { type: Boolean, required: true }, editData: { type: Object, default: null } })
@@ -231,6 +241,7 @@ const logoPreview = ref('')
 const ALL_STEPS = [
   { value:'basicos',   label:'Empresa',    desc:'Datos legales',      icon:'business',         hint:'Nombre, RUT y datos de contacto de la empresa' },
   { value:'payroll',   label:'Nómina',     desc:'Pagos y ciclos',     icon:'payments',         hint:'Frecuencia de pago, corte y ejecución de nóminas' },
+  { value:'mutual',    label:'Mutual',     desc:'Ley 16.744',         icon:'health_and_safety',hint:'Afiliación a mutualidad y tasa adicional ATEP', editOnly: true },
   { value:'politica',  label:'Vacaciones', desc:'Política de días',   icon:'beach_access',     hint:'Reglas de acumulación, traslado y tope de días' },
   { value:'feriados',  label:'Feriados',   desc:'Días no laborables', icon:'event_busy',       hint:'Días feriados para calcular días hábiles correctamente' },
   { value:'logo',      label:'Logo',       desc:'Imagen corporativa', icon:'image',            hint:'Imagen que aparecerá en liquidaciones y documentos' },
@@ -240,7 +251,7 @@ const ALL_STEPS = [
 const visibleSteps = computed(() => ALL_STEPS.filter(s => !s.editOnly || isEdit.value))
 const currentStep  = computed(() => ALL_STEPS.find(s => s.value === tab.value))
 
-const valid    = ref({ basicos: false, payroll: true, politica: true, feriados: true, logo: true })
+const valid    = ref({ basicos: false, payroll: true, mutual: true, politica: true, feriados: true, logo: true })
 const validAll = computed(() => Object.values(valid.value).every(Boolean))
 
 const formProgress = computed(() => {
@@ -260,6 +271,7 @@ const isStepDone = (name) => {
   return ({
     basicos:   !!(f.name && f.rut),
     payroll:   !!(f.payrollConfig?.frequency && f.payrollConfig?.cutoffDay),
+    mutual:    !!(f.mutual?.entityId),
     politica:  !!(f.timeOffPolicy?.vacation?.accrual?.mode),
     feriados:  f.holidays?.length > 0,
     logo:      !!(f.logo || logoFile.value),
@@ -275,7 +287,8 @@ const autoPublicaSinPlantilla = computed(() =>
 
 const defaultTimeOff = () => ({ vacation: { accrual: { mode:'DAILY', perYearDays:15, perMonthDays:null, accrueOnBusinessDays:true, startAfterDays:0, prorateFromStartDate:true }, carryOver: { enabled:true, maxCarry:5, resetMonth:1, resetDay:1 }, cap: { enabled:true, maxDays:30 } }, policyVersion:1 })
 const defaultPayroll = () => ({ frequency:'monthly', cutoffDay:25, paydayRule:'last_business_day', paydayDayOfMonth:5, businessDayAdjust:'previous', generateTime:'20:00', timezone:'America/Santiago', autoPublish:true, notifyOnPublish:true, templateId:'', rounding:'0', lastRunAt:null, nextRunAt:null })
-const defaultForm    = () => ({ name:'', rut:'', email:'', phone:'', address:'', status:'active', logo:'', timeOffPolicy:defaultTimeOff(), payrollConfig:defaultPayroll(), holidays:[] })
+const defaultMutual  = () => ({ entityId: null, additionalRate: 0, resolucionSuseso: '', lastUpdate: null })
+const defaultForm    = () => ({ name:'', rut:'', email:'', phone:'', address:'', status:'active', logo:'', brandColor:'', timeOffPolicy:defaultTimeOff(), payrollConfig:defaultPayroll(), mutual:defaultMutual(), holidays:[] })
 
 const form = ref(defaultForm())
 
@@ -287,12 +300,12 @@ watch(() => visible.value, v => {
   if (!v) return
   tab.value = 'basicos'
   if (props.editData) {
-    form.value = { name:props.editData.name||'', rut:props.editData.rut||'', email:props.editData.email||'', phone:props.editData.phone||'', address:props.editData.address||'', status:props.editData.status||'active', logo:props.editData.logo||'', timeOffPolicy:props.editData.timeOffPolicy||defaultTimeOff(), payrollConfig:props.editData.payrollConfig||defaultPayroll(), holidays:Array.isArray(props.editData.holidays)?props.editData.holidays:[] }
+    form.value = { name:props.editData.name||'', rut:props.editData.rut||'', email:props.editData.email||'', phone:props.editData.phone||'', address:props.editData.address||'', status:props.editData.status||'active', logo:props.editData.logo||'', brandColor:props.editData.brandColor||'', timeOffPolicy:props.editData.timeOffPolicy||defaultTimeOff(), payrollConfig:props.editData.payrollConfig||defaultPayroll(), mutual: props.editData.mutual || defaultMutual(), holidays:Array.isArray(props.editData.holidays)?props.editData.holidays:[] }
     logoPreview.value = props.editData.logo||''
   } else {
     form.value = defaultForm(); logoFile.value=null; logoPreview.value=''
   }
-  valid.value = { basicos:false, payroll:true, politica:true, feriados:true, logo:true }
+  valid.value = { basicos:false, payroll:true, mutual: !isEdit.value, politica:true, feriados:true, logo:true }
   snap()
 })
 

@@ -27,6 +27,7 @@ export const usePayrollCatalogStore = defineStore("payrollCatalog", {
     // Catálogo global
     afps: [],
     health: [],
+    mutuals: [],
 
     // Estado
     error: null,
@@ -40,11 +41,13 @@ export const usePayrollCatalogStore = defineStore("payrollCatalog", {
     // Aliases (por si después lo consumes distinto)
     afpOptions: (s) => s.afps,
     healthOptions: (s) => s.health,
+    mutualOptions: (s) => s.mutuals,
 
     isReady: (s) => (s.afps?.length || 0) > 0 && (s.health?.length || 0) > 0,
 
     getAfpById: (s) => (id) => s.afps.find((x) => x._id === id),
     getHealthById: (s) => (id) => s.health.find((x) => x._id === id),
+    getMutualById: (s) => (id) => s.mutuals.find((x) => x._id === id),
     getHealthMetaById: (s) => (id) => s.health.find((x) => x._id === id)?.meta || null,
     getHealthSlugById: (s) => (id) => String(s.health.find((x) => x._id === id)?.slug || "").toUpperCase(),
   },
@@ -78,19 +81,22 @@ export const usePayrollCatalogStore = defineStore("payrollCatalog", {
       this.error = null;
 
       try {
-        const [afps, health] = await Promise.all([
+        const [afps, health, mutuals] = await Promise.all([
           this.fetchEntitiesByType({ type: "AFP", active: true }),
           this.fetchEntitiesByType({ type: "HEALTH", active: true }),
+          this.fetchEntitiesByType({ type: "MUTUAL", active: true }),
         ]);
 
         this.afps = afps;
         this.health = health;
+        this.mutuals = mutuals;
         this.loadedAt = Date.now();
       } catch (err) {
         console.error("[payrollCatalog.fetchAll] error:", err);
         this.error = err?.message || "Error loading payroll catalog";
         this.afps = [];
         this.health = [];
+        this.mutuals = [];
         this.loadedAt = null;
         throw err;
       } finally {
@@ -101,6 +107,7 @@ export const usePayrollCatalogStore = defineStore("payrollCatalog", {
     clear() {
       this.afps = [];
       this.health = [];
+      this.mutuals = [];
       this.error = null;
       this.loading = false;
       this.loadedAt = null;

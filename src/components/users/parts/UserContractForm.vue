@@ -192,20 +192,30 @@
             />
           </div>
 
-          <div class="col-12 col-sm-6 col-lg-4">
-            <q-input
-              v-model.number="local.cargasFamiliares"
-              type="number"
-              min="0"
-              step="1"
-              label="Cargas familiares"
-              dense
-              outlined
-              class="rk-field"
-              :rules="[nroEntero0]"
-            />
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== Cargas familiares ===== -->
+    <div class="col-12">
+      <section class="rk-form-section">
+        <div class="rk-form-section__header">
+          <div class="rk-form-section__icon rk-form-section__icon--mint">
+            <q-icon name="family_restroom" />
+          </div>
+          <div>
+            <div class="rk-form-section__title">Cargas familiares</div>
+            <div class="rk-form-section__subtitle">
+              Causantes acreditados ante la Caja de Compensación o IPS. El tramo se calcula automáticamente.
+            </div>
           </div>
         </div>
+
+        <UserCargasForm
+          v-model="local.cargasFamiliares"
+          :can-upload-doc="canUploadDoc"
+          @upload-doc="(e) => emit('upload-cargaDoc', e)"
+        />
       </section>
     </div>
 
@@ -344,7 +354,8 @@
 <script setup>
 import { reactive, watch, computed } from "vue";
 import { normalizeMoney, normalizeDecimal, formatMoney } from "@/utils/format";
-import { req, reqNumber, nroEntero0, fechaPasada } from "@/utils/validators";
+import { req, reqNumber, fechaPasada } from "@/utils/validators";
+import UserCargasForm from "./UserCargasForm.vue";
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -354,9 +365,12 @@ const props = defineProps({
   afpOptions: { type: Array, default: () => [] },     // [{_id, displayName, slug, meta}]
   healthOptions: { type: Array, default: () => [] },  // [{_id, displayName, slug, meta}]
   healthSelectedMeta: { type: Object, default: null },// meta del seleccionado (requiresUf, etc.)
+
+  // habilita la subida de PDF de cargas (sólo en modo edición)
+  canUploadDoc: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "upload-cargaDoc"]);
 
 /* ✅ Listas “estables” (si mañana quieres, las haces dinámicas igual) */
 const contractTypes = [
@@ -407,12 +421,17 @@ const healthSelectOptions = computed(() =>
 
 const requiresUf = computed(() => !!props.healthSelectedMeta?.requiresUf);
 
-/* ✅ local model */
-const local = reactive({ ...props.modelValue });
+/* ✅ local model — normaliza cargasFamiliares a array siempre */
+function normalizeIncoming(v = {}) {
+  const out = { ...v }
+  if (!Array.isArray(out.cargasFamiliares)) out.cargasFamiliares = []
+  return out
+}
+const local = reactive(normalizeIncoming(props.modelValue));
 
 watch(
   () => props.modelValue,
-  (v) => Object.assign(local, v)
+  (v) => Object.assign(local, normalizeIncoming(v))
 );
 
 watch(

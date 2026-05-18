@@ -122,7 +122,8 @@
         <div class="rk-kpi" v-if="isEmployee">
           <div class="rk-kpi-label">Cargas</div>
           <div class="rk-kpi-value">
-            {{ Number(form.payroll.cargasFamiliares || 0) }}
+            {{ cargasCount }}
+            <span v-if="cargasCount > 0" class="rk-kpi-sub">activa{{ cargasCount === 1 ? '' : 's' }}</span>
           </div>
         </div>
 
@@ -214,6 +215,11 @@ const empresaLabel = computed(() => {
 const isEmployee = computed(() => form.tipo === 'empleado')
 const afpDisplay = computed(() => form?.payroll?.afp || form?.payroll?.afpEntityId || '')
 const healthDisplay = computed(() => form?.payroll?.saludSistema || form?.payroll?.healthEntityId || '')
+const cargasCount = computed(() => {
+  const arr = form?.payroll?.cargasFamiliares
+  if (!Array.isArray(arr)) return 0
+  return arr.filter(c => c?.active !== false).length
+})
 
 /* Nombre bonito del contrato */
 const contractNice = computed(() => {
@@ -232,7 +238,7 @@ const completeness = computed(() => {
   const reqCompany = ['empresa']
   // La asignación de plantilla es opcional al crear el empleado:
   // se puede dejar para Programación mensual o asignar luego desde la ficha.
-  const reqEmp = form.tipo === 'empleado' ? ['rut'] : []
+  const reqEmp = form.tipo === 'empleado' ? ['rut', 'personalEmail'] : []
   const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afpEntityId', 'payroll.healthEntityId']
 
   const required = [...reqBase, ...reqCompany, ...reqEmp, ...reqPayroll]
@@ -257,6 +263,7 @@ function humanizeField(f) {
     firstName: 'Nombre',
     lastName: 'Apellido',
     email: 'Correo',
+    personalEmail: 'Correo personal',
     password: 'Contraseña',
     tipo: 'Tipo de usuario',
     empresa: 'Empresa',
@@ -353,6 +360,12 @@ function copy(text) {
   line-height: 1.25;
   color: var(--rk-text);
   margin-top: 2px;
+}
+.rk-kpi-sub {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--rk-text-3);
+  margin-left: 4px;
 }
 
 /* hint compacta (Isapre / exención) */

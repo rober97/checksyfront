@@ -85,7 +85,7 @@
           <div class="rk-input-wrap">
             <q-input
               v-model="local.email"
-              label="Correo electrónico"
+              label="Correo electrónico (acceso al sistema)"
               type="email"
               dense
               outlined
@@ -97,6 +97,26 @@
             >
               <template #prepend>
                 <q-icon name="email" class="rk-input-icon" />
+              </template>
+            </q-input>
+          </div>
+
+          <div class="rk-input-wrap" v-if="local.tipo === 'empleado'">
+            <q-input
+              v-model="local.personalEmail"
+              label="Correo personal (NO corporativo) *"
+              type="email"
+              dense
+              outlined
+              clearable
+              :rules="personalEmailRules"
+              autocomplete="email"
+              hint="Res. Ex. N°38/2024 DT — recibe comprobantes de marca fuera del control del empleador"
+              @blur="local.personalEmail = (local.personalEmail || '').trim().toLowerCase()"
+              class="rk-input"
+            >
+              <template #prepend>
+                <q-icon name="alternate_email" class="rk-input-icon" />
               </template>
             </q-input>
           </div>
@@ -378,6 +398,7 @@ const EMPTY = () => ({
   firstName: '',
   lastName: '',
   email: '',
+  personalEmail: '',
   tipo: 'empleado',
   empresa: null,
   empresas: [],
@@ -395,6 +416,7 @@ const clean = (v = {}) => {
   x.firstName = s.firstName ?? ''
   x.lastName  = s.lastName  ?? ''
   x.email     = s.email     ?? ''
+  x.personalEmail = s.personalEmail ?? ''
   x.tipo      = s.tipo      ?? 'empleado'
   x.empresa   = s.empresa   ?? null
   x.empresas  = Array.isArray(s.empresas) ? s.empresas.slice() : []
@@ -433,6 +455,12 @@ const rutRule = (value) => {
   try { return validarRUT(value) || 'RUT inválido' } catch { return true }
 }
 const rutRules = computed(() => [req, rutRule])
+
+/* personalEmail: obligatorio solo si es empleado, además del formato */
+const personalEmailRules = computed(() => {
+  if (local.tipo !== 'empleado') return []
+  return [req, emailRule]
+})
 
 /* Sincronización Padre -> Hijo */
 watch(

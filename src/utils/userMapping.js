@@ -15,6 +15,7 @@ export function mapFromApi(u = {}) {
         firstName: u.firstName || "",
         lastName: u.lastName || "",
         email: u.email || "",
+        personalEmail: u.personalEmail || "",
         password: "", // no se edita aquí
         tipo: mapApiRoleToUI(u.role),
         empresa: u.company?._id || u.company || null,
@@ -43,7 +44,9 @@ export function mapFromApi(u = {}) {
             isaprePlan: u.payroll?.isaprePlan || "",
             isapreUf: u.payroll?.isapreUf ?? 0,
             apv: u.payroll?.apv ?? 0,
-            cargasFamiliares: u.payroll?.cargasFamiliares ?? 0,
+            cargasFamiliares: Array.isArray(u.payroll?.cargasFamiliares) ? u.payroll.cargasFamiliares : [],
+            incomeTaxApplies: u.payroll?.incomeTaxApplies !== false,
+            incomeTaxNote: u.payroll?.incomeTaxNote || "",
             banco: u.payroll?.banco || "",
             tipoCuenta: u.payroll?.tipoCuenta || "",
             numeroCuenta: u.payroll?.numeroCuenta || "",

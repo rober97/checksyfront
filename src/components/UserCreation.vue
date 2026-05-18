@@ -228,6 +228,8 @@
                           form.payroll.healthEntityId,
                         )
                       "
+                      :can-upload-doc="isEditMode"
+                      @upload-cargaDoc="onCargaUpload"
                     />
 
                     <div v-if="catalogError" class="rk-catalog-error">
@@ -404,6 +406,7 @@ import { useQuasar } from "quasar";
 import { useUserStore } from "@/stores/userStore";
 import { useCompaniesStore } from "@/stores/companies";
 import { usePayrollCatalogStore } from "@/stores/payrollCatalogStore";
+import { useDocumentStore } from "@/stores/documentStore";
 
 import { validarRUT } from "@/utils/validators";
 import { normalizeMoney, normalizeDecimal } from "@/utils/format";
@@ -423,6 +426,7 @@ const toast = useToast();
 const userStore = useUserStore();
 const companiesStore = useCompaniesStore();
 const payrollCatalogStore = usePayrollCatalogStore();
+const documentStore = useDocumentStore();
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -571,6 +575,61 @@ watch(
 function onBasicsPatch(patch) {
   if (!patch || typeof patch !== "object") return;
   Object.assign(form.value, patch);
+}
+
+// Solicitud de subir PDF de resolución para una carga familiar.
+// Disponible solo en modo edición porque necesita el userId para asociar el documento.
+async function onCargaUpload({ index, carga }) {
+  if (!isEditMode.value || !props.userId) {
+    toast.info("Guarda el usuario antes de adjuntar el PDF de la resolución.");
+    return;
+  }
+
+  // Si ya tiene documentId, abre el PDF (URL firmada del módulo documents)
+  if (carga.documentId) {
+    try {
+      const url = await documentStore.getSignedUrl(carga.documentId);
+      if (url) window.open(url, "_blank");
+    } catch {
+      toast.error("No se pudo abrir el documento");
+    }
+    return;
+  }
+
+  // Crea un input file invisible y dispara el picker
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "application/pdf,image/*";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const docName = `Resolución carga ${carga.fullName || "—"}`;
+      const item = await documentStore.uploadOne({
+        employeeId: props.userId,
+        name: docName,
+        type: "certificate",
+        period: "",
+        file,
+      });
+      if (item?._id) {
+        // Asigna el documentId a la carga
+        const cargas = form.value.payroll?.cargasFamiliares || [];
+        if (cargas[index]) {
+          cargas[index].documentId = item._id;
+          // Persistir el cambio
+          await userStore.updateUser({
+            id: props.userId,
+            patch: { payroll: { cargasFamiliares: cargas } },
+          });
+          toast.success("Resolución adjuntada correctamente");
+        }
+      }
+    } catch (e) {
+      toast.error(e?.message || "No se pudo subir el documento");
+    }
+  };
+  input.click();
 }
 
 async function loadEmpresasRaw() {
@@ -735,6 +794,12 @@ async function submitForm() {
       return;
     }
 
+    if (!form.value.personalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.personalEmail)) {
+      toast.error("El correo personal es obligatorio (Res. Ex. 38/2024 DT).");
+      tab.value = "basicos";
+      return;
+    }
+
     // ✅ validación dinámica: si catálogo no cargó, no sigas
     if (!payrollCatalogStore.isReady) {
       toast.error("Catálogo de nómina no disponible. Reintenta.");
@@ -875,6 +940,7 @@ function mapPayload(f) {
     firstName: f.firstName?.trim() || "",
     lastName: f.lastName?.trim() || "",
     email: f.email?.trim().toLowerCase() || "",
+    personalEmail: f.tipo === "empleado" ? (f.personalEmail?.trim().toLowerCase() || "") : "",
     password: f.password || "",
     rut: f.tipo === "empleado" ? f.rut : null,
     role: f.tipo,
@@ -904,7 +970,9 @@ function mapPayload(f) {
       isaprePlan: f.payroll?.isaprePlan || null,
       isapreUf: Number(normalizeDecimal(f.payroll?.isapreUf || 0)),
       apv: normalizeMoney(f.payroll?.apv || 0),
-      cargasFamiliares: Number(f.payroll?.cargasFamiliares || 0),
+      cargasFamiliares: Array.isArray(f.payroll?.cargasFamiliares)
+        ? f.payroll.cargasFamiliares
+        : [],
       incomeTaxApplies: f.payroll?.incomeTaxApplies !== false,
       incomeTaxNote: f.payroll?.incomeTaxNote?.trim() || "",
       banco: f.payroll?.banco || "",
@@ -942,6 +1010,7 @@ function getEmptyForm() {
     firstName: "",
     lastName: "",
     email: "",
+    personalEmail: "",
     password: "",
     tipo: "empleado",
     empresa: null,
@@ -965,7 +1034,7 @@ function getEmptyForm() {
       isaprePlan: "",
       isapreUf: 0,
       apv: 0,
-      cargasFamiliares: 0,
+      cargasFamiliares: [],
       incomeTaxApplies: true,
       incomeTaxNote: "",
       banco: "",

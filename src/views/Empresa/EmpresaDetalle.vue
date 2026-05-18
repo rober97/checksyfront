@@ -326,6 +326,12 @@ async function onDialogSaved() {
   try {
     const c = await loadCompanyById(empresa.value._id)
     if (c) empresa.value = c
+    // Refresca el user del authStore para que el tinte global (useCompanyTheme)
+    // y el avatar del header reaccionen al nuevo brandColor sin necesidad de
+    // re-login ni reload completo de la página.
+    if (String(auth.user?.company?._id || auth.user?.company || '') === String(empresa.value._id)) {
+      auth.fetchMe?.().catch(() => {})
+    }
     $q.notify({ type: 'positive', message: 'Empresa actualizada' })
   } catch (err) {
     console.error('[EmpresaDetalle] reload error:', err)
