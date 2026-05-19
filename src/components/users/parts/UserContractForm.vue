@@ -86,6 +86,136 @@
               </template>
             </q-input>
           </div>
+
+          <!-- Fecha de término — solo si plazo fijo u obra/faena -->
+          <div v-if="requiresEndDate" class="col-12 col-sm-6 col-lg-3">
+            <q-input
+              v-model="local.endDate"
+              label="Fecha de término *"
+              dense outlined readonly
+              class="rk-field"
+              :rules="endDateRules"
+              placeholder="YYYY-MM-DD"
+              hint="Obligatoria para plazo fijo / obra-faena"
+            >
+              <template #prepend><q-icon name="event_busy" /></template>
+              <template #append>
+                <q-icon name="calendar_month" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-date v-model="local.endDate" mask="YYYY-MM-DD" minimal color="primary" />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+          </div>
+
+          <div class="col-12 col-sm-6 col-lg-3">
+            <q-select
+              v-model="local.jornadaArt"
+              :options="jornadaArtOptions"
+              label="Modalidad de jornada"
+              dense outlined
+              emit-value map-options
+              class="rk-field"
+              hint="Art. 22 / Art. 38 Cód. del Trabajo"
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== Cargo y lugar de trabajo (Art. 10 N°2 y N°3) ===== -->
+    <div class="col-12">
+      <section class="rk-form-section">
+        <div class="rk-form-section__header">
+          <div class="rk-form-section__icon">
+            <q-icon name="work_outline" />
+          </div>
+          <div>
+            <div class="rk-form-section__title">Cargo y lugar de trabajo</div>
+            <div class="rk-form-section__subtitle">
+              Art. 10 N°2 y N°3 — debe quedar literal en el contrato individual.
+            </div>
+          </div>
+        </div>
+
+        <div class="row q-col-gutter-sm">
+          <div class="col-12 col-sm-6">
+            <q-input
+              v-model="local.cargo"
+              label="Cargo *"
+              dense outlined clearable
+              class="rk-field"
+              placeholder="Ej: Asistente administrativo"
+              :rules="[req]"
+            >
+              <template #prepend><q-icon name="badge" /></template>
+            </q-input>
+          </div>
+
+          <div class="col-12">
+            <q-input
+              v-model="local.funciones"
+              type="textarea"
+              label="Funciones específicas *"
+              dense outlined
+              class="rk-field"
+              autogrow
+              rows="2"
+              placeholder="Describe las tareas principales que realizará el trabajador"
+              :rules="[req]"
+              hint="Sin esto el contrato puede ser objetado por la DT"
+            >
+              <template #prepend><q-icon name="assignment" /></template>
+            </q-input>
+          </div>
+
+          <div class="col-12">
+            <q-input
+              v-model="local.lugarTrabajo.line1"
+              label="Lugar de trabajo / faena *"
+              dense outlined clearable
+              class="rk-field"
+              placeholder="Calle y número de la sede donde prestará servicios"
+              :rules="[req]"
+              hint="Distinto del domicilio del trabajador"
+            >
+              <template #prepend><q-icon name="apartment" /></template>
+            </q-input>
+          </div>
+
+          <div class="col-12 col-sm-4">
+            <q-input
+              v-model="local.lugarTrabajo.commune"
+              label="Comuna"
+              dense outlined clearable
+              class="rk-field"
+            >
+              <template #prepend><q-icon name="location_city" /></template>
+            </q-input>
+          </div>
+
+          <div class="col-12 col-sm-4">
+            <q-input
+              v-model="local.lugarTrabajo.city"
+              label="Ciudad"
+              dense outlined clearable
+              class="rk-field"
+            >
+              <template #prepend><q-icon name="map" /></template>
+            </q-input>
+          </div>
+
+          <div class="col-12 col-sm-4">
+            <q-input
+              v-model="local.lugarTrabajo.region"
+              label="Región"
+              dense outlined clearable
+              class="rk-field"
+            >
+              <template #prepend><q-icon name="public" /></template>
+            </q-input>
+          </div>
         </div>
       </section>
     </div>
@@ -378,6 +508,7 @@ const contractTypes = [
   { label: "Plazo fijo", value: "plazo_fijo" },
   { label: "Part-time", value: "part_time" },
   { label: "Honorarios", value: "honorarios" },
+  { label: "Obra o faena", value: "obra_faena" },
 ];
 
 const jornadas = [
@@ -385,6 +516,16 @@ const jornadas = [
   { label: "Parcial", value: "parcial" },
   { label: "Turnos", value: "turnos" },
 ];
+
+const jornadaArtOptions = [
+  { label: "Normal (jornada ordinaria)", value: "normal" },
+  { label: "Art. 22 (no fiscalizable)", value: "art22" },
+  { label: "Art. 38 (excepciones turno)", value: "art38" },
+];
+
+const requiresEndDate = computed(() =>
+  ['plazo_fijo', 'obra_faena'].includes(String(local.contractType || '').toLowerCase())
+);
 
 const bancos = [
   "BancoEstado",
@@ -421,10 +562,16 @@ const healthSelectOptions = computed(() =>
 
 const requiresUf = computed(() => !!props.healthSelectedMeta?.requiresUf);
 
-/* ✅ local model — normaliza cargasFamiliares a array siempre */
+/* ✅ local model — normaliza cargasFamiliares a array y lugarTrabajo a objeto */
 function normalizeIncoming(v = {}) {
   const out = { ...v }
   if (!Array.isArray(out.cargasFamiliares)) out.cargasFamiliares = []
+  out.lugarTrabajo = {
+    line1: '', commune: '', city: '', region: '',
+    ...(v?.lugarTrabajo || {}),
+  }
+  out.jornadaArt = out.jornadaArt || 'normal'
+  out.endDate = out.endDate ? String(out.endDate).slice(0, 10) : ''
   return out
 }
 const local = reactive(normalizeIncoming(props.modelValue));
@@ -433,6 +580,18 @@ watch(
   () => props.modelValue,
   (v) => Object.assign(local, normalizeIncoming(v))
 );
+
+/* Reglas para fecha término */
+const endDateRules = computed(() => {
+  if (!requiresEndDate.value) return []
+  return [
+    (v) => !!v || 'Fecha de término obligatoria para este tipo de contrato',
+    (v) => {
+      if (!v || !local.startDate) return true
+      return new Date(v) > new Date(local.startDate) || 'Debe ser posterior a la fecha de ingreso'
+    },
+  ]
+})
 
 watch(
   local,

@@ -103,6 +103,11 @@
         </div>
 
         <div class="rk-kpi">
+          <div class="rk-kpi-label">Cargo</div>
+          <div class="rk-kpi-value ellipsis">{{ form.payroll?.cargo || '—' }}</div>
+        </div>
+
+        <div class="rk-kpi">
           <div class="rk-kpi-label">Contrato</div>
           <div class="rk-kpi-value">{{ contractNice || '—' }}</div>
         </div>
@@ -236,12 +241,18 @@ const contractNice = computed(() => {
 const completeness = computed(() => {
   const reqBase = ['firstName', 'lastName', 'email', 'password', 'tipo']
   const reqCompany = ['empresa']
-  // La asignación de plantilla es opcional al crear el empleado:
-  // se puede dejar para Programación mensual o asignar luego desde la ficha.
-  const reqEmp = form.tipo === 'empleado' ? ['rut', 'personalEmail'] : []
-  const reqPayroll = ['payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate', 'payroll.afpEntityId', 'payroll.healthEntityId']
+  const isEmp = form.tipo === 'empleado'
+  const reqEmp = isEmp ? ['rut', 'personalEmail'] : []
+  const reqPersonal = isEmp
+    ? ['personalData.birthDate', 'personalData.nationality', 'personalData.gender', 'personalData.profession']
+    : []
+  const reqPayroll = [
+    'payroll.baseSalary', 'payroll.contractType', 'payroll.jornada', 'payroll.startDate',
+    'payroll.afpEntityId', 'payroll.healthEntityId',
+  ]
+  const reqArt10 = isEmp ? ['payroll.cargo', 'payroll.funciones', 'payroll.lugarTrabajo.line1'] : []
 
-  const required = [...reqBase, ...reqCompany, ...reqEmp, ...reqPayroll]
+  const required = [...reqBase, ...reqCompany, ...reqEmp, ...reqPersonal, ...reqPayroll, ...reqArt10]
   const missing = required.filter((path) => !get(form, path))
 
   const pct = Math.round(((required.length - missing.length) / required.length) * 100)
@@ -268,12 +279,19 @@ function humanizeField(f) {
     tipo: 'Tipo de usuario',
     empresa: 'Empresa',
     rut: 'RUT',
+    'personalData.birthDate': 'Fecha nacimiento',
+    'personalData.nationality': 'Nacionalidad',
+    'personalData.gender': 'Sexo',
+    'personalData.profession': 'Profesión',
     'payroll.baseSalary': 'Sueldo base',
     'payroll.contractType': 'Tipo contrato',
     'payroll.jornada': 'Jornada',
     'payroll.startDate': 'Fecha ingreso',
     'payroll.afpEntityId': 'AFP',
     'payroll.healthEntityId': 'Salud',
+    'payroll.cargo': 'Cargo',
+    'payroll.funciones': 'Funciones',
+    'payroll.lugarTrabajo.line1': 'Lugar de trabajo',
   }
   return map[f] || f
 }

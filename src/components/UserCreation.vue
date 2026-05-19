@@ -205,6 +205,26 @@
                     </div>
                   </q-tab-panel>
 
+                  <!-- Panel: Personal (Art. 10) -->
+                  <q-tab-panel name="personal" class="rk-panel">
+                    <div class="rk-panel-header">
+                      <q-icon name="person_pin" class="rk-panel-icon" />
+                      <div>
+                        <h4 class="rk-panel-title">Datos personales</h4>
+                        <p class="rk-panel-subtitle">
+                          Requeridos por el Art. 10 del Código del Trabajo para emitir contrato
+                        </p>
+                      </div>
+                    </div>
+
+                    <UserPersonalForm
+                      v-model="form.personalData"
+                      :is-employee="form.tipo === 'empleado'"
+                      :can-upload-doc="isEditMode"
+                      @upload-tutorDoc="onTutorDocUpload"
+                    />
+                  </q-tab-panel>
+
                   <!-- Panel: Contrato -->
                   <q-tab-panel name="contrato" class="rk-panel">
                     <div class="rk-panel-header">
@@ -415,6 +435,7 @@ import { diff, deepClone } from "@/utils/diff";
 import { friendly, statusColor, statusNice } from "@/composables/useUserForm";
 
 import UserBasicsForm from "./users/parts/UserBasicsForm.vue";
+import UserPersonalForm from "./users/parts/UserPersonalForm.vue";
 import UserContractForm from "./users/parts/UserContractForm.vue";
 import UserContactForm from "./users/parts/UserContactForm.vue";
 import UserSummary from "./users/parts/UserSummary.vue";
@@ -486,9 +507,10 @@ const showShiftsTab = computed(
 
 const tabs = computed(() => {
   const base = [
-    { value: "basicos",  label: "Básicos",  icon: "badge", desc: "Datos personales" },
-    { value: "contrato", label: "Contrato", icon: "work",  desc: "Información laboral" },
-    { value: "contacto", label: "Contacto", icon: "home",  desc: "Dirección y teléfono" },
+    { value: "basicos",  label: "Básicos",  icon: "badge",     desc: "Identidad y acceso" },
+    { value: "personal", label: "Personal", icon: "person_pin",desc: "Datos Art. 10" },
+    { value: "contrato", label: "Contrato", icon: "work",      desc: "Información laboral" },
+    { value: "contacto", label: "Contacto", icon: "home",      desc: "Dirección y teléfono" },
   ];
   if (showShiftsTab.value) {
     base.push({
@@ -539,8 +561,11 @@ const isTabCompleted = (tabName) => {
   switch (tabName) {
     case "basicos":
       return !!(f.firstName && f.lastName && f.email && (isEditMode.value || f.password));
+    case "personal":
+      if (f.tipo !== "empleado") return true;
+      return !!(f.personalData?.birthDate && f.personalData?.nationality && f.personalData?.profession && f.personalData?.gender);
     case "contrato":
-      return !!(f.payroll?.baseSalary && f.payroll?.contractType);
+      return !!(f.payroll?.baseSalary && f.payroll?.contractType && f.payroll?.cargo && f.payroll?.funciones && f.payroll?.lugarTrabajo?.line1);
     case "contacto":
       return !!(f.phone && f.address?.line1);
     default:
@@ -624,6 +649,53 @@ async function onCargaUpload({ index, carga }) {
           });
           toast.success("Resolución adjuntada correctamente");
         }
+      }
+    } catch (e) {
+      toast.error(e?.message || "No se pudo subir el documento");
+    }
+  };
+  input.click();
+}
+
+// Upload de autorización del representante legal (menores 15-17)
+async function onTutorDocUpload() {
+  if (!isEditMode.value || !props.userId) {
+    toast.info("Guarda el usuario antes de adjuntar la autorización.");
+    return;
+  }
+
+  const current = form.value.personalData?.tutorAuthorizationDocId;
+  if (current) {
+    try {
+      const url = await documentStore.getSignedUrl(current);
+      if (url) window.open(url, "_blank");
+    } catch {
+      toast.error("No se pudo abrir el documento");
+    }
+    return;
+  }
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "application/pdf,image/*";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const item = await documentStore.uploadOne({
+        employeeId: props.userId,
+        name: `Autorización representante legal — ${form.value.firstName} ${form.value.lastName}`,
+        type: "certificate",
+        period: "",
+        file,
+      });
+      if (item?._id) {
+        form.value.personalData.tutorAuthorizationDocId = item._id;
+        await userStore.updateUser({
+          id: props.userId,
+          patch: { personalData: { tutorAuthorizationDocId: item._id } },
+        });
+        toast.success("Autorización adjuntada correctamente");
       }
     } catch (e) {
       toast.error(e?.message || "No se pudo subir el documento");
@@ -800,6 +872,34 @@ async function submitForm() {
       return;
     }
 
+    // Datos personales Art. 10
+    const pd = form.value.personalData || {};
+    if (!pd.birthDate || !pd.nationality || !pd.profession || !pd.gender) {
+      toast.error("Completa los datos personales (Art. 10): nacimiento, nacionalidad, sexo, profesión.");
+      tab.value = "personal";
+      return;
+    }
+    if (pd.nationality !== "CL" && (!pd.visaType || !pd.visaExpiry)) {
+      toast.error("Para trabajadores extranjeros, indica tipo de visa y vencimiento.");
+      tab.value = "personal";
+      return;
+    }
+
+    // Cargo y lugar de trabajo (Art. 10 N°2 y N°3)
+    const p = form.value.payroll || {};
+    if (!p.cargo || !p.funciones || !p.lugarTrabajo?.line1) {
+      toast.error("Falta cargo, funciones o lugar de trabajo (Art. 10).");
+      tab.value = "contrato";
+      return;
+    }
+
+    // Fecha de término obligatoria para plazo fijo / obra-faena
+    if (["plazo_fijo", "obra_faena"].includes(p.contractType) && !p.endDate) {
+      toast.error("Para contratos a plazo fijo u obra-faena debes indicar fecha de término.");
+      tab.value = "contrato";
+      return;
+    }
+
     // ✅ validación dinámica: si catálogo no cargó, no sigas
     if (!payrollCatalogStore.isReady) {
       toast.error("Catálogo de nómina no disponible. Reintenta.");
@@ -956,11 +1056,35 @@ function mapPayload(f) {
       city: f.address?.city?.trim() || "",
       region: f.address?.region?.trim() || "",
     },
+    personalData: f.tipo === "empleado" ? {
+      birthDate: f.personalData?.birthDate || null,
+      birthPlace: f.personalData?.birthPlace || "",
+      nationality: (f.personalData?.nationality || "CL").toUpperCase(),
+      gender: f.personalData?.gender || "",
+      civilStatus: f.personalData?.civilStatus || "",
+      educationLevel: f.personalData?.educationLevel || "",
+      profession: (f.personalData?.profession || "").trim(),
+      documentType: f.personalData?.documentType || "rut",
+      documentNumber: (f.personalData?.documentNumber || "").trim(),
+      visaType: f.personalData?.visaType || "",
+      visaExpiry: f.personalData?.visaExpiry || null,
+      tutorAuthorizationDocId: f.personalData?.tutorAuthorizationDocId || null,
+    } : undefined,
     payroll: {
       baseSalary: normalizeMoney(f.payroll?.baseSalary || 0),
       contractType: f.payroll?.contractType || "",
       jornada: f.payroll?.jornada || "",
+      jornadaArt: f.payroll?.jornadaArt || "normal",
       startDate: f.payroll?.startDate || null,
+      endDate: f.payroll?.endDate || null,
+      cargo: (f.payroll?.cargo || "").trim(),
+      funciones: (f.payroll?.funciones || "").trim(),
+      lugarTrabajo: {
+        line1: (f.payroll?.lugarTrabajo?.line1 || "").trim(),
+        commune: (f.payroll?.lugarTrabajo?.commune || "").trim(),
+        city: (f.payroll?.lugarTrabajo?.city || "").trim(),
+        region: (f.payroll?.lugarTrabajo?.region || "").trim(),
+      },
 
       // ✅ IDs globales
       afpEntityId: f.payroll?.afpEntityId || null,
@@ -1022,11 +1146,30 @@ function getEmptyForm() {
     phone: "",
     emergencyContact: "",
     address: { line1: "", commune: "", city: "", region: "" },
+    personalData: {
+      birthDate: null,
+      birthPlace: "",
+      nationality: "CL",
+      gender: "",
+      civilStatus: "",
+      educationLevel: "",
+      profession: "",
+      documentType: "rut",
+      documentNumber: "",
+      visaType: "",
+      visaExpiry: null,
+      tutorAuthorizationDocId: null,
+    },
     payroll: {
       baseSalary: 0,
       contractType: "",
       jornada: "",
+      jornadaArt: "normal",
       startDate: "",
+      endDate: "",
+      cargo: "",
+      funciones: "",
+      lugarTrabajo: { line1: "", commune: "", city: "", region: "" },
 
       afpEntityId: null,
       healthEntityId: null,
