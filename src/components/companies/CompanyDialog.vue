@@ -171,6 +171,15 @@
                 />
               </q-tab-panel>
 
+              <q-tab-panel v-if="isEdit" name="reglamento" class="cd-tab-panel">
+                <CompanyRegulationTab
+                  :company-id="props.editData._id"
+                  v-model:internal-regulation-doc-id="form.internalRegulationDocId"
+                  v-model:internal-regulation-version="form.internalRegulationVersion"
+                  @validity="v => valid.reglamento = v"
+                />
+              </q-tab-panel>
+
               <q-tab-panel v-if="isEdit" name="conceptos" class="cd-tab-panel">
                 <CompanyConceptsTab :company-id="props.editData._id" />
               </q-tab-panel>
@@ -222,6 +231,7 @@ import CompanyLogoTab     from './tabs/CompanyLogoTab.vue'
 import CompanyPayrollTab  from './tabs/CompanyPayrollTab.vue'
 import CompanyMutualTab   from './tabs/CompanyMutualTab.vue'
 import CompanyConceptsTab from './tabs/CompanyConceptsTab.vue'
+import CompanyRegulationTab from './tabs/CompanyRegulationTab.vue'
 
 const props = defineProps({ modelValue: { type: Boolean, required: true }, editData: { type: Object, default: null } })
 const emit  = defineEmits(['update:modelValue', 'saved'])
@@ -245,13 +255,14 @@ const ALL_STEPS = [
   { value:'politica',  label:'Vacaciones', desc:'Política de días',   icon:'beach_access',     hint:'Reglas de acumulación, traslado y tope de días' },
   { value:'feriados',  label:'Feriados',   desc:'Días no laborables', icon:'event_busy',       hint:'Días feriados para calcular días hábiles correctamente' },
   { value:'logo',      label:'Logo',       desc:'Imagen corporativa', icon:'image',            hint:'Imagen que aparecerá en liquidaciones y documentos' },
+  { value:'reglamento',label:'Reglamento', desc:'Activación empleado',icon:'gavel',            hint:'PDF que el trabajador debe firmar al activar su cuenta (Res. Ex. 38/2024)', editOnly: true },
   { value:'conceptos', label:'Conceptos',  desc:'Liquidación',        icon:'receipt_long',     hint:'Haberes y descuentos de las liquidaciones de sueldo', editOnly: true },
 ]
 
 const visibleSteps = computed(() => ALL_STEPS.filter(s => !s.editOnly || isEdit.value))
 const currentStep  = computed(() => ALL_STEPS.find(s => s.value === tab.value))
 
-const valid    = ref({ basicos: false, payroll: true, mutual: true, politica: true, feriados: true, logo: true })
+const valid    = ref({ basicos: false, payroll: true, mutual: true, politica: true, feriados: true, logo: true, reglamento: true })
 const validAll = computed(() => Object.values(valid.value).every(Boolean))
 
 const formProgress = computed(() => {
@@ -288,7 +299,7 @@ const autoPublicaSinPlantilla = computed(() =>
 const defaultTimeOff = () => ({ vacation: { accrual: { mode:'DAILY', perYearDays:15, perMonthDays:null, accrueOnBusinessDays:true, startAfterDays:0, prorateFromStartDate:true }, carryOver: { enabled:true, maxCarry:5, resetMonth:1, resetDay:1 }, cap: { enabled:true, maxDays:30 } }, policyVersion:1 })
 const defaultPayroll = () => ({ frequency:'monthly', cutoffDay:25, paydayRule:'last_business_day', paydayDayOfMonth:5, businessDayAdjust:'previous', generateTime:'20:00', timezone:'America/Santiago', autoPublish:true, notifyOnPublish:true, templateId:'', rounding:'0', lastRunAt:null, nextRunAt:null })
 const defaultMutual  = () => ({ entityId: null, additionalRate: 0, resolucionSuseso: '', lastUpdate: null })
-const defaultForm    = () => ({ name:'', rut:'', email:'', phone:'', address:'', status:'active', logo:'', brandColor:'', timeOffPolicy:defaultTimeOff(), payrollConfig:defaultPayroll(), mutual:defaultMutual(), holidays:[] })
+const defaultForm    = () => ({ name:'', rut:'', email:'', phone:'', address:'', status:'active', logo:'', brandColor:'', timeOffPolicy:defaultTimeOff(), payrollConfig:defaultPayroll(), mutual:defaultMutual(), holidays:[], internalRegulationDocId:'', internalRegulationVersion:'1.0' })
 
 const form = ref(defaultForm())
 
@@ -300,12 +311,12 @@ watch(() => visible.value, v => {
   if (!v) return
   tab.value = 'basicos'
   if (props.editData) {
-    form.value = { name:props.editData.name||'', rut:props.editData.rut||'', email:props.editData.email||'', phone:props.editData.phone||'', address:props.editData.address||'', status:props.editData.status||'active', logo:props.editData.logo||'', brandColor:props.editData.brandColor||'', timeOffPolicy:props.editData.timeOffPolicy||defaultTimeOff(), payrollConfig:props.editData.payrollConfig||defaultPayroll(), mutual: props.editData.mutual || defaultMutual(), holidays:Array.isArray(props.editData.holidays)?props.editData.holidays:[] }
+    form.value = { name:props.editData.name||'', rut:props.editData.rut||'', email:props.editData.email||'', phone:props.editData.phone||'', address:props.editData.address||'', status:props.editData.status||'active', logo:props.editData.logo||'', brandColor:props.editData.brandColor||'', timeOffPolicy:props.editData.timeOffPolicy||defaultTimeOff(), payrollConfig:props.editData.payrollConfig||defaultPayroll(), mutual: props.editData.mutual || defaultMutual(), holidays:Array.isArray(props.editData.holidays)?props.editData.holidays:[], internalRegulationDocId: props.editData.internalRegulationDocId || '', internalRegulationVersion: props.editData.internalRegulationVersion || '1.0' }
     logoPreview.value = props.editData.logo||''
   } else {
     form.value = defaultForm(); logoFile.value=null; logoPreview.value=''
   }
-  valid.value = { basicos:false, payroll:true, mutual: !isEdit.value, politica:true, feriados:true, logo:true }
+  valid.value = { basicos:false, payroll:true, mutual: !isEdit.value, politica:true, feriados:true, logo:true, reglamento:true }
   snap()
 })
 

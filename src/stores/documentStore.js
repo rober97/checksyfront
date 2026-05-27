@@ -37,12 +37,13 @@ export const useDocumentStore = defineStore('documents', {
       }
     },
 
-    async uploadOne({ employeeId, name, type, period, file }) {
+    async uploadOne({ employeeId, companyId, name, type, period, file }) {
       const form = new FormData()
-      form.append('employeeId', employeeId)
+      if (employeeId) form.append('employeeId', employeeId)
+      if (companyId) form.append('companyId', companyId)
       form.append('name', name)
       form.append('type', type)
-      form.append('period', period) // YYYY-MM
+      if (period) form.append('period', period) // YYYY-MM
       form.append('file', file)
       try {
         this.loading = true

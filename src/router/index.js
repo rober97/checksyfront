@@ -50,6 +50,7 @@ const EmpComprobante = () => import(/* webpackChunkName:"dt" */ '@/views/Emplead
 const EmpConsentimiento = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/ConsentimientoDT.vue')
 const VerificarComprobante = () => import(/* webpackChunkName:"public" */ '@/views/Public/VerificarComprobante.vue')
 const PrivacyTerms = () => import(/* webpackChunkName:"public" */ '@/views/Public/PrivacyTerms.vue')
+const OnboardingWizard = () => import(/* webpackChunkName:"public" */ '@/views/Public/OnboardingWizard.vue')
 const InspectorDashboard = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Dashboard.vue')
 const InspectorAsistencias = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Asistencias.vue')
 
@@ -119,6 +120,11 @@ const routes = [
   // Accesible sin login para que cualquiera (incluida la DT) pueda validar un comprobante por su hash.
   { path: '/verificar-comprobante', name: 'VerificarComprobante', component: VerificarComprobante, meta: { public: true, title: 'Verificar comprobante' } },
   { path: '/verificar-comprobante/:hash', name: 'VerificarComprobanteHash', component: VerificarComprobante, props: true, meta: { public: true, title: 'Verificar comprobante' } },
+
+  // ===== Activación de cuenta (Fase 3 — Onboarding empleado) =====
+  // El link viaja por email al `personalEmail` del trabajador. La ruta NO
+  // requiere sesión: el token (SHA-256 en DB) es la única autorización.
+  { path: '/onboarding/:token', name: 'OnboardingWizard', component: OnboardingWizard, props: true, meta: { public: true, title: 'Activar cuenta' } },
 
   // ===== Términos y Privacidad (público) — requerido para App Store =====
   { path: '/legal/terms', name: 'PrivacyTerms', component: PrivacyTerms, meta: { public: true, title: 'Términos y Privacidad' } },
