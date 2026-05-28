@@ -50,7 +50,9 @@ export const MENU = [
     access: { roles: ['admin_rrhh', 'superadmin'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/rrhh/dashboard', exact: true },
-      { label: 'Marcar asistencia', icon: 'access_time', to: '/rrhh/marcar-asistencia' },
+      // Marcar asistencia: solo para admin_rrhh (es trabajador de la empresa).
+      // El superadmin NO marca asistencia porque no tiene contrato laboral.
+      { label: 'Marcar asistencia', icon: 'access_time', to: '/rrhh/marcar-asistencia', access: { roles: ['admin_rrhh'] } },
       { label: 'Empleados', icon: 'people', to: '/rrhh/users' },
       { label: 'Horarios', icon: 'schedule', to: '/rrhh/horarios' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/rrhh/attendance' },

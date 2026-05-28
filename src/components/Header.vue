@@ -9,15 +9,21 @@
           <div class="rk-btn-ripple"></div>
         </button>
 
-        <!-- Compact Recksy home icon -->
-        <button class="rk-home-btn" @click="goHome" aria-label="Recksy · Inicio">
-          <q-icon name="precision_manufacturing" />
-          <div class="rk-home-pulse"></div>
-          <q-tooltip class="rk-tooltip">Recksy v2.0 · Inicio</q-tooltip>
-        </button>
+        <!-- Compact Recksy home icon + Company switcher.
+             Solo para superadmin: él opera sobre múltiples empresas y
+             necesita el "volver al home plataforma" + el selector de empresa.
+             Los demás roles (admin_rrhh, employee, dt_inspector) tienen 1
+             empresa fija y navegan por el drawer — el chrome del header
+             queda limpio. -->
+        <template v-if="isSuperadmin">
+          <button class="rk-home-btn" @click="goHome" aria-label="Recksy · Inicio">
+            <q-icon name="precision_manufacturing" />
+            <div class="rk-home-pulse"></div>
+            <q-tooltip class="rk-tooltip">Recksy v2.0 · Inicio</q-tooltip>
+          </button>
 
-        <!-- Company contextual brand (replaces old static brand) -->
-        <CompanySwitcher />
+          <CompanySwitcher />
+        </template>
       </div>
 
       <!-- Right Section -->
@@ -303,6 +309,13 @@ function goHome() {
 const notifOpen = ref(false);
 const notificationsStore = useNotificationsStore();
 const authStore = useAuthStore();
+
+// Solo superadmin ve el home button y el selector de empresa en el header.
+// Para admin_rrhh / employee / dt_inspector la empresa es fija y la navegación
+// vive en el drawer.
+const isSuperadmin = computed(
+  () => String(authStore.user?.role || "").toLowerCase() === "superadmin"
+);
 const {
   items: notifications,
   unreadCount,
