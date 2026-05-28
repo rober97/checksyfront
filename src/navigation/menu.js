@@ -37,13 +37,17 @@ export const MENU = [
   },
 
   // ============================================================
-  // ADMIN RR.HH. — sólo su empresa
+  // RR.HH. de la empresa activa
+  //   - admin_rrhh: su única empresa.
+  //   - superadmin: la empresa que seleccionó en el switcher del header
+  //     (puede saltar entre empresas y operar como si fuera su admin RRHH).
+  // El scope de datos lo da auth.user.company en cada endpoint.
   // ============================================================
   {
     id: 'rh',
     label: 'Recursos Humanos',
     icon: 'admin_panel_settings',
-    access: { roles: ['admin_rrhh'] },
+    access: { roles: ['admin_rrhh', 'superadmin'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/rrhh/dashboard', exact: true },
       { label: 'Marcar asistencia', icon: 'access_time', to: '/rrhh/marcar-asistencia' },

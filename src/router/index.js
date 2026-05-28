@@ -177,11 +177,15 @@ const routes = [
   // =====================================================================
   // ADMIN RR.HH. (administrador de RR.HH. de UNA empresa cliente)
   // Paths antes eran /admin/*, ahora son /rrhh/*. Usa el mismo AdminLayout.
+  //
+  // Acceso: admin_rrhh (su única empresa) y superadmin (sobre la empresa
+  // activa que haya seleccionado en el switcher del header). El scope de
+  // datos viene de auth.user.company en cada controller del backend.
   // =====================================================================
   {
     path: '/rrhh',
     component: AdminLayout,
-    meta: { requiresAuth: true, roles: ['admin_rrhh'] },
+    meta: { requiresAuth: true, roles: ['admin_rrhh', 'superadmin'] },
     children: [
       { path: '', redirect: { name: 'RrhhDashboard' } },
       { path: 'dashboard', name: 'RrhhDashboard', component: Dashboard, meta: { title: 'Panel RR.HH.' } },
