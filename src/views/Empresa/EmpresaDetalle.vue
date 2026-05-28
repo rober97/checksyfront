@@ -272,17 +272,11 @@ const assignedCompanies = computed(() => {
 
 const headerTitle = computed(() => {
   if (!isMyCompany.value) return 'Detalle de empresa'
-  if (assignedCompanies.value.length > 1) return 'Empresa activa'
   return 'Mi empresa'
 })
 
 const headerSubtitle = computed(() => {
   if (!isMyCompany.value) return 'Vista ejecutiva de una empresa cliente de la plataforma.'
-  if (assignedCompanies.value.length > 1) {
-    const total = assignedCompanies.value.length
-    const name = empresa.value?.name || '—'
-    return `Estás viendo "${name}" (1 de ${total} empresas asignadas). Cambia con el switcher del header.`
-  }
   return 'Datos de tu empresa. Puedes actualizar los datos de contacto.'
 })
 

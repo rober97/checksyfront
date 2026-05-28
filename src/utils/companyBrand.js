@@ -1,7 +1,10 @@
 // Paleta de marca por empresa.
 // 1) Si la empresa tiene `brandColor` configurado (hex #RRGGBB) → se usa ese
 //    color como base y se derivan light/dark/hover por manipulación HSL.
-// 2) Si no → hash determinista del nombre/RUT/_id sobre una paleta fija.
+// 2) Si no → se devuelve la paleta Recksy por defecto (cyan).
+//
+// El color es OPT-IN: cada empresa debe configurarlo explícitamente desde
+// "Mi empresa → Logo / Color de marca". Sin configurar = identidad Recksy.
 //
 // Estructura común retornada:
 //   bg     → --color-primary, --q-primary
@@ -130,11 +133,18 @@ function deriveBrandFromHex(hex) {
    API pública
 ========================= */
 export function getCompanyColor(company) {
-  // 1) Color custom configurado por la empresa
+  // Si la empresa tiene un color custom configurado por el admin → se usa.
+  // Si no → identidad Recksy por defecto (cyan). No hay fallback por hash;
+  // el color es una decisión explícita de cada empresa.
   const custom = readBrandColor(company)
   if (custom) return deriveBrandFromHex(custom)
+  return DEFAULT_BRAND
+}
 
-  // 2) Hash determinista del nombre/RUT
+// Helper opcional: color determinista por hash del nombre. Útil para listas
+// donde querés diversidad visual sin que cada empresa lo tenga configurado
+// (p.ej. selector global del superadmin). NO se usa en el tinte global.
+export function getCompanyColorByHash(company) {
   const seed = seedFor(company)
   if (!seed) return DEFAULT_BRAND
   let hash = 0
