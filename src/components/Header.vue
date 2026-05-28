@@ -259,7 +259,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Dark, useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
@@ -451,25 +451,19 @@ const baseCommands = computed(() => {
     );
   }
 
-  // Cambio de empresa (admin_rrhh multi-empresa) — accesible desde ⌘K
-  if (role === "admin_rrhh") {
-    const all = Array.isArray(authStore.assignedCompanies) ? authStore.assignedCompanies : [];
-    if (all.length > 1) {
-      const a = authStore.activeCompany;
-      const activeId = typeof a === "object" ? String(a?._id || a?.id || "") : String(a || "");
-      all.forEach((c) => {
-        const cid = String(c?._id || c?.id || "");
-        if (!cid || cid === activeId) return;
-        cmds.push({
-          key: `switch-company:${cid}`,
-          icon: "business",
-          label: `Cambiar a ${c.name || "empresa"}`,
-          desc: c.rut ? `Empresa · RUT ${c.rut}` : "Cambiar empresa activa",
-          switchCompanyId: cid,
-          switchCompanyName: c.name || "",
-        });
-      });
-    }
+  // Cambio de empresa: SOLO superadmin (un admin_rrhh tiene una sola empresa
+  // por ley laboral CL — su contexto es fijo y no se cambia desde aquí).
+  // Las empresas reales se buscan/cambian desde el dropdown del CompanySwitcher
+  // (que llama a /companies/search con paginación). En ⌘K dejamos un atajo
+  // que abre ese dropdown para mantener la consistencia.
+  if (role === "superadmin") {
+    cmds.push({
+      key: "switch-company-open",
+      icon: "swap_horiz",
+      label: "Cambiar empresa activa",
+      desc: "Abrir selector de empresa (todas las empresas de la plataforma)",
+      openCompanySwitcher: true,
+    });
   }
 
   return cmds;
@@ -520,22 +514,13 @@ function activate() {
 
 async function exec(opt) {
   commandOpen.value = false;
-  if (opt.switchCompanyId) {
-    try {
-      await authStore.switchCompany(opt.switchCompanyId);
-      $q.notify({
-        type: "positive",
-        message: `Empresa activa: ${opt.switchCompanyName || ""}`.trim(),
-        icon: "business",
-      });
-      window.location.reload();
-    } catch (e) {
-      $q.notify({
-        type: "negative",
-        message: e?.message || "No se pudo cambiar de empresa",
-        icon: "error",
-      });
-    }
+  if (opt.openCompanySwitcher) {
+    // Dispara click sobre el chip del header para que abra su dropdown.
+    // El dropdown ya maneja búsqueda + recientes contra /companies/search.
+    nextTick(() => {
+      const trigger = document.querySelector('.rk-pill-trigger.is-clickable');
+      if (trigger) trigger.click();
+    });
     return;
   }
   if (opt.to) router.push(opt.to);

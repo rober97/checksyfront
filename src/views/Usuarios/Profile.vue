@@ -551,6 +551,14 @@ onMounted(() => {
 .rk-profile-page {
   max-width: 1100px;
   margin: 0 auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.rk-profile-page::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .rk-hidden-input {

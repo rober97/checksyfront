@@ -1,24 +1,46 @@
 <template>
-  <div v-if="hasActive" class="rk-company-pill">
+  <div v-if="visible" class="rk-company-pill">
+    <!-- ───── Caso: NO switcher (admin_rrhh, employee, dt_inspector) ───── -->
+    <!-- Solo avatar informativo, sin chevron, sin menú. -->
     <div
-      class="rk-pill-trigger"
-      :class="{
-        'is-clickable': canSwitch,
-        'is-disabled': switching,
-        'is-open': menuOpen,
-      }"
-      role="button"
-      :tabindex="canSwitch ? 0 : -1"
-      :aria-label="canSwitch ? `Empresa activa: ${activeName}. Cambiar empresa` : `Empresa activa: ${activeName}`"
-      :aria-haspopup="canSwitch ? 'menu' : undefined"
-      :aria-expanded="canSwitch ? String(menuOpen) : undefined"
+      v-if="!canSwitch"
+      class="rk-pill-trigger is-static"
+      role="img"
+      :aria-label="`Empresa: ${activeName}`"
     >
       <div class="rk-pill-avatar" :style="activeAvatarStyle" aria-hidden="true">
         <span>{{ activeInitial }}</span>
       </div>
+      <q-tooltip
+        anchor="bottom middle"
+        self="top middle"
+        :offset="[0, 6]"
+        class="rk-pill-tooltip"
+      >
+        <div class="rk-tooltip-inner">
+          <strong>{{ activeName }}</strong>
+          <span v-if="activeRut" class="rk-tooltip-rut">{{ activeRut }}</span>
+        </div>
+      </q-tooltip>
+    </div>
+
+    <!-- ───── Caso: superadmin (puede cambiar entre TODAS las empresas) ───── -->
+    <div
+      v-else
+      class="rk-pill-trigger is-clickable"
+      :class="{ 'is-disabled': switching, 'is-open': menuOpen, 'is-placeholder': !hasActive }"
+      role="button"
+      tabindex="0"
+      :aria-label="hasActive ? `Empresa activa: ${activeName}. Cambiar empresa` : 'Seleccionar empresa'"
+      aria-haspopup="menu"
+      :aria-expanded="String(menuOpen)"
+    >
+      <div class="rk-pill-avatar" :style="activeAvatarStyle" aria-hidden="true">
+        <span v-if="hasActive">{{ activeInitial }}</span>
+        <q-icon v-else name="apartment" size="18px" />
+      </div>
       <q-icon
-        v-if="canSwitch"
-        name="expand_more"
+        :name="menuOpen ? 'expand_less' : 'expand_more'"
         class="rk-pill-chevron"
       />
       <q-spinner v-if="switching" size="14px" class="rk-pill-spinner" />
@@ -31,83 +53,160 @@
         class="rk-pill-tooltip"
       >
         <div class="rk-tooltip-inner">
-          <strong>{{ activeName }}</strong>
+          <strong>{{ hasActive ? activeName : 'Selecciona una empresa' }}</strong>
           <span v-if="activeRut" class="rk-tooltip-rut">{{ activeRut }}</span>
-          <span v-if="canSwitch" class="rk-tooltip-hint">Click para cambiar · ⌘K</span>
+          <span class="rk-tooltip-hint">Click para cambiar · ⌘K</span>
         </div>
       </q-tooltip>
 
       <q-menu
-        v-if="canSwitch"
         v-model="menuOpen"
         anchor="bottom left"
         self="top left"
         :offset="[0, 10]"
         class="rk-pill-menu"
         :disable="switching"
+        @show="onMenuShow"
       >
+        <!-- Header con buscador -->
         <div class="rk-menu-header">
           <q-icon name="apartment" />
           <div class="rk-menu-header-text">
             <span class="rk-menu-header-eyebrow">Cambiar empresa</span>
-            <span class="rk-menu-header-hint">{{ companies.length }} disponibles · ⌘K para buscar</span>
+            <span class="rk-menu-header-hint">Plataforma · scope superadmin</span>
           </div>
         </div>
-        <q-list class="rk-menu-list">
-          <q-item
-            v-for="c in companies"
-            :key="c._id || c.id"
-            clickable
-            v-close-popup
-            :active="isActive(c)"
-            :disable="switching"
-            class="rk-menu-item"
-            @click="onPick(c)"
-          >
-            <q-item-section avatar>
-              <div class="rk-menu-avatar" :style="getAvatarStyle(c)">
-                <span>{{ getInitial(c) }}</span>
-              </div>
-            </q-item-section>
-            <q-item-section>
-              <q-item-label class="rk-menu-name">{{ c.name || 'Sin nombre' }}</q-item-label>
-              <q-item-label v-if="c.rut" caption class="rk-menu-rut">{{ c.rut }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-icon
-                v-if="isActive(c)"
-                name="check_circle"
-                size="20px"
-                class="rk-menu-check"
-              />
-              <q-icon
-                v-else
-                name="arrow_forward"
-                size="16px"
-                class="rk-menu-arrow"
-              />
-            </q-item-section>
-          </q-item>
-        </q-list>
+
+        <div class="rk-menu-search">
+          <q-icon name="search" size="16px" />
+          <input
+            ref="searchInput"
+            v-model="query"
+            type="text"
+            placeholder="Buscar por nombre o RUT…"
+            class="rk-menu-search-input"
+            @keydown.esc.prevent="menuOpen = false"
+          />
+          <q-spinner v-if="loading" size="14px" />
+        </div>
+
+        <!-- Recientes (solo cuando no hay búsqueda activa) -->
+        <div v-if="!query && recents.length" class="rk-menu-section">
+          <div class="rk-menu-section-label">
+            <q-icon name="history" size="12px" />
+            Recientes
+          </div>
+          <q-list class="rk-menu-list">
+            <q-item
+              v-for="c in recents"
+              :key="`recent-${c._id}`"
+              clickable
+              v-close-popup
+              :active="isActive(c)"
+              :disable="switching"
+              class="rk-menu-item"
+              @click="onPick(c)"
+            >
+              <q-item-section avatar>
+                <div class="rk-menu-avatar" :style="getAvatarStyle(c)">
+                  <span>{{ getInitial(c) }}</span>
+                </div>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="rk-menu-name">{{ c.name || 'Sin nombre' }}</q-item-label>
+                <q-item-label v-if="c.rut" caption class="rk-menu-rut">{{ c.rut }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-icon v-if="isActive(c)" name="check_circle" size="20px" class="rk-menu-check" />
+                <q-icon v-else name="arrow_forward" size="16px" class="rk-menu-arrow" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+
+        <!-- Resultados -->
+        <div class="rk-menu-section">
+          <div class="rk-menu-section-label">
+            <q-icon :name="query ? 'search' : 'list'" size="12px" />
+            {{ query ? 'Resultados' : 'Todas las empresas' }}
+            <span v-if="!loading" class="rk-menu-section-count">{{ results.length }}</span>
+          </div>
+
+          <div v-if="!loading && results.length === 0" class="rk-menu-empty">
+            <q-icon name="search_off" size="20px" />
+            <span>Sin resultados {{ query ? `para "${query}"` : '' }}</span>
+          </div>
+
+          <q-list v-else class="rk-menu-list">
+            <q-item
+              v-for="c in results"
+              :key="`r-${c._id}`"
+              clickable
+              v-close-popup
+              :active="isActive(c)"
+              :disable="switching"
+              class="rk-menu-item"
+              @click="onPick(c)"
+            >
+              <q-item-section avatar>
+                <div class="rk-menu-avatar" :style="getAvatarStyle(c)">
+                  <span>{{ getInitial(c) }}</span>
+                </div>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="rk-menu-name">{{ c.name || 'Sin nombre' }}</q-item-label>
+                <q-item-label v-if="c.rut" caption class="rk-menu-rut">{{ c.rut }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-icon v-if="isActive(c)" name="check_circle" size="20px" class="rk-menu-check" />
+                <q-icon v-else name="arrow_forward" size="16px" class="rk-menu-arrow" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+
+        <div v-if="hasMore" class="rk-menu-footer">
+          <span>Refiná la búsqueda para ver más resultados.</span>
+        </div>
       </q-menu>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
+import secureAxios from '@/utils/secureRequest'
 import { useAuthStore } from '@/stores/authStore'
 import { getCompanyColor, getCompanyInitial } from '@/utils/companyBrand'
+
+const RECENTS_KEY = 'recksy:recent-companies'
+const RECENTS_MAX = 5
+const SEARCH_LIMIT = 12
 
 const authStore = useAuthStore()
 const toast = useToast()
 
 const menuOpen = ref(false)
 const switching = ref(false)
+const loading = ref(false)
+const query = ref('')
+const results = ref([])
+const hasMore = ref(false)
+const recents = ref(loadRecents())
+const searchInput = ref(null)
 
-const companies = computed(() => authStore.assignedCompanies)
 const active = computed(() => authStore.activeCompany)
+const role = computed(() => String(authStore.user?.role || ''))
+
+const canSwitch = computed(() => role.value === 'superadmin')
+
+// El componente se muestra siempre que haya un user logueado (y haya empresa activa
+// o el usuario sea superadmin — que puede no tener empresa todavía).
+const visible = computed(() => {
+  if (!authStore.user) return false
+  return hasActive.value || canSwitch.value
+})
 
 const hasActive = computed(() => {
   const a = active.value
@@ -116,22 +215,27 @@ const hasActive = computed(() => {
   return true
 })
 
-const canSwitch = computed(() => {
-  const role = String(authStore.user?.role || '')
-  return role === 'admin_rrhh' && companies.value.length > 1
-})
-
 const activeCompanyObj = computed(() => {
   const a = active.value
   if (!a) return null
   if (typeof a === 'object') return a
-  return companies.value.find(c => String(c._id || c.id) === String(a)) || { name: '—', _id: a }
+  return { name: '—', _id: a }
 })
 
 const activeName = computed(() => activeCompanyObj.value?.name || '—')
 const activeRut = computed(() => activeCompanyObj.value?.rut || '')
 const activeInitial = computed(() => getCompanyInitial(activeCompanyObj.value))
-const activeAvatarStyle = computed(() => getAvatarStyle(activeCompanyObj.value))
+
+const activeAvatarStyle = computed(() => {
+  if (!hasActive.value) {
+    return {
+      background: 'linear-gradient(135deg, #475569, #1e293b)',
+      color: '#ffffff',
+      boxShadow: '0 4px 10px rgba(15, 23, 42, 0.25)',
+    }
+  }
+  return getAvatarStyle(activeCompanyObj.value)
+})
 
 function getAvatarStyle(company) {
   const c = getCompanyColor(company)
@@ -153,12 +257,87 @@ function isActive(c) {
   return cid && cid === aid
 }
 
+/* ───── Recentes (localStorage) ───── */
+function loadRecents() {
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY)
+    const arr = raw ? JSON.parse(raw) : []
+    return Array.isArray(arr) ? arr.filter(c => c && c._id) : []
+  } catch {
+    return []
+  }
+}
+
+function saveRecents(list) {
+  try {
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(list.slice(0, RECENTS_MAX)))
+  } catch {}
+}
+
+function promoteRecent(company) {
+  if (!company || !company._id) return
+  const slim = {
+    _id: String(company._id),
+    name: company.name || '',
+    rut: company.rut || '',
+    brandColor: company.brandColor || '',
+  }
+  const next = [slim, ...recents.value.filter(c => String(c._id) !== slim._id)]
+  recents.value = next.slice(0, RECENTS_MAX)
+  saveRecents(recents.value)
+}
+
+/* ───── Search (debounced) ───── */
+let inflight = null
+let debounceTimer = null
+
+async function runSearch(q) {
+  if (inflight) inflight.abort()
+  inflight = new AbortController()
+  loading.value = true
+  try {
+    const { data } = await secureAxios.get('/companies/search', {
+      params: { q, limit: SEARCH_LIMIT },
+      signal: inflight.signal,
+    })
+    const items = Array.isArray(data?.items) ? data.items : []
+    results.value = items
+    hasMore.value = !!data?.hasMore
+  } catch (err) {
+    if (err?.name !== 'CanceledError' && err?.message !== 'canceled') {
+      console.error('[CompanySwitcher] search error:', err)
+      results.value = []
+      hasMore.value = false
+    }
+  } finally {
+    inflight = null
+    loading.value = false
+  }
+}
+
+watch(query, (q) => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => runSearch(String(q || '').trim()), 220)
+})
+
+function onMenuShow() {
+  // Foco al buscador y carga inicial (lista completa paginada).
+  nextTick(() => {
+    try { searchInput.value?.focus() } catch {}
+  })
+  if (results.value.length === 0) {
+    runSearch('')
+  }
+}
+
+/* ───── Pick ───── */
 async function onPick(c) {
   const cid = c?._id || c?.id
   if (!cid || isActive(c)) { menuOpen.value = false; return }
   try {
     switching.value = true
     await authStore.switchCompany(cid)
+    promoteRecent(c)
     toast.success(`Empresa activa: ${c.name || ''}`)
     menuOpen.value = false
     window.location.reload()
@@ -168,6 +347,11 @@ async function onPick(c) {
     switching.value = false
   }
 }
+
+onMounted(() => {
+  // Si superadmin tiene company activa al cargar, la promovemos a recientes.
+  if (canSwitch.value && hasActive.value) promoteRecent(activeCompanyObj.value)
+})
 </script>
 
 <style scoped>
@@ -216,7 +400,10 @@ async function onPick(c) {
   pointer-events: none;
 }
 
-/* Avatar minimal: solo el círculo de color con la inicial */
+.rk-pill-trigger.is-static {
+  cursor: default;
+}
+
 .rk-pill-avatar {
   position: relative;
   width: 36px;
@@ -275,10 +462,7 @@ async function onPick(c) {
 }
 </style>
 
-<!--
-  Estilos no-scoped: q-menu y q-tooltip se teletransportan fuera del componente,
-  por lo que los estilos scoped no aplican al panel.
--->
+<!-- Teleported elements (tooltip + menu) -->
 <style>
 .rk-pill-tooltip {
   background: rgba(15, 23, 42, 0.94) !important;
@@ -316,7 +500,6 @@ async function onPick(c) {
   font-weight: 600;
 }
 
-/* Menú */
 .rk-pill-menu {
   background: #ffffff;
   border: 1.5px solid rgba(15, 23, 42, 0.08);
@@ -324,8 +507,11 @@ async function onPick(c) {
   overflow: hidden;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
   font-family: 'Sora', -apple-system, sans-serif;
-  min-width: 320px;
-  max-width: 380px;
+  width: 380px;
+  max-width: 92vw;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .body--dark .rk-pill-menu {
@@ -341,6 +527,7 @@ async function onPick(c) {
   padding: 14px 16px;
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   color: rgba(15, 23, 42, 0.85);
+  flex-shrink: 0;
 }
 
 .body--dark .rk-pill-menu .rk-menu-header {
@@ -373,15 +560,99 @@ async function onPick(c) {
   margin-top: 2px;
 }
 
-.rk-pill-menu .rk-menu-list {
-  padding: 8px;
+/* Search */
+.rk-pill-menu .rk-menu-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+  color: rgba(15, 23, 42, 0.5);
+  flex-shrink: 0;
+}
+
+.body--dark .rk-pill-menu .rk-menu-search {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.rk-pill-menu .rk-menu-search-input {
+  flex: 1;
   background: transparent;
+  border: none;
+  outline: none;
+  color: rgba(15, 23, 42, 0.92);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.body--dark .rk-pill-menu .rk-menu-search-input {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.rk-pill-menu .rk-menu-search-input::placeholder {
+  color: rgba(15, 23, 42, 0.4);
+  font-weight: 500;
+}
+
+.body--dark .rk-pill-menu .rk-menu-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Section */
+.rk-pill-menu .rk-menu-section {
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.rk-pill-menu .rk-menu-section + .rk-menu-section {
+  border-top: 1px dashed rgba(15, 23, 42, 0.06);
+}
+
+.body--dark .rk-pill-menu .rk-menu-section + .rk-menu-section {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.rk-pill-menu .rk-menu-section-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(15, 23, 42, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.body--dark .rk-pill-menu .rk-menu-section-label {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.rk-pill-menu .rk-menu-section-count {
+  margin-left: auto;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: rgba(15, 23, 42, 0.06);
+  border-radius: 999px;
+  letter-spacing: 0;
+}
+
+.body--dark .rk-pill-menu .rk-menu-section-count {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rk-pill-menu .rk-menu-list {
+  background: transparent;
+  padding: 0;
 }
 
 .rk-pill-menu .rk-menu-item {
   border-radius: 10px;
   padding: 8px 10px;
-  min-height: 56px;
+  min-height: 54px;
   transition: background 0.15s ease;
 }
 
@@ -450,5 +721,34 @@ async function onPick(c) {
 .rk-pill-menu .rk-menu-item:hover .rk-menu-arrow {
   color: var(--color-primary, #06b6d4);
   transform: translateX(2px);
+}
+
+.rk-pill-menu .rk-menu-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: rgba(15, 23, 42, 0.45);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.body--dark .rk-pill-menu .rk-menu-empty {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.rk-pill-menu .rk-menu-footer {
+  padding: 8px 16px 12px;
+  font-size: 0.7rem;
+  color: rgba(15, 23, 42, 0.45);
+  text-align: center;
+  border-top: 1px solid rgba(15, 23, 42, 0.05);
+  flex-shrink: 0;
+}
+
+.body--dark .rk-pill-menu .rk-menu-footer {
+  color: rgba(255, 255, 255, 0.45);
+  border-top-color: rgba(255, 255, 255, 0.05);
 }
 </style>
