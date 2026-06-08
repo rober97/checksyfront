@@ -154,7 +154,13 @@ export const useAuthStore = defineStore('auth', {
       try {
         const res = await secureAxios.get('/profile/me')
         const url = res?.data?.user?.avatarUrl || null
-        if (this.user) this.user = { ...this.user, avatarUrl: url }
+        // Solo reasignamos user cuando hay una URL real y distinta. Si url es
+        // null (usuario sin foto), reasignar generaría una nueva referencia con
+        // avatarUrl seguir vacío, y el watch que llama a este método volvería a
+        // dispararse en bucle infinito (peticiones /profile/me sin fin).
+        if (url && this.user && this.user.avatarUrl !== url) {
+          this.user = { ...this.user, avatarUrl: url }
+        }
         return url
       } catch (err) {
         return null

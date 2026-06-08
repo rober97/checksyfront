@@ -82,10 +82,14 @@ function normalizeCreateUserPayload(userData = {}) {
     firstName: cleanText(userData?.firstName, '') || '',
     lastName: cleanText(userData?.lastName, '') || '',
     email: cleanText(userData?.email, '')?.toLowerCase() || '',
+    // Res. Ex. N°38/2024 DT: obligatorio para empleados. No se debe descartar
+    // aquí o el backend lo recibe vacío y la validación del modelo falla.
+    personalEmail: cleanText(userData?.personalEmail, '')?.toLowerCase() || '',
     password: userData?.password || '',
     rut: cleanText(userData?.rut, null),
     role,
     company: cleanText(userData?.company, null),
+    companies: Array.isArray(userData?.companies) ? userData.companies.filter(Boolean) : [],
     workSchedule: cleanText(userData?.workSchedule, null),
     workScheduleChoice: userData?.workScheduleChoice || null,
     phone: cleanText(userData?.phone, null),
@@ -97,6 +101,7 @@ function normalizeCreateUserPayload(userData = {}) {
       region: cleanText(userData?.address?.region, '') || '',
     },
     permissions: Array.isArray(userData?.permissions) ? userData.permissions : [],
+    personalData: userData?.personalData ?? undefined,
     payroll: normalizePayroll(userData?.payroll, role),
     invite: Boolean(userData?.invite),
   }
