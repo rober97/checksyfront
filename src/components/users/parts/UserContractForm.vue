@@ -482,7 +482,7 @@
 </template>
 
 <script setup>
-import { reactive, watch, computed } from "vue";
+import { reactive, watch, computed, nextTick } from "vue";
 import { normalizeMoney, normalizeDecimal, formatMoney } from "@/utils/format";
 import { req, reqNumber, fechaPasada } from "@/utils/validators";
 import UserCargasForm from "./UserCargasForm.vue";
@@ -576,9 +576,18 @@ function normalizeIncoming(v = {}) {
 }
 const local = reactive(normalizeIncoming(props.modelValue));
 
+// Evita el bucle infinito de two-way binding: cuando nosotros emitimos un
+// objeto nuevo, el padre re-asigna props.modelValue y este watch volvería a
+// pisar `local` (con referencias nuevas de normalizeIncoming), re-disparando
+// el emit en cadena. Con este guard ignoramos nuestro propio eco.
+let isEmitting = false;
+
 watch(
   () => props.modelValue,
-  (v) => Object.assign(local, normalizeIncoming(v))
+  (v) => {
+    if (isEmitting) return;
+    Object.assign(local, normalizeIncoming(v));
+  }
 );
 
 /* Reglas para fecha término */
@@ -595,7 +604,13 @@ const endDateRules = computed(() => {
 
 watch(
   local,
-  (v) => emit("update:modelValue", { ...v }),
+  (v) => {
+    isEmitting = true;
+    emit("update:modelValue", { ...v });
+    // Se libera tras el flush actual, una vez que el watch de props.modelValue
+    // (disparado por nuestro propio emit) ya pasó y fue ignorado.
+    nextTick(() => { isEmitting = false; });
+  },
   { deep: true }
 );
 
