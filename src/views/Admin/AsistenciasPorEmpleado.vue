@@ -387,6 +387,15 @@
                       </div>
                       <div class="titem-nota">{{ m.note || 'Sin comentario' }}</div>
                     </div>
+                    <button
+                      v-if="m.photo"
+                      class="titem-photo"
+                      @click="openPhotoViewer(grupo.items, m)"
+                      title="Ver foto"
+                    >
+                      <q-img :src="thumbSrc(m)" ratio="1" fit="cover" no-spinner class="titem-photo-img" />
+                      <span class="titem-photo-ov"><q-icon name="visibility" size="14px" /></span>
+                    </button>
                     <div class="titem-right">
                       <div class="titem-hora">{{ horaBonita(m.timestamp) }}</div>
                       <div class="q-gutter-xs">
@@ -448,6 +457,10 @@
                       <span v-if="!m.modified && !m.workerObjected && !m.pending" class="rk-muted">—</span>
                     </td>
                     <td class="rk-td">
+                      <button v-if="m.photo" class="act-btn act-photo" @click="openPhotoViewer(historialFiltradoYTipado, m)">
+                        <q-img :src="thumbSrc(m)" ratio="1" fit="cover" no-spinner class="act-photo-img" />
+                        <q-tooltip>Ver foto</q-tooltip>
+                      </button>
                       <button v-if="m.ubicacion?.lat" class="act-btn act-map" @click="openInMaps(m)">
                         <q-icon name="place" size="14px" />
                         <q-tooltip>Ver en mapa</q-tooltip>
@@ -495,13 +508,55 @@
       @updated="onAttendanceModified"
     />
 
+    <!-- Visor de fotos -->
+    <q-dialog v-model="photoViewer.open" maximized transition-show="fade" transition-hide="fade">
+      <div class="pv-wrap">
+        <div class="pv-header">
+          <div class="pv-info">
+            <div class="pv-title">{{ photoViewerTitle }}</div>
+            <div v-if="photoViewerSub" class="pv-sub">{{ photoViewerSub }}</div>
+          </div>
+          <button class="pv-close" @click="closePhotoViewer" aria-label="Cerrar">
+            <q-icon name="close" size="22px" />
+          </button>
+        </div>
+        <div class="pv-body">
+          <button v-if="photoViewer.list.length > 1" class="pv-nav pv-prev" @click="prevPhoto">
+            <q-icon name="chevron_left" size="34px" />
+          </button>
+          <button v-if="photoViewer.list.length > 1" class="pv-nav pv-next" @click="nextPhoto">
+            <q-icon name="chevron_right" size="34px" />
+          </button>
+          <div class="pv-stage">
+            <q-inner-loading :showing="photoViewer.loading">
+              <q-spinner size="52px" color="white" />
+            </q-inner-loading>
+            <q-img
+              v-if="photoViewer.src && !photoViewer.error"
+              :key="photoViewer.src"
+              :src="photoViewer.src"
+              fit="contain"
+              no-spinner
+              class="pv-img"
+            />
+            <div v-else-if="photoViewer.error" class="pv-error">
+              <q-icon name="broken_image" size="64px" />
+              <div>{{ photoViewer.error }}</div>
+              <button class="pv-retry" @click="loadViewerPhoto">Reintentar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </q-dialog>
+
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useQuasar, date } from 'quasar';
 import { useAsistenciaStore } from '@/stores/asistenciaStore';
+import { fetchAttendancePhotoUrl } from '@/utils/attendancePhoto';
 import ModifyAttendanceDialog from '@/components/dt/ModifyAttendanceDialog.vue';
 
 const $q = useQuasar();
@@ -518,11 +573,91 @@ function openModify(m) {
 
 function onAttendanceModified(updated) {
   if (!updated?._id) return;
-  // Merge visual: encuentra la marca en el historial y marca como modified
+  // Recarga el historial del modal abierto para reflejar el cambio.
   try {
-    // historial es un computed sobre store; para que vean el cambio recargamos
-    loadData?.();
+    if (historialEmpleado.value?._id) recargarHistorialConRango();
   } catch {}
+}
+
+/* ── Fotos de marcas ───────────────────────── */
+const photoUrlCache = reactive(Object.create(null));
+const photoKey = (id, size) => `${id}::${size || 'full'}`;
+
+function thumbSrc(m) {
+  const id = m?._id;
+  if (!m?.photo || !id) return '';
+  const ck = photoKey(id, 96);
+  if (photoUrlCache[ck] === undefined) {
+    photoUrlCache[ck] = ''; // en carga
+    fetchAttendancePhotoUrl(id, 96)
+      .then(url => { photoUrlCache[ck] = url; })
+      .catch(() => { photoUrlCache[ck] = ''; });
+  }
+  return photoUrlCache[ck];
+}
+
+const photoViewer = reactive({
+  open: false,
+  loading: false,
+  error: null,
+  src: null,
+  list: [],
+  index: 0,
+});
+
+const photoViewerRow   = computed(() => photoViewer.list[photoViewer.index] || null);
+const photoViewerTitle = computed(() => {
+  const r = photoViewerRow.value;
+  if (!r) return 'Foto';
+  return `${capitalizar(r.tipo)} · ${formatFecha(r.timestamp)} ${horaBonita(r.timestamp)}`;
+});
+const photoViewerSub = computed(() =>
+  photoViewer.list.length > 1 ? `Foto ${photoViewer.index + 1} de ${photoViewer.list.length}` : ''
+);
+
+function openPhotoViewer(items, target) {
+  const list = (Array.isArray(items) ? items : []).filter(x => x?.photo && x?._id);
+  const idx = Math.max(0, list.findIndex(x => String(x._id) === String(target?._id)));
+  photoViewer.list = list;
+  photoViewer.index = idx;
+  photoViewer.open = true;
+  loadViewerPhoto();
+}
+
+async function loadViewerPhoto() {
+  photoViewer.loading = true;
+  photoViewer.error = null;
+  photoViewer.src = null;
+  const r = photoViewerRow.value;
+  if (!r?.photo || !r?._id) {
+    photoViewer.loading = false;
+    photoViewer.error = 'No hay foto disponible.';
+    return;
+  }
+  try {
+    photoViewer.src = await fetchAttendancePhotoUrl(r._id);
+  } catch (e) {
+    photoViewer.error = e?.response?.data?.message || e?.message || 'Error cargando la foto';
+  } finally {
+    photoViewer.loading = false;
+  }
+}
+
+function prevPhoto() {
+  if (photoViewer.list.length <= 1) return;
+  photoViewer.index = (photoViewer.index - 1 + photoViewer.list.length) % photoViewer.list.length;
+  loadViewerPhoto();
+}
+function nextPhoto() {
+  if (photoViewer.list.length <= 1) return;
+  photoViewer.index = (photoViewer.index + 1) % photoViewer.list.length;
+  loadViewerPhoto();
+}
+function closePhotoViewer() {
+  photoViewer.open = false;
+  photoViewer.src = null;
+  photoViewer.list = [];
+  photoViewer.index = 0;
 }
 
 /* ── Dark mode ─────────────────────────────── */
@@ -1289,4 +1424,41 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   .filter-row { flex-direction:column; }
   .modal-stats { display:none; }
 }
+
+/* ── Miniatura de foto (timeline) ── */
+.titem-photo {
+  position:relative; width:42px; height:42px; flex-shrink:0;
+  border:1px solid var(--c-border); border-radius:9px; overflow:hidden;
+  padding:0; cursor:pointer; background:var(--c-surface);
+  transition:transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+}
+.titem-photo:hover { transform:scale(1.06); border-color:var(--c-primary); box-shadow:0 4px 14px rgba(8,145,178,0.28); }
+.titem-photo-img { width:100%; height:100%; }
+.titem-photo-ov {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#fff; background:rgba(0,0,0,0.45); opacity:0; transition:opacity 0.12s;
+}
+.titem-photo:hover .titem-photo-ov { opacity:1; }
+
+/* ── Miniatura de foto (tabla) ── */
+.act-photo { width:30px; height:30px; overflow:hidden; padding:0; border:1px solid var(--c-border); border-radius:7px; }
+.act-photo:hover { border-color:var(--c-primary); }
+.act-photo-img { width:100%; height:100%; }
+
+/* ── Visor de fotos ── */
+.pv-wrap { position:fixed; inset:0; background:rgba(8,10,16,0.94); display:flex; flex-direction:column; }
+.pv-header { display:flex; align-items:center; justify-content:space-between; padding:16px 22px; color:#fff; }
+.pv-title { font-size:15px; font-weight:700; }
+.pv-sub { font-size:12px; opacity:0.7; margin-top:2px; }
+.pv-close { background:rgba(255,255,255,0.1); border:none; color:#fff; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.12s; }
+.pv-close:hover { background:rgba(255,255,255,0.22); }
+.pv-body { flex:1; position:relative; display:flex; align-items:center; justify-content:center; padding:0 16px 24px; min-height:0; }
+.pv-stage { position:relative; max-width:92vw; max-height:82vh; display:flex; align-items:center; justify-content:center; }
+.pv-img { max-width:92vw; max-height:82vh; border-radius:8px; }
+.pv-nav { position:absolute; top:50%; transform:translateY(-50%); z-index:2; background:rgba(255,255,255,0.12); border:none; color:#fff; width:52px; height:52px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.12s; }
+.pv-nav:hover { background:rgba(255,255,255,0.26); }
+.pv-prev { left:18px; }
+.pv-next { right:18px; }
+.pv-error { color:#fff; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; opacity:0.85; }
+.pv-retry { margin-top:6px; background:#fff; color:#111; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600; }
 </style>

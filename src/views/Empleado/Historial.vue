@@ -257,23 +257,13 @@ import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useAuthStore } from '@/stores/authStore';
 import { useAsistenciaStore } from '@/stores/asistenciaStore';
-import { API_URL } from '@/utils/api';
+import { fetchAttendancePhotoUrl } from '@/utils/attendancePhoto';
 
 import StatsCards from '@/components/StatsCards.vue';
 import RangeToolbar from '@/components/RangeToolbar.vue';
 import FiltersBar from '@/components/FiltersBar.vue';
 import DayCard from '@/components/DayCard.vue';
 import AttendanceRow from '@/components/AttendanceRow.vue';
-
-/* ===== CONFIG ===== */
-const API_BASE = API_URL.replace(/\/$/, '');
-const PHOTO_STREAM_BASE = `${API_BASE}/attendance/photo`;
-
-function buildPhotoUrl(attendanceId, size) {
-  if (!attendanceId) return '';
-  const base = `${PHOTO_STREAM_BASE}/${encodeURIComponent(String(attendanceId))}/photo`;
-  return size ? `${base}?size=${encodeURIComponent(String(size))}` : base;
-}
 
 /* ===== SETUP ===== */
 const $q = useQuasar();
@@ -530,14 +520,12 @@ const photoCacheKey = (attendanceId, size) => `${attendanceId}::${size || 'full'
 function thumbSrc(row) {
   if (!row?.photo || !row?.__realId) return '';
   const ck = photoCacheKey(row.__realId, 96);
-  if (!photoUrlCache[ck]) photoUrlCache[ck] = buildPhotoUrl(row.__realId, 96);
-  return photoUrlCache[ck];
-}
-
-function fullSrc(row) {
-  if (!row?.photo || !row?.__realId) return '';
-  const ck = photoCacheKey(row.__realId, null);
-  if (!photoUrlCache[ck]) photoUrlCache[ck] = buildPhotoUrl(row.__realId);
+  if (photoUrlCache[ck] === undefined) {
+    photoUrlCache[ck] = ''; // marca como "en carga" para no re-disparar
+    fetchAttendancePhotoUrl(row.__realId, 96)
+      .then((url) => { photoUrlCache[ck] = url; })
+      .catch(() => { photoUrlCache[ck] = ''; });
+  }
   return photoUrlCache[ck];
 }
 
@@ -607,7 +595,7 @@ async function loadCurrentPhoto() {
   }
 
   try {
-    viewer.src = fullSrc(r);
+    viewer.src = await fetchAttendancePhotoUrl(r.__realId);
   } catch (e) {
     viewer.error = e?.message || 'Error cargando la foto';
   } finally {
