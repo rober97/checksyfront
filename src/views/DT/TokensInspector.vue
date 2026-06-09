@@ -158,5 +158,5 @@ onMounted(() => dt.fetchInspectorTokens())
 
 <style scoped>
 .dt-page { max-width: 1200px; margin: 0 auto; }
-.token-cell { font-family: monospace; font-size: 11px; padding: 2px 6px; background: #f0f0f0; border-radius: 3px; }
+.token-cell { font-family: monospace; font-size: 11px; padding: 2px 6px; background: var(--surface-soft, #f1f5f9); border-radius: 3px; }
 </style>

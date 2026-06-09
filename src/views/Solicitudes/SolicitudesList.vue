@@ -659,11 +659,11 @@ const statusClass = (status) => {
 
 const tipoColor = (t) => {
   const colors = {
-    "Vacaciones": "blue",
-    "Día compensatorio": "green",
-    "Permiso personal": "purple",
-    "Licencia médica": "orange",
-    "Permiso familiar": "pink"
+    "Vacaciones": "primary",
+    "Día compensatorio": "positive",
+    "Permiso personal": "primary",
+    "Licencia médica": "warning",
+    "Permiso familiar": "primary"
   };
   return colors[t] || "grey";
 };
@@ -915,8 +915,8 @@ onMounted(async () => {
   --rk-positive: #059669;
   --rk-negative: #dc2626;
   --rk-orange: #d97706;
-  --rk-purple: #7c3aed;
-  --rk-pink: #db2777;
+  --rk-purple: var(--color-primary);
+  --rk-pink: var(--color-accent);
   --rk-text: #0f172a;
   --rk-text-muted: #64748b;
   --rk-text-soft: #94a3b8;
@@ -939,8 +939,8 @@ onMounted(async () => {
   --rk-text: #e8eef7;
   --rk-text-muted: #9fb0c8;
   --rk-text-soft: #70819b;
-  --rk-surface: rgba(20, 23, 32, 0.92);
-  --rk-surface-2: rgba(26, 30, 42, 0.94);
+  --rk-surface: rgba(26, 30, 39, 0.92);
+  --rk-surface-2: rgba(32, 36, 47, 0.94);
   --rk-border: rgba(255, 255, 255, 0.08);
   --rk-shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.15);
   --rk-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.2);
@@ -1325,9 +1325,9 @@ onMounted(async () => {
 }
 
 .rk-type-badge--vacaciones {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.15);
-  color: #2563eb;
+  background: var(--color-primary-soft);
+  border-color: rgba(6, 182, 212, 0.15);
+  color: var(--color-primary-dark);
 }
 .rk-type-badge--compensatorio {
   background: rgba(5, 150, 105, 0.1);
@@ -1335,9 +1335,9 @@ onMounted(async () => {
   color: #047857;
 }
 .rk-type-badge--personal {
-  background: rgba(124, 58, 237, 0.1);
-  border-color: rgba(124, 58, 237, 0.15);
-  color: #6d28d9;
+  background: var(--color-accent-soft);
+  border-color: rgba(20, 184, 166, 0.15);
+  color: var(--color-accent-dark);
 }
 .rk-type-badge--medica {
   background: rgba(217, 119, 6, 0.1);
@@ -1345,9 +1345,9 @@ onMounted(async () => {
   color: #b45309;
 }
 .rk-type-badge--familiar {
-  background: rgba(219, 39, 119, 0.1);
-  border-color: rgba(219, 39, 119, 0.15);
-  color: #be185d;
+  background: var(--color-info-soft);
+  border-color: rgba(8, 145, 178, 0.15);
+  color: var(--color-info);
 }
 .rk-type-badge--default {
   background: rgba(100, 116, 139, 0.1);

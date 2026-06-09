@@ -92,11 +92,11 @@ const passThroughNames = computed(() => {
   --cyan-header: #0891b2;
   --cyan-glow: rgba(6, 182, 212, 0.5);
   
-  /* Backgrounds oscuros */
-  --bg-dark-1: #0f1419;
-  --bg-dark-2: #1a2332;
-  --bg-dark-3: #243447;
-  --bg-dark-row: #1e2a3a;
+  /* Backgrounds — token-based so they work in both modes */
+  --bg-dark-1: var(--background-color);
+  --bg-dark-2: var(--card-background);
+  --bg-dark-3: var(--surface-soft);
+  --bg-dark-row: var(--surface-soft);
   
   /* Borders */
   --border-subtle: rgba(6, 182, 212, 0.15);

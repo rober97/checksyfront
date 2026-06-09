@@ -669,7 +669,7 @@ onMounted(async () => {
 .rk-weekly-hours {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-primary, #334155);
 }
 .rk-quick-actions {
   display: flex;
@@ -680,10 +680,10 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 10px;
   padding: 12px;
-  background: #f8fafc;
+  background: var(--surface-soft, #f8fafc);
 }
 .rk-day-row {
   display: grid;
@@ -692,11 +692,11 @@ onMounted(async () => {
   gap: 12px;
   padding: 8px;
   border-radius: 8px;
-  background: #fff;
+  background: var(--card-background, #fff);
   transition: background 0.15s;
 }
 .rk-day-row--off {
-  background: #f1f5f9;
+  background: var(--surface-soft, #f1f5f9);
   opacity: 0.75;
 }
 .rk-day-toggle {
@@ -736,7 +736,7 @@ onMounted(async () => {
 }
 .rk-assign-avatar {
   margin-left: -6px;
-  border: 2px solid #fff;
+  border: 2px solid var(--card-background, #fff);
   font-size: 11px;
   font-weight: 600;
 }
@@ -747,7 +747,7 @@ onMounted(async () => {
   font-size: 12px;
 }
 .body--dark .rk-assign-avatar {
-  border-color: #11151c;
+  border-color: var(--card-background, #1a1e27);
 }
 @media (max-width: 600px) {
   .rk-day-row {
@@ -757,19 +757,13 @@ onMounted(async () => {
   .rk-day-hours { text-align: left; }
 }
 
-/* ---------- Dark mode ---------- */
-.body--dark .rk-days-editor {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: #0f1216;
-}
-.body--dark .rk-day-row {
-  background: #161b24;
-}
-.body--dark .rk-day-row--off {
-  background: #11151c;
-  opacity: 0.7;
-}
+/* ---------- Dark mode collapsed into token vars ----------
+   The .rk-days-editor, .rk-day-row and .rk-day-row--off rules above already
+   consume var(--border-color), var(--surface-soft) and var(--card-background)
+   which flip automatically in body--dark via tokens.css.
+   Only the .rk-weekly-hours color needs an explicit dark override because it
+   inherits from the parent component's text cascade rather than a local var. */
 .body--dark .rk-weekly-hours {
-  color: #e5e7eb;
+  color: var(--text-primary, #e8eaf2);
 }
 </style>

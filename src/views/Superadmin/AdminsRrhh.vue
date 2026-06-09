@@ -334,7 +334,7 @@ const activeCompanyOptions = computed(() =>
 )
 
 /* ── Helpers de presentación ───────────────────── */
-const AVATAR_COLORS = ["#3d6fff","#8b5cf6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899"]
+const AVATAR_COLORS = ["#06b6d4","#0891b2","#14b8a6","#0d9488","#f59e0b","#ef4444","#22d3ee"]
 const avatarColor = (name="") => AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
 const initials = (fn="", ln="") => ((fn?.[0]||"") + (ln?.[0]||"") || "U").toUpperCase()
 const statusNice = (s) => ({ active: 'Activo', inactive: 'Inactivo', suspended: 'Suspendido', pending: 'Pendiente' }[s] || s || '—')
@@ -531,30 +531,26 @@ onMounted(() => {
    TOKENS
 ══════════════════════════════════════════════════ */
 .rk-page {
-  --c-bg:        #f0f2f7;
-  --c-surface:   #ffffff;
-  --c-surface2:  #f7f8fc;
-  --c-border:    rgba(0,0,0,0.08);
-  --c-text:      #0f1117;
-  --c-text2:     #5a6482;
-  --c-text3:     #9aa1b9;
-  --c-primary:   #06b6d4;
-  --c-primary-l: rgba(6,182,212,0.12);
-  --c-ok:        #16a34a;
-  --c-ok-l:      rgba(22,163,74,0.12);
-  --c-warn:      #d97706;
-  --c-warn-l:    rgba(217,119,6,0.12);
-  --c-err:       #dc2626;
-  --c-err-l:     rgba(220,38,38,0.12);
-  --c-purple:    #8b5cf6;
-  --c-purple-l:  rgba(139,92,246,0.12);
-  --c-teal:      #0d9488;
-  --c-teal-l:    rgba(13,148,136,0.12);
-  --c-indigo:    #6366f1;
-  --c-indigo-l:  rgba(99,102,241,0.12);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-  --shadow-lg:   0 12px 36px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.05);
+  --c-bg:        var(--background-color, #f0f2f7);
+  --c-surface:   var(--card-background, #ffffff);
+  --c-surface2:  var(--surface-soft, #f7f8fc);
+  --c-border:    var(--border-color, rgba(0,0,0,0.08));
+  --c-text:      var(--text-primary, #0f1117);
+  --c-text2:     var(--text-secondary, #5a6482);
+  --c-text3:     var(--text-muted, #9aa1b9);
+  --c-primary:   var(--color-primary, #06b6d4);
+  --c-primary-l: var(--color-primary-soft, rgba(8,145,178,0.12));
+  --c-ok:        var(--color-success, #16a34a);
+  --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
+  --c-warn:      var(--color-warning, #d97706);
+  --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
+  --c-err:       var(--color-danger, #dc2626);
+  --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
+  --c-teal:      var(--color-accent, #14b8a6);
+  --c-teal-l:    var(--color-accent-soft, rgba(13,148,136,0.12));
+  --shadow-sm:   var(--app-shadow-sm);
+  --shadow-md:   var(--app-shadow-md);
+  --shadow-lg:   var(--app-shadow-lg);
   --radius-md:   14px;
   --radius-lg:   20px;
   --ff-body:     'DM Sans','Segoe UI',system-ui,sans-serif;
@@ -570,24 +566,11 @@ onMounted(() => {
   overflow-x: hidden;
   transition: background 0.3s, color 0.3s;
 }
+/* Dark mode — all surface/text/accent tokens inherited from global via var() above */
 .rk-page.is-dark {
-  --c-bg:        #0c0e14;
-  --c-surface:   #141720;
-  --c-surface2:  #1a1e2a;
-  --c-border:    rgba(255,255,255,0.07);
-  --c-text:      #e8eaf2;
-  --c-text2:     #8b92ad;
-  --c-text3:     #555d78;
-  --c-primary-l: rgba(6,182,212,0.18);
-  --c-ok-l:      rgba(22,163,74,0.18);
-  --c-warn-l:    rgba(217,119,6,0.18);
-  --c-err-l:     rgba(220,38,38,0.18);
-  --c-purple-l:  rgba(139,92,246,0.18);
-  --c-teal-l:    rgba(13,148,136,0.18);
-  --c-indigo-l:  rgba(99,102,241,0.18);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg:   0 12px 36px rgba(0,0,0,0.5);
+  --shadow-sm:   var(--app-shadow-sm);
+  --shadow-md:   var(--app-shadow-md);
+  --shadow-lg:   var(--app-shadow-lg);
 }
 
 /* ══════════════════════════════════════════════════
@@ -597,7 +580,7 @@ onMounted(() => {
 .mesh-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.35; }
 .rk-page:not(.is-dark) .mesh-orb { opacity:0.12; }
 .orb-1 { width:520px; height:520px; top:-180px; right:-100px; background:var(--c-primary); }
-.orb-2 { width:380px; height:380px; bottom:120px; left:-120px; background:var(--c-purple); }
+.orb-2 { width:380px; height:380px; bottom:120px; left:-120px; background:var(--c-teal); }
 .orb-3 { width:280px; height:280px; top:40%; left:45%; background:var(--c-teal); }
 .mesh-grid {
   position:absolute; inset:0;
@@ -659,9 +642,9 @@ onMounted(() => {
   background:var(--kpi-c);
 }
 
-.kpi-all      { --kpi-c:var(--c-indigo);  --kpi-cl:var(--c-indigo-l);  }
+.kpi-all      { --kpi-c:var(--c-primary); --kpi-cl:var(--c-primary-l); }
 .kpi-active   { --kpi-c:var(--c-ok);      --kpi-cl:var(--c-ok-l);      }
-.kpi-multi    { --kpi-c:var(--c-purple);  --kpi-cl:var(--c-purple-l);  }
+.kpi-multi    { --kpi-c:var(--c-teal);    --kpi-cl:var(--c-teal-l);    }
 .kpi-coverage { --kpi-c:var(--c-primary); --kpi-cl:var(--c-primary-l); }
 
 .kpi-icon-wrap {
@@ -836,29 +819,29 @@ onMounted(() => {
 <!-- Dialog styles: NO scoped because q-dialog se teleporta fuera del componente -->
 <style>
 .rk-admin-dialog {
-  --d-surface:   #ffffff;
-  --d-surface2:  #f7f8fc;
-  --d-border:    rgba(0,0,0,0.08);
-  --d-text:      #0f1117;
-  --d-text2:     #5a6482;
-  --d-text3:     #9aa1b9;
-  --d-primary:   #06b6d4;
-  --d-teal:      #0d9488;
-  --d-err:       #dc2626;
-  --d-err-l:     rgba(220,38,38,0.12);
+  --d-surface:   var(--card-background, #ffffff);
+  --d-surface2:  var(--surface-soft, #f1f5f9);
+  --d-border:    var(--border-color, rgba(0,0,0,0.08));
+  --d-text:      var(--text-primary, #0f1117);
+  --d-text2:     var(--text-secondary, #475569);
+  --d-text3:     var(--text-muted, #94a3b8);
+  --d-primary:   var(--color-primary, #06b6d4);
+  --d-teal:      var(--color-accent, #14b8a6);
+  --d-err:       var(--color-danger, #dc2626);
+  --d-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
   --d-shadow:    0 24px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08);
   --d-radius:    20px;
   --d-ff:        'DM Sans','Segoe UI',system-ui,sans-serif;
   --d-ff-disp:   'Sora','DM Sans',system-ui,sans-serif;
 }
 .rk-admin-dialog.is-dark {
-  --d-surface:   #141720;
-  --d-surface2:  #1a1e2a;
-  --d-border:    rgba(255,255,255,0.08);
-  --d-text:      #e8eaf2;
-  --d-text2:     #8b92ad;
-  --d-text3:     #555d78;
-  --d-err-l:     rgba(220,38,38,0.2);
+  --d-surface:   var(--card-background, #1a1e27);
+  --d-surface2:  var(--surface-soft, #20242f);
+  --d-border:    var(--border-color, rgba(255,255,255,0.08));
+  --d-text:      var(--text-primary, #e8eaf2);
+  --d-text2:     var(--text-secondary, #9aa3b8);
+  --d-text3:     var(--text-muted, #6b7488);
+  --d-err-l:     var(--color-danger-soft, rgba(220,38,38,0.2));
   --d-shadow:    0 24px 60px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.4);
 }
 

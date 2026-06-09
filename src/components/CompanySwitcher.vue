@@ -178,7 +178,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import secureAxios from '@/utils/secureRequest'
 import { useAuthStore } from '@/stores/authStore'
-import { getCompanyColor, getCompanyInitial } from '@/utils/companyBrand'
+import { getCompanyInitial, DEFAULT_BRAND } from '@/utils/companyBrand'
 
 const RECENTS_KEY = 'recksy:recent-companies'
 const RECENTS_MAX = 5
@@ -229,7 +229,7 @@ const activeInitial = computed(() => getCompanyInitial(activeCompanyObj.value))
 const activeAvatarStyle = computed(() => {
   if (!hasActive.value) {
     return {
-      background: 'linear-gradient(135deg, #475569, #1e293b)',
+      background: 'linear-gradient(135deg, #475569, #20242f)',
       color: '#ffffff',
       boxShadow: '0 4px 10px rgba(15, 23, 42, 0.25)',
     }
@@ -237,8 +237,10 @@ const activeAvatarStyle = computed(() => {
   return getAvatarStyle(activeCompanyObj.value)
 })
 
-function getAvatarStyle(company) {
-  const c = getCompanyColor(company)
+function getAvatarStyle() {
+  // Mismo color cyan para todas las empresas (ignoramos el brandColor
+  // por empresa aquí para mantener el switcher visualmente uniforme).
+  const c = DEFAULT_BRAND
   return {
     background: `linear-gradient(135deg, ${c.bg}, ${c.bgAlt})`,
     color: c.fg,
@@ -515,7 +517,7 @@ onMounted(() => {
 }
 
 .body--dark .rk-pill-menu {
-  background: #0f172a;
+  background: var(--card-background, #1a1e27);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }

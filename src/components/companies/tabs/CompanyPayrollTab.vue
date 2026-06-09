@@ -924,19 +924,19 @@ async function saveOne() {
 
 /* ──────────────────────────── TOKENS ── */
 .rk-wrap {
-  --c-ink:            #0f172a;
-  --c-ink-2:          #334155;
-  --c-ink-3:          #64748b;
-  --c-ink-4:          #94a3b8;
-  --c-surface:        #ffffff;
-  --c-surface-2:      #f8fafc;
-  --c-surface-3:      #f1f5f9;
-  --c-border:         #e2e8f0;
-  --c-border-strong:  #cbd5e1;
-  --c-accent:         #1e40af;
-  --c-accent-hover:   #1d3a9e;
-  --c-accent-soft:    #eff6ff;
-  --c-accent-mid:     #bfdbfe;
+  --c-ink:            var(--text-primary);
+  --c-ink-2:          var(--text-secondary);
+  --c-ink-3:          var(--text-muted);
+  --c-ink-4:          var(--text-muted);
+  --c-surface:        var(--card-background);
+  --c-surface-2:      var(--surface-soft);
+  --c-surface-3:      var(--background-color);
+  --c-border:         var(--border-color);
+  --c-border-strong:  var(--color-gray);
+  --c-accent:         var(--color-primary);
+  --c-accent-hover:   var(--color-primary-dark);
+  --c-accent-soft:    var(--color-primary-soft);
+  --c-accent-mid:     rgba(6,182,212,0.30);
   --c-earn:           #166534;
   --c-earn-bg:        #f0fdf4;
   --c-earn-border:    #bbf7d0;
@@ -1096,7 +1096,7 @@ async function saveOne() {
 }
 
 .rk-row--inactive { opacity: 0.45; }
-.rk-row--patched  { background: rgba(30, 64, 175, 0.03) !important; }
+.rk-row--patched  { background: var(--color-primary-soft) !important; }
 .rk-row--patched td.col-actions {
   background: var(--c-surface);
 }
@@ -1294,17 +1294,6 @@ async function saveOne() {
 
 /* ──────────────────────────── DARK MODE ── */
 .body--dark .rk-wrap {
-  --c-ink:           #e2e8f0;
-  --c-ink-2:         #cbd5e1;
-  --c-ink-3:         #94a3b8;
-  --c-ink-4:         #64748b;
-  --c-surface:       #0f172a;
-  --c-surface-2:     #1e293b;
-  --c-surface-3:     #263247;
-  --c-border:        rgba(255,255,255,0.09);
-  --c-border-strong: rgba(255,255,255,0.16);
-  --c-accent-soft:   rgba(30,64,175,0.18);
-  --c-accent-mid:    rgba(96,165,250,0.35);
   --c-earn-bg:       rgba(22,101,52,0.15);
   --c-earn-border:   rgba(34,197,94,0.25);
   --c-deduct-bg:     rgba(153,27,27,0.15);
@@ -1313,7 +1302,7 @@ async function saveOne() {
   --c-warn-border:   rgba(245,158,11,0.3);
   --c-ok-bg:         rgba(20,83,45,0.15);
   --c-ok-border:     rgba(34,197,94,0.25);
-  background: #060c18;
+  background: var(--background-color);
 }
 
 /* ──────────────────────────── RESPONSIVE ── */

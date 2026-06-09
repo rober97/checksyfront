@@ -4,7 +4,7 @@
       <div class="row items-center q-mb-md">
         <div class="col">
           <div class="text-h5 text-weight-bold">
-            <q-icon name="apartment" class="text-deep-purple q-mr-sm" />
+            <q-icon name="apartment" class="text-primary q-mr-sm" />
             Empresas cliente
           </div>
           <div class="text-caption text-grey-7">

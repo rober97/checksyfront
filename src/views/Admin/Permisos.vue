@@ -66,7 +66,7 @@
           <template v-else>
             <q-chip
               v-if="selectedProfileId"
-              color="deep-purple"
+              color="primary"
               text-color="white"
               class="rk-chip rk-item"
             >
@@ -84,7 +84,7 @@
                 dense
                 outlined
                 standout
-                color="deep-purple"
+                color="primary"
                 class="rk-inline-name"
                 :label="`Renombrar perfil`"
               />
@@ -93,7 +93,7 @@
                 flat
                 round
                 icon="save"
-                color="deep-purple"
+                color="primary"
                 :disable="!canSaveInline"
                 @click="saveInlineProfileName"
                 class="rk-btn-save-inline"

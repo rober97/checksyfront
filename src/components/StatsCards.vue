@@ -71,28 +71,26 @@ defineProps({
 }
 
 .stat-card--gradient-1 {
-  background: linear-gradient(135deg, 
-    rgba(99, 102, 241, 0.12) 0%, 
-    rgba(139, 92, 246, 0.08) 100%);
+  background: linear-gradient(135deg,
+    var(--color-primary-soft, rgba(6, 182, 212, 0.12)) 0%,
+    var(--color-accent-soft, rgba(20, 184, 166, 0.08)) 100%);
 }
 
 .stat-card--gradient-2 {
-  background: linear-gradient(135deg, 
-    rgba(236, 72, 153, 0.12) 0%, 
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.10) 0%,
     rgba(245, 158, 11, 0.08) 100%);
 }
 
 .stat-card--gradient-3 {
-  background: linear-gradient(135deg, 
-    rgba(6, 182, 212, 0.12) 0%, 
-    rgba(16, 185, 129, 0.08) 100%);
+  background: linear-gradient(135deg,
+    var(--color-accent-soft, rgba(20, 184, 166, 0.12)) 0%,
+    rgba(6, 182, 212, 0.08) 100%);
 }
 
 body.body--dark .stat-card {
-  background: linear-gradient(135deg, 
-    rgba(30, 41, 59, 0.6) 0%, 
-    rgba(15, 23, 42, 0.4) 100%);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--card-background, #1a1e27);
+  border-color: var(--border-color, rgba(255, 255, 255, 0.08));
 }
 
 .stat-icon-wrapper {
@@ -104,26 +102,26 @@ body.body--dark .stat-card {
   justify-content: center;
   font-size: 32px;
   background: rgba(255, 255, 255, 0.9);
-  color: #6366f1;
+  color: var(--color-primary, #06b6d4);
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
 }
 
 .stat-card--gradient-1 .stat-icon-wrapper {
-  color: #6366f1;
+  color: var(--color-primary, #06b6d4);
 }
 
 .stat-card--gradient-2 .stat-icon-wrapper {
-  color: #ec4899;
+  color: var(--color-accent, #14b8a6);
 }
 
 .stat-card--gradient-3 .stat-icon-wrapper {
-  color: #06b6d4;
+  color: var(--color-primary, #06b6d4);
 }
 
 body.body--dark .stat-icon-wrapper {
-  background: rgba(255, 255, 255, 0.08);
-  color: #a5b4fc;
+  background: var(--surface-soft, rgba(32, 36, 47, 0.8));
+  color: var(--color-primary, #22d3ee);
 }
 
 .stat-content {
@@ -137,7 +135,7 @@ body.body--dark .stat-icon-wrapper {
   letter-spacing: -0.03em;
   line-height: 1;
   margin-bottom: 6px;
-  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  background: linear-gradient(135deg, var(--text-primary, #0f172a) 0%, var(--text-secondary, #475569) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

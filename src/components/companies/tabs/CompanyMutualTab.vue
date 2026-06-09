@@ -216,39 +216,33 @@ watch(
   display: flex;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.02));
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: var(--color-primary-soft);
+  border: 1px solid rgba(6, 182, 212, 0.2);
   border-radius: 12px;
 }
 .cmt-info-icon {
-  color: rgb(99, 102, 241);
+  color: var(--color-primary);
   margin-top: 1px;
   flex-shrink: 0;
 }
 .cmt-info-title {
   font-size: 14px;
   font-weight: 700;
-  color: rgb(15, 17, 23);
+  color: var(--text-primary);
   letter-spacing: -0.1px;
 }
 .cmt-info-text {
   font-size: 12.5px;
-  color: rgb(90, 100, 130);
+  color: var(--text-secondary);
   margin: 4px 0 0 0;
   line-height: 1.5;
 }
-.body--dark .cmt-info-title { color: rgb(232, 234, 242); }
-.body--dark .cmt-info-text { color: rgb(139, 146, 173); }
 
 .cmt-card {
-  background: #ffffff;
-  border: 1px solid rgba(15, 17, 23, 0.08);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
-}
-.body--dark .cmt-card {
-  background: #1a1e2a;
-  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .cmt-card-head {
@@ -270,16 +264,14 @@ watch(
 .cmt-card-title {
   font-size: 13px;
   font-weight: 700;
-  color: rgb(15, 17, 23);
+  color: var(--text-primary);
   letter-spacing: -0.1px;
 }
 .cmt-card-sub {
   font-size: 11.5px;
-  color: rgb(90, 100, 130);
+  color: var(--text-secondary);
   margin-top: 1px;
 }
-.body--dark .cmt-card-title { color: rgb(232, 234, 242); }
-.body--dark .cmt-card-sub { color: rgb(139, 146, 173); }
 
 .cmt-field :deep(.q-field__control) {
   min-height: 40px;
@@ -319,22 +311,19 @@ watch(
 }
 .cmt-total-detail {
   font-size: 11px;
-  color: rgb(90, 100, 130);
+  color: var(--text-secondary);
   margin-top: 2px;
 }
-.body--dark .cmt-total-label,
-.body--dark .cmt-total-detail { color: rgb(139, 146, 173); }
 
 .cmt-status {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: rgba(22, 163, 74, 0.08);
+  background: var(--color-success-soft);
   border: 1px solid rgba(22, 163, 74, 0.22);
   border-radius: 10px;
   font-size: 12.5px;
-  color: rgb(15, 17, 23);
+  color: var(--text-primary);
 }
-.body--dark .cmt-status { color: rgb(232, 234, 242); }
 </style>

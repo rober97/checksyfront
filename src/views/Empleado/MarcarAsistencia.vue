@@ -1502,7 +1502,7 @@ kbd {
 
 .rk-mood-btn.mood-great { background: linear-gradient(135deg, var(--color-primary), #0891b2); }
 .rk-mood-btn.mood-good { background: linear-gradient(135deg, var(--color-success), #16a34a); }
-.rk-mood-btn.mood-ok { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.rk-mood-btn.mood-ok { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); }
 .rk-mood-btn.mood-tired { background: linear-gradient(135deg, var(--color-warning), #d97706); }
 .rk-mood-btn.mood-bad { background: linear-gradient(135deg, var(--color-danger), #dc2626); }
 

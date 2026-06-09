@@ -349,7 +349,7 @@ const initials = (label = '') => {
   --s-shadow:      0 8px 28px rgba(6,182,212,.08), 0 2px 8px rgba(0,0,0,.05);
 }
 .body--dark .rk-side {
-  --s-bg:          rgba(10,16,28,.96);
+  --s-bg:          var(--card-background);
   --s-bg-soft:     rgba(6,182,212,.06);
   --s-border:      rgba(6,182,212,.18);
   --s-border-hover:rgba(6,182,212,.35);

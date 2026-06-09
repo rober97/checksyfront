@@ -1,68 +1,8 @@
-:root {
-  /* 🎯 Colores principales */
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-primary-dark: #0891b2;
-  --color-primary-hover: #0ea5e9;
-
-  /* 🌟 Secundario (puedes usarlo para acentos o botones secundarios) */
-  --color-secondary: #ffb400;
-  --color-secondary-light: #ffd24d;
-  --color-secondary-dark: #cc9100;
-
-  /* 📘 Neutros */
-  --color-white: #ffffff;
-  --color-black: #000000;
-  --color-gray-light: #f4f4f4;
-  --color-gray: #cfd8dc;
-  --color-gray-dark: #90a4ae;
-
-  /* ✅ Estados */
-  --color-success: #00c853;
-  --color-warning: #ffab00;
-  --color-danger: #d50000;
-  --color-info: var(--color-primary);
-
-  /* 🧱 Layout y fondo */
-  --background-color: #ffffff;
-  --card-background: #ffffff;
-  --border-color: #e0e0e0;
-
-  /* ✍️ Texto */
-  --text-primary: #1e1e1e;
-  --text-secondary: #5f6368;
-  --text-light: #ffffff;
-  --text-muted: #9e9e9e;
-
-  /* Otros */
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --radius-base: 12px;
-}
-
-body.body--dark {
-  --color-primary: #22d3ee;
-  --color-primary-light: #67e8f9;
-  --color-primary-dark: #06b6d4;
-  --color-primary-hover: #0ea5e9;
-
-  --color-secondary: #ffc107;
-  --color-secondary-light: #ffe082;
-  --color-secondary-dark: #ff8f00;
-
-  --color-white: #121212;
-  --color-black: #ffffff;
-  --color-gray-light: #1e1e1e;
-  --color-gray: #2e2e2e;
-  --color-gray-dark: #4a4a4a;
-
-  --background-color: #121212;
-  --card-background: #1e1e1e;
-  --border-color: #2a2a2a;
-
-  --text-primary: #f4f4f4;
-  --text-secondary: #b0bec5;
-  --text-light: #ffffff;
-  --text-muted: #9e9e9e;
-
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
+/* =====================================================================
+   base.css — DEPRECADO como fuente de tokens.
+   Toda la paleta (claro + oscuro) vive ahora en tokens.css, que es la
+   única fuente de verdad. Este archivo se conserva para no romper el
+   import en main.js, pero NO debe redefinir variables de color: hacerlo
+   provocaría conflictos por orden de carga.
+   Añade aquí solo reglas base globales que no sean tokens de color.
+===================================================================== */

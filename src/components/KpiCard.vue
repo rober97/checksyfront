@@ -57,7 +57,7 @@ const props = defineProps({
   },
   iconGradient: {
     type: String,
-    default: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    default: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)'
   },
   variant: {
     type: String,
@@ -211,19 +211,16 @@ function formatDecimal(num) {
 
 <style lang="scss" scoped>
 .kpi-card {
-  background: white;
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-soft);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  
-  .body--dark & {
-    background: #2a2a3e;
-  }
 
   &::before {
     content: '';
@@ -232,7 +229,7 @@ function formatDecimal(num) {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--q-primary), var(--q-secondary));
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
@@ -248,10 +245,10 @@ function formatDecimal(num) {
   }
 
   &.highlight {
-    border: 2px solid var(--q-primary);
-    
+    border: 2px solid var(--color-primary);
+
     .kpi-value {
-      color: var(--q-primary);
+      color: var(--color-primary);
     }
   }
 
@@ -306,24 +303,24 @@ function formatDecimal(num) {
   flex-shrink: 0;
 
   &.positive {
-    background: rgba(46, 213, 115, 0.1);
-    color: #2ed573;
+    background: var(--color-success-soft);
+    color: var(--color-success);
   }
 
   &.negative {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
   }
 }
 
 .kpi-badge {
-  background: #ff4757;
+  background: var(--color-danger);
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
   flex-shrink: 0;
 }
 
@@ -338,22 +335,18 @@ function formatDecimal(num) {
 .kpi-value {
   font-size: 2rem;
   font-weight: 800;
-  color: #2c3e50;
+  color: var(--text-primary);
   line-height: 1.2;
   display: flex;
   align-items: baseline;
   gap: 0.25rem;
   flex-wrap: wrap;
   word-break: break-word;
-  
-  .body--dark & {
-    color: #ecf0f1;
-  }
 
   &.time {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--q-primary);
+    color: var(--color-primary);
   }
 
   &.large {
@@ -381,14 +374,14 @@ function formatDecimal(num) {
 
 .kpi-label {
   font-size: 0.875rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   font-weight: 500;
   line-height: 1.3;
 }
 
 .kpi-subtitle {
   font-size: 0.75rem;
-  color: #95a5a6;
+  color: var(--text-muted);
   font-weight: 400;
   line-height: 1.3;
 }
@@ -396,16 +389,12 @@ function formatDecimal(num) {
 .kpi-progress {
   margin-top: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  
-  .body--dark & {
-    border-top-color: rgba(255, 255, 255, 0.1);
-  }
+  border-top: 1px solid var(--border-color);
 }
 
 .progress-label {
   font-size: 0.75rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin-top: 0.5rem;
   text-align: right;
 }

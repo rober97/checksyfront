@@ -1,9 +1,9 @@
 <template>
   <q-page padding>
     <div class="sa-shell">
-      <q-banner class="bg-deep-purple-1 q-mb-md">
+      <q-banner class="bg-cyan-1 q-mb-md">
         <template #avatar>
-          <q-icon name="shield" color="deep-purple" size="40px" />
+          <q-icon name="shield" color="primary" size="40px" />
         </template>
         <div class="text-h6 text-weight-bold">Superadmin — Plataforma Recksy</div>
         <div class="text-caption">
@@ -19,7 +19,7 @@
             <q-card-section>
               <div class="text-caption text-grey-7">Empresas activas</div>
               <div class="text-h3 text-weight-bold">{{ stats.companies }}</div>
-              <q-icon name="apartment" class="metric-ico text-deep-purple" />
+              <q-icon name="apartment" class="metric-ico text-primary" />
             </q-card-section>
           </q-card>
         </div>
@@ -59,8 +59,8 @@
             <q-btn unelevated color="primary" icon="add_business" label="Nueva empresa" to="/superadmin/empresas/new" />
             <q-btn unelevated color="primary" outline icon="apartment" label="Empresas" to="/superadmin/empresas" />
             <q-btn unelevated color="primary" outline icon="badge" label="Admins RR.HH." to="/superadmin/admins-rrhh" />
-            <q-btn unelevated color="deep-purple" icon="download" label="Reportes DT" to="/superadmin/dt/reportes" />
-            <q-btn unelevated color="deep-purple" outline icon="history" label="Auditoría" to="/superadmin/dt/auditoria" />
+            <q-btn unelevated color="primary" icon="download" label="Reportes DT" to="/superadmin/dt/reportes" />
+            <q-btn unelevated color="primary" outline icon="history" label="Auditoría" to="/superadmin/dt/auditoria" />
           </div>
         </q-card-section>
       </q-card>
@@ -70,7 +70,7 @@
           <div class="text-subtitle1 text-weight-medium">Modelo de roles</div>
           <q-list dense>
             <q-item>
-              <q-item-section avatar><q-icon name="shield" color="deep-purple" /></q-item-section>
+              <q-item-section avatar><q-icon name="shield" color="primary" /></q-item-section>
               <q-item-section>
                 <q-item-label><b>superadmin</b> — tú</q-item-label>
                 <q-item-label caption>

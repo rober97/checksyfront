@@ -667,8 +667,8 @@ async function reloadData() {
 }
 
 .body--dark .rk-card {
-  background: #101318;
-  border-color: rgba(255,255,255,.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-card.rk-disabled {
@@ -711,18 +711,18 @@ async function reloadData() {
 }
 
 .rk-tipo-card:hover {
-  border-color: var(--q-primary);
+  border-color: var(--color-primary);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
 
 .rk-tipo-card.selected {
-  border-color: var(--q-primary);
-  background: rgba(33, 150, 243, 0.06);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .rk-tipo-card .q-icon:first-child {
-  color: var(--q-primary);
+  color: var(--color-primary);
 }
 
 .rk-tipo-label {
@@ -829,8 +829,8 @@ async function reloadData() {
 }
 
 .body--dark .rk-summary-card {
-  background: #101318;
-  border-color: rgba(255,255,255,.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-summary-title {
@@ -845,7 +845,7 @@ async function reloadData() {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(33, 150, 243, 0.06);
+  background: var(--color-primary-soft);
   border-radius: 8px;
   font-size: 0.88rem;
 }

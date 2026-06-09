@@ -1499,8 +1499,8 @@ const kpiColorMap = {
   teal: '#14b8a6',
   green: '#22c55e',
   orange: '#f97316',
-  purple: '#a855f7',
-  blue: '#3b82f6',
+  purple: '#06b6d4',
+  blue: '#06b6d4',
   red: '#ef4444',
 };
 function kpiColorHex(color) {

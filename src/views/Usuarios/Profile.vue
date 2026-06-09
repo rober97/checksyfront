@@ -384,10 +384,10 @@ const roleColor = computed(() => {
   const r = String(user.value?.role || "").toLowerCase();
   return (
     {
-      superadmin: "deep-purple-5",
-      admin: "deep-purple-5",
-      admin_rrhh: "indigo-6",
-      company: "indigo-6",
+      superadmin: "primary",
+      admin: "primary",
+      admin_rrhh: "primary",
+      company: "primary",
       employee: "teal-6",
       dt_inspector: "amber-9",
     }[r] || "grey-6"
@@ -571,20 +571,20 @@ onMounted(() => {
   border-radius: 20px;
   overflow: hidden;
   margin-bottom: 24px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: #fff;
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.08));
+  background: var(--card-background, #fff);
 }
 
 .rk-profile-hero.is-dark {
-  background: #0f172a;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-profile-hero__bg {
   position: absolute;
   inset: 0;
   height: 140px;
-  background: linear-gradient(135deg, #06b6d4 0%, #14b8a6 60%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--color-primary, #06b6d4) 0%, var(--color-accent, #14b8a6) 60%, var(--color-primary-dark, #0891b2) 100%);
 }
 
 .rk-profile-hero__content {
@@ -606,7 +606,7 @@ onMounted(() => {
 }
 
 .rk-profile-hero.is-dark .rk-profile-hero__avatar {
-  border-color: #0f172a;
+  border-color: var(--card-background);
 }
 
 .rk-profile-hero__initials {
@@ -634,7 +634,7 @@ onMounted(() => {
 }
 
 .rk-profile-hero.is-dark .rk-profile-hero__upload-btn {
-  border-color: #0f172a;
+  border-color: var(--card-background);
 }
 
 .rk-profile-hero__upload-btn:hover:not(:disabled) {
@@ -658,25 +658,17 @@ onMounted(() => {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 800;
-  color: rgba(15, 23, 42, 0.95);
+  color: var(--text-primary);
   line-height: 1.2;
-}
-
-.rk-profile-hero.is-dark .rk-profile-hero__name {
-  color: rgba(255, 255, 255, 0.95);
 }
 
 .rk-profile-hero__email {
   margin: 6px 0 12px;
   font-size: 0.95rem;
-  color: rgba(15, 23, 42, 0.65);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.rk-profile-hero.is-dark .rk-profile-hero__email {
-  color: rgba(255, 255, 255, 0.65);
 }
 
 .rk-profile-hero__chips {
@@ -718,8 +710,8 @@ onMounted(() => {
   align-items: center;
   gap: 14px;
   padding: 18px 20px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--card-background, #fff);
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.08));
   border-radius: 14px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -730,8 +722,8 @@ onMounted(() => {
 }
 
 .rk-stat-card.is-dark {
-  background: #0f172a;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-stat-card__icon {
@@ -754,7 +746,7 @@ onMounted(() => {
 }
 
 .rk-stat-card__icon--violet {
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  background: linear-gradient(135deg, var(--color-accent, #14b8a6), var(--color-accent-dark, #0d9488));
 }
 
 .rk-stat-card__icon--amber {
@@ -764,47 +756,35 @@ onMounted(() => {
 .rk-stat-card__label {
   font-size: 0.82rem;
   font-weight: 600;
-  color: rgba(15, 23, 42, 0.6);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
-}
-
-.rk-stat-card.is-dark .rk-stat-card__label {
-  color: rgba(255, 255, 255, 0.6);
 }
 
 .rk-stat-card__value {
   font-size: 1.5rem;
   font-weight: 800;
-  color: rgba(15, 23, 42, 0.92);
+  color: var(--text-primary);
   line-height: 1.2;
-}
-
-.rk-stat-card.is-dark .rk-stat-card__value {
-  color: rgba(255, 255, 255, 0.92);
 }
 
 /* ===== Section cards ===== */
 .rk-section-card {
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--card-background, #fff);
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.08));
   border-radius: 16px;
   margin-bottom: 20px;
   overflow: hidden;
 }
 
 .rk-section-card.is-dark {
-  background: #0f172a;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-section-card__header {
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.rk-section-card.is-dark .rk-section-card__header {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-color, rgba(15, 23, 42, 0.06));
 }
 
 .rk-section-card__title {
@@ -813,11 +793,7 @@ onMounted(() => {
   gap: 10px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.92);
-}
-
-.rk-section-card.is-dark .rk-section-card__title {
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
 }
 
 .rk-section-card__title .q-icon {
@@ -827,11 +803,7 @@ onMounted(() => {
 .rk-section-card__hint {
   margin: 6px 0 0;
   font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.55);
-}
-
-.rk-section-card.is-dark .rk-section-card__hint {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
 }
 
 .rk-section-card__body {
@@ -857,21 +829,13 @@ onMounted(() => {
 .rk-action-row__title {
   font-size: 0.98rem;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.9);
-}
-
-.rk-section-card.is-dark .rk-action-row__title {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
 }
 
 .rk-action-row__desc {
   font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.55);
+  color: var(--text-muted);
   margin-top: 2px;
-}
-
-.rk-section-card.is-dark .rk-action-row__desc {
-  color: rgba(255, 255, 255, 0.55);
 }
 
 @media (max-width: 600px) {

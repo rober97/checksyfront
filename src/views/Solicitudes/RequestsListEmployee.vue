@@ -400,8 +400,8 @@ onMounted(fetchData);
 }
 
 .body--dark .rk-toolbar {
-  background: rgba(16, 19, 24, .7);
-  border-color: rgba(255, 255, 255, .06);
+  background: rgba(26, 30, 39, .7);
+  border-color: var(--border-color);
 }
 
 .rk-toggle :deep(.q-btn) {
@@ -460,8 +460,8 @@ onMounted(fetchData);
 }
 
 .rk-stat--total {
-  background: rgba(33, 150, 243, .07);
-  color: #1976d2;
+  background: var(--color-info-soft);
+  color: var(--color-info);
 }
 .rk-stat--pending {
   background: rgba(245, 158, 11, .07);
@@ -476,22 +476,17 @@ onMounted(fetchData);
   color: #dc2626;
 }
 
-.body--dark .rk-stat--total { background: rgba(33, 150, 243, .12); color: #42a5f5; }
+.body--dark .rk-stat--total { background: var(--color-info-soft); color: var(--color-info); }
 .body--dark .rk-stat--pending { background: rgba(245, 158, 11, .12); color: #fbbf24; }
 .body--dark .rk-stat--approved { background: rgba(34, 197, 94, .12); color: #4ade80; }
 .body--dark .rk-stat--rejected { background: rgba(239, 68, 68, .12); color: #f87171; }
 
 /* Table wrap */
 .rk-table-wrap {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, .06);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
-}
-
-.body--dark .rk-table-wrap {
-  background: #101318;
-  border-color: rgba(255, 255, 255, .06);
 }
 
 /* Override q-table styles */

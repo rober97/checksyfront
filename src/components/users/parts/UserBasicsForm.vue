@@ -640,18 +640,18 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
 }
 
 .body--dark .rk-user-card {
-  --rk-bg:           #141720;
-  --rk-surface:      #1a1e2a;
-  --rk-surface-2:    #232838;
-  --rk-border:       rgba(255, 255, 255, 0.08);
+  --rk-bg:           var(--card-background);
+  --rk-surface:      var(--surface-soft);
+  --rk-surface-2:    rgba(255, 255, 255, 0.05);
+  --rk-border:       var(--border-color);
   --rk-border-2:     rgba(255, 255, 255, 0.16);
-  --rk-text:         #e8eaf2;
-  --rk-text-2:       #8b92ad;
-  --rk-text-3:       #555d78;
-  --rk-accent-soft:  rgba(6, 182, 212, 0.18);
-  --rk-success-soft: rgba(22, 163, 74, 0.18);
-  --rk-warn-soft:    rgba(217, 119, 6, 0.20);
-  --rk-err-soft:     rgba(220, 38, 38, 0.18);
+  --rk-text:         var(--text-primary);
+  --rk-text-2:       var(--text-secondary);
+  --rk-text-3:       var(--text-muted);
+  --rk-accent-soft:  var(--color-primary-soft);
+  --rk-success-soft: var(--color-success-soft);
+  --rk-warn-soft:    var(--color-warning-soft);
+  --rk-err-soft:     var(--color-danger-soft);
 }
 
 /* Container — sin padding propio: el panel del modal ya lo da */

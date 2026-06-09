@@ -211,7 +211,7 @@ body.body--dark .attendance-row:not(:last-child) {
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 body.body--dark .time-value {
@@ -279,28 +279,28 @@ body.body--dark .type-badge--salida {
 }
 
 .mood-badge--great {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4338ca;
+  background: var(--color-primary-soft, rgba(6, 182, 212, 0.12));
+  color: var(--color-primary-dark, #0891b2);
 }
 
 .mood-badge--good {
-  background: rgba(16, 185, 129, 0.1);
-  color: #065f46;
+  background: var(--color-success-soft, rgba(22, 163, 74, 0.12));
+  color: var(--color-success, #16a34a);
 }
 
 .mood-badge--ok {
-  background: rgba(59, 130, 246, 0.1);
-  color: #1e40af;
+  background: var(--color-accent-soft, rgba(20, 184, 166, 0.12));
+  color: var(--color-accent-dark, #0d9488);
 }
 
 .mood-badge--tired {
-  background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  background: var(--color-warning-soft, rgba(217, 119, 6, 0.12));
+  color: var(--color-warning, #d97706);
 }
 
 .mood-badge--bad {
-  background: rgba(239, 68, 68, 0.1);
-  color: #991b1b;
+  background: var(--color-danger-soft, rgba(220, 38, 38, 0.12));
+  color: var(--color-danger, #dc2626);
 }
 
 .note-content {
@@ -336,27 +336,27 @@ body.body--dark .note-content {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
+  color: var(--color-primary-dark, #0891b2);
+  background: var(--color-primary-soft, rgba(6, 182, 212, 0.10));
   text-decoration: none;
   transition: all 0.3s;
 }
 
 .location-link:hover {
-  background: rgba(37, 99, 235, 0.15);
+  background: rgba(6, 182, 212, 0.18);
   transform: translateY(-1px);
 }
 
 body.body--dark .location-link {
-  color: #60a5fa;
-  background: rgba(96, 165, 250, 0.15);
+  color: var(--color-primary, #22d3ee);
+  background: var(--color-primary-soft, rgba(34, 211, 238, 0.14));
 }
 
 .photo-button {
   position: relative;
   width: 48px;
   height: 48px;
-  border: 2px solid #e0e7ff;
+  border: 2px solid var(--border-color, #e2e8f0);
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -366,13 +366,13 @@ body.body--dark .location-link {
 }
 
 .photo-button:hover {
-  border-color: #6366f1;
+  border-color: var(--color-primary, #06b6d4);
   transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
 }
 
 body.body--dark .photo-button {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: var(--color-primary-soft, rgba(34, 211, 238, 0.25));
 }
 
 .photo-thumb {

@@ -105,7 +105,7 @@ watch(
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   font-weight: 700;
   letter-spacing: 0.2px;
   cursor: pointer;
@@ -123,7 +123,7 @@ watch(
   transform: translateY(0);
 }
 .seg-pill:focus-visible {
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.6);
   border-radius: 12px;
 }
 
@@ -145,8 +145,8 @@ watch(
   left: 6px;
   height: 34px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, var(--color-primary, #06b6d4), var(--color-accent, #14b8a6));
+  box-shadow: 0 10px 24px rgba(6, 182, 212, 0.35);
   transition: transform 0.18s cubic-bezier(0.22, 0.9, 0.25, 1), width 0.18s ease;
 }
 </style>

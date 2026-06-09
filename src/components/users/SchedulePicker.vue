@@ -349,7 +349,7 @@ watch(
 /* Dark mode */
 .body--dark .rk-ws {
   --rk-border: rgba(255, 255, 255, 0.08);
-  --rk-surface: #101318;
+  --rk-surface: var(--card-background);
   --rk-muted: #9aa3b2;
 }
 .body--dark .rk-mode-card.is-active { background: rgba(6, 182, 212, 0.16); }

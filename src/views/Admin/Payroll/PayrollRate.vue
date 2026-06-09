@@ -612,11 +612,11 @@ async function confirmDeactivate(row) {
   font-weight: 700;
   margin: 0 0 4px 0;
   letter-spacing: -0.4px;
-  color: #1c1917;
+  color: var(--text-primary);
 }
 
 .rates-subtitle {
-  color: #78716c;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0;
   line-height: 1.5;
@@ -641,24 +641,24 @@ async function confirmDeactivate(row) {
   gap: 7px;
   padding: 9px 18px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #fff;
+  border: 1px solid var(--border-color);
+  background: var(--card-background);
   font-size: 13.5px;
   font-weight: 500;
-  color: #57534e;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .tab-pill:hover {
-  border-color: rgba(0, 0, 0, 0.16);
-  background: #fafaf9;
+  border-color: var(--border-color);
+  background: var(--surface-soft);
 }
 
 .tab-pill.active {
-  background: #1c1917;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #1c1917;
+  border-color: var(--color-primary);
 }
 
 .tab-pill.active .tab-count {
@@ -670,7 +670,7 @@ async function confirmDeactivate(row) {
   font-size: 11px;
   font-weight: 600;
   background: rgba(0, 0, 0, 0.06);
-  color: #78716c;
+  color: var(--text-secondary);
   padding: 1px 7px;
   border-radius: 20px;
   min-width: 20px;
@@ -691,12 +691,12 @@ async function confirmDeactivate(row) {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #57534e;
+  color: var(--text-secondary);
 }
 
 .summary-chip strong {
   font-weight: 600;
-  color: #1c1917;
+  color: var(--text-primary);
 }
 
 .search-input {
@@ -718,9 +718,9 @@ async function confirmDeactivate(row) {
 .rate-card {
   position: relative;
   display: flex;
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
-  background: #fff;
+  background: var(--card-background);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -742,11 +742,11 @@ async function confirmDeactivate(row) {
 }
 
 .accent-active {
-  background: linear-gradient(180deg, #10b981, #059669);
+  background: linear-gradient(180deg, var(--color-success), var(--color-success));
 }
 
 .accent-inactive {
-  background: #d6d3d1;
+  background: var(--border-color);
 }
 
 .card-body {
@@ -765,13 +765,13 @@ async function confirmDeactivate(row) {
 .card-name {
   font-weight: 600;
   font-size: 15.5px;
-  color: #1c1917;
+  color: var(--text-primary);
   text-transform: capitalize;
 }
 
 .card-slug {
   font-size: 11.5px;
-  color: #a8a29e;
+  color: var(--text-muted);
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   margin-bottom: 8px;
 }
@@ -788,13 +788,13 @@ async function confirmDeactivate(row) {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #a8a29e;
+  color: var(--text-muted);
 }
 
 .card-rate {
   font-size: 26px;
   font-weight: 700;
-  color: #1c1917;
+  color: var(--text-primary);
   letter-spacing: -0.8px;
   font-variant-numeric: tabular-nums;
 }
@@ -832,21 +832,21 @@ async function confirmDeactivate(row) {
 }
 
 .status-active {
-  background: #ecfdf5;
-  color: #047857;
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .status-active .status-dot {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .status-inactive {
-  background: #f5f5f4;
-  color: #a8a29e;
+  background: var(--surface-soft);
+  color: var(--text-muted);
 }
 
 .status-inactive .status-dot {
-  background: #d6d3d1;
+  background: var(--border-color);
 }
 
 /* ── Empty state ───────────────────────────────── */
@@ -857,7 +857,7 @@ async function confirmDeactivate(row) {
 
 .empty-text {
   font-size: 15px;
-  color: #a8a29e;
+  color: var(--text-muted);
   margin-top: 12px;
 }
 
@@ -882,19 +882,19 @@ async function confirmDeactivate(row) {
 }
 
 .hero-afp {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #0e7490 0%, var(--color-primary) 100%);
 }
 
 .hero-health {
-  background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-accent-dark, #0d9488) 0%, var(--color-accent) 100%);
 }
 
 .hero-cesantia {
-  background: linear-gradient(135deg, #713f12 0%, #d97706 100%);
+  background: linear-gradient(135deg, #713f12 0%, var(--color-warning) 100%);
 }
 
 .hero-other {
-  background: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
 }
 
 .hero-icon-wrap {
@@ -952,7 +952,7 @@ async function confirmDeactivate(row) {
   gap: 6px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #57534e;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 8px;
@@ -965,7 +965,7 @@ async function confirmDeactivate(row) {
 .field-hint {
   margin-top: 8px;
   font-size: 12px;
-  color: #78716c;
+  color: var(--text-secondary);
   line-height: 1.45;
 }
 
@@ -993,8 +993,8 @@ async function confirmDeactivate(row) {
 
 /* Live preview */
 .live-preview {
-  background: #fafaf9;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 14px 16px;
 }
@@ -1004,7 +1004,7 @@ async function confirmDeactivate(row) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #a8a29e;
+  color: var(--text-muted);
   margin-bottom: 10px;
 }
 
@@ -1022,18 +1022,18 @@ async function confirmDeactivate(row) {
 
 .preview-key {
   font-size: 11px;
-  color: #a8a29e;
+  color: var(--text-muted);
 }
 
 .preview-val {
   font-size: 15px;
   font-weight: 600;
-  color: #1c1917;
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
 .preview-val.highlight {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 /* Dates */
@@ -1054,7 +1054,7 @@ async function confirmDeactivate(row) {
 
 .date-sublabel {
   font-size: 12px;
-  color: #78716c;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
@@ -1063,12 +1063,12 @@ async function confirmDeactivate(row) {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-soft);
   border-radius: 12px;
   padding: 14px 16px;
   font-size: 12.5px;
-  color: #1e40af;
+  color: var(--color-primary-dark);
   line-height: 1.5;
 }
 
@@ -1107,93 +1107,30 @@ async function confirmDeactivate(row) {
 }
 
 /* ── Dark mode ─────────────────────────────────── */
-.body--dark .rates-title {
-  color: #fafaf9;
-}
-
-.body--dark .rates-subtitle {
-  color: #a8a29e;
-}
-
-.body--dark .tab-pill {
-  background: #292524;
-  border-color: rgba(255, 255, 255, 0.06);
-  color: #d6d3d1;
-}
-
-.body--dark .tab-pill:hover {
-  background: #3a3633;
-}
+/* Most overrides are now handled automatically by tokens.css.
+   Only non-token specifics remain below. */
 
 .body--dark .tab-pill.active {
-  background: #fafaf9;
-  color: #1c1917;
-  border-color: #fafaf9;
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
 .body--dark .tab-pill.active .tab-count {
-  background: rgba(0, 0, 0, 0.12);
-  color: #1c1917;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .body--dark .tab-count {
   background: rgba(255, 255, 255, 0.08);
-  color: #a8a29e;
-}
-
-.body--dark .summary-chip {
-  color: #a8a29e;
-}
-
-.body--dark .summary-chip strong {
-  color: #fafaf9;
-}
-
-.body--dark .rate-card {
-  background: #292524;
-  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .body--dark .rate-card:hover {
   border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.body--dark .card-name,
-.body--dark .card-rate {
-  color: #fafaf9;
-}
-
-.body--dark .status-active {
-  background: #064e3b;
-  color: #6ee7b7;
-}
-
-.body--dark .status-inactive {
-  background: #3a3633;
-  color: #78716c;
-}
-
-.body--dark .live-preview {
-  background: #1c1917;
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-.body--dark .preview-val {
-  color: #fafaf9;
-}
-
-.body--dark .preview-val.highlight {
-  color: #60a5fa;
+  box-shadow: var(--shadow-soft);
 }
 
 .body--dark .info-callout {
-  background: #1e293b;
-  border-color: #1e3a5f;
-  color: #93c5fd;
-}
-
-.body--dark .field-hint {
-  color: #a8a29e;
+  color: var(--color-primary);
 }
 </style>

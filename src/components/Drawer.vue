@@ -362,9 +362,9 @@ watch(() => route.path, () => {
 <style scoped lang="scss">
 /* ===== Tokens ===== */
 .rk-drawer {
-  --rk-dark: #1a1a1a;
+  --rk-dark: #1a1e27;
   --rk-light: #ffffff;
-  --rk-glow: rgba(99,102,241,.24);
+  --rk-glow: rgba(6,182,212,.24);
   --rk-border: rgba(255,255,255,.08);
   --rk-beam-speed: 1.45s;
   --rk-beam-strength: .95;
@@ -386,7 +386,7 @@ watch(() => route.path, () => {
   height: 100%;
   /* override Quasar default to avoid double-scroll competing with .rk-nav */
   overflow: hidden !important;
-  &.dark{  background: linear-gradient(135deg, var(--rk-dark) 0%, #222 100%); color:#fff; }
+  &.dark{  background: linear-gradient(135deg, var(--rk-dark) 0%, var(--background-color, #12151c) 100%); color:#fff; }
   &.light{ background: linear-gradient(135deg, var(--rk-light) 0%, #f7f9fc 100%); color:#111; }
 }
 
@@ -418,8 +418,8 @@ watch(() => route.path, () => {
 .rk-search__item{
   display:flex; align-items:center; gap:.6rem; padding:.5rem .6rem; border-radius:8px; cursor:pointer;
 }
-.rk-search__item:hover{ background:rgba(99,102,241,.18) }
-.rk-search__item.active{ background:rgba(99,102,241,.32); color:#fff }
+.rk-search__item:hover{ background:var(--color-primary-soft) }
+.rk-search__item.active{ background:rgba(6,182,212,.32); color:#fff }
 .rk-search__info{ flex:1; min-width:0 }
 .rk-search__label{ font-weight:600 }
 .rk-search__desc{ font-size:.75rem; opacity:.8 }
@@ -453,8 +453,8 @@ watch(() => route.path, () => {
 .rk-item{
   position:relative; margin: 2px 0; border-radius:10px; cursor:pointer; outline:none; transition:.15s;
 }
-.rk-item:hover{ background: rgba(99,102,241,.20); transform: translateX(6px) }
-.rk-item.active{ background: var(--q-primary); color:#fff }
+.rk-item:hover{ background: var(--color-primary-soft); transform: translateX(6px) }
+.rk-item.active{ background: var(--color-primary); color:#fff }
 .rk-item__content{ display:flex; align-items:center; gap:.75rem; padding:.7rem .9rem; position:relative; z-index:1 }
 .rk-item__label{ font-weight:700; font-size:.92rem }
 .rk-item__desc{ font-size:.75rem; opacity:.8; margin-top:.1rem }
@@ -468,8 +468,8 @@ watch(() => route.path, () => {
   position:absolute; inset:-14% -10%; pointer-events:none; z-index:0;
   opacity:0; filter: blur(18px) saturate(1.06); mix-blend-mode: screen;
   background:
-    radial-gradient(60% 70% at 15% 50%, color-mix(in oklab, var(--q-primary) 26%, transparent) 14%, transparent 64%),
-    radial-gradient(70% 80% at 85% 50%, color-mix(in oklab, var(--q-primary) 18%, transparent) 12%, transparent 62%);
+    radial-gradient(60% 70% at 15% 50%, color-mix(in oklab, var(--color-primary) 26%, transparent) 14%, transparent 64%),
+    radial-gradient(70% 80% at 85% 50%, color-mix(in oklab, var(--color-primary) 18%, transparent) 12%, transparent 62%);
   transition: opacity .22s ease;
 }
 .rk-item:hover .rk-item__ambient,
@@ -485,13 +485,13 @@ watch(() => route.path, () => {
   background:
     linear-gradient(90deg,
       transparent 0%,
-      color-mix(in oklab, var(--q-primary) 42%, white) 45%,
+      color-mix(in oklab, var(--color-primary) 42%, white) 45%,
       white 50%,
-      color-mix(in oklab, var(--q-primary) 42%, white) 55%,
+      color-mix(in oklab, var(--color-primary) 42%, white) 55%,
       transparent 100%
     ),
     radial-gradient(90% 120% at 30% 50%,
-      color-mix(in oklab, var(--q-primary) 38%, transparent) 0%,
+      color-mix(in oklab, var(--color-primary) 38%, transparent) 0%,
       transparent 70%);
   background-repeat: no-repeat;
   background-size: 75% 100%, 100% 100%;
@@ -564,9 +564,9 @@ watch(() => route.path, () => {
 .rk-fx__c{ width:100px; height:100px; bottom:100px; right:50px }
 
 /* ===== Theme helpers ===== */
-.avatar-primary   { color:#fff; background:#3f51b5 }
-.avatar-secondary { color:#fff; background:#9c27b0 }
-.avatar-accent    { color:#fff; background:#ff4081 }
-.avatar-info      { color:#fff; background:#00acc1 }
+.avatar-primary   { color:#fff; background:var(--color-primary-dark, #0891b2) }
+.avatar-secondary { color:#fff; background:var(--color-accent, #14b8a6) }
+.avatar-accent    { color:#fff; background:var(--color-accent-dark, #0d9488) }
+.avatar-info      { color:#fff; background:var(--color-info, #0891b2) }
 .avatar-warning   { color:#111; background:#ffca28 }
 </style>

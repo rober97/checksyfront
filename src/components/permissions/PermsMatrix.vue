@@ -27,7 +27,7 @@
         />
         <q-btn
           v-else
-          color="deep-purple"
+          color="primary"
           outline
           icon="add"
           label="Crear nuevo perfil"
@@ -314,7 +314,7 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
   --border-dash:   rgba(6,182,212,.22);
   --muted:         #8fa3bc;
   --title:         rgba(255,255,255,.90);
-  --bg:            rgba(8,14,26,.97);
+  --bg:            var(--card-background);
   --bg-soft:       rgba(6,182,212,.05);
   --bg-cat:        rgba(6,182,212,.06);
   --chip:          rgba(6,182,212,.1);

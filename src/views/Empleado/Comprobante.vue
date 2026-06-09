@@ -167,5 +167,5 @@ onMounted(load)
 
 <style scoped>
 .hash-mini { font-family: monospace; font-size: 11px; }
-.hash-full { font-family: monospace; font-size: 11px; word-break: break-all; background: #f4f4f4; padding: 8px; border-radius: 4px; }
+.hash-full { font-family: monospace; font-size: 11px; word-break: break-all; background: var(--surface-soft); padding: 8px; border-radius: 4px; }
 </style>

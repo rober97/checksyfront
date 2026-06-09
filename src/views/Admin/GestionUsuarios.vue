@@ -538,7 +538,7 @@ const formatDate  = (d) => {
 };
 
 // Color avatar determinístico
-const AVATAR_COLORS = ["#3d6fff","#0ea5e9","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899"];
+const AVATAR_COLORS = ["#0891b2","#06b6d4","#0d9488","#14b8a6","#0ea5e9","#22d3ee","#2dd4bf"];
 const avatarColor = (name="") => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
 const roleOptions = [
@@ -655,30 +655,30 @@ onBeforeUnmount(() => {
    TOKENS  (mismo sistema que CompaniesPage)
 ══════════════════════════════════════════════════ */
 .rk-page {
-  --c-bg:        #f0f2f7;
-  --c-surface:   #ffffff;
-  --c-surface2:  #f7f8fc;
-  --c-border:    rgba(0,0,0,0.08);
-  --c-text:      #0f1117;
-  --c-text2:     #5a6482;
-  --c-text3:     #9aa1b9;
-  --c-primary:   #3d6fff;
-  --c-primary-l: rgba(61,111,255,0.12);
-  --c-ok:        #16a34a;
-  --c-ok-l:      rgba(22,163,74,0.12);
-  --c-warn:      #d97706;
-  --c-warn-l:    rgba(217,119,6,0.12);
-  --c-err:       #dc2626;
-  --c-err-l:     rgba(220,38,38,0.12);
-  --c-all:       #06b6d4;
-  --c-all-l:     rgba(6,182,212,0.12);
-  --c-purple:    #0891b2;
-  --c-purple-l:  rgba(8,145,178,0.12);
-  --c-teal:      #0d9488;
-  --c-teal-l:    rgba(13,148,136,0.12);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-  --shadow-lg:   0 12px 36px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.05);
+  --c-bg:        var(--background-color, #f0f2f7);
+  --c-surface:   var(--card-background, #ffffff);
+  --c-surface2:  var(--surface-soft, #f7f8fc);
+  --c-border:    var(--border-color, rgba(0,0,0,0.08));
+  --c-text:      var(--text-primary, #0f1117);
+  --c-text2:     var(--text-secondary, #5a6482);
+  --c-text3:     var(--text-muted, #9aa1b9);
+  --c-primary:   var(--color-primary, #06b6d4);
+  --c-primary-l: var(--color-primary-soft, rgba(6,182,212,0.12));
+  --c-ok:        var(--color-success, #16a34a);
+  --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
+  --c-warn:      var(--color-warning, #d97706);
+  --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
+  --c-err:       var(--color-danger, #dc2626);
+  --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
+  --c-all:       var(--color-primary, #06b6d4);
+  --c-all-l:     var(--color-primary-soft, rgba(6,182,212,0.12));
+  --c-purple:    var(--color-accent-dark, #0891b2);
+  --c-purple-l:  var(--color-accent-soft, rgba(8,145,178,0.12));
+  --c-teal:      var(--color-accent, #0d9488);
+  --c-teal-l:    var(--color-accent-soft, rgba(13,148,136,0.12));
+  --shadow-sm:   var(--app-shadow-sm, 0 1px 3px rgba(0,0,0,0.07));
+  --shadow-md:   var(--app-shadow-md, 0 4px 16px rgba(0,0,0,0.08));
+  --shadow-lg:   var(--app-shadow-lg, 0 12px 36px rgba(0,0,0,0.1));
   --radius-sm:   8px;
   --radius-md:   14px;
   --radius-lg:   20px;
@@ -695,23 +695,23 @@ onBeforeUnmount(() => {
   transition: background 0.3s, color 0.3s;
 }
 .rk-page.is-dark {
-  --c-bg:        #0c0e14;
-  --c-surface:   #141720;
-  --c-surface2:  #1a1e2a;
-  --c-border:    rgba(255,255,255,0.07);
-  --c-text:      #e8eaf2;
-  --c-text2:     #8b92ad;
-  --c-text3:     #555d78;
-  --c-primary-l: rgba(61,111,255,0.18);
-  --c-ok-l:      rgba(22,163,74,0.18);
-  --c-warn-l:    rgba(217,119,6,0.18);
-  --c-err-l:     rgba(220,38,38,0.18);
-  --c-all-l:     rgba(6,182,212,0.18);
-  --c-purple-l:  rgba(8,145,178,0.18);
-  --c-teal-l:    rgba(13,148,136,0.18);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg:   0 12px 36px rgba(0,0,0,0.5);
+  --c-bg:        var(--background-color, #12151c);
+  --c-surface:   var(--card-background, #1a1e27);
+  --c-surface2:  var(--surface-soft, #20242f);
+  --c-border:    var(--border-color, rgba(255,255,255,0.09));
+  --c-text:      var(--text-primary, #e8eaf2);
+  --c-text2:     var(--text-secondary, #9aa3b8);
+  --c-text3:     var(--text-muted, #6b7488);
+  --c-primary-l: var(--color-primary-soft, rgba(34,211,238,0.16));
+  --c-ok-l:      var(--color-success-soft, rgba(34,197,94,0.18));
+  --c-warn-l:    var(--color-warning-soft, rgba(245,158,11,0.18));
+  --c-err-l:     var(--color-danger-soft, rgba(248,113,113,0.18));
+  --c-all-l:     var(--color-primary-soft, rgba(34,211,238,0.16));
+  --c-purple-l:  var(--color-accent-soft, rgba(45,212,191,0.16));
+  --c-teal-l:    var(--color-accent-soft, rgba(45,212,191,0.16));
+  --shadow-sm:   var(--app-shadow-sm, 0 2px 8px rgba(0,0,0,0.3));
+  --shadow-md:   var(--app-shadow-md, 0 10px 30px rgba(0,0,0,0.38));
+  --shadow-lg:   var(--app-shadow-lg, 0 20px 60px rgba(0,0,0,0.5));
 }
 
 /* ══════════════════════════════════════════════════
@@ -1004,7 +1004,7 @@ onBeforeUnmount(() => {
 /* Rol */
 .badge-role-admin       { background:var(--c-purple-l); color:var(--c-purple); }
 .badge-role-rrhh        { background:var(--c-purple-l); color:var(--c-purple); }
-.badge-role-superadmin  { background:rgba(236,72,153,0.12); color:#ec4899; }
+.badge-role-superadmin  { background:var(--c-primary-l); color:var(--c-primary); }
 .badge-role-company     { background:var(--c-all-l);    color:var(--c-all);    }
 .badge-role-employee    { background:var(--c-teal-l);   color:var(--c-teal);   }
 .badge-role-supervisor  { background:var(--c-primary-l);color:var(--c-primary);}

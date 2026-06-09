@@ -1,3 +1,10 @@
+/* =====================================================================
+   TOKENS — Fuente única de verdad de la paleta Recksy
+   Paleta: cyan/teal como acento; verde/ámbar/rojo SOLO para estados.
+   Modo claro = superficies limpias slate; modo oscuro = "carbón equilibrado".
+   NO dupliques estas variables en otros archivos: consúmelas desde aquí.
+===================================================================== */
+
 /* Forzar paleta Recksy sobre el azul por defecto de Quasar */
 :root {
   --q-primary:   #06b6d4;
@@ -6,49 +13,68 @@
 }
 
 :root {
+  /* ---- Tipografías ---- */
   --app-font-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
   --app-font-display: "Sora", "DM Sans", system-ui, sans-serif;
   --app-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
+  /* ---- Radios ---- */
   --app-radius-sm: 8px;
   --app-radius-md: 14px;
   --app-radius-lg: 20px;
+  --radius-base: 12px;
 
+  /* ---- Sombras ---- */
   --app-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
   --app-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
   --app-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05);
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+  /* ---- Acento (cyan / teal) ---- */
   --color-primary: #06b6d4;
   --color-primary-light: #22d3ee;
   --color-primary-dark: #0891b2;
   --color-primary-hover: #0ea5e9;
+  --color-accent: #14b8a6;
+  --color-accent-dark: #0d9488;
 
-  --color-secondary: #ffb400;
-  --color-secondary-light: #ffd24d;
-  --color-secondary-dark: #cc9100;
+  /* Tinte translúcido del acento (para fondos suaves) */
+  --color-primary-soft: rgba(8, 145, 178, 0.12);
+  --color-accent-soft: rgba(13, 148, 136, 0.12);
 
+  /* ---- Secundario (acentos cálidos puntuales) ---- */
+  --color-secondary: #f59e0b;
+  --color-secondary-light: #fbbf24;
+  --color-secondary-dark: #d97706;
+
+  /* ---- Neutros ---- */
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-gray-light: #f4f4f4;
-  --color-gray: #cfd8dc;
-  --color-gray-dark: #90a4ae;
+  --color-gray-light: #f1f5f9;
+  --color-gray: #cbd5e1;
+  --color-gray-dark: #94a3b8;
 
-  --color-success: #00c853;
-  --color-warning: #ffab00;
-  --color-danger: #d50000;
-  --color-info: var(--color-primary);
+  /* ---- Estados semánticos (NO se re-tintan con la marca) ---- */
+  --color-success: #16a34a;
+  --color-success-soft: rgba(22, 163, 74, 0.12);
+  --color-warning: #d97706;
+  --color-warning-soft: rgba(217, 119, 6, 0.12);
+  --color-danger: #dc2626;
+  --color-danger-soft: rgba(220, 38, 38, 0.12);
+  --color-info: #0891b2;
+  --color-info-soft: rgba(8, 145, 178, 0.12);
 
-  --background-color: #ffffff;
+  /* ---- Layout / superficies ---- */
+  --background-color: #f4f6fb;
   --card-background: #ffffff;
-  --border-color: #e0e0e0;
+  --surface-soft: #f1f5f9;
+  --border-color: #e2e8f0;
 
-  --text-primary: #1e1e1e;
-  --text-secondary: #5f6368;
+  /* ---- Texto ---- */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-light: #ffffff;
-  --text-muted: #9e9e9e;
-
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --radius-base: 12px;
+  --text-muted: #94a3b8;
 }
 
 body {
@@ -57,30 +83,56 @@ body {
   color: var(--text-primary);
 }
 
+/* =====================================================================
+   MODO OSCURO — "Carbón equilibrado"
+   Fondo carbón (no negro OLED ni gris slate), superficies con elevación
+   perceptible y bordes visibles para dar profundidad y legibilidad.
+===================================================================== */
 body.body--dark {
+  /* Acento cyan: en oscuro usamos un cyan más luminoso para contraste */
   --color-primary: #22d3ee;
   --color-primary-light: #67e8f9;
   --color-primary-dark: #06b6d4;
-  --color-primary-hover: #0ea5e9;
+  --color-primary-hover: #38bdf8;
+  --color-accent: #2dd4bf;
+  --color-accent-dark: #14b8a6;
 
-  --color-secondary: #ffc107;
-  --color-secondary-light: #ffe082;
-  --color-secondary-dark: #ff8f00;
+  --color-primary-soft: rgba(34, 211, 238, 0.16);
+  --color-accent-soft: rgba(45, 212, 191, 0.16);
 
-  --color-white: #121212;
-  --color-black: #ffffff;
-  --color-gray-light: #1e1e1e;
-  --color-gray: #2e2e2e;
-  --color-gray-dark: #4a4a4a;
+  --color-secondary: #fbbf24;
+  --color-secondary-light: #fcd34d;
+  --color-secondary-dark: #f59e0b;
 
-  --background-color: #121212;
-  --card-background: #1e1e1e;
-  --border-color: #2a2a2a;
+  --color-white: #1a1e27;
+  --color-black: #f1f5f9;
+  --color-gray-light: #20242f;
+  --color-gray: #2c313e;
+  --color-gray-dark: #4a5365;
 
-  --text-primary: #f4f4f4;
-  --text-secondary: #b0bec5;
+  /* Estados (versión luminosa para oscuro) */
+  --color-success: #22c55e;
+  --color-success-soft: rgba(34, 197, 94, 0.18);
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.18);
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.18);
+  --color-info: #22d3ee;
+  --color-info-soft: rgba(34, 211, 238, 0.18);
+
+  /* Superficies carbón */
+  --background-color: #12151c;
+  --card-background: #1a1e27;
+  --surface-soft: #20242f;
+  --border-color: rgba(255, 255, 255, 0.09);
+
+  --text-primary: #e8eaf2;
+  --text-secondary: #9aa3b8;
   --text-light: #ffffff;
-  --text-muted: #9e9e9e;
+  --text-muted: #6b7488;
 
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --app-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
+  --app-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.38);
+  --app-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.50);
 }

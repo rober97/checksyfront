@@ -49,25 +49,25 @@
           </div>
           <div class="rk-info-item">
             <span class="rk-info-label">Días pagados</span>
-            <strong class="text-green">{{ current.daysPaid ?? 0 }}</strong>
+            <strong class="text-positive">{{ current.daysPaid ?? 0 }}</strong>
           </div>
           <div class="rk-info-item">
             <span class="rk-info-label">Ausencias</span>
-            <strong class="text-red">{{ current.daysAbsent ?? 0 }}</strong>
+            <strong class="text-negative">{{ current.daysAbsent ?? 0 }}</strong>
           </div>
         </div>
 
         <!-- Financial summary -->
         <div class="rk-financial">
           <div class="rk-fin-row">
-            <q-icon name="add_circle" color="green" size="20px" />
+            <q-icon name="add_circle" color="positive" size="20px" />
             <span>Total haberes</span>
-            <strong class="text-green q-ml-auto">{{ formatMoney(current.totalEarn) }}</strong>
+            <strong class="text-positive q-ml-auto">{{ formatMoney(current.totalEarn) }}</strong>
           </div>
           <div class="rk-fin-row">
-            <q-icon name="remove_circle" color="red" size="20px" />
+            <q-icon name="remove_circle" color="negative" size="20px" />
             <span>Total descuentos</span>
-            <strong class="text-red q-ml-auto">{{ formatMoney(current.totalDeduct) }}</strong>
+            <strong class="text-negative q-ml-auto">{{ formatMoney(current.totalDeduct) }}</strong>
           </div>
           <q-separator />
           <div class="rk-fin-row rk-fin-total">
@@ -90,7 +90,7 @@
               </q-item-section>
               <q-item-section side>
                 <q-badge
-                  :color="line.type === 'DESCUENTO' ? 'red' : 'green'"
+                  :color="line.type === 'DESCUENTO' ? 'negative' : 'positive'"
                   :label="line.type === 'DESCUENTO' ? 'Desc.' : 'Haber'"
                   outline
                   dense
@@ -98,7 +98,7 @@
                 />
               </q-item-section>
               <q-item-section side>
-                <strong :class="line.type === 'DESCUENTO' ? 'text-red' : 'text-green'">
+                <strong :class="line.type === 'DESCUENTO' ? 'text-negative' : 'text-positive'">
                   {{ formatMoney(line.amount) }}
                 </strong>
               </q-item-section>
@@ -121,7 +121,7 @@
         <q-btn
           v-if="current?.status === 'ISSUED'"
           unelevated
-          color="red-6"
+          color="primary"
           icon="picture_as_pdf"
           label="Ver PDF"
           @click="$emit('open-pdf', current)"
@@ -129,7 +129,7 @@
         <q-btn
           v-if="current?.status === 'ISSUED'"
           flat
-          color="orange"
+          color="warning"
           icon="block"
           label="Anular"
           @click="$emit('void', current)"
@@ -186,7 +186,7 @@ function formatMoney(value) {
 }
 
 function statusColor(s) {
-  const map = { ISSUED: "green", DRAFT: "orange", VOID: "grey" };
+  const map = { ISSUED: "positive", DRAFT: "warning", VOID: "grey" };
   return map[s] || "grey";
 }
 

@@ -192,8 +192,8 @@ function onPickPeriod(value) {
 
 const stats = computed(() => [
   { icon: "folder", color: "primary", value: props.periodRows.length, label: "Períodos" },
-  { icon: "edit_note", color: "orange", value: countStatus('DRAFT'), label: "Borrador" },
-  { icon: "check_circle", color: "green", value: countStatus('PUBLISHED'), label: "Publicados" },
+  { icon: "edit_note", color: "warning", value: countStatus('DRAFT'), label: "Borrador" },
+  { icon: "check_circle", color: "positive", value: countStatus('PUBLISHED'), label: "Publicados" },
   { icon: "lock", color: "grey", value: countStatus('CLOSED'), label: "Cerrados" },
 ]);
 
@@ -206,7 +206,7 @@ function formatPeriod(period) {
 }
 
 function statusColor(status) {
-  const map = { CLOSED: "grey", PUBLISHED: "green", DRAFT: "orange" };
+  const map = { CLOSED: "grey", PUBLISHED: "positive", DRAFT: "warning" };
   return map[status] || "grey";
 }
 
@@ -223,16 +223,16 @@ function statusLabel(status) {
 }
 
 .rk-content-card {
-  background: var(--rk-card, #fff);
-  border: 1px solid var(--rk-border, rgba(0,0,0,.08));
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.04);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .body--dark .rk-content-card {
-  background: #101318;
-  border-color: rgba(255,255,255,.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 /* Controls row */
@@ -383,8 +383,8 @@ function statusLabel(status) {
   color: rgba(255,255,255,.65);
 }
 
-.rk-count-draft { color: #d97706; }
-.rk-count-issued { color: #16a34a; }
+.rk-count-draft { color: var(--color-warning); }
+.rk-count-issued { color: var(--color-success); }
 
 .rk-empty {
   display: flex;

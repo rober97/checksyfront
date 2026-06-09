@@ -378,21 +378,13 @@ async function doLogout() {
   font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.2px;
-  color: rgba(15, 23, 42, 0.95);
-}
-
-body.body--dark .rk-config-header__title {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
 }
 
 .rk-config-header__subtitle {
   margin: 4px 0 0;
   font-size: 0.92rem;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-body.body--dark .rk-config-header__subtitle {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .rk-config-header__cta {
@@ -408,8 +400,8 @@ body.body--dark .rk-config-header__subtitle {
 
 /* ===== Cards ===== */
 .rk-card {
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--card-background, #fff);
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.08));
   border-radius: 16px;
   padding: 20px 22px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -421,8 +413,8 @@ body.body--dark .rk-config-header__subtitle {
 }
 
 .rk-card.is-dark {
-  background: #0f172a;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-card--danger {
@@ -443,11 +435,7 @@ body.body--dark .rk-config-header__subtitle {
   gap: 10px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.92);
-}
-
-.rk-card.is-dark .rk-card__title {
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
 }
 
 .rk-card__title .q-icon {
@@ -462,11 +450,7 @@ body.body--dark .rk-config-header__subtitle {
 .rk-card__hint {
   margin: 4px 0 0;
   font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.55);
-}
-
-.rk-card.is-dark .rk-card__hint {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
 }
 
 /* ===== Rows ===== */
@@ -486,22 +470,14 @@ body.body--dark .rk-config-header__subtitle {
 .rk-row__label {
   font-size: 0.95rem;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.9);
-}
-
-.rk-card.is-dark .rk-row__label {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
 }
 
 .rk-row__desc {
   font-size: 0.83rem;
-  color: rgba(15, 23, 42, 0.55);
+  color: var(--text-muted);
   margin-top: 2px;
   line-height: 1.4;
-}
-
-.rk-card.is-dark .rk-row__desc {
-  color: rgba(255, 255, 255, 0.55);
 }
 
 .rk-row__select {

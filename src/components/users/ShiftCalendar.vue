@@ -385,9 +385,9 @@ defineExpose({ reload: load })
   align-items: center;
 }
 .rk-date-avatar {
-  background: linear-gradient(180deg, #e6f0ff, #d6e6ff);
-  color: #1f4ea0;
-  border: 1px solid #cfd9ec;
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.15), rgba(20, 184, 166, 0.12));
+  color: var(--color-primary-dark, #0891b2);
+  border: 1px solid rgba(6, 182, 212, 0.25);
   flex-direction: column;
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
@@ -418,12 +418,12 @@ defineExpose({ reload: load })
   }
 }
 .body--dark .rk-shifts {
-  background: #101318;
+  background: var(--card-background);
   border-color: rgba(255, 255, 255, 0.08);
 }
 .body--dark .rk-date-avatar {
-  background: linear-gradient(180deg, #172034, #12243f);
-  color: #8ab6ff;
-  border-color: #2a3b56;
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.18), rgba(20, 184, 166, 0.14));
+  color: var(--color-primary, #22d3ee);
+  border-color: rgba(6, 182, 212, 0.30);
 }
 </style>

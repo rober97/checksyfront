@@ -11,21 +11,21 @@
   justify-content: center;
 
   &.light {
-    background: linear-gradient(145deg, #ffffff, #f5f5f5);
-    color: #333;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    background: var(--card-background);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
   }
 
   &.dark {
-    background: linear-gradient(145deg, #2e2e2e, #3a3a3a);
-    color: #e0e0e0;
-    border: 1px solid #444;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    background: var(--card-background);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
   }
 
   .kpi-icon-wrapper {
-    background: var(--q-primary);
+    background: var(--color-primary);
     color: white;
     border-radius: 50%;
     padding: 18px;
@@ -40,7 +40,7 @@
   .kpi-value {
     font-size: 24px;
     font-weight: bold;
-    color: var(--q-primary);
+    color: var(--color-primary);
     margin-bottom: 4px;
   }
 

@@ -586,12 +586,6 @@ onBeforeUnmount(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
 
-:root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
-}
-
 /* Theme Variables */
 .rk-header {
   --header-bg: rgba(255, 255, 255, 0.92);
@@ -784,7 +778,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: 0 5px;
-  background: #ef4444;
+  background: var(--color-danger);
   border: 2px solid var(--header-bg);
   border-radius: 10px;
   font-size: 0.7rem;
@@ -796,7 +790,7 @@ onBeforeUnmount(() => {
 .rk-badge-pulse {
   position: absolute;
   inset: -2px;
-  background: #ef4444;
+  background: var(--color-danger);
   border-radius: 10px;
   animation: badgePulse 2s ease-in-out infinite;
 }
@@ -819,7 +813,7 @@ onBeforeUnmount(() => {
   right: 6px;
   width: 10px;
   height: 10px;
-  background: #f59e0b;
+  background: var(--color-warning);
   border: 2px solid var(--header-bg);
   border-radius: 50%;
   z-index: 2;
@@ -828,14 +822,14 @@ onBeforeUnmount(() => {
 .rk-notif-dot-pulse {
   position: absolute;
   inset: -2px;
-  background: #f59e0b;
+  background: var(--color-warning);
   border-radius: 50%;
   animation: badgePulse 2s ease-in-out infinite;
 }
 
 /* Glow del icono cuando hay notificaciones que atender */
 .rk-notif-btn.has-unread .q-icon {
-  color: #ef4444;
+  color: var(--color-danger);
   animation: bellShake 2.4s ease-in-out infinite;
 }
 
@@ -845,7 +839,7 @@ onBeforeUnmount(() => {
 }
 
 .rk-notif-btn.has-pending .q-icon {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 @keyframes bellGlow {
@@ -1043,29 +1037,29 @@ onBeforeUnmount(() => {
 }
 
 .rk-notif-tag-warning {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.3);
-  color: #b45309;
+  background: var(--color-warning-soft);
+  border-color: rgba(217, 119, 6, 0.3);
+  color: var(--color-warning);
 }
 
 .rk-notif-tag-success {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #047857;
+  background: var(--color-success-soft);
+  border-color: rgba(22, 163, 74, 0.3);
+  color: var(--color-success);
 }
 
 .rk-notif-pending {
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid var(--color-warning);
 }
 
 .rk-notif-resolved {
-  border-left: 3px solid #10b981;
+  border-left: 3px solid var(--color-success);
 }
 
 .rk-notif-item-dot {
   width: 8px;
   height: 8px;
-  background: #ef4444;
+  background: var(--color-danger);
   border-radius: 50%;
   flex-shrink: 0;
   margin-top: 6px;
@@ -1371,8 +1365,8 @@ onBeforeUnmount(() => {
 <!--
   Estilos no-scoped para el command palette y el menú de notificaciones.
   Quasar teletransporta q-dialog/q-menu fuera del componente, por lo que
-  los estilos `scoped` (y los CSS vars definidos sólo dentro de .rk-header)
-  no aplican al contenido renderizado. Aquí usamos colores directos.
+  los estilos `scoped` (y los CSS vars locales de .rk-header) no aplican.
+  Usamos los tokens globales de tokens.css que sí son accesibles aquí.
 -->
 <style>
 /* ===== Command palette (q-dialog teletransportado) ===== */
@@ -1383,28 +1377,18 @@ onBeforeUnmount(() => {
 
 .rk-command-palette {
   width: min(640px, 95vw);
-  background: #ffffff;
+  background: var(--card-background);
   border: 1.5px solid rgba(6, 182, 212, 0.18);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   font-family: 'Sora', -apple-system, sans-serif;
-  color: rgba(15, 23, 42, 0.95);
-}
-
-.body--dark .rk-command-palette {
-  background: #0f172a;
-  border-color: rgba(6, 182, 212, 0.25);
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
 }
 
 .rk-command-header {
   padding: 18px 20px;
-  border-bottom: 1.5px solid rgba(15, 23, 42, 0.08);
-}
-
-.body--dark .rk-command-header {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom: 1.5px solid var(--border-color);
 }
 
 .rk-command-search {
@@ -1415,7 +1399,7 @@ onBeforeUnmount(() => {
 
 .rk-command-search .rk-search-icon {
   font-size: 22px;
-  color: #06b6d4;
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
@@ -1431,41 +1415,28 @@ onBeforeUnmount(() => {
 }
 
 .rk-command-search .rk-search-input::placeholder {
-  color: rgba(15, 23, 42, 0.45);
+  color: var(--text-muted);
   font-weight: 500;
-}
-
-.body--dark .rk-command-search .rk-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.45);
 }
 
 .rk-command-search .rk-search-kbd {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: rgba(15, 23, 42, 0.5);
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.body--dark .rk-command-search .rk-search-kbd {
-  color: rgba(255, 255, 255, 0.5);
-}
-
 .rk-command-search .rk-search-kbd kbd {
   padding: 4px 8px;
-  background: rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.75rem;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   color: inherit;
-}
-
-.body--dark .rk-command-search .rk-search-kbd kbd {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .rk-command-results {
@@ -1481,13 +1452,9 @@ onBeforeUnmount(() => {
   padding: 8px 12px;
   font-size: 0.72rem;
   font-weight: 800;
-  color: rgba(15, 23, 42, 0.5);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-}
-
-.body--dark .rk-results-label {
-  color: rgba(255, 255, 255, 0.5);
 }
 
 .rk-command-item {
@@ -1502,12 +1469,7 @@ onBeforeUnmount(() => {
 
 .rk-command-item:hover,
 .rk-command-item.active {
-  background: rgba(6, 182, 212, 0.08);
-}
-
-.body--dark .rk-command-item:hover,
-.body--dark .rk-command-item.active {
-  background: rgba(6, 182, 212, 0.14);
+  background: var(--color-primary-soft);
 }
 
 .rk-command-item-icon {
@@ -1516,29 +1478,21 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.10);
+  background: var(--color-primary-soft);
   border-radius: 10px;
   flex-shrink: 0;
   transition: background 0.15s ease;
 }
 
-.body--dark .rk-command-item-icon {
-  background: rgba(6, 182, 212, 0.18);
-}
-
 .rk-command-item.active .rk-command-item-icon {
-  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
 }
 
 .rk-command-item-icon .q-icon {
   font-size: 20px;
-  color: rgba(15, 23, 42, 0.7);
+  color: var(--text-secondary);
   transition: color 0.15s ease;
-}
-
-.body--dark .rk-command-item-icon .q-icon {
-  color: rgba(255, 255, 255, 0.75);
 }
 
 .rk-command-item.active .rk-command-item-icon .q-icon {
@@ -1559,30 +1513,20 @@ onBeforeUnmount(() => {
 
 .rk-command-item-desc {
   font-size: 0.83rem;
-  color: rgba(15, 23, 42, 0.6);
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.35;
 }
 
-.body--dark .rk-command-item-desc {
-  color: rgba(255, 255, 255, 0.6);
-}
-
 .rk-command-kbd {
   padding: 4px 10px;
-  background: rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 0.75rem;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.6);
-}
-
-.body--dark .rk-command-kbd {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .rk-command-empty {
@@ -1599,50 +1543,33 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.08);
+  background: var(--color-primary-soft);
   border-radius: 16px;
   margin-bottom: 16px;
 }
 
 .rk-command-empty .rk-empty-icon .q-icon {
   font-size: 32px;
-  color: rgba(15, 23, 42, 0.4);
-}
-
-.body--dark .rk-command-empty .rk-empty-icon .q-icon {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .rk-command-empty .rk-empty-text {
   font-size: 0.95rem;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.7);
+  color: var(--text-secondary);
   margin: 0 0 4px 0;
-}
-
-.body--dark .rk-command-empty .rk-empty-text {
-  color: rgba(255, 255, 255, 0.7);
 }
 
 .rk-command-empty .rk-empty-hint {
   font-size: 0.85rem;
-  color: rgba(15, 23, 42, 0.45);
+  color: var(--text-muted);
   margin: 0;
-}
-
-.body--dark .rk-command-empty .rk-empty-hint {
-  color: rgba(255, 255, 255, 0.45);
 }
 
 .rk-command-footer {
   padding: 12px 20px;
-  border-top: 1.5px solid rgba(15, 23, 42, 0.08);
-  background: rgba(6, 182, 212, 0.05);
-}
-
-.body--dark .rk-command-footer {
-  border-top-color: rgba(255, 255, 255, 0.08);
-  background: rgba(6, 182, 212, 0.08);
+  border-top: 1.5px solid var(--border-color);
+  background: var(--color-primary-soft);
 }
 
 .rk-command-hints {
@@ -1656,29 +1583,19 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 6px;
   font-size: 0.78rem;
-  color: rgba(15, 23, 42, 0.55);
+  color: var(--text-muted);
   font-weight: 600;
-}
-
-.body--dark .rk-hint-item {
-  color: rgba(255, 255, 255, 0.55);
 }
 
 .rk-hint-item kbd {
   padding: 3px 7px;
-  background: rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   font-size: 0.7rem;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  color: rgba(15, 23, 42, 0.85);
-}
-
-.body--dark .rk-hint-item kbd {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
 }
 
 @media (max-width: 767px) {

@@ -160,9 +160,9 @@ function applyCustomRange() {
 }
 
 body.body--dark .range-selector {
-  background: rgba(30, 41, 59, 0.6);
+  background: var(--surface-soft, rgba(32, 36, 47, 0.7));
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
 }
 
 .range-btn {
@@ -175,7 +175,7 @@ body.body--dark .range-selector {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
@@ -196,15 +196,15 @@ body.body--dark .range-btn:hover {
 }
 
 .range-btn--active {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--color-primary, #06b6d4) 0%, var(--color-accent, #14b8a6) 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
 
 .range-btn--active:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark, #0891b2) 0%, var(--color-accent-dark, #0d9488) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
 }
 
 .range-divider {
@@ -237,13 +237,13 @@ body.body--dark .range-divider {
 .export-btn {
   font-weight: 700;
   padding: 12px 28px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
   text-transform: none;
   letter-spacing: 0.02em;
 }
 
 .export-btn:hover {
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
 }
 
 .refresh-btn {
@@ -261,12 +261,12 @@ body.body--dark .range-divider {
 }
 
 body.body--dark .refresh-btn {
-  background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--surface-soft, rgba(32, 36, 47, 0.7));
+  border-color: var(--border-color, rgba(255, 255, 255, 0.08));
 }
 
 body.body--dark .refresh-btn:hover {
-  background: rgba(51, 65, 85, 0.6);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .export-menu {
@@ -291,8 +291,8 @@ body.body--dark .refresh-btn:hover {
 }
 
 .menu-icon--csv {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #2563eb;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(20, 184, 166, 0.12) 100%);
+  color: var(--color-primary, #06b6d4);
 }
 
 .menu-icon--print {

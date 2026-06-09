@@ -25,22 +25,29 @@
 }
 
 body.body--dark .rk-shell-layout {
-  --rk-shell-bg: #0c0e14;
-  --rk-shell-surface: rgba(20, 23, 32, 0.92);
-  --rk-shell-surface-strong: #141720;
-  --rk-shell-surface-soft: rgba(26, 30, 42, 0.92);
-  --rk-shell-border: rgba(255, 255, 255, 0.08);
+  /* Carbón equilibrado: fondo elevado del negro OLED, superficies con
+     contraste perceptible y bordes visibles para dar profundidad. */
+  --rk-shell-bg: #12151c;
+  --rk-shell-surface: rgba(26, 30, 39, 0.94);
+  --rk-shell-surface-strong: #1a1e27;
+  --rk-shell-surface-soft: rgba(32, 36, 47, 0.94);
+  --rk-shell-border: rgba(255, 255, 255, 0.10);
   --rk-shell-text: #e8eaf2;
-  --rk-shell-text-muted: #8b92ad;
-  --rk-shell-text-soft: #5f6885;
-  --rk-shell-primary-soft: rgba(8, 145, 178, 0.2);
-  --rk-shell-alt-soft: rgba(13, 148, 136, 0.2);
-  --rk-shell-ok-soft: rgba(5, 150, 105, 0.2);
-  --rk-shell-warn-soft: rgba(217, 119, 6, 0.2);
-  --rk-shell-danger-soft: rgba(220, 38, 38, 0.2);
-  --rk-shell-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
-  --rk-shell-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --rk-shell-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.48);
+  --rk-shell-text-muted: #9aa3b8;
+  --rk-shell-text-soft: #6b7488;
+  --rk-shell-primary: #22d3ee;
+  --rk-shell-primary-soft: rgba(34, 211, 238, 0.18);
+  --rk-shell-alt: #2dd4bf;
+  --rk-shell-alt-soft: rgba(45, 212, 191, 0.18);
+  --rk-shell-ok: #22c55e;
+  --rk-shell-ok-soft: rgba(34, 197, 94, 0.18);
+  --rk-shell-warn: #f59e0b;
+  --rk-shell-warn-soft: rgba(245, 158, 11, 0.18);
+  --rk-shell-danger: #f87171;
+  --rk-shell-danger-soft: rgba(248, 113, 113, 0.18);
+  --rk-shell-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
+  --rk-shell-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.38);
+  --rk-shell-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.50);
 }
 
 .rk-shell-container {
@@ -50,12 +57,11 @@ body.body--dark .rk-shell-layout {
   overflow: hidden;
   background-color: var(--rk-shell-bg);
   background-image:
-    radial-gradient(circle at top right, rgba(8, 145, 178, 0.18), transparent 24rem),
-    radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.14), transparent 20rem),
-    radial-gradient(circle at 52% 46%, rgba(5, 150, 105, 0.12), transparent 16rem),
+    radial-gradient(circle at top right, var(--rk-shell-primary-soft), transparent 26rem),
+    radial-gradient(circle at bottom left, var(--rk-shell-alt-soft), transparent 22rem),
     linear-gradient(var(--rk-shell-border) 1px, transparent 1px),
     linear-gradient(90deg, var(--rk-shell-border) 1px, transparent 1px);
-  background-size: auto, auto, auto, 40px 40px, 40px 40px;
+  background-size: auto, auto, 40px 40px, 40px 40px;
   background-attachment: fixed;
   color: var(--rk-shell-text);
 }

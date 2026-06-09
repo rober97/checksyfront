@@ -126,7 +126,7 @@ watch(() => props.mood, (val) => localMood.value = val);
   border-radius: 14px;
   font-size: 15px;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--text-primary, #0f172a);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
@@ -137,20 +137,20 @@ watch(() => props.mood, (val) => localMood.value = val);
 
 .search-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--color-primary, #06b6d4);
   background: white;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1),
+  box-shadow: 0 0 0 4px var(--color-primary-soft, rgba(6, 182, 212, 0.12)),
               0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 body.body--dark .search-input {
-  background: rgba(30, 41, 59, 0.6);
-  color: #f1f5f9;
+  background: var(--surface-soft, rgba(32, 36, 47, 0.7));
+  color: var(--text-primary, #e8eaf2);
   backdrop-filter: blur(20px);
 }
 
 body.body--dark .search-input:focus {
-  background: rgba(30, 41, 59, 0.8);
+  background: var(--card-background, rgba(26, 30, 39, 0.9));
 }
 
 .search-clear {
@@ -205,7 +205,7 @@ body.body--dark .search-clear:hover {
 }
 
 body.body--dark .filter-select :deep(.q-field__control) {
-  background: rgba(30, 41, 59, 0.6);
+  background: var(--surface-soft, rgba(32, 36, 47, 0.7));
   backdrop-filter: blur(20px);
 }
 
@@ -214,8 +214,8 @@ body.body--dark .filter-select :deep(.q-field__control) {
 }
 
 .filter-select :deep(.q-field--focused .q-field__control) {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  border-color: var(--color-primary, #06b6d4);
+  box-shadow: 0 0 0 4px var(--color-primary-soft, rgba(6, 182, 212, 0.12));
 }
 
 .columns-btn {
@@ -229,19 +229,19 @@ body.body--dark .filter-select :deep(.q-field__control) {
 }
 
 .columns-btn:hover {
-  border-color: #6366f1;
-  color: #6366f1;
-  background: rgba(99, 102, 241, 0.05);
+  border-color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #06b6d4);
+  background: var(--color-primary-soft, rgba(6, 182, 212, 0.08));
 }
 
 body.body--dark .columns-btn {
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  border-color: var(--border-color, rgba(255, 255, 255, 0.08));
+  color: var(--text-secondary, #9aa3b8);
 }
 
 body.body--dark .columns-btn:hover {
-  border-color: #6366f1;
-  color: #a5b4fc;
+  border-color: var(--color-primary, #22d3ee);
+  color: var(--color-primary, #22d3ee);
 }
 
 @media (max-width: 768px) {

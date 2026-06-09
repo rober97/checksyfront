@@ -79,11 +79,11 @@
                 >{{ props.row.assignment.scheduleId.name || 'Plantilla' }}</q-chip>
                 <q-chip
                   v-else-if="props.row.assignment"
-                  dense square color="cyan-6" text-color="white" icon="event_repeat"
+                  dense square color="primary" text-color="white" icon="event_repeat"
                 >Turnos por demanda</q-chip>
                 <q-chip
                   v-else
-                  dense square color="orange-4" text-color="white" icon="warning"
+                  dense square color="warning" text-color="white" icon="warning"
                 >Sin asignación</q-chip>
               </q-td>
             </template>
@@ -322,14 +322,13 @@ onMounted(async () => {
   font-weight: 700;
   letter-spacing: -0.2px;
   line-height: 1.25;
-  color: #0f1117;
+  color: var(--text-primary, #0f1117);
 }
 .rk-assign-subtitle {
   font-size: 12.5px;
   font-weight: 500;
   margin-top: 2px;
-  color: #5a6482;
+  color: var(--text-secondary, #5a6482);
 }
-.body--dark .rk-assign-title { color: #e8eaf2; }
-.body--dark .rk-assign-subtitle { color: #9aa3b2; }
+/* body--dark overrides are now handled by tokens.css automatically */
 </style>

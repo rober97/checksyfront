@@ -78,15 +78,15 @@ function formatPeriod(period) {
   gap: 16px;
   padding: 8px 16px;
   margin: 0 12px;
-  background: var(--rk-card, #fff);
-  border: 1px solid var(--rk-border, rgba(0,0,0,.08));
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   flex-wrap: wrap;
 }
 
 .body--dark .rk-toolbar {
-  background: #101318;
-  border-color: rgba(255,255,255,.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 .rk-mode-tabs {
@@ -121,19 +121,19 @@ function formatPeriod(period) {
 }
 
 .rk-period-badge {
-  background: rgba(33, 150, 243, 0.08);
-  color: var(--q-primary);
-  border: 1px solid rgba(33, 150, 243, 0.15);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-soft);
 }
 
 .rk-pending-badge {
-  background: rgba(245, 158, 11, 0.1);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-soft);
 }
 
 .body--dark .rk-pending-badge {
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 @media (max-width: 767px) {

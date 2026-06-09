@@ -492,26 +492,26 @@ onBeforeUnmount(() => {
    TOKENS
 ══════════════════════════════════════════════════════ */
 .rk-page {
-  --c-bg:        #f0f2f7;
-  --c-surface:   #ffffff;
-  --c-surface2:  #f7f8fc;
-  --c-border:    rgba(0,0,0,0.08);
-  --c-text:      #0f1117;
-  --c-text2:     #5a6482;
-  --c-text3:     #9aa1b9;
-  --c-primary:   #3d6fff;
-  --c-primary-l: rgba(61,111,255,0.12);
-  --c-ok:        #16a34a;
-  --c-ok-l:      rgba(22,163,74,0.12);
-  --c-warn:      #d97706;
-  --c-warn-l:    rgba(217,119,6,0.12);
-  --c-err:       #dc2626;
-  --c-err-l:     rgba(220,38,38,0.12);
-  --c-all:       #6366f1;
-  --c-all-l:     rgba(99,102,241,0.12);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-  --shadow-lg:   0 12px 36px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.05);
+  --c-bg:        var(--background-color, #f0f2f7);
+  --c-surface:   var(--card-background, #ffffff);
+  --c-surface2:  var(--surface-soft, #f7f8fc);
+  --c-border:    var(--border-color, rgba(0,0,0,0.08));
+  --c-text:      var(--text-primary, #0f1117);
+  --c-text2:     var(--text-secondary, #5a6482);
+  --c-text3:     var(--text-muted, #9aa1b9);
+  --c-primary:   var(--color-primary, #06b6d4);
+  --c-primary-l: var(--color-primary-soft, rgba(8,145,178,0.12));
+  --c-ok:        var(--color-success, #16a34a);
+  --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
+  --c-warn:      var(--color-warning, #d97706);
+  --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
+  --c-err:       var(--color-danger, #dc2626);
+  --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
+  --c-all:       var(--color-accent, #14b8a6);
+  --c-all-l:     var(--color-accent-soft, rgba(13,148,136,0.12));
+  --shadow-sm:   var(--app-shadow-sm);
+  --shadow-md:   var(--app-shadow-md);
+  --shadow-lg:   var(--app-shadow-lg);
   --radius-sm:   8px;
   --radius-md:   14px;
   --radius-lg:   20px;
@@ -528,23 +528,12 @@ onBeforeUnmount(() => {
   transition: background 0.3s, color 0.3s;
 }
 
-/* Dark mode */
+/* Dark mode — values now inherited from global tokens via .rk-page vars above;
+   only override what the local tokens don't already reference via var(). */
 .rk-page.is-dark {
-  --c-bg:        #0c0e14;
-  --c-surface:   #141720;
-  --c-surface2:  #1a1e2a;
-  --c-border:    rgba(255,255,255,0.07);
-  --c-text:      #e8eaf2;
-  --c-text2:     #8b92ad;
-  --c-text3:     #555d78;
-  --c-primary-l: rgba(61,111,255,0.18);
-  --c-ok-l:      rgba(22,163,74,0.18);
-  --c-warn-l:    rgba(217,119,6,0.18);
-  --c-err-l:     rgba(220,38,38,0.18);
-  --c-all-l:     rgba(99,102,241,0.18);
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg:   0 12px 36px rgba(0,0,0,0.5);
+  --shadow-sm:   var(--app-shadow-sm);
+  --shadow-md:   var(--app-shadow-md);
+  --shadow-lg:   var(--app-shadow-lg);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -599,7 +588,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(61,111,255,0.35);
+  box-shadow: 0 8px 24px rgba(6,182,212,0.35);
   flex-shrink: 0;
 }
 .rk-title {
@@ -839,10 +828,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
   font-family: var(--ff-body);
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(61,111,255,0.35);
+  box-shadow: 0 4px 14px rgba(6,182,212,0.35);
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.rk-btn-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(61,111,255,0.4); }
+.rk-btn-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(6,182,212,0.4); }
 
 /* ══════════════════════════════════════════════════════
    TABLA WRAP

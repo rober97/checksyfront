@@ -77,12 +77,12 @@
           <span class="rk-stat-lbl">Total</span>
         </div>
         <div class="rk-stat">
-          <q-icon name="edit_note" size="16px" color="orange" />
+          <q-icon name="edit_note" size="16px" color="warning" />
           <span class="rk-stat-val">{{ countByStatus('DRAFT') }}</span>
           <span class="rk-stat-lbl">Borrador</span>
         </div>
         <div class="rk-stat">
-          <q-icon name="check_circle" size="16px" color="green" />
+          <q-icon name="check_circle" size="16px" color="positive" />
           <span class="rk-stat-val">{{ countByStatus('ISSUED') }}</span>
           <span class="rk-stat-lbl">Emitidas</span>
         </div>
@@ -132,8 +132,8 @@
             <q-td :props="props">
               <strong class="rk-net">{{ formatMoney(props.row.totalNet) }}</strong>
               <div class="rk-breakdown">
-                <span class="text-green">+{{ formatMoney(props.row.totalEarn) }}</span>
-                <span class="text-red"> -{{ formatMoney(props.row.totalDeduct) }}</span>
+                <span class="text-positive">+{{ formatMoney(props.row.totalEarn) }}</span>
+                <span class="text-negative"> -{{ formatMoney(props.row.totalDeduct) }}</span>
               </div>
             </q-td>
           </template>
@@ -180,7 +180,7 @@
                 <q-btn
                   v-if="props.row.status === 'ISSUED'"
                   unelevated dense
-                  color="red-6"
+                  color="primary"
                   icon="picture_as_pdf"
                   label="Ver PDF"
                   :disable="loading"
@@ -192,7 +192,7 @@
                 <q-btn
                   v-if="props.row.status === 'ISSUED'"
                   flat dense
-                  color="orange"
+                  color="warning"
                   icon="block"
                   :disable="loading"
                   @click="$emit('void-one', props.row)"
@@ -303,7 +303,7 @@ function getAvatarColor(name) {
 }
 
 function statusBadgeColor(s) {
-  const map = { ISSUED: "green", DRAFT: "orange", VOID: "grey" };
+  const map = { ISSUED: "positive", DRAFT: "warning", VOID: "grey" };
   return map[s] || "grey";
 }
 
@@ -324,16 +324,16 @@ function formatPeriod(period) {
 }
 
 .rk-content-card {
-  background: var(--rk-card, #fff);
-  border: 1px solid var(--rk-border, rgba(0,0,0,.08));
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.04);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .body--dark .rk-content-card {
-  background: #101318;
-  border-color: rgba(255,255,255,.08);
+  background: var(--card-background);
+  border-color: var(--border-color);
 }
 
 /* Top bar */
@@ -382,13 +382,13 @@ function formatPeriod(period) {
 }
 
 .rk-alert-warning {
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  color: #92400e;
+  background: var(--color-warning-soft);
+  border: 1px solid var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .body--dark .rk-alert-warning {
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 /* Filters */
@@ -526,7 +526,7 @@ function formatPeriod(period) {
   display: block;
   font-size: 1.05rem;
   font-weight: 800;
-  color: #16a34a;
+  color: var(--color-success);
   font-family: 'Space Mono', monospace;
 }
 

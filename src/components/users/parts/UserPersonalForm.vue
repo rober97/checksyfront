@@ -426,14 +426,14 @@ const ageHint = computed(() => {
   color: var(--rk-text);
 }
 .body--dark .rk-personal-wrap {
-  --rk-bg:           #141720;
-  --rk-surface:      #1a1e2a;
-  --rk-surface-2:    #232838;
-  --rk-border:       rgba(255, 255, 255, 0.08);
-  --rk-text:         #e8eaf2;
-  --rk-text-2:       #8b92ad;
-  --rk-text-3:       #555d78;
-  --rk-accent-soft:  rgba(6, 182, 212, 0.18);
+  --rk-bg:           var(--card-background);
+  --rk-surface:      var(--surface-soft);
+  --rk-surface-2:    rgba(255, 255, 255, 0.05);
+  --rk-border:       var(--border-color);
+  --rk-text:         var(--text-primary);
+  --rk-text-2:       var(--text-secondary);
+  --rk-text-3:       var(--text-muted);
+  --rk-accent-soft:  var(--color-primary-soft);
 }
 
 .rk-info {

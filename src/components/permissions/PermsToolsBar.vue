@@ -191,7 +191,7 @@ const clearFilters = () => {
   --t-shadow:       0 6px 20px rgba(6,182,212,.07), 0 2px 6px rgba(0,0,0,.04);
 }
 .body--dark .rk-tools {
-  --t-bg:           rgba(10,16,28,.96);
+  --t-bg:           var(--card-background);
   --t-bg-soft:      rgba(6,182,212,.06);
   --t-border:       rgba(6,182,212,.18);
   --t-title:        rgba(255,255,255,.90);

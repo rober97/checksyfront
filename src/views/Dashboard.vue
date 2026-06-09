@@ -143,7 +143,7 @@
             title="Asistencias"
             :value="asistencias"
             icon="event_available"
-            icon-gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+            icon-gradient="linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)"
             format-type="auto"
             trend="positive"
           />
@@ -154,7 +154,7 @@
             title="Días Vacaciones"
             :value="vacaciones"
             icon="beach_access"
-            icon-gradient="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+            icon-gradient="linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)"
             format-type="decimal"
             :decimals="0"
             subtitle="Disponibles este año"
@@ -165,7 +165,7 @@
             title="Solicitudes Pendientes"
             :value="solicitudes"
             icon="hourglass_empty"
-            icon-gradient="linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%)"
+            icon-gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
             format-type="auto"
             :badge="solicitudes > 0 ? solicitudes : null"
           />
@@ -176,7 +176,7 @@
             title="Usuarios Activos"
             :value="usuariosActivos"
             icon="people"
-            icon-gradient="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+            icon-gradient="linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
             format-type="compact"
             subtitle="En el sistema"
           />
@@ -187,7 +187,7 @@
             title="Empresas Registradas"
             :value="empresas"
             icon="apartment"
-            icon-gradient="linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)"
+            icon-gradient="linear-gradient(135deg, #0891b2 0%, #0d9488 100%)"
             format-type="auto"
             trend="positive"
           />
@@ -198,7 +198,7 @@
             title="Días Administrativos"
             :value="diasAdmin"
             icon="calendar_today"
-            icon-gradient="linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+            icon-gradient="linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)"
             format-type="decimal"
             :decimals="0"
             subtitle="Disponibles"
@@ -210,7 +210,7 @@
             title="Último Check-in"
             :value="ultimoCheck || '—'"
             icon="access_time"
-            icon-gradient="linear-gradient(135deg, #30cfd0 0%, #330867 100%)"
+            icon-gradient="linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)"
             format-type="time"
             variant="highlight"
             subtitle="Hora de entrada"
@@ -261,7 +261,7 @@
           <q-btn
             unelevated
             color="white"
-            text-color="green"
+            text-color="primary"
             label="Gestionar empleados"
             to="/rrhh/users"
             no-caps
@@ -285,7 +285,7 @@
           <q-btn
             unelevated
             color="white"
-            text-color="orange"
+            text-color="primary"
             label="Marcar Asistencia"
             to="/employee/attendance"
             no-caps
@@ -539,26 +539,19 @@ const lastUpdatedText = computed(() =>
 <style lang="scss" scoped>
 .dashboard-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  
-  .body--dark & {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  }
+  background: transparent;
 }
 
 /* =================== HEADER =================== */
 .dashboard-header {
-  background: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-soft);
+  border-radius: 16px;
   padding: 1.5rem 2rem;
   position: sticky;
   top: 0;
   z-index: 100;
-  
-  .body--dark & {
-    background: #1e1e2e;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-  }
 }
 
 .header-content {
@@ -578,7 +571,7 @@ const lastUpdatedText = computed(() =>
 }
 
 .header-icon {
-  color: var(--q-primary);
+  color: var(--color-primary);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
@@ -592,11 +585,7 @@ const lastUpdatedText = computed(() =>
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2c3e50;
-
-  .body--dark & {
-    color: #ecf0f1;
-  }
+  color: var(--text-primary);
 }
 
 .role-chip {
@@ -607,8 +596,8 @@ const lastUpdatedText = computed(() =>
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--q-primary);
-  background: rgba(var(--q-primary-rgb), 0.12);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
   border-radius: 10px;
 }
 
@@ -617,7 +606,7 @@ const lastUpdatedText = computed(() =>
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
 }
 
 .meta-item {
@@ -631,8 +620,8 @@ const lastUpdatedText = computed(() =>
 }
 
 .period-badge {
-  background: rgba(var(--q-primary-rgb), 0.1);
-  color: var(--q-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-weight: 600;
@@ -649,13 +638,9 @@ const lastUpdatedText = computed(() =>
 .preset-pills {
   display: flex;
   gap: 0.5rem;
-  background: #f8f9fa;
+  background: var(--surface-soft);
   padding: 0.25rem;
   border-radius: 12px;
-  
-  .body--dark & {
-    background: rgba(255, 255, 255, 0.05);
-  }
 }
 
 .preset-pill {
@@ -665,7 +650,7 @@ const lastUpdatedText = computed(() =>
   padding: 0.5rem 0.875rem;
   border: none;
   background: transparent;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -673,53 +658,40 @@ const lastUpdatedText = computed(() =>
   font-size: 0.875rem;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: #2c3e50;
-    
-    .body--dark & {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ecf0f1;
-    }
+    background: var(--color-primary-soft);
+    color: var(--text-primary);
   }
 
   &.active {
-    background: var(--q-primary);
-    color: white;
-    box-shadow: 0 2px 8px rgba(var(--q-primary-rgb), 0.3);
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--color-primary-soft);
   }
 }
 
 .date-picker-btn {
-  background: #f8f9fa;
+  background: var(--surface-soft);
   padding: 0.5rem 1rem;
   border-radius: 10px;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   transition: all 0.2s ease;
-  
-  .body--dark & {
-    background: rgba(255, 255, 255, 0.05);
-  }
 
   &.active {
-    background: var(--q-primary);
-    color: white;
+    background: var(--color-primary);
+    color: #fff;
   }
 
   &:not(.active):hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-primary-soft);
   }
 }
 
 .refresh-btn {
-  background: #f8f9fa;
-  
-  .body--dark & {
-    background: rgba(255, 255, 255, 0.05);
-  }
+  background: var(--surface-soft);
 
   &:hover {
-    background: rgba(var(--q-primary-rgb), 0.1);
-    color: var(--q-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 }
 
@@ -738,7 +710,7 @@ const lastUpdatedText = computed(() =>
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
 
@@ -758,21 +730,18 @@ const lastUpdatedText = computed(() =>
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  background: white;
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-soft);
   text-decoration: none;
-  color: #2c3e50;
+  color: var(--text-primary);
   transition: all 0.3s ease;
-  
-  .body--dark & {
-    background: #2a2a3e;
-    color: #ecf0f1;
-  }
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: var(--color-primary);
+    box-shadow: var(--app-shadow-lg);
 
     .action-arrow {
       transform: translateX(4px);
@@ -786,7 +755,7 @@ const lastUpdatedText = computed(() =>
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
   border-radius: 12px;
   color: white;
 }
@@ -835,17 +804,17 @@ const lastUpdatedText = computed(() =>
   flex-wrap: wrap;
 
   &.admin {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #06b6d4 0%, #0d9488 100%);
     color: white;
   }
 
   &.company {
-    background: linear-gradient(135deg, #2ed573 0%, #17c0eb 100%);
+    background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
     color: white;
   }
 
   &.employee {
-    background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);
+    background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
     color: white;
   }
 }

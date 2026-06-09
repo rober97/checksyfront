@@ -681,9 +681,9 @@ onMounted(async () => {
 .rk-grid thead th {
   position: sticky;
   top: 0;
-  background: #f8fafc;
+  background: var(--surface-soft, #f8fafc);
   z-index: 3;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 .rk-grid-corner {
   left: 0;
@@ -692,19 +692,19 @@ onMounted(async () => {
   text-align: left;
   padding: 8px 12px;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-secondary, #475569);
 }
 .rk-grid-day {
   min-width: 86px;
   padding: 6px 4px;
   text-align: center;
   font-weight: 500;
-  color: #475569;
+  color: var(--text-secondary, #475569);
 }
-.rk-grid-day--weekend { background: #eef2ff; }
+.rk-grid-day--weekend { background: var(--color-primary-soft, rgba(6,182,212,0.08)); }
 .rk-grid-day--today {
-  background: #c7d2fe !important;
-  color: #1e1b4b;
+  background: var(--color-primary-soft, rgba(6,182,212,0.18)) !important;
+  color: var(--color-primary-dark, #0891b2);
 }
 .rk-grid-day__short {
   font-size: 10px;
@@ -720,38 +720,38 @@ onMounted(async () => {
 .rk-grid-emp {
   position: sticky;
   left: 0;
-  background: #fff;
+  background: var(--card-background, #fff);
   z-index: 2;
   min-width: 220px;
   text-align: left;
   padding: 8px 12px;
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid var(--border-color, #e2e8f0);
+  border-bottom: 1px solid var(--surface-soft, #f1f5f9);
   display: flex;
   align-items: center;
 }
 .rk-grid-emp__text { line-height: 1.2; }
-.rk-grid-emp__name { font-weight: 600; color: #0f172a; }
-.rk-grid-emp__role { font-size: 11px; color: #64748b; }
+.rk-grid-emp__name { font-weight: 600; color: var(--text-primary, #0f172a); }
+.rk-grid-emp__role { font-size: 11px; color: var(--text-secondary, #64748b); }
 
 .rk-grid-cell {
   min-width: 86px;
   height: 56px;
   padding: 4px;
   text-align: center;
-  border-bottom: 1px solid #f1f5f9;
-  border-right: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--surface-soft, #f1f5f9);
+  border-right: 1px solid var(--surface-soft, #f1f5f9);
   cursor: pointer;
   transition: background 0.1s;
 }
 .rk-grid-cell:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: var(--color-primary-soft, rgba(6,182,212,0.08));
 }
-.rk-grid-cell--weekend { background: #f8fafc; }
-.rk-grid-cell--today { background: rgba(199, 210, 254, 0.25); }
-.rk-grid-cell--has-shifts { background: rgba(34, 197, 94, 0.08); }
-.rk-grid-cell--off { color: #cbd5e1; }
-.rk-grid-cell:focus { outline: 2px solid #6366f1; outline-offset: -2px; }
+.rk-grid-cell--weekend { background: var(--surface-soft, #f8fafc); }
+.rk-grid-cell--today { background: var(--color-primary-soft, rgba(6,182,212,0.12)); }
+.rk-grid-cell--has-shifts { background: var(--color-success-soft, rgba(34, 197, 94, 0.08)); }
+.rk-grid-cell--off { color: var(--border-color, #cbd5e1); }
+.rk-grid-cell:focus { outline: 2px solid var(--color-primary, #06b6d4); outline-offset: -2px; }
 
 .rk-grid-segments {
   display: flex;
@@ -762,13 +762,13 @@ onMounted(async () => {
 }
 .rk-grid-seg {
   font-size: 11px;
-  color: #15803d;
+  color: var(--color-success, #16a34a);
   font-weight: 600;
   white-space: nowrap;
 }
 .rk-grid-empty {
   font-size: 14px;
-  color: #cbd5e1;
+  color: var(--border-color, #cbd5e1);
 }
 
 /* Editor de celda */
@@ -784,35 +784,42 @@ onMounted(async () => {
 }
 .rk-cell-add { align-self: flex-start; font-size: 12px; }
 
-/* ---------- Dark mode ---------- */
+/* ---------- Dark mode ----------
+   Most rules above already consume CSS tokens (--surface-soft, --border-color,
+   --card-background, --text-primary/secondary, --color-primary-soft,
+   --color-success, --color-success-soft) that flip automatically in
+   body--dark via tokens.css.  Only the few values that can't be expressed
+   as a single shared token need explicit overrides here. */
+
+/* thead sticky background must match the dark surface-soft token */
 .body--dark .rk-grid thead th {
-  background: #0f1216;
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-  color: #cbd5e1;
+  background: var(--surface-soft);
+  border-bottom-color: var(--border-color);
+  color: var(--text-secondary);
 }
-.body--dark .rk-grid-day--weekend { background: #131a2a; }
+/* weekend column: re-use a subtle cyan tint darker in dark mode */
+.body--dark .rk-grid-day--weekend { background: var(--color-primary-soft); }
+/* today column: stronger tint so it's visible on dark surface */
 .body--dark .rk-grid-day--today {
-  background: rgba(99, 102, 241, 0.35) !important;
-  color: #fff;
+  background: var(--color-primary-soft) !important;
+  color: var(--color-primary);
 }
-.body--dark .rk-grid-emp {
-  background: #0f1216;
-  border-right-color: rgba(255, 255, 255, 0.08);
-  border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-.body--dark .rk-grid-emp__name { color: #e5e7eb; }
-.body--dark .rk-grid-emp__role { color: #9aa3b2; }
+/* Sticky employee column uses card-background token — already correct.
+   Only the border tokens need the dark values, handled by token.css. */
+.body--dark .rk-grid-emp__name { color: var(--text-primary); }
+.body--dark .rk-grid-emp__role { color: var(--text-secondary); }
+/* Cell borders: lighter than surface-soft in dark mode */
 .body--dark .rk-grid-cell {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
-  border-right-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: var(--border-color);
+  border-right-color: var(--border-color);
 }
-.body--dark .rk-grid-cell:hover { background: rgba(99, 102, 241, 0.18); }
-.body--dark .rk-grid-cell--weekend { background: #11151c; }
-.body--dark .rk-grid-cell--today { background: rgba(99, 102, 241, 0.18); }
-.body--dark .rk-grid-cell--has-shifts { background: rgba(34, 197, 94, 0.12); }
-.body--dark .rk-grid-cell--off { color: #475569; }
-.body--dark .rk-grid-empty { color: #475569; }
-.body--dark .rk-grid-seg { color: #4ade80; }
+.body--dark .rk-grid-cell:hover { background: var(--color-primary-soft); }
+.body--dark .rk-grid-cell--weekend { background: var(--surface-soft); }
+.body--dark .rk-grid-cell--today { background: var(--color-primary-soft); }
+.body--dark .rk-grid-cell--has-shifts { background: var(--color-success-soft); }
+.body--dark .rk-grid-cell--off { color: var(--text-muted); }
+.body--dark .rk-grid-empty { color: var(--text-muted); }
+.body--dark .rk-grid-seg { color: var(--color-success); }
 
 @media (max-width: 768px) {
   .rk-grid-corner { min-width: 160px; }
