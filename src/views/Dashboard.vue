@@ -218,6 +218,110 @@
         </div>
       </div>
 
+      <!-- =============== Analítica RR.HH. (solo admin_rrhh) =============== -->
+      <section v-if="roleDisplay === 'AdminRrhh' && !error" class="rrhh-section">
+        <div class="section-label">Panel de tu empresa</div>
+        <div class="rrhh-grid">
+          <!-- Solicitudes por estado -->
+          <div class="rk-card span-5">
+            <div class="rk-card__head">
+              <div>
+                <div class="rk-card__title">Solicitudes por estado</div>
+                <div class="rk-card__sub">Distribución histórica de tu empresa</div>
+              </div>
+              <q-icon name="donut_large" class="rk-card__ico" />
+            </div>
+            <apexchart
+              v-if="chartReady && reqDonutTotal > 0"
+              type="donut" height="260"
+              :options="reqDonutOptions" :series="reqDonutSeries"
+            />
+            <div v-else class="rk-empty"><q-icon name="inbox" size="32px" /><span>Sin solicitudes registradas</span></div>
+          </div>
+
+          <!-- Asistencia de hoy (gauge) -->
+          <div class="rk-card span-3 rk-card--center">
+            <div class="rk-card__head">
+              <div>
+                <div class="rk-card__title">Asistencia de hoy</div>
+                <div class="rk-card__sub">Presentes vs. plantilla activa</div>
+              </div>
+            </div>
+            <apexchart
+              v-if="chartReady"
+              type="radialBar" height="240"
+              :options="attendanceGaugeOptions" :series="attendanceGaugeSeries"
+            />
+            <div class="rk-gauge-foot">
+              <b>{{ rrhhTodayAttendance }}</b> marcas hoy ·
+              <b>{{ rrhhActiveEmployees || usuariosActivos }}</b> activos
+            </div>
+          </div>
+
+          <!-- Plantilla -->
+          <div class="rk-card span-4">
+            <div class="rk-card__head">
+              <div>
+                <div class="rk-card__title">Plantilla</div>
+                <div class="rk-card__sub">Estado de tus empleados</div>
+              </div>
+              <q-icon name="groups" class="rk-card__ico" />
+            </div>
+            <div class="rk-headcount">
+              <div class="rk-hc__big">{{ headcountTotal || usuariosActivos }}</div>
+              <div class="rk-hc__lbl">empleados en total</div>
+            </div>
+            <div class="rk-hc-bar" v-if="headcountTotal">
+              <div class="rk-hc-bar__fill" :style="{ width: (rrhhActiveEmployees / headcountTotal * 100) + '%' }"></div>
+            </div>
+            <div class="rk-hc-legend">
+              <span><i class="dot dot--active"></i> Activos <b>{{ rrhhActiveEmployees }}</b></span>
+              <span><i class="dot dot--inactive"></i> Inactivos <b>{{ rrhhInactiveEmployees }}</b></span>
+            </div>
+            <q-btn flat dense no-caps color="primary" icon="people" label="Gestionar empleados" to="/rrhh/users" class="rk-hc-btn" />
+          </div>
+
+          <!-- Solicitudes pendientes -->
+          <div class="rk-card span-12">
+            <div class="rk-card__head">
+              <div>
+                <div class="rk-card__title">
+                  Solicitudes pendientes
+                  <q-badge v-if="rrhhCounts.pending" color="orange" class="q-ml-sm">{{ rrhhCounts.pending }}</q-badge>
+                </div>
+                <div class="rk-card__sub">Últimas solicitudes de tu equipo</div>
+              </div>
+              <q-btn flat dense no-caps color="primary" icon="assignment" label="Ver todas" to="/rrhh/requests" />
+            </div>
+
+            <q-list v-if="rrhhRecent.length" class="rk-reqs">
+              <q-item v-for="r in rrhhRecent" :key="r.id" class="rk-req">
+                <q-item-section avatar>
+                  <div class="rk-req__ico"><q-icon :name="(REQ_TYPE[r.type] || {}).icon || 'description'" size="18px" /></div>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="rk-req__title">
+                    {{ reqUserName(r) }} · {{ (REQ_TYPE[r.type] || {}).label || r.type }}
+                  </q-item-label>
+                  <q-item-label caption class="rk-req__meta">
+                    {{ reqDateRange(r) }} · {{ timeAgo(r.createdAt) }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-badge
+                    :style="{ backgroundColor: (REQ_STATUS[r.status] || {}).color || '#94a3b8' }"
+                    text-color="white"
+                  >
+                    {{ (REQ_STATUS[r.status] || {}).label || r.status }}
+                  </q-badge>
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <div v-else class="rk-empty"><q-icon name="inbox" size="32px" /><span>No hay solicitudes recientes</span></div>
+          </div>
+        </div>
+      </section>
+
       <!-- Role-specific Banners (modelo 2026) -->
       <transition name="slide-up">
         <div v-if="roleDisplay === 'Superadmin'" class="info-banner admin">
@@ -301,6 +405,7 @@ import { ref, computed, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { useKpiStore } from "@/stores/kpiStore";
 import { useAuthStore } from "@/stores/authStore";
+import secureAxios from "@/utils/secureRequest";
 import KpiCard from "@/components/KpiCard.vue";
 
 const $q = useQuasar();
@@ -484,6 +589,161 @@ const quickLinks = computed(() => {
   return [];
 });
 
+/* =================== Analítica RR.HH. (admin_rrhh) =================== */
+const REQ_TYPE = {
+  VACATION: { label: "Vacaciones", icon: "beach_access" },
+  ADMIN_DAY: { label: "Día administrativo", icon: "event" },
+  PERMISSION: { label: "Permiso", icon: "badge" },
+  COMP_DAY: { label: "Día compensatorio", icon: "schedule" },
+  OTHER: { label: "Otra solicitud", icon: "description" },
+};
+const REQ_STATUS = {
+  PENDING: { label: "Pendiente", color: "#f59e0b" },
+  APPROVED: { label: "Aprobada", color: "#22c55e" },
+  REJECTED: { label: "Rechazada", color: "#ef4444" },
+  CANCELLED: { label: "Cancelada", color: "#94a3b8" },
+};
+
+const chartReady = ref(false);
+const rrhhCounts = ref({ pending: 0, approved: 0, rejected: 0, cancelled: 0 });
+const rrhhTodayAttendance = ref(0);
+const rrhhActiveEmployees = ref(0);
+const rrhhInactiveEmployees = ref(0);
+const rrhhRecent = ref([]);
+
+function reqDateRange(r) {
+  const fmt = (d) =>
+    d ? new Date(d).toLocaleDateString("es-CL", { day: "2-digit", month: "short" }) : "—";
+  if (!r.startDate) return "—";
+  if (!r.endDate || r.startDate === r.endDate) return fmt(r.startDate);
+  return `${fmt(r.startDate)} → ${fmt(r.endDate)}`;
+}
+function reqUserName(r) {
+  const u = r.userId;
+  if (u && typeof u === "object") {
+    const n = `${u.firstName || ""} ${u.lastName || ""}`.trim();
+    return n || u.email || "Empleado";
+  }
+  return "Empleado";
+}
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (isNaN(diff)) return "";
+  if (diff < 60) return "recién";
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`;
+  if (diff < 604800) return `hace ${Math.floor(diff / 86400)} d`;
+  return new Date(dateStr).toLocaleDateString("es-CL");
+}
+
+function pickArray(data, ...keys) {
+  if (Array.isArray(data)) return data;
+  for (const k of keys) if (Array.isArray(data?.[k])) return data[k];
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.rows)) return data.rows;
+  return [];
+}
+
+async function loadRrhhExtras() {
+  const cid = companyId.value || undefined;
+  try {
+    const [summaryRes, listRes, usersRes] = await Promise.all([
+      secureAxios.get("/requests/requests/summary", { params: { companyId: cid } }).catch(() => null),
+      secureAxios.get("/requests", { params: { companyId: cid, limit: 8 } }).catch(() => null),
+      secureAxios.get("/users", { params: { companyId: cid } }).catch(() => null),
+    ]);
+
+    const sum = summaryRes?.data?.data;
+    if (sum?.requests) {
+      rrhhCounts.value = {
+        pending: sum.requests.pending || 0,
+        approved: sum.requests.approved || 0,
+        rejected: sum.requests.rejected || 0,
+        cancelled: sum.requests.cancelled || 0,
+      };
+    }
+    rrhhTodayAttendance.value = sum?.todayAttendanceCount || 0;
+
+    rrhhRecent.value = pickArray(listRes?.data, "data").slice(0, 8);
+
+    const us = pickArray(usersRes?.data, "users");
+    const emps = us.filter((u) => u.role === "employee");
+    rrhhActiveEmployees.value = emps.filter((u) => u.active !== false && u.status !== "inactive").length;
+    rrhhInactiveEmployees.value = emps.length - rrhhActiveEmployees.value;
+  } catch (e) {
+    console.warn("[Dashboard] loadRrhhExtras error:", e?.message);
+  }
+}
+
+/* Colores de ejes/grid según tema (para ApexCharts) */
+const axisColor = computed(() => (isDark.value ? "#9aa3b8" : "#64748b"));
+const gridColor = computed(() => (isDark.value ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"));
+const chartTheme = computed(() => (isDark.value ? "dark" : "light"));
+
+const reqDonutSeries = computed(() => {
+  const c = rrhhCounts.value;
+  return [c.pending, c.approved, c.rejected, c.cancelled];
+});
+const reqDonutTotal = computed(() => reqDonutSeries.value.reduce((a, b) => a + b, 0));
+const reqDonutOptions = computed(() => ({
+  chart: { fontFamily: "inherit", background: "transparent" },
+  theme: { mode: chartTheme.value },
+  labels: ["Pendientes", "Aprobadas", "Rechazadas", "Canceladas"],
+  colors: ["#f59e0b", "#22c55e", "#ef4444", "#94a3b8"],
+  stroke: { width: 0 },
+  legend: { position: "bottom", labels: { colors: axisColor.value } },
+  dataLabels: { enabled: false },
+  plotOptions: {
+    pie: {
+      donut: {
+        size: "70%",
+        labels: {
+          show: true,
+          total: {
+            show: true, label: "Solicitudes", color: axisColor.value,
+            formatter: () => String(reqDonutTotal.value),
+          },
+        },
+      },
+    },
+  },
+  tooltip: { theme: chartTheme.value },
+}));
+
+const attendancePct = computed(() => {
+  const active = rrhhActiveEmployees.value || usuariosActivos.value || 0;
+  if (!active) return 0;
+  return Math.min(100, Math.round((rrhhTodayAttendance.value / active) * 100));
+});
+const attendanceGaugeSeries = computed(() => [attendancePct.value]);
+const attendanceGaugeOptions = computed(() => ({
+  chart: { fontFamily: "inherit", background: "transparent" },
+  theme: { mode: chartTheme.value },
+  colors: ["#06b6d4"],
+  plotOptions: {
+    radialBar: {
+      hollow: { size: "62%" },
+      track: { background: isDark.value ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.07)" },
+      dataLabels: {
+        name: { offsetY: 22, color: axisColor.value, fontSize: "0.8rem" },
+        value: {
+          offsetY: -12, fontSize: "1.7rem", fontWeight: 800,
+          color: isDark.value ? "#e8eaf2" : "#0f172a",
+          formatter: (v) => `${Math.round(v)}%`,
+        },
+      },
+    },
+  },
+  fill: {
+    type: "gradient",
+    gradient: { shade: "dark", type: "horizontal", gradientToColors: ["#14b8a6"], stops: [0, 100] },
+  },
+  stroke: { lineCap: "round" },
+  labels: ["Presentes hoy"],
+}));
+
+const headcountTotal = computed(() => rrhhActiveEmployees.value + rrhhInactiveEmployees.value);
+
 /* =================== Carga KPIs =================== */
 async function reload() {
   if (!userId.value && roleDisplay.value === "Empleado") {
@@ -500,6 +760,7 @@ async function reload() {
       from: range.value?.from || undefined,
       to: range.value?.to || undefined,
     });
+    if (roleDisplay.value === "AdminRrhh") await loadRrhhExtras();
     lastUpdated.value = new Date();
   } catch (e) {
     error.value = e?.message || "No se pudieron cargar los KPIs.";
@@ -509,6 +770,9 @@ async function reload() {
 }
 
 onMounted(() => {
+  // Monta los gráficos un tick después de que el DOM exista para evitar
+  // la carrera de render de ApexCharts ("Element not found").
+  chartReady.value = true;
   setPresetDates("7d");
   reload();
   const t = setInterval(() => reload(), 60000);
@@ -888,6 +1152,83 @@ const lastUpdatedText = computed(() =>
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* =================== ANALÍTICA RR.HH. =================== */
+.rrhh-section { animation: fadeIn 0.5s ease 0.15s both; }
+.rrhh-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.25rem;
+}
+.span-3 { grid-column: span 3; }
+.span-4 { grid-column: span 4; }
+.span-5 { grid-column: span 5; }
+.span-12 { grid-column: span 12; }
+
+.rk-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+}
+.rk-card--center { align-items: center; }
+.rk-card__head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  width: 100%; gap: .5rem; margin-bottom: .4rem;
+}
+.rk-card__title { font-weight: 700; font-size: 1.02rem; color: var(--text-primary); }
+.rk-card__sub { font-size: .78rem; color: var(--text-secondary); margin-top: 2px; }
+.rk-card__ico { font-size: 22px; color: var(--text-secondary); opacity: .55; }
+
+.rk-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 40px 12px; color: var(--text-secondary); opacity: .7; font-size: .85rem;
+}
+
+.rk-gauge-foot { font-size: .8rem; color: var(--text-secondary); margin-top: -8px; text-align: center; }
+.rk-gauge-foot b { color: var(--text-primary); }
+
+/* Plantilla */
+.rk-headcount { margin: .4rem 0 .6rem; }
+.rk-hc__big { font-size: 2.4rem; font-weight: 800; line-height: 1; color: var(--text-primary); }
+.rk-hc__lbl { font-size: .8rem; color: var(--text-secondary); margin-top: 2px; }
+.rk-hc-bar {
+  height: 10px; border-radius: 99px; overflow: hidden;
+  background: rgba(148,163,184,.22); margin: .4rem 0 .7rem;
+}
+.rk-hc-bar__fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #06b6d4, #14b8a6); transition: width .5s ease;
+}
+.rk-hc-legend {
+  display: flex; gap: 1.2rem; font-size: .82rem; color: var(--text-secondary); flex-wrap: wrap;
+}
+.rk-hc-legend b { color: var(--text-primary); }
+.rk-hc-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.dot--active { background: #14b8a6; }
+.dot--inactive { background: #94a3b8; }
+.rk-hc-btn { margin-top: auto; align-self: flex-start; }
+
+/* Solicitudes pendientes */
+.rk-reqs { padding: 2px 0; }
+.rk-req { border-radius: 12px; }
+.rk-req:hover { background: var(--surface-soft); }
+.rk-req__ico {
+  width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--color-primary-soft); color: var(--color-primary);
+}
+.rk-req__title { font-weight: 600; font-size: .9rem; color: var(--text-primary); }
+.rk-req__meta { font-size: .76rem; color: var(--text-secondary); }
+
+@media (max-width: 1024px) {
+  .span-5, .span-3, .span-4 { grid-column: span 6; }
+}
+@media (max-width: 680px) {
+  .span-5, .span-3, .span-4, .span-12 { grid-column: span 12; }
 }
 
 /* =================== RESPONSIVE =================== */

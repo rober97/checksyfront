@@ -154,6 +154,12 @@ export const useDtStore = defineStore('dt', {
       return data
     },
 
+    /** Admin registra la salida olvidada de un trabajador (DT: razón + audit + notifica) */
+    async adminResolveMissedExit(id, payload) {
+      const { data } = await secureAxios.post(`/attendance/${id}/resolve-exit-admin`, payload)
+      return data
+    },
+
     /** Objeción del trabajador (ventana 48h) */
     async objectModification(id) {
       const { data } = await secureAxios.post(`/attendance/${id}/object`)

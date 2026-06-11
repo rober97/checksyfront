@@ -323,6 +323,74 @@
         <!-- Contenido del modal -->
         <div class="rk-modal-body">
 
+          <!-- Panel de edición inline (Res. Ex. 38/2024) -->
+          <div v-if="editTarget" class="edit-panel">
+            <div class="edit-panel-head">
+              <q-icon name="edit_note" size="18px" />
+              <span>Modificar marca — {{ capitalizar(editTarget.tipo) }} · {{ formatFecha(editTarget.timestamp) }} {{ horaBonita(editTarget.timestamp) }}</span>
+            </div>
+            <div class="edit-panel-note">
+              Queda registrado en la bitácora inmutable. El trabajador será notificado en su correo y tendrá <b>48 horas</b> para objetar.
+            </div>
+            <div class="edit-grid">
+              <label class="edit-field">
+                <span class="filter-label">Tipo</span>
+                <select v-model="editForm.tipo" class="rk-select">
+                  <option v-for="o in EDIT_TIPOS" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </select>
+              </label>
+              <label class="edit-field">
+                <span class="filter-label">Nueva fecha/hora</span>
+                <input type="datetime-local" v-model="editForm.timestamp" class="rk-date-input" />
+              </label>
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Comentario (opcional)</span>
+                <input type="text" v-model="editForm.note" class="rk-date-input" placeholder="Sin comentario" />
+              </label>
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Razón de la modificación * (mín. 5 caracteres)</span>
+                <input type="text" v-model="editForm.reason" class="rk-date-input" placeholder="Ej: Corrección de hora solicitada por el trabajador" />
+              </label>
+            </div>
+            <div class="edit-actions">
+              <button class="footer-btn footer-btn-close" @click="cancelEdit" :disabled="editSaving">Cancelar</button>
+              <button class="footer-btn footer-btn-excel" :disabled="!editCanSubmit || editSaving" @click="saveEdit">
+                <q-icon name="save" size="14px" />{{ editSaving ? 'Guardando…' : 'Guardar modificación' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel: registrar salida olvidada (admin) -->
+          <div v-if="resolveTarget" class="edit-panel edit-panel-resolve">
+            <div class="edit-panel-head">
+              <q-icon name="logout" size="18px" />
+              <span>Registrar salida olvidada — entrada {{ formatFecha(resolveTarget.timestamp) }} {{ horaBonita(resolveTarget.timestamp) }}</span>
+            </div>
+            <div class="edit-panel-note">
+              Crea la salida faltante a nombre del trabajador. Queda en la bitácora, se marca como generada por administración y se notifica al trabajador (48h para objetar).
+            </div>
+            <div class="edit-grid">
+              <label class="edit-field">
+                <span class="filter-label">Hora de salida</span>
+                <input type="datetime-local" v-model="resolveForm.timestamp" class="rk-date-input" />
+              </label>
+              <label class="edit-field">
+                <span class="filter-label">Comentario (opcional)</span>
+                <input type="text" v-model="resolveForm.note" class="rk-date-input" placeholder="Sin comentario" />
+              </label>
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Razón * (mín. 5 caracteres)</span>
+                <input type="text" v-model="resolveForm.reason" class="rk-date-input" placeholder="Ej: El trabajador olvidó marcar salida; hora confirmada con su jefatura" />
+              </label>
+            </div>
+            <div class="edit-actions">
+              <button class="footer-btn footer-btn-close" @click="cancelResolve" :disabled="resolveSaving">Cancelar</button>
+              <button class="footer-btn footer-btn-excel" :disabled="!resolveCanSubmit || resolveSaving" @click="saveResolve">
+                <q-icon name="save" size="14px" />{{ resolveSaving ? 'Guardando…' : 'Registrar salida' }}
+              </button>
+            </div>
+          </div>
+
           <!-- Aviso de salidas olvidadas -->
           <div v-if="!isFetching && conteos.pendientes > 0" class="pending-banner">
             <div class="pending-banner-icon">
@@ -402,6 +470,9 @@
                         <a v-if="m.ubicacion?.lat" href="#" class="titem-mapa" @click.prevent="openInMaps(m)">
                           <q-icon name="place" size="12px" />mapa
                         </a>
+                        <a v-if="m.pending" href="#" class="titem-mapa titem-resolve" @click.prevent="openResolve(m)">
+                          <q-icon name="logout" size="12px" />registrar salida
+                        </a>
                         <a href="#" class="titem-mapa" @click.prevent="openModify(m)">
                           <q-icon name="edit" size="12px" />editar
                         </a>
@@ -465,6 +536,10 @@
                         <q-icon name="place" size="14px" />
                         <q-tooltip>Ver en mapa</q-tooltip>
                       </button>
+                      <button v-if="m.pending" class="act-btn act-resolve" @click="openResolve(m)">
+                        <q-icon name="logout" size="14px" />
+                        <q-tooltip>Registrar salida olvidada</q-tooltip>
+                      </button>
                       <button class="act-btn act-map" @click="openModify(m)">
                         <q-icon name="edit" size="14px" />
                         <q-tooltip>Modificar (registra razón + notifica al trabajador)</q-tooltip>
@@ -501,13 +576,6 @@
       </div>
     </q-dialog>
 
-    <!-- Diálogo de modificación DT (Res. Ex. 38/2024) -->
-    <ModifyAttendanceDialog
-      v-model="modifyOpen"
-      :attendance="modifyTarget"
-      @updated="onAttendanceModified"
-    />
-
     <!-- Visor de fotos -->
     <q-dialog v-model="photoViewer.open" maximized transition-show="fade" transition-hide="fade">
       <div class="pv-wrap">
@@ -531,13 +599,12 @@
             <q-inner-loading :showing="photoViewer.loading">
               <q-spinner size="52px" color="white" />
             </q-inner-loading>
-            <q-img
+            <img
               v-if="photoViewer.src && !photoViewer.error"
               :key="photoViewer.src"
               :src="photoViewer.src"
-              fit="contain"
-              no-spinner
               class="pv-img"
+              alt=""
             />
             <div v-else-if="photoViewer.error" class="pv-error">
               <q-icon name="broken_image" size="64px" />
@@ -557,26 +624,114 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useQuasar, date } from 'quasar';
 import { useAsistenciaStore } from '@/stores/asistenciaStore';
 import { fetchAttendancePhotoUrl } from '@/utils/attendancePhoto';
-import ModifyAttendanceDialog from '@/components/dt/ModifyAttendanceDialog.vue';
+import { useDtStore } from '@/stores/dtStore';
 
 const $q = useQuasar();
 const asistenciaStore = useAsistenciaStore();
+const dt = useDtStore();
 
-/* ── Modificación DT ──────────────────────── */
-const modifyOpen = ref(false);
-const modifyTarget = ref(null);
+/* ── Modificación DT (edición inline) ──────── */
+const EDIT_TIPOS = [
+  { label: 'Entrada', value: 'entrada' },
+  { label: 'Salida', value: 'salida' },
+  { label: 'Inicio de colación', value: 'colacion_inicio' },
+  { label: 'Fin de colación', value: 'colacion_fin' },
+  { label: 'Inicio horas extras', value: 'he_inicio' },
+  { label: 'Fin horas extras', value: 'he_fin' },
+];
 
-function openModify(m) {
-  modifyTarget.value = m;
-  modifyOpen.value = true;
+const editTarget = ref(null);
+const editSaving = ref(false);
+const editForm = reactive({ tipo: '', timestamp: '', note: '', reason: '' });
+
+function toLocalInput(d) {
+  if (!d) return '';
+  const dd = new Date(d);
+  const pad = n => String(n).padStart(2, '0');
+  return `${dd.getFullYear()}-${pad(dd.getMonth() + 1)}-${pad(dd.getDate())}T${pad(dd.getHours())}:${pad(dd.getMinutes())}`;
 }
 
-function onAttendanceModified(updated) {
-  if (!updated?._id) return;
-  // Recarga el historial del modal abierto para reflejar el cambio.
+function openModify(m) {
+  if (!m?._id) return;
+  resolveTarget.value = null;
+  editTarget.value = m;
+  editForm.tipo = m.tipo || '';
+  editForm.timestamp = toLocalInput(m.serverTimestamp || m.timestamp);
+  editForm.note = m.note || '';
+  editForm.reason = '';
+}
+
+function cancelEdit() {
+  editTarget.value = null;
+}
+
+/* ── Registrar salida olvidada (admin) ────── */
+const resolveTarget = ref(null);
+const resolveSaving = ref(false);
+const resolveForm = reactive({ timestamp: '', note: '', reason: '' });
+
+function openResolve(m) {
+  if (!m?._id) return;
+  editTarget.value = null;
+  resolveTarget.value = m;
+  // Sugerencia: entrada + 8h; si cae en el futuro, ahora.
+  let def = new Date(new Date(m.timestamp).getTime() + 8 * 3600 * 1000);
+  if (def.getTime() > Date.now()) def = new Date();
+  resolveForm.timestamp = toLocalInput(def);
+  resolveForm.note = '';
+  resolveForm.reason = '';
+}
+
+function cancelResolve() {
+  resolveTarget.value = null;
+}
+
+const resolveCanSubmit = computed(
+  () => !!resolveTarget.value?._id && !!resolveForm.timestamp && !!resolveForm.reason && resolveForm.reason.trim().length >= 5
+);
+
+async function saveResolve() {
+  if (!resolveCanSubmit.value) return;
+  resolveSaving.value = true;
   try {
-    if (historialEmpleado.value?._id) recargarHistorialConRango();
-  } catch {}
+    const payload = {
+      timestamp: new Date(resolveForm.timestamp).toISOString(),
+      note: resolveForm.note,
+      reason: resolveForm.reason.trim(),
+      tzOffset: -new Date().getTimezoneOffset(),
+    };
+    await dt.adminResolveMissedExit(resolveTarget.value._id, payload);
+    $q.notify({ type: 'positive', message: 'Salida registrada. Se notificó al trabajador.', timeout: 3000 });
+    resolveTarget.value = null;
+    if (historialEmpleado.value?._id) await recargarHistorialConRango();
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err?.response?.data?.message || 'No se pudo registrar la salida' });
+  } finally {
+    resolveSaving.value = false;
+  }
+}
+
+const editCanSubmit = computed(() =>
+  !!editForm.reason && editForm.reason.trim().length >= 5
+);
+
+async function saveEdit() {
+  if (!editTarget.value?._id || !editCanSubmit.value) return;
+  editSaving.value = true;
+  try {
+    const payload = { reason: editForm.reason.trim() };
+    if (editForm.tipo && editForm.tipo !== editTarget.value.tipo) payload.tipo = editForm.tipo;
+    if (editForm.note !== (editTarget.value.note || '')) payload.note = editForm.note;
+    if (editForm.timestamp) payload.timestamp = new Date(editForm.timestamp).toISOString();
+    await dt.modifyAttendance(editTarget.value._id, payload);
+    $q.notify({ type: 'positive', message: 'Modificación registrada. Se notificó al trabajador.', timeout: 3000 });
+    editTarget.value = null;
+    if (historialEmpleado.value?._id) await recargarHistorialConRango();
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err?.response?.data?.message || 'Error al guardar la modificación' });
+  } finally {
+    editSaving.value = false;
+  }
 }
 
 /* ── Fotos de marcas ───────────────────────── */
@@ -1454,11 +1609,27 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .pv-close:hover { background:rgba(255,255,255,0.22); }
 .pv-body { flex:1; position:relative; display:flex; align-items:center; justify-content:center; padding:0 16px 24px; min-height:0; }
 .pv-stage { position:relative; max-width:92vw; max-height:82vh; display:flex; align-items:center; justify-content:center; }
-.pv-img { max-width:92vw; max-height:82vh; border-radius:8px; }
+.pv-img { display:block; max-width:92vw; max-height:82vh; width:auto; height:auto; object-fit:contain; border-radius:8px; }
 .pv-nav { position:absolute; top:50%; transform:translateY(-50%); z-index:2; background:rgba(255,255,255,0.12); border:none; color:#fff; width:52px; height:52px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.12s; }
 .pv-nav:hover { background:rgba(255,255,255,0.26); }
 .pv-prev { left:18px; }
 .pv-next { right:18px; }
 .pv-error { color:#fff; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; opacity:0.85; }
 .pv-retry { margin-top:6px; background:#fff; color:#111; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600; }
+
+/* ── Panel de edición inline ── */
+.edit-panel { border:1px solid var(--c-primary); background:var(--c-primary-l); border-radius:14px; padding:16px; margin-bottom:18px; }
+.edit-panel-head { display:flex; align-items:center; gap:8px; font-weight:700; color:var(--c-text); font-size:14px; }
+.edit-panel-note { font-size:12px; color:var(--c-text2); margin:6px 0 14px; }
+.edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.edit-field { display:flex; flex-direction:column; gap:5px; }
+.edit-field-full { grid-column:1 / -1; }
+.edit-field .rk-select, .edit-field .rk-date-input { width:100%; }
+.edit-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
+.edit-actions .footer-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.edit-panel-resolve { border-color:#f59e0b; background:rgba(245,158,11,0.10); }
+.titem-resolve { color:#d97706 !important; font-weight:600; }
+.act-resolve { color:#d97706; }
+.act-resolve:hover { background:rgba(245,158,11,0.14); }
+@media(max-width:600px){ .edit-grid { grid-template-columns:1fr; } }
 </style>

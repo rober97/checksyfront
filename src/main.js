@@ -11,6 +11,8 @@ import quasarUserOptions from './quasar-user-options'
 import Toast, { POSITION } from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
+import VueApexCharts from 'vue3-apexcharts'
+
 import './css/tokens.css'
 import './css/patterns.css'
 import './css/theme.css'
@@ -44,6 +46,7 @@ app.use(Toast, {
 })
 app.use(createPinia())
 app.use(router)
+app.use(VueApexCharts)
 
 // 👉 Montar la aplicación al final
 app.mount('#app')

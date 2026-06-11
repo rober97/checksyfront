@@ -259,13 +259,49 @@
       </div>
     </q-dialog>
 
+    <!-- Resolver de salida olvidada (desde la web) -->
+    <q-dialog v-model="resolverOpen" persistent>
+      <q-card style="min-width:340px;max-width:440px;border-radius:16px">
+        <q-card-section class="row items-center no-wrap">
+          <q-icon name="logout" color="warning" size="26px" class="q-mr-sm" />
+          <div>
+            <div class="text-h6">Registrar salida olvidada</div>
+            <div class="text-caption text-grey-7">Entrada: {{ resolverEntradaLabel }}</div>
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-section class="q-gutter-md">
+          <div>
+            <div class="text-caption text-grey-7 q-mb-xs">Hora de salida</div>
+            <input
+              type="datetime-local"
+              v-model="resolverForm.timestamp"
+              style="width:100%;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:transparent;color:inherit"
+            />
+          </div>
+          <q-input v-model="resolverForm.note" label="Comentario (opcional)" outlined dense autogrow />
+          <div class="text-caption text-grey-6">
+            La salida debe ser posterior a la entrada y anterior a la siguiente entrada registrada.
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" v-close-popup :disable="resolverSaving" />
+          <q-btn
+            unelevated color="primary" icon="save" label="Registrar salida"
+            :loading="resolverSaving" :disable="!resolverCanSubmit"
+            @click="submitMissedExit"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <!-- Loading Bar -->
     <q-ajax-bar ref="ajax" position="top" size="3px" color="primary" />
   </q-header>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, reactive, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Dark, useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
@@ -368,13 +404,7 @@ function openNotif(n) {
   if (!n.read) notificationsStore.markAsRead(n.id).catch(() => {});
   notifOpen.value = false;
   if (n.action === "confirm-missed-exit" && !n.resolved) {
-    $q.notify({
-      type: "warning",
-      message: n.title,
-      caption: "Confirma la salida olvidada desde la app móvil.",
-      icon: "phone_iphone",
-      timeout: 5000,
-    });
+    openMissedExitResolver(n);
     return;
   }
   $q.notify({
@@ -383,6 +413,73 @@ function openNotif(n) {
     caption: n.body,
     icon: n.icon,
   });
+}
+
+/* Resolver de salida olvidada (desde la web) */
+const resolverOpen = ref(false);
+const resolverSaving = ref(false);
+const resolverTarget = ref(null);
+const resolverForm = reactive({ timestamp: "", note: "" });
+
+function tsToLocalInput(d) {
+  if (!d) return "";
+  const dd = new Date(d);
+  if (isNaN(dd)) return "";
+  const pad = (x) => String(x).padStart(2, "0");
+  return `${dd.getFullYear()}-${pad(dd.getMonth() + 1)}-${pad(dd.getDate())}T${pad(dd.getHours())}:${pad(dd.getMinutes())}`;
+}
+
+function openMissedExitResolver(n) {
+  const entradaTs =
+    n.meta?.attendance?.timestamp || n.meta?.attendanceTimestamp || null;
+  resolverTarget.value = {
+    attendanceId: n.meta?.attendanceId || n.meta?.attendance?.id || null,
+    entradaTs,
+  };
+  // Sugerencia: entrada + 8h; si cae en el futuro, usar "ahora".
+  let def = entradaTs
+    ? new Date(new Date(entradaTs).getTime() + 8 * 3600 * 1000)
+    : new Date();
+  if (def.getTime() > Date.now()) def = new Date();
+  resolverForm.timestamp = tsToLocalInput(def);
+  resolverForm.note = "";
+  if (!resolverTarget.value.attendanceId) {
+    $q.notify({ type: "negative", message: "No se pudo identificar la marca de entrada." });
+    return;
+  }
+  resolverOpen.value = true;
+}
+
+const resolverEntradaLabel = computed(() => {
+  const ts = resolverTarget.value?.entradaTs;
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString("es-CL", { dateStyle: "medium", timeStyle: "short" });
+});
+
+const resolverCanSubmit = computed(
+  () => !!resolverTarget.value?.attendanceId && !!resolverForm.timestamp
+);
+
+async function submitMissedExit() {
+  if (!resolverCanSubmit.value) return;
+  resolverSaving.value = true;
+  try {
+    const iso = new Date(resolverForm.timestamp).toISOString();
+    await notificationsStore.resolveMissedExit({
+      attendanceId: resolverTarget.value.attendanceId,
+      timestamp: iso,
+      note: resolverForm.note,
+    });
+    $q.notify({ type: "positive", message: "Salida registrada. Asistencia corregida.", icon: "check_circle" });
+    resolverOpen.value = false;
+  } catch (err) {
+    $q.notify({
+      type: "negative",
+      message: err?.response?.data?.message || "No se pudo registrar la salida",
+    });
+  } finally {
+    resolverSaving.value = false;
+  }
 }
 
 /* Command Palette */

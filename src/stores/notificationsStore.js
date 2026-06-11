@@ -267,6 +267,33 @@ export const useNotificationsStore = defineStore('notifications', {
       }
     },
 
+    /**
+     * Registra la salida olvidada (resuelve una entrada huérfana) desde la web.
+     * Solo el dueño de la marca puede hacerlo (validado en el backend).
+     * @param {{ attendanceId:string, timestamp:string, mood?:string, note?:string }} payload
+     */
+    async resolveMissedExit ({ attendanceId, timestamp, mood = 'ok', note = '' }) {
+      if (!attendanceId) throw new Error('attendanceId requerido')
+      const tzOffset = -new Date().getTimezoneOffset()
+      const { data } = await secureAxios.post('/attendance/resolve-missed-exit', {
+        attendanceId,
+        timestamp,
+        mood,
+        note,
+        tzOffset,
+        client: { platform: 'web' },
+      })
+      // Marca como resuelta en memoria cualquier notificación (real o sintética)
+      // asociada a esta entrada, para que deje de figurar como pendiente.
+      const idStr = String(attendanceId)
+      this.items = this.items.map((n) => {
+        const aid = n.meta?.attendanceId || n.meta?.attendance?.id
+        return aid && String(aid) === idStr ? { ...n, resolved: true, read: true } : n
+      })
+      this.unreadCount = this.items.filter((n) => !n.read).length
+      return data
+    },
+
     async markAsRead (id) {
       const target = this.items.find((n) => n.id === id)
       const prev = this.items

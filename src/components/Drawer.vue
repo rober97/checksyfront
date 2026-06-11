@@ -362,10 +362,14 @@ watch(() => route.path, () => {
 <style scoped lang="scss">
 /* ===== Tokens ===== */
 .rk-drawer {
-  --rk-dark: #1a1e27;
+  /* Carbón neutro (charcoal) */
+  --rk-carbon-1: #1b1d22;
+  --rk-carbon-2: #141519;
+  --rk-carbon-3: #0f1013;
+  --rk-dark: var(--rk-carbon-1);
   --rk-light: #ffffff;
   --rk-glow: rgba(6,182,212,.24);
-  --rk-border: rgba(255,255,255,.08);
+  --rk-border: rgba(255,255,255,.07);
   --rk-beam-speed: 1.45s;
   --rk-beam-strength: .95;
   --rk-beam-blur: 18px;
@@ -386,13 +390,14 @@ watch(() => route.path, () => {
   height: 100%;
   /* override Quasar default to avoid double-scroll competing with .rk-nav */
   overflow: hidden !important;
-  &.dark{  background: linear-gradient(135deg, var(--rk-dark) 0%, var(--background-color, #12151c) 100%); color:#fff; }
+  &.dark{  background: linear-gradient(180deg, var(--rk-carbon-1) 0%, var(--rk-carbon-2) 55%, var(--rk-carbon-3) 100%); color:#fff; }
   &.light{ background: linear-gradient(135deg, var(--rk-light) 0%, #f7f9fc 100%); color:#111; }
 }
 
 /* Header & footer must not shrink so .rk-nav gets the remaining space */
 .rk-drawer__header{ flex: 0 0 auto; }
-.rk-drawer__footer{ flex: 0 0 auto; }
+/* Footer fijo: nunca se desplaza con el scroll del nav */
+.rk-drawer__footer{ flex: 0 0 auto; position: sticky; bottom: 0; z-index: 2; }
 
 /* ===== Header ===== */
 .rk-drawer__header{
@@ -435,11 +440,23 @@ watch(() => route.path, () => {
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  /* Firefox: thumb transparente por defecto, se revela al hover */
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+  transition: scrollbar-color .25s ease;
 }
-.rk-nav::-webkit-scrollbar{ width: 8px; }
-.rk-nav::-webkit-scrollbar-thumb{ background: rgba(100,116,139,.25); border-radius: 99px; }
+.rk-nav:hover{ scrollbar-color: rgba(148,163,184,.30) transparent; }
+/* WebKit: scrollbar fino tipo overlay, oculto hasta hover */
+.rk-nav::-webkit-scrollbar{ width: 6px; }
 .rk-nav::-webkit-scrollbar-track{ background: transparent; }
+.rk-nav::-webkit-scrollbar-thumb{
+  background: transparent; border-radius: 99px;
+  border: 2px solid transparent; background-clip: padding-box;
+  transition: background-color .25s ease;
+}
+.rk-nav:hover::-webkit-scrollbar-thumb{ background: rgba(148,163,184,.28); background-clip: padding-box; }
+.rk-nav:hover::-webkit-scrollbar-thumb:hover{ background: rgba(6,182,212,.55); background-clip: padding-box; }
 .rk-nav__group{ padding: 2px 2px 8px }
 .rk-group__head{
   display:flex; align-items:center; gap:.75rem; padding:.6rem .75rem; border-radius:12px; cursor:pointer; transition:.2s;
@@ -542,9 +559,13 @@ watch(() => route.path, () => {
 .rk-drawer__footer{
   padding: 14px 12px;
   border-top: 1px solid var(--rk-border);
-  position: relative;
+  position: sticky;
+  bottom: 0;
   flex-shrink: 0;
+  box-shadow: 0 -8px 18px -10px rgba(0,0,0,.55);
 }
+.rk-drawer__content.dark .rk-drawer__footer{ background: var(--rk-carbon-3); }
+.rk-drawer__content.light .rk-drawer__footer{ background: #ffffff; }
 .rk-logout{
   position: relative; width:100%; justify-content:flex-start;
   border-radius:10px; padding:.7rem .9rem; transition:.2s; overflow:hidden;
