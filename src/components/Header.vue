@@ -16,12 +16,6 @@
              empresa fija y navegan por el drawer — el chrome del header
              queda limpio. -->
         <template v-if="isSuperadmin">
-          <button class="rk-home-btn" @click="goHome" aria-label="Recksy · Inicio">
-            <q-icon name="precision_manufacturing" />
-            <div class="rk-home-pulse"></div>
-            <q-tooltip class="rk-tooltip">Recksy v2.0 · Inicio</q-tooltip>
-          </button>
-
           <CompanySwitcher />
         </template>
       </div>
