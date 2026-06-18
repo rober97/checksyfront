@@ -58,6 +58,25 @@
 
           <div class="col-12 col-sm-6 col-lg-3">
             <q-input
+              v-model.number="local.weeklyContractHours"
+              type="number"
+              label="Horas semanales de contrato"
+              dense
+              outlined
+              class="rk-field"
+              min="0"
+              :max="legalLimit"
+              step="0.5"
+              :rules="contractHoursRules"
+              :hint="contractHoursHint"
+            >
+              <template #prepend><q-icon name="schedule" /></template>
+              <template #append><span class="text-caption text-grey-6">h/sem</span></template>
+            </q-input>
+          </div>
+
+          <div class="col-12 col-sm-6 col-lg-3">
+            <q-input
               v-model="local.startDate"
               label="Fecha ingreso"
               dense
@@ -185,35 +204,51 @@
           </div>
 
           <div class="col-12 col-sm-4">
-            <q-input
+            <q-select
+              v-model="local.lugarTrabajo.region"
+              :options="regionOptions"
+              label="Región"
+              dense outlined clearable
+              use-input input-debounce="0"
+              hide-bottom-space behavior="menu"
+              class="rk-field"
+              @filter="filterRegion"
+              @update:model-value="onRegionChange"
+            >
+              <template #prepend><q-icon name="public" /></template>
+              <template #no-option>
+                <q-item><q-item-section class="text-grey">Sin coincidencias</q-item-section></q-item>
+              </template>
+            </q-select>
+          </div>
+
+          <div class="col-12 col-sm-4">
+            <q-select
               v-model="local.lugarTrabajo.commune"
+              :options="comunaOptions"
               label="Comuna"
               dense outlined clearable
+              use-input input-debounce="0"
+              hide-bottom-space behavior="menu"
               class="rk-field"
+              @filter="filterComuna"
+              @update:model-value="onComunaChange"
             >
               <template #prepend><q-icon name="location_city" /></template>
-            </q-input>
+              <template #no-option>
+                <q-item><q-item-section class="text-grey">Sin coincidencias</q-item-section></q-item>
+              </template>
+            </q-select>
           </div>
 
           <div class="col-12 col-sm-4">
             <q-input
               v-model="local.lugarTrabajo.city"
-              label="Ciudad"
+              label="Ciudad (opcional)"
               dense outlined clearable
               class="rk-field"
             >
               <template #prepend><q-icon name="map" /></template>
-            </q-input>
-          </div>
-
-          <div class="col-12 col-sm-4">
-            <q-input
-              v-model="local.lugarTrabajo.region"
-              label="Región"
-              dense outlined clearable
-              class="rk-field"
-            >
-              <template #prepend><q-icon name="public" /></template>
             </q-input>
           </div>
         </div>
@@ -434,6 +469,12 @@
         icon="paid"
         label="Haberes/Descuentos frecuentes (opcional)"
       >
+        <div class="rk-extra-note">
+          <q-icon name="info" size="15px" class="q-mr-xs" />
+          Valores base recurrentes. Si la empresa define un <strong>concepto de nómina</strong>
+          para el mismo ítem, ese concepto manda y el valor escrito aquí se ignora.
+        </div>
+
         <div class="row q-col-gutter-sm q-mt-sm">
           <div class="col-6 col-sm-3">
             <q-input
@@ -442,8 +483,15 @@
               dense
               outlined
               @update:model-value="(v) => (local.gratificacion = normalizeMoney(v))"
-              :hint="formatMoney(local.gratificacion)"
-            />
+              :hint="overrideHint('gratificacion', local.gratificacion)"
+              :input-class="isOverridden('gratificacion') ? 'rk-overridden' : ''"
+            >
+              <template v-if="isOverridden('gratificacion')" #append>
+                <q-icon name="layers" color="warning" size="18px">
+                  <q-tooltip>Gestionado por un concepto activo. Este valor no se usa.</q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
           <div class="col-6 col-sm-3">
             <q-input
@@ -452,8 +500,15 @@
               dense
               outlined
               @update:model-value="(v) => (local.bonoColacion = normalizeMoney(v))"
-              :hint="formatMoney(local.bonoColacion)"
-            />
+              :hint="overrideHint('bonoColacion', local.bonoColacion)"
+              :input-class="isOverridden('bonoColacion') ? 'rk-overridden' : ''"
+            >
+              <template v-if="isOverridden('bonoColacion')" #append>
+                <q-icon name="layers" color="warning" size="18px">
+                  <q-tooltip>Gestionado por un concepto activo. Este valor no se usa.</q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
           <div class="col-6 col-sm-3">
             <q-input
@@ -462,8 +517,15 @@
               dense
               outlined
               @update:model-value="(v) => (local.bonoMovilizacion = normalizeMoney(v))"
-              :hint="formatMoney(local.bonoMovilizacion)"
-            />
+              :hint="overrideHint('bonoMovilizacion', local.bonoMovilizacion)"
+              :input-class="isOverridden('bonoMovilizacion') ? 'rk-overridden' : ''"
+            >
+              <template v-if="isOverridden('bonoMovilizacion')" #append>
+                <q-icon name="layers" color="warning" size="18px">
+                  <q-tooltip>Gestionado por un concepto activo. Este valor no se usa.</q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
           <div class="col-6 col-sm-3">
             <q-input
@@ -472,8 +534,15 @@
               dense
               outlined
               @update:model-value="(v) => (local.descuentoPrestamo = normalizeMoney(v))"
-              :hint="formatMoney(local.descuentoPrestamo)"
-            />
+              :hint="overrideHint('descuentoPrestamo', local.descuentoPrestamo)"
+              :input-class="isOverridden('descuentoPrestamo') ? 'rk-overridden' : ''"
+            >
+              <template v-if="isOverridden('descuentoPrestamo')" #append>
+                <q-icon name="layers" color="warning" size="18px">
+                  <q-tooltip>Gestionado por un concepto activo. Este valor no se usa.</q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
         </div>
       </q-expansion-item>
@@ -485,7 +554,9 @@
 import { reactive, watch, computed, nextTick } from "vue";
 import { normalizeMoney, normalizeDecimal, formatMoney } from "@/utils/format";
 import { req, reqNumber, fechaPasada } from "@/utils/validators";
+import { legalWeeklyLimitForDate, suggestedContractHours } from "@/utils/workHours";
 import UserCargasForm from "./UserCargasForm.vue";
+import { useChileAddress } from "@/composables/useChileAddress.js";
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -498,6 +569,10 @@ const props = defineProps({
 
   // habilita la subida de PDF de cargas (sólo en modo edición)
   canUploadDoc: { type: Boolean, default: false },
+
+  // valuePaths de conceptos de nómina ACTIVOS en la empresa (ej. ['bonoColacion']).
+  // Si un campo recurrente está aquí, su valor lo gestiona un concepto y se ignora.
+  overriddenValuePaths: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(["update:modelValue", "upload-cargaDoc"]);
@@ -526,6 +601,27 @@ const jornadaArtOptions = [
 const requiresEndDate = computed(() =>
   ['plazo_fijo', 'obra_faena'].includes(String(local.contractType || '').toLowerCase())
 );
+
+/* ---- Horas semanales de contrato (fuente de verdad de la jornada) ---- */
+const legalLimit = computed(() => legalWeeklyLimitForDate(new Date()));
+const contractHoursHint = computed(() => {
+  const h = Number(local.weeklyContractHours || 0);
+  if (!h) return `Jornada ordinaria pactada. Máx. legal vigente: ${legalLimit.value} h/sem.`;
+  if (h > legalLimit.value) return `⚠ Supera el máximo legal vigente (${legalLimit.value} h/sem).`;
+  return `Máx. legal vigente: ${legalLimit.value} h/sem. Las plantillas no podrán exceder este valor.`;
+});
+const contractHoursRules = [
+  (v) => v === null || v === '' || Number(v) >= 0 || 'No puede ser negativo',
+  (v) => !v || Number(v) <= legalLimit.value || `No puede exceder el máximo legal (${legalLimit.value} h/sem)`,
+];
+
+/* ---- Conceptos que sobreescriben los montos recurrentes del contrato ---- */
+function isOverridden(path) {
+  return (props.overriddenValuePaths || []).includes(path);
+}
+function overrideHint(path, value) {
+  return isOverridden(path) ? 'Lo gestiona un concepto activo' : formatMoney(value);
+}
 
 const bancos = [
   "BancoEstado",
@@ -571,10 +667,21 @@ function normalizeIncoming(v = {}) {
     ...(v?.lugarTrabajo || {}),
   }
   out.jornadaArt = out.jornadaArt || 'normal'
+  out.weeklyContractHours = Number(out.weeklyContractHours || 0)
   out.endDate = out.endDate ? String(out.endDate).slice(0, 10) : ''
   return out
 }
 const local = reactive(normalizeIncoming(props.modelValue));
+
+/* ── Selectores de dirección del lugar de trabajo (Región -> Comuna en cascada) ── */
+const {
+  regionOptions,
+  comunaOptions,
+  filterRegion,
+  filterComuna,
+  onRegionChange,
+  onComunaChange,
+} = useChileAddress(() => local.lugarTrabajo);
 
 // Evita el bucle infinito de two-way binding: cuando nosotros emitimos un
 // objeto nuevo, el padre re-asigna props.modelValue y este watch volvería a
@@ -633,6 +740,18 @@ watch(
   },
   { immediate: true }
 );
+
+// Autosugerencia: al elegir/cambiar el tipo de jornada, si las horas están en 0
+// (campo no tocado), precargamos un valor coherente. Nunca pisa un valor ya escrito.
+watch(
+  () => local.jornada,
+  (j) => {
+    if (!Number(local.weeklyContractHours || 0)) {
+      const suggested = suggestedContractHours(j);
+      if (suggested) local.weeklyContractHours = suggested;
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -652,6 +771,22 @@ watch(
   --rk-accent-soft:  rgba(6, 182, 212, 0.10);
   align-items: start;
   color: var(--rk-text);
+}
+
+.rk-extra-note {
+  display: flex;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--rk-text-2);
+  background: var(--rk-accent-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+:deep(.rk-overridden) {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 .body--dark .rk-contract-grid {

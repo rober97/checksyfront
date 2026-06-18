@@ -28,41 +28,61 @@
         </div>
 
         <div class="col-12 col-sm-6">
-          <q-input
+          <q-select
+            v-model="local.address.region"
+            :options="regionOptions"
+            label="Región"
+            dense
+            outlined
+            clearable
+            use-input
+            input-debounce="0"
+            hide-bottom-space
+            behavior="menu"
+            class="rk-field"
+            @filter="filterRegion"
+            @update:model-value="onRegionChange"
+          >
+            <template #prepend><q-icon name="map" /></template>
+            <template #no-option>
+              <q-item><q-item-section class="text-grey">Sin coincidencias</q-item-section></q-item>
+            </template>
+          </q-select>
+        </div>
+
+        <div class="col-12 col-sm-6">
+          <q-select
             v-model="local.address.commune"
+            :options="comunaOptions"
             label="Comuna"
             dense
             outlined
             clearable
+            use-input
+            input-debounce="0"
+            hide-bottom-space
+            behavior="menu"
             class="rk-field"
+            @filter="filterComuna"
+            @update:model-value="onComunaChange"
           >
             <template #prepend><q-icon name="location_city" /></template>
-          </q-input>
+            <template #no-option>
+              <q-item><q-item-section class="text-grey">Sin coincidencias</q-item-section></q-item>
+            </template>
+          </q-select>
         </div>
 
         <div class="col-12 col-sm-6">
           <q-input
             v-model="local.address.city"
-            label="Ciudad"
+            label="Ciudad (opcional)"
             dense
             outlined
             clearable
             class="rk-field"
           >
             <template #prepend><q-icon name="apartment" /></template>
-          </q-input>
-        </div>
-
-        <div class="col-12 col-sm-6">
-          <q-input
-            v-model="local.address.region"
-            label="Región"
-            dense
-            outlined
-            clearable
-            class="rk-field"
-          >
-            <template #prepend><q-icon name="map" /></template>
           </q-input>
         </div>
       </div>
@@ -115,6 +135,7 @@
 
 <script setup>
 import { reactive, watch } from "vue";
+import { useChileAddress } from "@/composables/useChileAddress.js";
 
 const props = defineProps({ modelValue: { type: Object, required: true } });
 const emit = defineEmits(["update:modelValue"]);
@@ -126,6 +147,16 @@ const local = reactive({
   ...props.modelValue,
   address: { line1: "", commune: "", city: "", region: "", ...props.modelValue?.address },
 });
+
+/* ── Selectores de dirección (Región -> Comuna en cascada) ── */
+const {
+  regionOptions,
+  comunaOptions,
+  filterRegion,
+  filterComuna,
+  onRegionChange,
+  onComunaChange,
+} = useChileAddress(() => local.address);
 
 watch(
   () => props.modelValue,

@@ -78,9 +78,33 @@
               <q-input v-model="form.address.line1" outlined dense label="Dirección">
                 <template #prepend><q-icon name="home" size="16px" /></template>
               </q-input>
-              <q-input v-model="form.address.commune" outlined dense label="Comuna" />
-              <q-input v-model="form.address.city" outlined dense label="Ciudad" />
-              <q-input v-model="form.address.region" outlined dense label="Región" />
+              <q-select
+                v-model="form.address.region"
+                :options="regionOptions"
+                outlined dense label="Región"
+                clearable use-input input-debounce="0"
+                hide-bottom-space behavior="menu"
+                @filter="filterRegion"
+                @update:model-value="onRegionChange"
+              >
+                <template #no-option>
+                  <q-item><q-item-section class="text-grey">Sin coincidencias</q-item-section></q-item>
+                </template>
+              </q-select>
+              <q-select
+                v-model="form.address.commune"
+                :options="comunaOptions"
+                outlined dense label="Comuna"
+                clearable use-input input-debounce="0"
+                hide-bottom-space behavior="menu"
+                @filter="filterComuna"
+                @update:model-value="onComunaChange"
+              >
+                <template #no-option>
+                  <q-item><q-item-section class="text-grey">Sin coincidencias</q-item-section></q-item>
+                </template>
+              </q-select>
+              <q-input v-model="form.address.city" outlined dense label="Ciudad (opcional)" />
             </div>
 
             <div class="ow-actions">
@@ -260,6 +284,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import axios from 'axios'
 import { API_URL } from '@/utils/api'
+import { useChileAddress } from '@/composables/useChileAddress.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -292,6 +317,16 @@ const form = reactive({
   newPassword: '',
   confirmPassword: '',
 })
+
+// Selectores de dirección (Región -> Comuna en cascada)
+const {
+  regionOptions,
+  comunaOptions,
+  filterRegion,
+  filterComuna,
+  onRegionChange,
+  onComunaChange,
+} = useChileAddress(() => form.address)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

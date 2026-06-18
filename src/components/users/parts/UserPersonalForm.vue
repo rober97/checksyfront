@@ -74,15 +74,22 @@
         </div>
 
         <div class="col-12 col-sm-6 col-lg-4">
-          <q-input
+          <q-select
             v-model="local.birthPlace"
+            :options="birthPlaceOptions"
             label="Lugar de nacimiento"
             dense outlined clearable
+            use-input fill-input hide-dropdown-icon
+            input-debounce="0"
+            new-value-mode="add-unique"
+            hide-bottom-space behavior="menu"
             class="rk-field"
-            placeholder="Ej: Santiago, Chile"
+            placeholder="Ej: Santiago (o ciudad/país si nació en el extranjero)"
+            @filter="filterBirthPlace"
+            @input-value="onBirthPlaceInput"
           >
             <template #prepend><q-icon name="public" /></template>
-          </q-input>
+          </q-select>
         </div>
 
         <div class="col-12 col-sm-6 col-lg-4">
@@ -253,6 +260,7 @@
 
 <script setup>
 import { reactive, computed, watch, ref } from 'vue'
+import { COMUNAS, normalize } from '@/data/chileRegiones.js'
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) },
@@ -371,6 +379,21 @@ function filterNationality(val, update) {
       ? ALL_COUNTRIES
       : ALL_COUNTRIES.filter(c => c.label.toLowerCase().includes(needle))
   })
+}
+
+// Lugar de nacimiento: sugiere comunas chilenas pero permite texto libre
+// (un trabajador extranjero pudo nacer fuera de Chile).
+const birthPlaceOptions = ref([])
+function filterBirthPlace(val, update) {
+  update(() => {
+    const needle = normalize(val)
+    birthPlaceOptions.value = needle
+      ? COMUNAS.filter(c => normalize(c).includes(needle)).slice(0, 50)
+      : []
+  })
+}
+function onBirthPlaceInput(val) {
+  local.birthPlace = val || ''
 }
 
 // Reglas

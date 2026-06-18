@@ -233,6 +233,56 @@
         </div>
       </div>
 
+      <!-- ===== Sección: Aprobaciones / Jerarquía ===== -->
+      <div class="rk-section" data-step="approvals">
+        <div class="rk-section-header">
+          <div class="rk-section-icon">
+            <q-icon name="account_tree" />
+          </div>
+          <div class="rk-section-title-wrap">
+            <h4 class="rk-section-title">Aprobaciones y jerarquía</h4>
+            <p class="rk-section-desc">Quién autoriza las solicitudes de esta persona</p>
+          </div>
+        </div>
+
+        <div class="rk-section-grid rk-single-col">
+          <div class="rk-input-wrap">
+            <q-select
+              v-model="local.approverId"
+              :options="approverSelectOptions"
+              option-value="value"
+              option-label="label"
+              emit-value
+              map-options
+              clearable
+              dense
+              outlined
+              label="Aprobador (jefatura)"
+              hint="Recibe y autoriza las solicitudes de vacaciones/permisos de esta persona. Si se deja vacío, recae en el representante del empleador o RR.HH."
+              class="rk-input"
+            >
+              <template #prepend>
+                <q-icon name="supervisor_account" class="rk-input-icon" />
+              </template>
+            </q-select>
+          </div>
+
+          <!-- Facultad del empleador: sólo el superadmin puede asignarla -->
+          <div v-if="canPickRole" class="rk-input-wrap rk-employer-rep">
+            <q-toggle
+              v-model="local.isEmployerRepresentative"
+              color="primary"
+              label="Representante del empleador"
+            />
+            <p class="rk-section-desc rk-employer-rep__desc">
+              Ostenta la facultad del empleador (Art. 4 Cód. del Trabajo): puede
+              autorizar solicitudes de cualquier persona de la empresa, incluidas
+              las suyas (quedan registradas como auto-autorización en la bitácora).
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== Sección 4: Acceso y Seguridad ===== -->
       <div class="rk-section" data-step="3">
         <div class="rk-section-header">
@@ -385,11 +435,18 @@ import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
 const canPickRole = computed(() => String(authStore.user?.role || '') === 'superadmin')
 
+// Opciones de jefatura. Las provee el contenedor ya scopeadas a la empresa
+// y sin el propio usuario (no puede ser su propia jefatura).
+const approverSelectOptions = computed(() => props.approverOptions || [])
+
 /* Props / Emits */
 const props = defineProps({
   modelValue: { type: Object, required: true },
   empresasRaw: { type: Array, default: () => [] },
-  requirePassword: { type: Boolean, default: true }
+  requirePassword: { type: Boolean, default: true },
+  // Posibles jefaturas/aprobadores (usuarios de la empresa) para el selector.
+  // Formato: [{ value: id, label: 'Nombre Apellido — rol' }]
+  approverOptions: { type: Array, default: () => [] }
 })
 const emit = defineEmits(['update:modelValue', 'tipo-change'])
 
@@ -405,6 +462,8 @@ const EMPTY = () => ({
   rut: '',
   horarioLaboralId: null,
   workScheduleChoice: { mode: 'fixed', scheduleId: null, oncall: null },
+  approverId: null,
+  isEmployerRepresentative: false,
   password: '',
   passwordConfirm: ''
 })
@@ -422,6 +481,8 @@ const clean = (v = {}) => {
   x.empresas  = Array.isArray(s.empresas) ? s.empresas.slice() : []
   x.rut       = s.rut       ?? ''
   x.horarioLaboralId = s.horarioLaboralId ?? null
+  x.approverId = s.approverId ?? null
+  x.isEmployerRepresentative = !!s.isEmployerRepresentative
   x.workScheduleChoice = {
     mode: w.mode ?? 'fixed',
     scheduleId: w.scheduleId ?? null,
@@ -713,6 +774,11 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
   color: var(--rk-text-2);
   margin: 1px 0 0 0;
   font-weight: 500;
+}
+
+/* Representante del empleador */
+.rk-employer-rep__desc {
+  margin-top: 6px;
 }
 
 /* Section grid */

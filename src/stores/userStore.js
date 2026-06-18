@@ -92,6 +92,8 @@ function normalizeCreateUserPayload(userData = {}) {
     companies: Array.isArray(userData?.companies) ? userData.companies.filter(Boolean) : [],
     workSchedule: cleanText(userData?.workSchedule, null),
     workScheduleChoice: userData?.workScheduleChoice || null,
+    approverId: cleanText(userData?.approverId, null),
+    isEmployerRepresentative: userData?.isEmployerRepresentative === true,
     phone: cleanText(userData?.phone, null),
     emergencyContact: cleanText(userData?.emergencyContact, null),
     address: {

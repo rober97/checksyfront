@@ -22,6 +22,8 @@ export function mapFromApi(u = {}) {
         empresas,
         rut: u.rut || "",
         horarioLaboralId: u.workSchedule?._id || u.workSchedule || null,
+        approverId: u.approverId?._id || u.approverId || null,
+        isEmployerRepresentative: u.isEmployerRepresentative === true,
         status: u.status || "active",
         phone: u.phone || "",
         emergencyContact: u.emergencyContact || "",

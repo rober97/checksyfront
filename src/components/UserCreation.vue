@@ -142,6 +142,7 @@
                       :require-password="!isEditMode"
                       :horarios="horarios"
                       :loading-horarios="loadingHorarios"
+                      :approver-options="approverOptions"
                       @tipo-change="onTipoChange"
                     />
 
@@ -249,6 +250,7 @@
                         )
                       "
                       :can-upload-doc="isEditMode"
+                      :overridden-value-paths="overriddenValuePaths"
                       @upload-cargaDoc="onCargaUpload"
                     />
 
@@ -426,6 +428,7 @@ import { useQuasar } from "quasar";
 import { useUserStore } from "@/stores/userStore";
 import { useCompaniesStore } from "@/stores/companies";
 import { usePayrollCatalogStore } from "@/stores/payrollCatalogStore";
+import { usePayrollConceptsStore } from "@/stores/payrollConceptsStore";
 import { useDocumentStore } from "@/stores/documentStore";
 
 import { validarRUT } from "@/utils/validators";
@@ -447,6 +450,7 @@ const toast = useToast();
 const userStore = useUserStore();
 const companiesStore = useCompaniesStore();
 const payrollCatalogStore = usePayrollCatalogStore();
+const payrollConceptsStore = usePayrollConceptsStore();
 const documentStore = useDocumentStore();
 
 const props = defineProps({
@@ -470,6 +474,7 @@ const pwdDialog = ref(false);
 const pwd = ref("");
 const showPwd = ref(false);
 const audit = ref({ createdAt: null, updatedAt: null, lastLogin: null });
+const approverOptions = ref([]);
 let original = null;
 
 const isEditMode = computed(() => props.mode === "edit");
@@ -534,6 +539,22 @@ const healthSelectedMeta = computed(() => {
   return payrollCatalogStore.getHealthMetaById(id);
 });
 
+// Conceptos de nómina ACTIVOS de la empresa que sobreescriben los montos
+// recurrentes del contrato (gratificación/colación/movilización/préstamo).
+const RECURRING_VALUE_PATHS = ['gratificacion', 'bonoColacion', 'bonoMovilizacion', 'descuentoPrestamo'];
+const overriddenValuePaths = computed(() =>
+  (payrollConceptsStore.items || [])
+    .filter((c) => c.active && RECURRING_VALUE_PATHS.includes(c.valuePath))
+    .map((c) => c.valuePath)
+);
+
+// Al cambiar de empresa, recargamos sus conceptos para detectar sobreescrituras.
+watch(
+  () => form.value?.empresa,
+  (companyId) => { if (companyId) payrollConceptsStore.fetchConcepts(companyId); },
+  { immediate: true }
+);
+
 // Progreso igual que lo tenías
 const formProgress = computed(() => {
   let progress = 0;
@@ -588,6 +609,7 @@ watch(
     await Promise.allSettled([
       loadEmpresasRaw(),
       payrollCatalogStore.fetchAll({ force: false }),
+      loadApprovers(),
     ]);
 
     if (isEditMode.value && props.userId) {
@@ -596,6 +618,24 @@ watch(
   },
   { immediate: true },
 );
+
+/* Carga los posibles aprobadores (usuarios de la empresa). El backend ya
+   scopea por empresa del admin. Excluimos al propio usuario en edición. */
+async function loadApprovers() {
+  try {
+    await userStore.fetchUsers();
+    const roleLabel = (r) =>
+      r === "admin_rrhh" ? "Admin RR.HH." : r === "employee" ? "Empleado" : r || "";
+    approverOptions.value = (userStore.users || [])
+      .filter((u) => String(u._id) !== String(props.userId || ""))
+      .map((u) => ({
+        value: u._id,
+        label: `${u.firstName || ""} ${u.lastName || ""}`.trim() + ` — ${roleLabel(u.role)}`,
+      }));
+  } catch {
+    approverOptions.value = [];
+  }
+}
 
 function onBasicsPatch(patch) {
   if (!patch || typeof patch !== "object") return;
@@ -1048,6 +1088,8 @@ function mapPayload(f) {
     companies,
     workSchedule: f.workScheduleChoice?.scheduleId || null,
     workScheduleChoice: f.workScheduleChoice || null,
+    approverId: f.approverId || null,
+    isEmployerRepresentative: f.isEmployerRepresentative === true,
     phone: f.phone?.trim() || null,
     emergencyContact: f.emergencyContact?.trim() || null,
     address: {
@@ -1142,6 +1184,8 @@ function getEmptyForm() {
     rut: "",
     horarioLaboralId: null,
     workScheduleChoice: { mode: "fixed", scheduleId: null, oncall: null },
+    approverId: null,
+    isEmployerRepresentative: false,
     status: "active",
     phone: "",
     emergencyContact: "",

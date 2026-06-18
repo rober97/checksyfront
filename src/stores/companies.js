@@ -333,15 +333,22 @@ export const useCompaniesStore = defineStore('companies', {
     },
 
     async createAssignment(userId, { companyId, scheduleId = null, validFrom = null } = {}) {
-      const res = await secureAxios.post(`/work-schedules/${userId}`, {
-        companyId,
-        scheduleId,
-        ...(validFrom ? { validFrom } : {}),
-      })
-      if (!(res?.data?.success ?? true)) {
-        throw new Error(res?.data?.message || 'No se pudo crear la asignación')
+      try {
+        const res = await secureAxios.post(`/work-schedules/${userId}`, {
+          companyId,
+          scheduleId,
+          ...(validFrom ? { validFrom } : {}),
+        })
+        if (!(res?.data?.success ?? true)) {
+          throw new Error(res?.data?.message || 'No se pudo crear la asignación')
+        }
+        return res?.data?.item
+      } catch (err) {
+        // El backend bloquea con 409 cuando la plantilla excede las horas de
+        // contrato; su mensaje útil viaja en response.data.message.
+        const msg = err?.response?.data?.message || err?.message || 'No se pudo crear la asignación'
+        throw new Error(msg)
       }
-      return res?.data?.item
     },
 
     async endAssignment(userId, assignmentId) {

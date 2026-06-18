@@ -155,10 +155,27 @@
                     <span v-else>{{ row.initials }}</span>
                   </q-avatar>
                   <div class="rk-grid-emp__text">
-                    <div class="rk-grid-emp__name">{{ row.user.firstName }} {{ row.user.lastName }}</div>
+                    <div class="rk-grid-emp__name">
+                      {{ row.user.firstName }} {{ row.user.lastName }}
+                      <q-icon
+                        v-if="row.exceedsContract"
+                        name="warning"
+                        color="warning"
+                        size="15px"
+                        class="q-ml-xs"
+                      >
+                        <q-tooltip>
+                          Semana de {{ row.maxWeekHours }} h planificadas supera el contrato
+                          ({{ row.contractHours }} h/sem). El exceso debe registrarse como horas extra.
+                        </q-tooltip>
+                      </q-icon>
+                    </div>
                     <div class="rk-grid-emp__role">
                       <span v-if="row.assignment">{{ row.assignment.scheduleId?.name || 'Sin plantilla' }}</span>
                       <span v-else class="text-warning">Sin asignación</span>
+                      <span v-if="row.contractHours > 0" class="rk-grid-emp__contract">
+                        · {{ row.contractHours }} h/sem
+                      </span>
                     </div>
                   </div>
                 </th>
@@ -312,6 +329,7 @@ import { useToast } from 'vue-toastification'
 import { useCompaniesStore } from '@/stores/companies'
 import { useMonthlyPlanStore } from '@/stores/monthlyPlan'
 import { useAuthStore } from '@/stores/authStore'
+import { toMinutes, diffHours } from '@/utils/workHours'
 
 const $q = useQuasar()
 const toast = useToast()
@@ -371,6 +389,35 @@ function initialsOf(u) {
   return ((f[0] || '') + (l[0] || '')).toUpperCase() || '?'
 }
 
+function contractHoursOf(u) {
+  return Number(u?.payroll?.weeklyContractHours || 0)
+}
+
+/** Clave ISO semana (YYYY-Www) para agrupar turnos por semana. */
+function isoWeekKey(yyyymmdd) {
+  const [y, m, d] = yyyymmdd.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  const day = dt.getUTCDay() || 7
+  dt.setUTCDate(dt.getUTCDate() + 4 - day)
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil(((dt - yearStart) / 86400000 + 1) / 7)
+  return `${dt.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+}
+
+/** Mayor total de horas planificadas en una misma semana ISO para el empleado.
+ *  Programación ADVIERTE (no bloquea): un exceso puntual puede ser hora extra. */
+function maxWeeklyPlanned(shiftsByDate) {
+  const byWeek = {}
+  for (const dKey of Object.keys(shiftsByDate || {})) {
+    const wk = isoWeekKey(dKey)
+    const dayHrs = (shiftsByDate[dKey] || []).reduce((sum, s) => sum + diffHours(s.start, s.end), 0)
+    byWeek[wk] = (byWeek[wk] || 0) + dayHrs
+  }
+  let max = 0
+  for (const wk of Object.keys(byWeek)) max = Math.max(max, byWeek[wk])
+  return +max.toFixed(1)
+}
+
 const rows = computed(() => {
   const result = []
 
@@ -413,6 +460,13 @@ const rows = computed(() => {
     })
   }
 
+  // Enriquecer con contrato y aviso de exceso semanal (no bloqueante).
+  for (const r of result) {
+    r.contractHours = contractHoursOf(r.user)
+    r.maxWeekHours = maxWeeklyPlanned(r.shiftsByDate)
+    r.exceedsContract = r.contractHours > 0 && r.maxWeekHours > r.contractHours + 0.01
+  }
+
   result.sort((a, b) => {
     const an = `${a.user.firstName || ''} ${a.user.lastName || ''}`.toLowerCase()
     const bn = `${b.user.firstName || ''} ${b.user.lastName || ''}`.toLowerCase()
@@ -433,12 +487,6 @@ const totalPlannedHours = computed(() => {
   }
   return (mins / 60).toFixed(1)
 })
-
-function toMinutes(hhmm) {
-  if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null
-  const [h, m] = String(hhmm).split(':').map(Number)
-  return h * 60 + m
-}
 
 /* ---------- Carga ---------- */
 // Lee la empresa activa del JWT (la setea el CompanySwitcher del header).
@@ -733,6 +781,7 @@ onMounted(async () => {
 .rk-grid-emp__text { line-height: 1.2; }
 .rk-grid-emp__name { font-weight: 600; color: var(--text-primary, #0f172a); }
 .rk-grid-emp__role { font-size: 11px; color: var(--text-secondary, #64748b); }
+.rk-grid-emp__contract { color: var(--text-muted, #94a3b8); font-variant-numeric: tabular-nums; }
 
 .rk-grid-cell {
   min-width: 86px;

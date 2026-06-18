@@ -88,6 +88,18 @@
               </q-td>
             </template>
 
+            <template #body-cell-contract="props">
+              <q-td :props="props">
+                <span v-if="props.row.contractHours > 0" class="rk-contract-hours">
+                  {{ props.row.contractHours }} h/sem
+                </span>
+                <span v-else class="text-grey-5">
+                  Sin pactar
+                  <q-tooltip>Define las horas de contrato en la ficha del empleado para poder validar la plantilla.</q-tooltip>
+                </span>
+              </q-td>
+            </template>
+
             <template #body-cell-since="props">
               <q-td :props="props">
                 <span v-if="props.row.assignment?.validFrom" class="text-grey-8">
@@ -132,6 +144,25 @@
         </q-card-section>
 
         <q-card-section>
+          <q-banner
+            v-if="assignDialog.contractHours > 0"
+            dense
+            class="rk-contract-banner q-mb-md"
+          >
+            <template #avatar><q-icon name="schedule" color="primary" /></template>
+            Contrato: <strong>{{ assignDialog.contractHours }} h/sem</strong>.
+            La plantilla no puede superar estas horas (las horas extra se gestionan en la programación mensual).
+          </q-banner>
+          <q-banner
+            v-else
+            dense
+            class="rk-contract-banner rk-contract-banner--warn q-mb-md"
+          >
+            <template #avatar><q-icon name="info" color="warning" /></template>
+            Este empleado no tiene horas de contrato definidas. Se permitirá cualquier plantilla.
+            Defínelas en su ficha para activar la validación.
+          </q-banner>
+
           <SchedulePicker
             v-model="assignDialog.choice"
             :company-id="companyId"
@@ -176,6 +207,7 @@ const filter = ref('')
 const columns = [
   { name: 'employee', label: 'Empleado', field: 'employee', align: 'left' },
   { name: 'template', label: 'Plantilla asignada', field: 'template', align: 'left' },
+  { name: 'contract', label: 'Contrato', field: 'contract', align: 'left' },
   { name: 'since', label: 'Vigente desde', field: 'since', align: 'left' },
   { name: 'actions', label: '', field: 'actions', align: 'right' },
 ]
@@ -186,14 +218,18 @@ function initialsOf(u) {
   return ((f[0] || '') + (l[0] || '')).toUpperCase() || '?'
 }
 
+function contractHoursOf(u) {
+  return Number(u?.payroll?.weeklyContractHours || 0)
+}
+
 const rows = computed(() => {
   const out = []
   for (const a of assignments.value) {
     if (!a.userId) continue
-    out.push({ userId: String(a.userId._id), user: a.userId, initials: initialsOf(a.userId), assignment: a })
+    out.push({ userId: String(a.userId._id), user: a.userId, initials: initialsOf(a.userId), assignment: a, contractHours: contractHoursOf(a.userId) })
   }
   for (const u of unassigned.value) {
-    out.push({ userId: String(u._id), user: u, initials: initialsOf(u), assignment: null })
+    out.push({ userId: String(u._id), user: u, initials: initialsOf(u), assignment: null, contractHours: contractHoursOf(u) })
   }
   out.sort((a, b) => {
     const an = `${a.user.firstName || ''} ${a.user.lastName || ''}`.toLowerCase()
@@ -256,12 +292,14 @@ const assignDialog = reactive({
   saving: false,
   userId: null,
   userName: '',
+  contractHours: 0,
   choice: { mode: 'fixed', scheduleId: null },
 })
 
 function openAssignDialog(row) {
   assignDialog.userId = row.userId
   assignDialog.userName = `${row.user.firstName || ''} ${row.user.lastName || ''}`.trim()
+  assignDialog.contractHours = row.contractHours || 0
   const a = row.assignment
   assignDialog.choice = a
     ? { mode: a.scheduleId ? 'fixed' : 'oncall', scheduleId: a.scheduleId?._id || a.scheduleId || null }
@@ -330,5 +368,20 @@ onMounted(async () => {
   margin-top: 2px;
   color: var(--text-secondary, #5a6482);
 }
+.rk-contract-hours {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary, #334155);
+}
+.rk-contract-banner {
+  border-radius: 10px;
+  background: var(--color-primary-soft, rgba(6, 182, 212, 0.08));
+  color: var(--text-secondary, #5a6482);
+  font-size: 12.5px;
+}
+.rk-contract-banner--warn {
+  background: var(--color-warning-soft, rgba(245, 158, 11, 0.10));
+}
+.body--dark .rk-contract-hours { color: var(--text-primary, #e8eaf2); }
 /* body--dark overrides are now handled by tokens.css automatically */
 </style>

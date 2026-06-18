@@ -13,6 +13,22 @@ function toQuery(params = {}) {
   return q.toString()
 }
 
+// Deriva el nombre visible del empleado desde un userId que puede venir
+// poblado (objeto) o como id (string).
+function employeeName(user) {
+  if (!user || typeof user !== 'object') return ''
+  const full = [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
+  return full || user.name || user.email || ''
+}
+
+// Deriva el departamento desde el userId poblado (si existe).
+function employeeDepartment(user) {
+  if (!user || typeof user !== 'object') return ''
+  const dep = user.department || user.departamento || user.area
+  if (!dep) return ''
+  return typeof dep === 'object' ? (dep.name || dep.nombre || '') : dep
+}
+
 // Normaliza un request del backend (puede venir en { ok, data } o plano)
 function normalizeRequest(r) {
   const o = r?.data ? r.data : r
@@ -22,14 +38,18 @@ function normalizeRequest(r) {
     _id: o._id || o.id,
     id: o.id || o._id,
     userId: o.userId,
+    empleado: employeeName(o.userId),        // nombre visible en la tabla
+    departamento: employeeDepartment(o.userId),
     companyId: o.companyId,
     type: o.type,                 // 'VACATION' | 'ADMIN_DAY' | ...
     status: o.status,             // 'PENDING' | 'APPROVED' | ...
     startDate: o.startDate,
     endDate: o.endDate,
     reason: o.reason || '',
+    notas: o.reason || '',        // alias usado por la columna "Notas"
     approverId: o.approverId || null,
     approvedAt: o.approvedAt || null,
+    selfApproved: o.selfApproved === true,
     createdAt: o.createdAt,
     updatedAt: o.updatedAt
   }

@@ -315,6 +315,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useQuasar } from 'quasar'
 import { useCompaniesStore } from '@/stores/companies'
+import {
+  DAY_DEFS as dayDefs,
+  dayHours as dayHoursOf,
+  weeklyTotalHoursLabel,
+  buildSummaryGroups,
+} from '@/utils/workHours'
 
 const toast = useToast()
 const $q = useQuasar()
@@ -326,16 +332,6 @@ const isDialogOpen = ref(false)
 const editingId = ref(null)
 const loading = ref(false)
 const filter = ref('')
-
-const dayDefs = [
-  { key: 'mon', label: 'Lunes', short: 'Lun' },
-  { key: 'tue', label: 'Martes', short: 'Mar' },
-  { key: 'wed', label: 'Miércoles', short: 'Mié' },
-  { key: 'thu', label: 'Jueves', short: 'Jue' },
-  { key: 'fri', label: 'Viernes', short: 'Vie' },
-  { key: 'sat', label: 'Sábado', short: 'Sáb' },
-  { key: 'sun', label: 'Domingo', short: 'Dom' },
-]
 
 function emptyWeekly() {
   return dayDefs.reduce((acc, d) => {
@@ -365,68 +361,12 @@ const scheduleForm = ref({
   weekly: emptyWeekly(),
 })
 
-/* ---------- Helpers tiempo ---------- */
-function toMinutes(hhmm) {
-  if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null
-  const [h, m] = hhmm.split(':').map(Number)
-  if (h > 23 || m > 59) return null
-  return h * 60 + m
-}
-function diffHours(start, end) {
-  const s = toMinutes(start)
-  let e = toMinutes(end)
-  if (s == null || e == null) return 0
-  if (e < s) e += 24 * 60 // turno cruza medianoche
-  return +((e - s) / 60).toFixed(2)
-}
+/* ---------- Helpers tiempo (delegados a utils/workHours) ---------- */
+// Horas de un día del editor (formato { enabled, segments }).
 function dayHours(key) {
-  const d = scheduleForm.value.weekly[key]
-  if (!d?.segments?.length) return 0
-  return +d.segments.reduce((sum, s) => sum + diffHours(s.start, s.end), 0).toFixed(2)
+  return dayHoursOf(scheduleForm.value.weekly[key])
 }
-const totalFormHours = computed(() => {
-  return dayDefs.reduce((sum, d) => {
-    const day = scheduleForm.value.weekly[d.key]
-    if (!day.enabled) return sum
-    return sum + day.segments.reduce((s, seg) => s + diffHours(seg.start, seg.end), 0)
-  }, 0).toFixed(1)
-})
-
-/* ---------- Visualización: agrupar días contiguos con mismo horario ----------
-   Para días partidos (ej. 09-13 / 15-19), el "time signature" del día es la
-   concatenación de todos sus tramos, separados por " / ". Se agrupan días
-   contiguos sólo si su firma completa coincide. */
-function buildSummaryGroups(weekly) {
-  const entries = dayDefs.map((d) => {
-    const segs = Array.isArray(weekly?.[d.key]) ? weekly[d.key] : []
-    const valid = segs.filter((s) => s?.start && s?.end)
-    if (!valid.length) return { day: d, time: null }
-    const time = valid.map((s) => `${s.start}-${s.end}`).join(' / ')
-    return { day: d, time }
-  })
-
-  const groups = []
-  let i = 0
-  while (i < entries.length) {
-    const cur = entries[i]
-    if (!cur.time) { i++; continue }
-    let j = i
-    while (j + 1 < entries.length && entries[j + 1].time === cur.time) j++
-    const label = i === j
-      ? cur.day.short
-      : `${entries[i].day.short}-${entries[j].day.short}`
-    groups.push({ key: `${i}-${j}-${cur.time}`, label, time: cur.time })
-    i = j + 1
-  }
-  return groups
-}
-
-function calcTotalHours(weekly) {
-  return dayDefs.reduce((sum, d) => {
-    const segs = Array.isArray(weekly?.[d.key]) ? weekly[d.key] : []
-    return sum + segs.reduce((s, seg) => s + diffHours(seg?.start, seg?.end), 0)
-  }, 0).toFixed(1)
-}
+const totalFormHours = computed(() => weeklyTotalHoursLabel(scheduleForm.value.weekly))
 
 /* ---------- Normalización de filas ---------- */
 function normalizeRow(schedule, companyName) {
@@ -443,7 +383,7 @@ function normalizeRow(schedule, companyName) {
     companyName,
     weekly,
     summaryGroups: buildSummaryGroups(weekly),
-    totalHours: calcTotalHours(weekly),
+    totalHours: weeklyTotalHoursLabel(weekly),
     assignments: [],
     assignmentsCount: 0,
   }

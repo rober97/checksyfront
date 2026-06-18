@@ -344,10 +344,17 @@
           <!-- Columna: Estado -->
           <template #body-cell-estado="p">
             <q-td :props="p">
-              <q-badge class="rk-status-badge" :class="statusClass(p.row.status)">
-                <q-icon :name="estadoIcon(p.row.status)" class="q-mr-xs" size="12px" />
-                {{ statusLabel(p.row.status) }}
-              </q-badge>
+              <div class="column items-start q-gutter-xs">
+                <q-badge class="rk-status-badge" :class="statusClass(p.row.status)">
+                  <q-icon :name="estadoIcon(p.row.status)" class="q-mr-xs" size="12px" />
+                  {{ statusLabel(p.row.status) }}
+                </q-badge>
+                <q-badge v-if="p.row.selfApproved" class="rk-status-badge rk-status-badge--self">
+                  <q-icon name="gavel" class="q-mr-xs" size="12px" />
+                  Autorizada como representante
+                  <q-tooltip>Auto-autorizada por el representante del empleador (Art. 4 Cód. del Trabajo). Queda registrada en bitácora.</q-tooltip>
+                </q-badge>
+              </div>
             </q-td>
           </template>
 
@@ -366,7 +373,7 @@
             <q-td :props="p" class="text-right">
               <div class="rk-row-actions">
                 <q-btn
-                  v-if="p.row.status === 'PENDING'"
+                  v-if="p.row.status === 'PENDING' && canDecide(p.row)"
                   round
                   dense
                   flat
@@ -376,11 +383,11 @@
                   class="rk-row-action-btn"
                   @click="approveRow(p.row)"
                 >
-                  <q-tooltip>Aprobar</q-tooltip>
+                  <q-tooltip>{{ ownerIdOf(p.row) === currentUserId ? 'Autorizar como representante del empleador' : 'Aprobar' }}</q-tooltip>
                 </q-btn>
-                
+
                 <q-btn
-                  v-if="p.row.status === 'PENDING'"
+                  v-if="p.row.status === 'PENDING' && canDecide(p.row)"
                   round
                   dense
                   flat
@@ -392,6 +399,16 @@
                 >
                   <q-tooltip>Rechazar</q-tooltip>
                 </q-btn>
+
+                <q-icon
+                  v-if="p.row.status === 'PENDING' && !canDecide(p.row)"
+                  name="lock_clock"
+                  color="grey-5"
+                  size="sm"
+                  class="rk-row-action-btn"
+                >
+                  <q-tooltip>Tu solicitud está pendiente de tu jefatura o del representante del empleador</q-tooltip>
+                </q-icon>
                 
                 <q-btn
                   round
@@ -455,9 +472,31 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useQuasar, date } from "quasar";
 import DynamicDataTable from "@/components/shared/DynamicDataTable.vue";
 import { useRequestsStore } from "@/stores/requests";
+import { useAuthStore } from "@/stores/authStore";
 
 const $q = useQuasar();
 const store = useRequestsStore();
+const auth = useAuthStore();
+
+/* Identidad del usuario actual para aplicar la regla de cuatro ojos:
+   nadie aprueba su propia solicitud, salvo el representante del empleador. */
+const currentUserId = computed(() =>
+  String(auth.user?._id || auth.user?.id || "")
+);
+const amEmployerRep = computed(() => auth.user?.isEmployerRepresentative === true);
+
+const ownerIdOf = (row) => {
+  const u = row?.userId;
+  if (!u) return "";
+  return String(typeof u === "object" ? (u._id || u.id || "") : u);
+};
+
+/* ¿Puede el usuario actual decidir (aprobar/rechazar) esta solicitud? */
+const canDecide = (row) => {
+  const isSelf = ownerIdOf(row) === currentUserId.value;
+  if (isSelf) return amEmployerRep.value; // sólo el representante aprueba lo suyo
+  return true; // el backend valida jefatura/representante; aquí no escondemos al resto
+};
 
 /* Tema Premium */
 const isDark = computed(() => $q.dark.isActive);
@@ -1369,6 +1408,13 @@ onMounted(async () => {
   background: rgba(220, 38, 38, 0.1);
   border-color: rgba(220, 38, 38, 0.15);
   color: #b91c1c;
+}
+.rk-status-badge--self {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.18);
+  color: #6d28d9;
+  font-size: 0.68rem;
+  min-height: 24px;
 }
 
 /* Notes Cell */
