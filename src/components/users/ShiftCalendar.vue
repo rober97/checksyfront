@@ -385,9 +385,9 @@ defineExpose({ reload: load })
   align-items: center;
 }
 .rk-date-avatar {
-  background: linear-gradient(180deg, rgba(6, 182, 212, 0.15), rgba(20, 184, 166, 0.12));
-  color: var(--color-primary-dark, #0891b2);
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  background: linear-gradient(180deg, rgba(12, 169, 196, 0.15), rgba(8, 147, 170, 0.12));
+  color: var(--color-primary-dark, #0893AA);
+  border: 1px solid rgba(12, 169, 196, 0.25);
   flex-direction: column;
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
@@ -422,8 +422,8 @@ defineExpose({ reload: load })
   border-color: rgba(255, 255, 255, 0.08);
 }
 .body--dark .rk-date-avatar {
-  background: linear-gradient(180deg, rgba(6, 182, 212, 0.18), rgba(20, 184, 166, 0.14));
-  color: var(--color-primary, #22d3ee);
-  border-color: rgba(6, 182, 212, 0.30);
+  background: linear-gradient(180deg, rgba(12, 169, 196, 0.18), rgba(8, 147, 170, 0.14));
+  color: var(--color-primary, #33BECB);
+  border-color: rgba(12, 169, 196, 0.30);
 }
 </style>

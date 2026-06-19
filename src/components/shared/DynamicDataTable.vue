@@ -30,7 +30,7 @@
 
     <template #loading>
       <div class="rk-loading">
-        <q-spinner-hourglass color="cyan-5" size="40px" />
+        <q-spinner-hourglass color="primary" size="40px" />
         <p>{{ loadingLabel }}</p>
       </div>
     </template>
@@ -88,9 +88,9 @@ const passThroughNames = computed(() => {
    ========================================== */
 .rk-table {
   /* Cyan/Teal principal */
-  --cyan-bright: #06b6d4;
-  --cyan-header: #0891b2;
-  --cyan-glow: rgba(6, 182, 212, 0.5);
+  --cyan-bright: #0CA9C4;
+  --cyan-header: #0893AA;
+  --cyan-glow: rgba(12, 169, 196, 0.5);
   
   /* Backgrounds — token-based so they work in both modes */
   --bg-dark-1: var(--background-color);
@@ -99,9 +99,9 @@ const passThroughNames = computed(() => {
   --bg-dark-row: var(--surface-soft);
   
   /* Borders */
-  --border-subtle: rgba(6, 182, 212, 0.15);
-  --border-medium: rgba(6, 182, 212, 0.3);
-  --border-strong: #0891b2;
+  --border-subtle: rgba(12, 169, 196, 0.15);
+  --border-medium: rgba(12, 169, 196, 0.3);
+  --border-strong: #0893AA;
   
   /* Text */
   --text-primary: #e2e8f0;
@@ -125,7 +125,7 @@ const passThroughNames = computed(() => {
    ========================================== */
 .rk-table :deep(.q-table__top) {
   padding: 16px 20px;
-  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #0893AA 0%, #0CA9C4 100%);
   border-bottom: none;
 }
 
@@ -138,7 +138,7 @@ const passThroughNames = computed(() => {
 }
 
 .rk-table :deep(thead tr) {
-  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #0893AA 0%, #0CA9C4 100%);
 }
 
 .rk-table :deep(th) {
@@ -204,7 +204,7 @@ const passThroughNames = computed(() => {
 
 /* Row hover - Efecto cyan brillante */
 .rk-table :deep(tbody tr:hover) {
-  background: linear-gradient(90deg, rgba(6, 182, 212, 0.15), transparent);
+  background: linear-gradient(90deg, rgba(12, 169, 196, 0.15), transparent);
   box-shadow: inset 3px 0 0 var(--cyan-bright);
 }
 
@@ -242,10 +242,10 @@ const passThroughNames = computed(() => {
 
 /* Selected row - Cyan glow */
 .rk-table :deep(.q-tr--selected) {
-  background: rgba(6, 182, 212, 0.2) !important;
+  background: rgba(12, 169, 196, 0.2) !important;
   box-shadow: 
     inset 3px 0 0 var(--cyan-bright),
-    0 0 15px rgba(6, 182, 212, 0.3);
+    0 0 15px rgba(12, 169, 196, 0.3);
 }
 
 /* ==========================================
@@ -267,7 +267,7 @@ const passThroughNames = computed(() => {
   font-size: 0.7rem;
   padding: 3px 8px;
   background: var(--cyan-header);
-  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 2px 4px rgba(12, 169, 196, 0.3);
 }
 
 /* ==========================================
@@ -284,7 +284,7 @@ const passThroughNames = computed(() => {
 }
 
 .rk-table :deep(td .q-btn.q-btn--flat):hover {
-  background: rgba(6, 182, 212, 0.1);
+  background: rgba(12, 169, 196, 0.1);
 }
 
 .rk-table :deep(td .q-btn:not(.q-btn--flat)) {
@@ -306,7 +306,7 @@ const passThroughNames = computed(() => {
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--cyan-bright);
-  background: rgba(6, 182, 212, 0.1);
+  background: rgba(12, 169, 196, 0.1);
   padding: 3px 8px;
   border-radius: 4px;
   border: 1px solid var(--border-medium);
@@ -344,7 +344,7 @@ const passThroughNames = computed(() => {
 }
 
 .rk-table :deep(.rk-status.info) {
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(12, 169, 196, 0.15);
   color: var(--cyan-bright);
   border: 1px solid var(--border-medium);
 }
@@ -434,7 +434,7 @@ const passThroughNames = computed(() => {
 
 .rk-table :deep(.q-btn.q-pagination__btn:hover) {
   border-color: var(--cyan-bright);
-  background: rgba(6, 182, 212, 0.1);
+  background: rgba(12, 169, 196, 0.1);
 }
 
 .rk-table :deep(.q-btn.q-pagination__btn.q-btn--active) {
@@ -504,7 +504,7 @@ const passThroughNames = computed(() => {
 .rk-table :deep(tbody tr:focus-within) {
   outline: 2px solid var(--cyan-bright);
   outline-offset: -2px;
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 0 0 3px rgba(12, 169, 196, 0.2);
 }
 
 /* ==========================================
@@ -556,7 +556,7 @@ const passThroughNames = computed(() => {
   }
 
   .rk-table :deep(thead tr) {
-    background: #0891b2 !important;
+    background: #0893AA !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

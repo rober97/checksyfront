@@ -337,7 +337,7 @@ const growthSeries = ref([
 const growthOptions = computed(() => ({
   chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', background: 'transparent' },
   theme: { mode: themeMode.value },
-  colors: ['#06b6d4', '#14b8a6'],
+  colors: ['#0CA9C4', '#0893AA'],
   dataLabels: { enabled: false },
   stroke: { curve: 'smooth', width: 3 },
   fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 90, 100] } },
@@ -357,7 +357,7 @@ const donutOptions = computed(() => ({
   chart: { fontFamily: 'inherit', background: 'transparent' },
   theme: { mode: themeMode.value },
   labels: ['Admins RR.HH.', 'Empleados activos', 'Pendientes'],
-  colors: ['#06b6d4', '#14b8a6', '#f59e0b'],
+  colors: ['#0CA9C4', '#0893AA', '#f59e0b'],
   stroke: { width: 0 },
   legend: { position: 'bottom', labels: { colors: axisColor.value } },
   dataLabels: { enabled: true, formatter: (v) => `${Math.round(v)}%` },
@@ -383,7 +383,7 @@ const byCompanyCats = ref([])
 const byCompanyOptions = computed(() => ({
   chart: { toolbar: { show: false }, fontFamily: 'inherit', background: 'transparent' },
   theme: { mode: themeMode.value },
-  colors: ['#06b6d4'],
+  colors: ['#0CA9C4'],
   plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '58%', distributed: false } },
   dataLabels: { enabled: true, style: { colors: [$q.dark.isActive ? '#e8eaf2' : '#0f172a'] }, offsetX: 18 },
   grid: { borderColor: gridColor.value, strokeDashArray: 4 },
@@ -532,7 +532,7 @@ onMounted(async () => {
 }
 .sa-hero__bg {
   position: absolute; inset: 0;
-  background: linear-gradient(120deg, #0891b2 0%, #06b6d4 45%, #14b8a6 100%);
+  background: linear-gradient(120deg, #0893AA 0%, #0CA9C4 45%, #0893AA 100%);
 }
 .sa-hero__bg::after {
   content: ''; position: absolute; inset: 0;
@@ -592,11 +592,11 @@ onMounted(async () => {
 }
 .sa-kpi::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-  background: var(--accent, #06b6d4);
+  background: var(--accent, #0CA9C4);
 }
 .sa-kpi:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.16); }
-.sa-kpi--primary { --accent: #06b6d4; }
-.sa-kpi--teal { --accent: #14b8a6; }
+.sa-kpi--primary { --accent: #0CA9C4; }
+.sa-kpi--teal { --accent: #0893AA; }
 .sa-kpi--indigo { --accent: #6366f1; }
 .sa-kpi--amber { --accent: #f59e0b; }
 .sa-kpi__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -642,7 +642,7 @@ onMounted(async () => {
   width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
 }
 .sa-feed__ico--positive { background: rgba(34,197,94,0.15); color: #16a34a; }
-.sa-feed__ico--primary { background: rgba(6,182,212,0.15); color: #0891b2; }
+.sa-feed__ico--primary { background: rgba(12, 169, 196,0.15); color: #0893AA; }
 .sa-feed__ico--negative { background: rgba(239,68,68,0.15); color: #dc2626; }
 .sa-feed__ico--warning { background: rgba(245,158,11,0.15); color: #d97706; }
 .sa-feed__ico--grey { background: rgba(148,163,184,0.18); color: #64748b; }
@@ -653,7 +653,7 @@ onMounted(async () => {
 .sa-comp { padding: 4px 16px 12px; }
 .sa-comp__row { display: flex; align-items: center; gap: 14px; padding: 6px 0; }
 .sa-comp__ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; }
-.sa-comp__ico--ok { background: rgba(6,182,212,0.14); color: #0891b2; }
+.sa-comp__ico--ok { background: rgba(12, 169, 196,0.14); color: #0893AA; }
 .sa-comp__ico--warn { background: rgba(245,158,11,0.16); color: #d97706; }
 .sa-comp__body { flex: 1; }
 .sa-comp__val { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
@@ -663,8 +663,8 @@ onMounted(async () => {
 .sa-roles { padding: 6px 16px 14px; display: grid; gap: 12px; }
 .sa-role { display: flex; gap: 14px; align-items: flex-start; }
 .sa-role__ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
-.sa-role__ico--primary { background: rgba(6,182,212,0.14); color: #0891b2; }
-.sa-role__ico--teal { background: rgba(20,184,166,0.14); color: #0d9488; }
+.sa-role__ico--primary { background: rgba(12, 169, 196,0.14); color: #0893AA; }
+.sa-role__ico--teal { background: rgba(8, 147, 170,0.14); color: #067C90; }
 .sa-role__ico--indigo { background: rgba(99,102,241,0.14); color: #4f46e5; }
 .sa-role__ico--amber { background: rgba(245,158,11,0.16); color: #d97706; }
 .sa-role__name { font-weight: 700; font-size: 0.92rem; color: var(--text-primary); }
@@ -674,5 +674,5 @@ onMounted(async () => {
 body.body--dark .sa-kpi__delta--up { color: #4ade80; }
 body.body--dark .sa-feed__ico--primary,
 body.body--dark .sa-comp__ico--ok,
-body.body--dark .sa-role__ico--primary { color: #22d3ee; }
+body.body--dark .sa-role__ico--primary { color: #33BECB; }
 </style>

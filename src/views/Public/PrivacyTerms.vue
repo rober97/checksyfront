@@ -202,7 +202,7 @@ const sections = [
   --rk-text: #0b0b0f;
   --rk-muted: #5e6470;
   --rk-border: #e2e6ec;
-  --rk-primary: #22c8d1;
+  --rk-primary: #33BECB;
   --rk-primary-soft: #d9f3f5;
   --rk-card: #ffffff;
   --rk-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
@@ -256,7 +256,7 @@ const sections = [
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--rk-primary), #16bac3);
+  background: linear-gradient(135deg, var(--rk-primary), #0893AA);
   color: #fff;
 }
 .rk-brand__name {

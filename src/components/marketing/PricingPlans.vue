@@ -23,8 +23,8 @@
               <path d="M0,4 Q50,0 100,4 T200,4" fill="none" stroke="url(#grad-pricing)" stroke-width="2"/>
               <defs>
                 <linearGradient id="grad-pricing" x1="0%" x2="100%">
-                  <stop offset="0%" style="stop-color: #06b6d4; stop-opacity: 0.6" />
-                  <stop offset="100%" style="stop-color: #14b8a6; stop-opacity: 0.8" />
+                  <stop offset="0%" style="stop-color: #0CA9C4; stop-opacity: 0.6" />
+                  <stop offset="100%" style="stop-color: #0893AA; stop-opacity: 0.8" />
                 </linearGradient>
               </defs>
             </svg>
@@ -260,11 +260,11 @@ const viewPlans = computed(() => plans.map(p => {
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
+  --color-primary: #0CA9C4;
+  --color-primary-light: #33BECB;
+  --color-accent: #0893AA;
   --color-bg-dark: #0a0e14;
-  --color-surface: rgba(6, 182, 212, 0.05);
+  --color-surface: rgba(12, 169, 196, 0.05);
 }
 
 /* Section */
@@ -288,8 +288,8 @@ const viewPlans = computed(() => plans.map(p => {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(12, 169, 196, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 169, 196, 0.03) 1px, transparent 1px);
   background-size: 60px 60px;
   opacity: 0.5;
 }
@@ -342,8 +342,8 @@ const viewPlans = computed(() => plans.map(p => {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--color-primary-light);
-  background: rgba(6, 182, 212, 0.1);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.1);
+  border: 1.5px solid rgba(12, 169, 196, 0.25);
   border-radius: 50px;
   backdrop-filter: blur(10px);
   position: relative;
@@ -361,13 +361,13 @@ const viewPlans = computed(() => plans.map(p => {
 
 @keyframes pulseRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+    box-shadow: 0 0 0 0 rgba(12, 169, 196, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
+    box-shadow: 0 0 0 10px rgba(12, 169, 196, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
+    box-shadow: 0 0 0 0 rgba(12, 169, 196, 0);
   }
 }
 
@@ -412,8 +412,8 @@ const viewPlans = computed(() => plans.map(p => {
   align-items: center;
   gap: 16px;
   padding: 8px;
-  background: rgba(6, 182, 212, 0.05);
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: rgba(12, 169, 196, 0.05);
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 50px;
   backdrop-filter: blur(10px);
 }
@@ -452,7 +452,7 @@ const viewPlans = computed(() => plans.map(p => {
   font-weight: 800;
   color: #fff;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
 }
 
 .rk-toggle-slider {
@@ -465,13 +465,13 @@ const viewPlans = computed(() => plans.map(p => {
 .rk-slider-track {
   position: absolute;
   inset: 0;
-  background: rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.2);
   border-radius: 16px;
   transition: background 0.3s ease;
 }
 
 .rk-toggle-slider.yearly .rk-slider-track {
-  background: rgba(6, 182, 212, 0.3);
+  background: rgba(12, 169, 196, 0.3);
 }
 
 .rk-slider-thumb {
@@ -482,7 +482,7 @@ const viewPlans = computed(() => plans.map(p => {
   height: 24px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -501,8 +501,8 @@ const viewPlans = computed(() => plans.map(p => {
 /* Pricing Card */
 .rk-pricing-card {
   position: relative;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.04), rgba(20, 184, 166, 0.04));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.04), rgba(8, 147, 170, 0.04));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 28px;
   padding: clamp(32px, 5vw, 40px);
   overflow: hidden;
@@ -512,19 +512,19 @@ const viewPlans = computed(() => plans.map(p => {
 
 .rk-pricing-card:hover {
   transform: translateY(-8px);
-  border-color: rgba(6, 182, 212, 0.35);
-  box-shadow: 0 24px 48px rgba(6, 182, 212, 0.2);
+  border-color: rgba(12, 169, 196, 0.35);
+  box-shadow: 0 24px 48px rgba(12, 169, 196, 0.2);
 }
 
 .rk-pricing-card.popular {
-  border-color: rgba(6, 182, 212, 0.4);
-  box-shadow: 0 16px 40px rgba(6, 182, 212, 0.15);
+  border-color: rgba(12, 169, 196, 0.4);
+  box-shadow: 0 16px 40px rgba(12, 169, 196, 0.15);
   transform: scale(1.05);
 }
 
 .rk-pricing-card.popular:hover {
   transform: scale(1.05) translateY(-8px);
-  box-shadow: 0 28px 56px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 28px 56px rgba(12, 169, 196, 0.25);
 }
 
 /* Popular Badge */
@@ -542,7 +542,7 @@ const viewPlans = computed(() => plans.map(p => {
   font-weight: 800;
   color: #fff;
   letter-spacing: 0.8px;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.4);
   z-index: 3;
 }
 
@@ -610,7 +610,7 @@ const viewPlans = computed(() => plans.map(p => {
   inset: 0;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.3);
   transition: transform 0.3s ease;
 }
 
@@ -648,8 +648,8 @@ const viewPlans = computed(() => plans.map(p => {
 .rk-price-display {
   margin-bottom: 32px;
   padding: 24px 0;
-  border-top: 1px solid rgba(6, 182, 212, 0.1);
-  border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+  border-top: 1px solid rgba(12, 169, 196, 0.1);
+  border-bottom: 1px solid rgba(12, 169, 196, 0.1);
 }
 
 .rk-price-wrapper {
@@ -749,7 +749,7 @@ const viewPlans = computed(() => plans.map(p => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(12, 169, 196, 0.15);
   border-radius: 6px;
   flex-shrink: 0;
 }
@@ -801,12 +801,12 @@ const viewPlans = computed(() => plans.map(p => {
 .rk-btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: #fff;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.3);
 }
 
 .rk-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.4);
 }
 
 .rk-btn-primary .q-icon {
@@ -819,13 +819,13 @@ const viewPlans = computed(() => plans.map(p => {
 
 .rk-btn-secondary {
   color: var(--color-primary-light);
-  border: 2px solid rgba(6, 182, 212, 0.3);
-  background: rgba(6, 182, 212, 0.05);
+  border: 2px solid rgba(12, 169, 196, 0.3);
+  background: rgba(12, 169, 196, 0.05);
 }
 
 .rk-btn-secondary:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(12, 169, 196, 0.5);
+  background: rgba(12, 169, 196, 0.12);
   transform: translateY(-2px);
 }
 
@@ -871,8 +871,8 @@ const viewPlans = computed(() => plans.map(p => {
   left: 3px;
   width: 30px;
   height: 30px;
-  border-top: 2px solid rgba(6, 182, 212, 0.3);
-  border-left: 2px solid rgba(6, 182, 212, 0.3);
+  border-top: 2px solid rgba(12, 169, 196, 0.3);
+  border-left: 2px solid rgba(12, 169, 196, 0.3);
   border-radius: 4px 0 0 0;
 }
 
@@ -904,8 +904,8 @@ const viewPlans = computed(() => plans.map(p => {
 /* Pricing Footer */
 .rk-pricing-footer {
   padding: clamp(40px, 6vw, 60px);
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(20, 184, 166, 0.08));
-  border: 2px solid rgba(6, 182, 212, 0.2);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.08), rgba(8, 147, 170, 0.08));
+  border: 2px solid rgba(12, 169, 196, 0.2);
   border-radius: 28px;
   backdrop-filter: blur(20px);
 }
@@ -917,7 +917,7 @@ const viewPlans = computed(() => plans.map(p => {
   gap: 32px;
   margin-bottom: 32px;
   padding-bottom: 32px;
-  border-bottom: 1px solid rgba(6, 182, 212, 0.15);
+  border-bottom: 1px solid rgba(12, 169, 196, 0.15);
 }
 
 .rk-footer-left {
@@ -938,7 +938,7 @@ const viewPlans = computed(() => plans.map(p => {
   font-size: 28px !important;
   color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 6px 20px rgba(12, 169, 196, 0.3);
 }
 
 .rk-footer-title {
@@ -965,15 +965,15 @@ const viewPlans = computed(() => plans.map(p => {
   font-weight: 700;
   letter-spacing: 0.3px;
   color: var(--color-primary-light);
-  border: 2px solid rgba(6, 182, 212, 0.3);
-  background: rgba(6, 182, 212, 0.08);
+  border: 2px solid rgba(12, 169, 196, 0.3);
+  background: rgba(12, 169, 196, 0.08);
   border-radius: 14px;
   transition: all 0.3s ease;
 }
 
 .rk-contact-btn:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(12, 169, 196, 0.5);
+  background: rgba(12, 169, 196, 0.15);
   transform: translateY(-2px);
 }
 
@@ -1011,7 +1011,7 @@ const viewPlans = computed(() => plans.map(p => {
 .rk-trust-divider {
   width: 1px;
   height: 24px;
-  background: rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.2);
 }
 
 /* Responsive */

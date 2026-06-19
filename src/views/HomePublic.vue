@@ -164,13 +164,13 @@
                 <svg viewBox="0 0 320 90" preserveAspectRatio="none" class="rk-spark">
                   <defs>
                     <linearGradient id="rk-area" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%"  stop-color="#06B6D4" stop-opacity=".22"/>
-                      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+                      <stop offset="0%"  stop-color="#0CA9C4" stop-opacity=".22"/>
+                      <stop offset="100%" stop-color="#0CA9C4" stop-opacity="0"/>
                     </linearGradient>
                   </defs>
                   <path d="M0,68 C30,58 50,40 80,42 C115,44 140,22 175,28 C210,34 240,60 280,46 L320,52 L320,90 L0,90 Z" fill="url(#rk-area)"/>
-                  <path d="M0,68 C30,58 50,40 80,42 C115,44 140,22 175,28 C210,34 240,60 280,46 L320,52" fill="none" stroke="#06B6D4" stroke-width="2.4" stroke-linecap="round"/>
-                  <path d="M0,78 C30,76 50,72 80,70 C115,68 140,64 175,66 C210,68 240,72 280,68 L320,70" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 4"/>
+                  <path d="M0,68 C30,58 50,40 80,42 C115,44 140,22 175,28 C210,34 240,60 280,46 L320,52" fill="none" stroke="#0CA9C4" stroke-width="2.4" stroke-linecap="round"/>
+                  <path d="M0,78 C30,76 50,72 80,70 C115,68 140,64 175,66 C210,68 240,72 280,68 L320,70" fill="none" stroke="#0893AA" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 4"/>
                 </svg>
               </div>
             </div>
@@ -185,7 +185,7 @@
           </div>
 
           <div class="rk-float-chip rk-float-chip--bot">
-            <span class="rk-float-chip__icon" style="background:var(--c-accent-soft);color:#0E7C70"><q-icon name="favorite"/></span>
+            <span class="rk-float-chip__icon" style="background:var(--c-accent-soft);color:#055E6D"><q-icon name="favorite"/></span>
             <div>
               <div class="rk-float-chip__value">4.8/5</div>
               <div class="rk-float-chip__label">satisfacción</div>
@@ -564,8 +564,8 @@ const navLinks = [
 ]
 
 const previewKpis = [
-  { label: 'Asistencia',    value: '98.5%', delta: '+2.3%', icon: 'fingerprint',         color: '#0891B2', tint: '#CFFAFE' },
-  { label: 'Productividad', value: '127%',  delta: '+15%',  icon: 'trending_up',         color: '#0E7C70', tint: '#CCFBF1' },
+  { label: 'Asistencia',    value: '98.5%', delta: '+2.3%', icon: 'fingerprint',         color: '#0893AA', tint: '#CFFAFE' },
+  { label: 'Productividad', value: '127%',  delta: '+15%',  icon: 'trending_up',         color: '#055E6D', tint: '#CCFBF1' },
   { label: 'Satisfacción',  value: '4.8/5', delta: '+0.4',  icon: 'sentiment_satisfied', color: '#B45309', tint: '#FEF3C7' },
 ]
 
@@ -579,10 +579,10 @@ const heroStats = [
 const logos = ['ANDINA', 'TRANSCORP', 'NORTSUR', 'FINTECH', 'AGRO•VAL', 'COPEC+']
 
 const attendance = [
-  { initials: 'CV', name: 'Carla Vergara',  role: 'Gerente · Operaciones',  time: '08:42', status: 'on',    statusLabel: 'Presente', tint: '#CFFAFE', color: '#0891B2' },
-  { initials: 'MR', name: 'Mario Reyes',    role: 'Analista · Finanzas',    time: '08:51', status: 'on',    statusLabel: 'Presente', tint: '#CCFBF1', color: '#0E7C70' },
+  { initials: 'CV', name: 'Carla Vergara',  role: 'Gerente · Operaciones',  time: '08:42', status: 'on',    statusLabel: 'Presente', tint: '#CFFAFE', color: '#0893AA' },
+  { initials: 'MR', name: 'Mario Reyes',    role: 'Analista · Finanzas',    time: '08:51', status: 'on',    statusLabel: 'Presente', tint: '#CCFBF1', color: '#055E6D' },
   { initials: 'PT', name: 'Paula Toro',     role: 'Diseñadora · Producto',  time: '09:14', status: 'late',  statusLabel: 'Atrasada', tint: '#FEF3C7', color: '#B45309' },
-  { initials: 'AS', name: 'Ana Soto',         role: 'Admin · RR.HH.',         time: '08:35', status: 'on',    statusLabel: 'Presente', tint: '#CFFAFE', color: '#0891B2' },
+  { initials: 'AS', name: 'Ana Soto',         role: 'Admin · RR.HH.',         time: '08:35', status: 'on',    statusLabel: 'Presente', tint: '#CFFAFE', color: '#0893AA' },
 ]
 
 const bars = [
@@ -594,12 +594,12 @@ const bars = [
 ]
 
 const features = [
-  { icon: 'fingerprint',       title: 'Asistencia precisa',         text: 'Marcaje biométrico, geolocalización y reglas anti-fraude.', color: '#0891B2', tint: '#CFFAFE' },
-  { icon: 'schedule',          title: 'Horarios flexibles',          text: 'Turnos rotativos, partidos o por proyecto en minutos.',    color: '#0E7C70', tint: '#CCFBF1' },
-  { icon: 'gavel',             title: 'Cumplimiento DT',             text: 'Libro electrónico y reportes listos para fiscalización.',  color: '#0E7490', tint: '#E0F2FE' },
+  { icon: 'fingerprint',       title: 'Asistencia precisa',         text: 'Marcaje biométrico, geolocalización y reglas anti-fraude.', color: '#0893AA', tint: '#CFFAFE' },
+  { icon: 'schedule',          title: 'Horarios flexibles',          text: 'Turnos rotativos, partidos o por proyecto en minutos.',    color: '#055E6D', tint: '#CCFBF1' },
+  { icon: 'gavel',             title: 'Cumplimiento DT',             text: 'Libro electrónico y reportes listos para fiscalización.',  color: '#067C90', tint: '#E0F2FE' },
   { icon: 'payments',          title: 'Liquidaciones automáticas',   text: 'De marcajes a sueldos sin intermediarios.',                color: '#B45309', tint: '#FEF3C7' },
-  { icon: 'insights',          title: 'Dashboards en vivo',          text: 'Métricas claras de ausentismo y desempeño al segundo.',    color: '#0E7C70', tint: '#CCFBF1' },
-  { icon: 'health_and_safety', title: 'Bienestar del equipo',        text: 'Pulse surveys y reconocimientos para tu gente.',           color: '#0891B2', tint: '#CFFAFE' },
+  { icon: 'insights',          title: 'Dashboards en vivo',          text: 'Métricas claras de ausentismo y desempeño al segundo.',    color: '#055E6D', tint: '#CCFBF1' },
+  { icon: 'health_and_safety', title: 'Bienestar del equipo',        text: 'Pulse surveys y reconocimientos para tu gente.',           color: '#0893AA', tint: '#CFFAFE' },
 ]
 
 const steps = [
@@ -611,10 +611,10 @@ const steps = [
 const testimonials = [
   { initials: 'CV', author: 'Carla Vergara', role: 'Gerente de Personas · Andina S.A.',
     text: 'Pasamos de 20 horas semanales en planillas a literalmente cero. Mi equipo ahora dedica el tiempo a las personas, no a Excel.',
-    color: '#0891B2', tint: '#CFFAFE' },
+    color: '#0893AA', tint: '#CFFAFE' },
   { initials: 'MR', author: 'Mario Reyes',   role: 'CFO · Transcorp Logística',
     text: 'La integración con liquidaciones nos ahorró un proceso completo. La auditoría DT del último mes la cerramos en 2 horas.',
-    color: '#0E7C70', tint: '#CCFBF1' },
+    color: '#055E6D', tint: '#CCFBF1' },
   { initials: 'PT', author: 'Paula Toro',    role: 'Head of People · Fintech Latam',
     text: 'Por fin un software de RR.HH. que mi equipo realmente usa. La app móvil es buenísima y los reportes son claros.',
     color: '#B45309', tint: '#FEF3C7' },
@@ -756,13 +756,13 @@ onBeforeUnmount(() => {
   --c-text-muted:  #64748B;
 
   /* Marca — sistema */
-  --c-primary:      #06B6D4;
-  --c-primary-dark: #0891B2;
+  --c-primary:      #0CA9C4;
+  --c-primary-dark: #0893AA;
   --c-primary-deep: #155E75;
   --c-primary-soft: #CFFAFE;
   --c-primary-tint: #ECFEFF;
 
-  --c-accent:      #14B8A6;
+  --c-accent:      #0893AA;
   --c-accent-soft: #CCFBF1;
 
   --c-amber:      #F59E0B;
@@ -776,7 +776,7 @@ onBeforeUnmount(() => {
 
   --c-shadow-sm: 0 1px 2px rgba(15, 23, 42, .04);
   --c-shadow-md: 0 6px 16px rgba(15, 23, 42, .06), 0 2px 4px rgba(15, 23, 42, .04);
-  --c-shadow-lg: 0 24px 60px rgba(15, 23, 42, .10), 0 8px 18px rgba(6, 182, 212, .08);
+  --c-shadow-lg: 0 24px 60px rgba(15, 23, 42, .10), 0 8px 18px rgba(12, 169, 196, .08);
 
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
 
@@ -812,7 +812,7 @@ onBeforeUnmount(() => {
 .rk-eyebrow__dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--c-primary);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, .18);
+  box-shadow: 0 0 0 3px rgba(12, 169, 196, .18);
 }
 .rk-eyebrow--light { color: #fff; background: rgba(255,255,255,.18); backdrop-filter: blur(10px); }
 .rk-eyebrow__dot--light { background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
@@ -873,12 +873,12 @@ onBeforeUnmount(() => {
 .rk-btn--primary {
   background: var(--c-primary) !important;
   color: #fff !important;
-  box-shadow: 0 8px 18px rgba(6, 182, 212, .28);
+  box-shadow: 0 8px 18px rgba(12, 169, 196, .28);
 }
 .rk-btn--primary:hover {
   background: var(--c-primary-dark) !important;
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(6, 182, 212, .35);
+  box-shadow: 0 12px 26px rgba(12, 169, 196, .35);
 }
 .rk-btn--ghost {
   background: transparent !important;
@@ -935,7 +935,7 @@ onBeforeUnmount(() => {
   border-radius: 11px;
   background: linear-gradient(135deg, var(--c-primary), var(--c-accent));
   color: #fff;
-  box-shadow: 0 6px 14px rgba(6, 182, 212, .35);
+  box-shadow: 0 6px 14px rgba(12, 169, 196, .35);
 }
 .rk-brand__mark .q-icon { font-size: 22px; }
 .rk-brand__name { font-size: 19px; }
@@ -1011,8 +1011,8 @@ onBeforeUnmount(() => {
 .rk-hero__grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(6, 182, 212, .07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, .07) 1px, transparent 1px);
+    linear-gradient(rgba(12, 169, 196, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 169, 196, .07) 1px, transparent 1px);
   background-size: 56px 56px;
   -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 35%, #000 30%, transparent 80%);
           mask-image: radial-gradient(ellipse 65% 55% at 50% 35%, #000 30%, transparent 80%);
@@ -1577,7 +1577,7 @@ onBeforeUnmount(() => {
 }
 .rk-billing__opt:not(.active) .rk-billing__save {
   background: var(--c-accent-soft);
-  color: #0E7C70;
+  color: #055E6D;
 }
 
 .rk-plans {
@@ -1601,7 +1601,7 @@ onBeforeUnmount(() => {
 }
 .rk-plan--popular {
   border-color: var(--c-primary);
-  box-shadow: 0 24px 48px rgba(6, 182, 212, .14), 0 6px 14px rgba(6, 182, 212, .08);
+  box-shadow: 0 24px 48px rgba(12, 169, 196, .14), 0 6px 14px rgba(12, 169, 196, .08);
   background:
     linear-gradient(180deg, var(--c-primary-tint) 0%, var(--c-surface) 30%);
 }
@@ -1707,14 +1707,14 @@ onBeforeUnmount(() => {
   padding: clamp(40px, 6vw, 72px);
   overflow: hidden;
   color: #fff;
-  background: linear-gradient(135deg, #06B6D4 0%, #0891B2 50%, #0E7C70 100%);
-  box-shadow: 0 30px 70px rgba(6, 182, 212, .35);
+  background: linear-gradient(135deg, #0CA9C4 0%, #0893AA 50%, #055E6D 100%);
+  box-shadow: 0 30px 70px rgba(12, 169, 196, .35);
 }
 .rk-cta-card__bg {
   position: absolute; inset: 0; pointer-events: none;
   background:
     radial-gradient(circle at 15% 20%, rgba(255,255,255,.18), transparent 40%),
-    radial-gradient(circle at 90% 90%, rgba(20, 184, 166, .35), transparent 40%);
+    radial-gradient(circle at 90% 90%, rgba(8, 147, 170, .35), transparent 40%);
 }
 .rk-cta-card__content { position: relative; z-index: 1; max-width: 720px; }
 .rk-cta-card__title {
@@ -1828,14 +1828,14 @@ onBeforeUnmount(() => {
   --c-text-muted:  #94A3B8;
 
   /* Marca — más luminosa sobre fondo oscuro para mantener contraste AA */
-  --c-primary:      #22D3EE;
-  --c-primary-dark: #06B6D4;
-  --c-primary-deep: #67E8F9;
-  --c-primary-soft: rgba(34, 211, 238, .14);
-  --c-primary-tint: rgba(34, 211, 238, .07);
+  --c-primary:      #33BECB;
+  --c-primary-dark: #0CA9C4;
+  --c-primary-deep: #66D2DD;
+  --c-primary-soft: rgba(51, 190, 203, .14);
+  --c-primary-tint: rgba(51, 190, 203, .07);
 
-  --c-accent:       #2DD4BF;
-  --c-accent-soft:  rgba(45, 212, 191, .14);
+  --c-accent:       #33BECB;
+  --c-accent-soft:  rgba(51, 190, 203, .14);
 
   --c-amber:      #FBBF24;
   --c-amber-soft: rgba(251, 191, 36, .14);
@@ -1848,7 +1848,7 @@ onBeforeUnmount(() => {
 
   --c-shadow-sm: 0 1px 2px rgba(0, 0, 0, .35);
   --c-shadow-md: 0 6px 16px rgba(0, 0, 0, .35), 0 2px 4px rgba(0, 0, 0, .25);
-  --c-shadow-lg: 0 24px 60px rgba(0, 0, 0, .55), 0 8px 18px rgba(34, 211, 238, .12);
+  --c-shadow-lg: 0 24px 60px rgba(0, 0, 0, .55), 0 8px 18px rgba(51, 190, 203, .12);
 
   background: var(--c-bg);
   color: var(--c-text);
@@ -1868,17 +1868,17 @@ onBeforeUnmount(() => {
 
 /* Hero · halos atenuados + grid más oscuro */
 .rk-home.is-dark .rk-hero__halo--1 {
-  background: radial-gradient(circle, rgba(34, 211, 238, .25), transparent 70%);
+  background: radial-gradient(circle, rgba(51, 190, 203, .25), transparent 70%);
   opacity: .8;
 }
 .rk-home.is-dark .rk-hero__halo--2 {
-  background: radial-gradient(circle, rgba(45, 212, 191, .22), transparent 70%);
+  background: radial-gradient(circle, rgba(51, 190, 203, .22), transparent 70%);
   opacity: .8;
 }
 .rk-home.is-dark .rk-hero__grid {
   background-image:
-    linear-gradient(rgba(34, 211, 238, .07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34, 211, 238, .07) 1px, transparent 1px);
+    linear-gradient(rgba(51, 190, 203, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(51, 190, 203, .07) 1px, transparent 1px);
   opacity: .5;
 }
 
@@ -1922,12 +1922,12 @@ onBeforeUnmount(() => {
 
 /* Eyebrows / tags / pills con tonos brillantes */
 .rk-home.is-dark .rk-eyebrow {
-  color: #67E8F9;
-  background: rgba(34, 211, 238, .12);
+  color: #66D2DD;
+  background: rgba(51, 190, 203, .12);
 }
 .rk-home.is-dark .rk-tag {
-  color: #67E8F9;
-  background: rgba(34, 211, 238, .12);
+  color: #66D2DD;
+  background: rgba(51, 190, 203, .12);
 }
 .rk-home.is-dark .rk-pill--success {
   background: rgba(74, 222, 128, .14);
@@ -1961,18 +1961,18 @@ onBeforeUnmount(() => {
 
 /* Step number stroke */
 .rk-home.is-dark .rk-step__num {
-  -webkit-text-stroke-color: rgba(34, 211, 238, .35);
+  -webkit-text-stroke-color: rgba(51, 190, 203, .35);
 }
 .rk-home.is-dark .rk-step__icon {
-  background: rgba(34, 211, 238, .14);
-  color: #67E8F9;
+  background: rgba(51, 190, 203, .14);
+  color: #66D2DD;
 }
 .rk-home.is-dark .rk-step__connector {
-  background: linear-gradient(90deg, rgba(34, 211, 238, .35), transparent);
+  background: linear-gradient(90deg, rgba(51, 190, 203, .35), transparent);
 }
 .rk-home.is-dark .rk-step__connector::after {
   background: var(--c-primary);
-  box-shadow: 0 0 0 4px rgba(34, 211, 238, .18);
+  box-shadow: 0 0 0 4px rgba(51, 190, 203, .18);
 }
 
 /* KPI tarjetas dentro del preview */
@@ -1988,13 +1988,13 @@ onBeforeUnmount(() => {
 /* Pricing — plan popular se rediseña para oscuro */
 .rk-home.is-dark .rk-plan--popular {
   border-color: var(--c-primary);
-  background: linear-gradient(180deg, rgba(34, 211, 238, .08) 0%, var(--c-surface) 35%);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, .45), 0 0 0 1px rgba(34, 211, 238, .12);
+  background: linear-gradient(180deg, rgba(51, 190, 203, .08) 0%, var(--c-surface) 35%);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, .45), 0 0 0 1px rgba(51, 190, 203, .12);
 }
 .rk-home.is-dark .rk-plan__features { border-top-color: var(--c-border-soft); }
 .rk-home.is-dark .rk-plan__features .q-icon {
-  background: rgba(34, 211, 238, .18);
-  color: #67E8F9;
+  background: rgba(51, 190, 203, .18);
+  color: #66D2DD;
 }
 
 /* Billing toggle */
@@ -2003,8 +2003,8 @@ onBeforeUnmount(() => {
   border-color: var(--c-border);
 }
 .rk-home.is-dark .rk-billing__opt:not(.active) .rk-billing__save {
-  background: rgba(45, 212, 191, .15);
-  color: #5EEAD4;
+  background: rgba(51, 190, 203, .15);
+  color: #66D2DD;
 }
 
 /* FAQ */
@@ -2018,8 +2018,8 @@ onBeforeUnmount(() => {
 
 /* CTA final */
 .rk-home.is-dark .rk-cta-card {
-  background: linear-gradient(135deg, #0E7C8F 0%, #0891B2 50%, #0E7C70 100%);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, .55), 0 0 0 1px rgba(34, 211, 238, .18);
+  background: linear-gradient(135deg, #067C90 0%, #0893AA 50%, #055E6D 100%);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .55), 0 0 0 1px rgba(51, 190, 203, .18);
 }
 
 /* Footer */
@@ -2046,7 +2046,7 @@ onBeforeUnmount(() => {
 
 /* Brand mark glow */
 .rk-home.is-dark .rk-brand__mark {
-  box-shadow: 0 6px 14px rgba(34, 211, 238, .28);
+  box-shadow: 0 6px 14px rgba(51, 190, 203, .28);
 }
 
 /* Floating chips elevadas sobre la card oscura */
@@ -2058,7 +2058,7 @@ onBeforeUnmount(() => {
 
 /* Hero title gradient — refresca tonos para oscuro */
 .rk-home.is-dark .rk-grad {
-  background: linear-gradient(120deg, #67E8F9 0%, #5EEAD4 100%);
+  background: linear-gradient(120deg, #66D2DD 0%, #66D2DD 100%);
   -webkit-background-clip: text;
           background-clip: text;
   color: transparent;

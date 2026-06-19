@@ -282,19 +282,19 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
   --allow:       #16a34a;  --allow-700:  #15803d;
   --deny:        #dc2626;  --deny-700:   #b91c1c;
   --inherit:     #64748b;  --inherit-700:#475569;
-  --accent:      #06b6d4;
+  --accent:      #0CA9C4;
 
-  --border:        rgba(6,182,212,.12);
-  --border-strong: rgba(6,182,212,.22);
-  --border-dash:   rgba(6,182,212,.18);
+  --border:        rgba(12, 169, 196,.12);
+  --border-strong: rgba(12, 169, 196,.22);
+  --border-dash:   rgba(12, 169, 196,.18);
   --muted:         #64708a;
   --title:         rgba(15,23,42,.88);
   --bg:            #ffffff;
-  --bg-soft:       rgba(6,182,212,.03);
-  --bg-cat:        rgba(6,182,212,.04);
-  --chip:          rgba(6,182,212,.08);
+  --bg-soft:       rgba(12, 169, 196,.03);
+  --bg-cat:        rgba(12, 169, 196,.04);
+  --chip:          rgba(12, 169, 196,.08);
   --chipText:      rgba(15,23,42,.78);
-  --shadow:        0 6px 20px rgba(6,182,212,.07), 0 2px 6px rgba(0,0,0,.04);
+  --shadow:        0 6px 20px rgba(12, 169, 196,.07), 0 2px 6px rgba(0,0,0,.04);
 
   --app-header:  56px;
   --banner:      64px;
@@ -307,17 +307,17 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
   --allow:       #22c55e;  --allow-700:  #16a34a;
   --deny:        #ef4444;  --deny-700:   #dc2626;
   --inherit:     #94a3b8;  --inherit-700:#64748b;
-  --accent:      #22d3ee;
+  --accent:      #33BECB;
 
-  --border:        rgba(6,182,212,.15);
-  --border-strong: rgba(6,182,212,.28);
-  --border-dash:   rgba(6,182,212,.22);
+  --border:        rgba(12, 169, 196,.15);
+  --border-strong: rgba(12, 169, 196,.28);
+  --border-dash:   rgba(12, 169, 196,.22);
   --muted:         #8fa3bc;
   --title:         rgba(255,255,255,.90);
   --bg:            var(--card-background);
-  --bg-soft:       rgba(6,182,212,.05);
-  --bg-cat:        rgba(6,182,212,.06);
-  --chip:          rgba(6,182,212,.1);
+  --bg-soft:       rgba(12, 169, 196,.05);
+  --bg-cat:        rgba(12, 169, 196,.06);
+  --chip:          rgba(12, 169, 196,.1);
   --chipText:      rgba(255,255,255,.82);
   --shadow:        0 6px 24px rgba(0,0,0,.4);
 }
@@ -415,7 +415,7 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
 }
 .rk-item:focus-within {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(6,182,212,.25);
+  box-shadow: 0 0 0 2px rgba(12, 169, 196,.25);
   border-color: var(--accent);
 }
 
@@ -471,7 +471,7 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
   background: transparent;
   transition: background .12s;
 }
-.rk-tri :deep(.q-btn.q-btn--actionable:hover) { background: rgba(6,182,212,.08); }
+.rk-tri :deep(.q-btn.q-btn--actionable:hover) { background: rgba(12, 169, 196,.08); }
 
 .rk-tri :deep(.q-btn:nth-child(1).q-btn--active) { background: linear-gradient(135deg, var(--allow), var(--allow-700)); }
 .rk-tri :deep(.q-btn:nth-child(2).q-btn--active) { background: linear-gradient(135deg, var(--deny),  var(--deny-700));  }
@@ -487,11 +487,11 @@ const copy = async (txt) => { try { await navigator.clipboard?.writeText(txt); }
 .rk-tags :deep(.q-badge) { border-radius: 8px; font-size: .72rem; }
 
 /* ── Resaltado diferencias ──────────────────────────────────────── */
-.rk-diff     { outline: 1px dashed rgba(6,182,212,.4);    background: rgba(6,182,212,.04);  }
+.rk-diff     { outline: 1px dashed rgba(12, 169, 196,.4);    background: rgba(12, 169, 196,.04);  }
 .rk-conflict { outline: 1px solid  rgba(220,38,38,.45);   background: rgba(220,38,38,.04);  }
 .rk-changed  { outline: 1px solid  rgba(245,158,11,.35);  background: rgba(245,158,11,.04); }
 
-.rk-dark .rk-diff     { background: rgba(6,182,212,.08);  }
+.rk-dark .rk-diff     { background: rgba(12, 169, 196,.08);  }
 .rk-dark .rk-conflict { background: rgba(220,38,38,.10);  }
 .rk-dark .rk-changed  { background: rgba(245,158,11,.09); }
 

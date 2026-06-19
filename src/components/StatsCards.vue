@@ -72,20 +72,20 @@ defineProps({
 
 .stat-card--gradient-1 {
   background: linear-gradient(135deg,
-    var(--color-primary-soft, rgba(6, 182, 212, 0.12)) 0%,
-    var(--color-accent-soft, rgba(20, 184, 166, 0.08)) 100%);
+    var(--color-primary-soft, rgba(12, 169, 196, 0.12)) 0%,
+    var(--color-accent-soft, rgba(8, 147, 170, 0.08)) 100%);
 }
 
 .stat-card--gradient-2 {
   background: linear-gradient(135deg,
-    rgba(6, 182, 212, 0.10) 0%,
+    rgba(12, 169, 196, 0.10) 0%,
     rgba(245, 158, 11, 0.08) 100%);
 }
 
 .stat-card--gradient-3 {
   background: linear-gradient(135deg,
-    var(--color-accent-soft, rgba(20, 184, 166, 0.12)) 0%,
-    rgba(6, 182, 212, 0.08) 100%);
+    var(--color-accent-soft, rgba(8, 147, 170, 0.12)) 0%,
+    rgba(12, 169, 196, 0.08) 100%);
 }
 
 body.body--dark .stat-card {
@@ -102,26 +102,26 @@ body.body--dark .stat-card {
   justify-content: center;
   font-size: 32px;
   background: rgba(255, 255, 255, 0.9);
-  color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #0CA9C4);
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.2);
 }
 
 .stat-card--gradient-1 .stat-icon-wrapper {
-  color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #0CA9C4);
 }
 
 .stat-card--gradient-2 .stat-icon-wrapper {
-  color: var(--color-accent, #14b8a6);
+  color: var(--color-accent, #0893AA);
 }
 
 .stat-card--gradient-3 .stat-icon-wrapper {
-  color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #0CA9C4);
 }
 
 body.body--dark .stat-icon-wrapper {
   background: var(--surface-soft, rgba(32, 36, 47, 0.8));
-  color: var(--color-primary, #22d3ee);
+  color: var(--color-primary, #33BECB);
 }
 
 .stat-content {

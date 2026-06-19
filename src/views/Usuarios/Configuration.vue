@@ -358,8 +358,8 @@ async function doLogout() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #06b6d4, #14b8a6);
-  box-shadow: 0 8px 20px rgba(6, 182, 212, 0.35);
+  background: linear-gradient(135deg, #0CA9C4, #0893AA);
+  box-shadow: 0 8px 20px rgba(12, 169, 196, 0.35);
   flex-shrink: 0;
 }
 
@@ -439,7 +439,7 @@ async function doLogout() {
 }
 
 .rk-card__title .q-icon {
-  color: #06b6d4;
+  color: #0CA9C4;
   font-size: 22px;
 }
 

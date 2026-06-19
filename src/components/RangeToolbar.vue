@@ -196,15 +196,15 @@ body.body--dark .range-btn:hover {
 }
 
 .range-btn--active {
-  background: linear-gradient(135deg, var(--color-primary, #06b6d4) 0%, var(--color-accent, #14b8a6) 100%);
+  background: linear-gradient(135deg, var(--color-primary, #0CA9C4) 0%, var(--color-accent, #0893AA) 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
 }
 
 .range-btn--active:hover {
-  background: linear-gradient(135deg, var(--color-primary-dark, #0891b2) 0%, var(--color-accent-dark, #0d9488) 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark, #0893AA) 0%, var(--color-accent-dark, #067C90) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 6px 16px rgba(12, 169, 196, 0.4);
 }
 
 .range-divider {
@@ -237,13 +237,13 @@ body.body--dark .range-divider {
 .export-btn {
   font-weight: 700;
   padding: 12px 28px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
   text-transform: none;
   letter-spacing: 0.02em;
 }
 
 .export-btn:hover {
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 6px 20px rgba(12, 169, 196, 0.4);
 }
 
 .refresh-btn {
@@ -291,8 +291,8 @@ body.body--dark .refresh-btn:hover {
 }
 
 .menu-icon--csv {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(20, 184, 166, 0.12) 100%);
-  color: var(--color-primary, #06b6d4);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.12) 0%, rgba(8, 147, 170, 0.12) 100%);
+  color: var(--color-primary, #0CA9C4);
 }
 
 .menu-icon--print {

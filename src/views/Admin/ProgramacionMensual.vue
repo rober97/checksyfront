@@ -749,10 +749,10 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--text-secondary, #475569);
 }
-.rk-grid-day--weekend { background: var(--color-primary-soft, rgba(6,182,212,0.08)); }
+.rk-grid-day--weekend { background: var(--color-primary-soft, rgba(12, 169, 196,0.08)); }
 .rk-grid-day--today {
-  background: var(--color-primary-soft, rgba(6,182,212,0.18)) !important;
-  color: var(--color-primary-dark, #0891b2);
+  background: var(--color-primary-soft, rgba(12, 169, 196,0.18)) !important;
+  color: var(--color-primary-dark, #0893AA);
 }
 .rk-grid-day__short {
   font-size: 10px;
@@ -794,13 +794,13 @@ onMounted(async () => {
   transition: background 0.1s;
 }
 .rk-grid-cell:hover {
-  background: var(--color-primary-soft, rgba(6,182,212,0.08));
+  background: var(--color-primary-soft, rgba(12, 169, 196,0.08));
 }
 .rk-grid-cell--weekend { background: var(--surface-soft, #f8fafc); }
-.rk-grid-cell--today { background: var(--color-primary-soft, rgba(6,182,212,0.12)); }
+.rk-grid-cell--today { background: var(--color-primary-soft, rgba(12, 169, 196,0.12)); }
 .rk-grid-cell--has-shifts { background: var(--color-success-soft, rgba(34, 197, 94, 0.08)); }
 .rk-grid-cell--off { color: var(--border-color, #cbd5e1); }
-.rk-grid-cell:focus { outline: 2px solid var(--color-primary, #06b6d4); outline-offset: -2px; }
+.rk-grid-cell:focus { outline: 2px solid var(--color-primary, #0CA9C4); outline-offset: -2px; }
 
 .rk-grid-segments {
   display: flex;

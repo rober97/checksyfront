@@ -181,7 +181,7 @@ function clearDoc() {
 .crt-intro {
   display: flex; align-items: flex-start; gap: 12px;
   padding: 14px 16px;
-  background: var(--color-primary-soft); border: 1px solid rgba(6,182,212,.25);
+  background: var(--color-primary-soft); border: 1px solid rgba(12, 169, 196,.25);
   border-left: 3px solid var(--color-primary); border-radius: 10px;
   color: var(--text-primary);
 }
@@ -214,12 +214,12 @@ function clearDoc() {
 .crt-drop-zone {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   min-height: 140px; padding: 16px;
-  border: 2px dashed rgba(6,182,212,.3); border-radius: 10px;
+  border: 2px dashed rgba(12, 169, 196,.3); border-radius: 10px;
   background: var(--color-primary-soft); cursor: pointer; position: relative;
   transition: border-color .15s, background .15s;
   gap: 6px;
 }
-.crt-drop-zone:hover { border-color: rgba(6,182,212,.6); background: var(--color-primary-soft); }
+.crt-drop-zone:hover { border-color: rgba(12, 169, 196,.6); background: var(--color-primary-soft); }
 .crt-drop-zone.has-doc { border-color: rgba(22,163,74,.4); background: var(--color-success-soft); }
 .crt-drop-zone.has-doc:hover { border-color: rgba(22,163,74,.6); background: var(--color-success-soft); }
 

@@ -29,8 +29,8 @@
               <path d="M0,4 Q50,0 100,4 T200,4" fill="none" stroke="url(#grad-underline)" stroke-width="2"/>
               <defs>
                 <linearGradient id="grad-underline" x1="0%" x2="100%">
-                  <stop offset="0%" style="stop-color: #06b6d4; stop-opacity: 0.6" />
-                  <stop offset="100%" style="stop-color: #14b8a6; stop-opacity: 0.8" />
+                  <stop offset="0%" style="stop-color: #0CA9C4; stop-opacity: 0.6" />
+                  <stop offset="100%" style="stop-color: #0893AA; stop-opacity: 0.8" />
                 </linearGradient>
               </defs>
             </svg>
@@ -47,9 +47,9 @@
         <svg class="rk-timeline-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color: #06b6d4; stop-opacity: 0.4" />
-              <stop offset="50%" style="stop-color: #14b8a6; stop-opacity: 0.6" />
-              <stop offset="100%" style="stop-color: #22d3ee; stop-opacity: 0.4" />
+              <stop offset="0%" style="stop-color: #0CA9C4; stop-opacity: 0.4" />
+              <stop offset="50%" style="stop-color: #0893AA; stop-opacity: 0.6" />
+              <stop offset="100%" style="stop-color: #33BECB; stop-opacity: 0.4" />
             </linearGradient>
             <filter id="glow">
               <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -72,9 +72,9 @@
           />
           
           <!-- Node circles -->
-          <circle cx="200" cy="150" r="8" fill="#06b6d4" class="rk-node-circle" />
-          <circle cx="600" cy="350" r="8" fill="#14b8a6" class="rk-node-circle" />
-          <circle cx="1000" cy="600" r="8" fill="#22d3ee" class="rk-node-circle" />
+          <circle cx="200" cy="150" r="8" fill="#0CA9C4" class="rk-node-circle" />
+          <circle cx="600" cy="350" r="8" fill="#0893AA" class="rk-node-circle" />
+          <circle cx="1000" cy="600" r="8" fill="#33BECB" class="rk-node-circle" />
         </svg>
 
         <!-- Steps Cards en diagonal -->
@@ -305,11 +305,11 @@ const particleStyle = (i) => {
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
+  --color-primary: #0CA9C4;
+  --color-primary-light: #33BECB;
+  --color-accent: #0893AA;
   --color-bg-dark: #0a0e14;
-  --color-surface: rgba(6, 182, 212, 0.05);
+  --color-surface: rgba(12, 169, 196, 0.05);
 }
 
 /* Section */
@@ -334,8 +334,8 @@ const particleStyle = (i) => {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(12, 169, 196, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 169, 196, 0.03) 1px, transparent 1px);
   background-size: 80px 80px;
   opacity: 0.5;
 }
@@ -409,8 +409,8 @@ const particleStyle = (i) => {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--color-primary-light);
-  background: rgba(6, 182, 212, 0.1);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.1);
+  border: 1.5px solid rgba(12, 169, 196, 0.25);
   border-radius: 50px;
   backdrop-filter: blur(10px);
 }
@@ -516,8 +516,8 @@ const particleStyle = (i) => {
 /* Step Cards - Optimized */
 .rk-step-diagonal-card {
   position: relative;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.04), rgba(20, 184, 166, 0.04));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.04), rgba(8, 147, 170, 0.04));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 28px;
   padding: clamp(28px, 4vw, 36px);
   overflow: hidden;
@@ -540,8 +540,8 @@ const particleStyle = (i) => {
 
 .rk-step-diagonal-card:hover {
   transform: translateY(-8px) !important;
-  border-color: rgba(6, 182, 212, 0.4);
-  box-shadow: 0 20px 40px rgba(6, 182, 212, 0.2);
+  border-color: rgba(12, 169, 196, 0.4);
+  box-shadow: 0 20px 40px rgba(12, 169, 196, 0.2);
 }
 
 .rk-card-bg-effect {
@@ -549,7 +549,7 @@ const particleStyle = (i) => {
   inset: 0;
   background: linear-gradient(135deg, 
     transparent 0%,
-    rgba(6, 182, 212, 0.08) 50%,
+    rgba(12, 169, 196, 0.08) 50%,
     transparent 100%
   );
   opacity: 0;
@@ -591,8 +591,8 @@ const particleStyle = (i) => {
 .rk-number-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(20, 184, 166, 0.15));
-  border: 2px solid rgba(6, 182, 212, 0.3);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.15), rgba(8, 147, 170, 0.15));
+  border: 2px solid rgba(12, 169, 196, 0.3);
   border-radius: 50%;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
@@ -600,8 +600,8 @@ const particleStyle = (i) => {
 
 .rk-step-diagonal-card:hover .rk-number-bg {
   transform: rotate(90deg) scale(1.05);
-  border-color: rgba(6, 182, 212, 0.5);
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(20, 184, 166, 0.25));
+  border-color: rgba(12, 169, 196, 0.5);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.25), rgba(8, 147, 170, 0.25));
 }
 
 .rk-number-text {
@@ -646,7 +646,7 @@ const particleStyle = (i) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 20px;
   transition: transform 0.3s ease;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.3);
 }
 
 .rk-step-diagonal-card:hover .rk-icon-bg-layer {
@@ -656,14 +656,14 @@ const particleStyle = (i) => {
 .rk-icon-ring {
   position: absolute;
   inset: -6px;
-  border: 2px solid rgba(6, 182, 212, 0.3);
+  border: 2px solid rgba(12, 169, 196, 0.3);
   border-radius: 24px;
   transition: all 0.3s ease;
 }
 
 .rk-step-diagonal-card:hover .rk-icon-ring {
   inset: -8px;
-  border-color: rgba(6, 182, 212, 0.5);
+  border-color: rgba(12, 169, 196, 0.5);
 }
 
 .rk-step-icon {
@@ -722,8 +722,8 @@ const particleStyle = (i) => {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: rgba(6, 182, 212, 0.12);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.12);
+  border: 1px solid rgba(12, 169, 196, 0.2);
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -777,7 +777,7 @@ const particleStyle = (i) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(12, 169, 196, 0.15);
   border-radius: 6px;
   flex-shrink: 0;
 }
@@ -790,7 +790,7 @@ const particleStyle = (i) => {
 /* Action Button */
 .rk-step-action {
   padding-top: 20px;
-  border-top: 1px solid rgba(6, 182, 212, 0.1);
+  border-top: 1px solid rgba(12, 169, 196, 0.1);
   margin-bottom: 60px;
 }
 
@@ -803,7 +803,7 @@ const particleStyle = (i) => {
 
 .rk-action-btn:hover {
   color: var(--color-accent);
-  background: rgba(6, 182, 212, 0.1);
+  background: rgba(12, 169, 196, 0.1);
 }
 
 .rk-action-btn .q-icon {
@@ -878,8 +878,8 @@ const particleStyle = (i) => {
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
-  background: rgba(6, 182, 212, 0.12);
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.12);
+  border: 1px solid rgba(12, 169, 196, 0.25);
   border-radius: 20px;
   backdrop-filter: blur(10px);
   font-size: 0.8rem;
@@ -897,8 +897,8 @@ const particleStyle = (i) => {
 }
 
 .rk-status-indicator.is-active {
-  background: rgba(6, 182, 212, 0.18);
-  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(12, 169, 196, 0.18);
+  border-color: rgba(12, 169, 196, 0.4);
   color: var(--color-primary-light);
 }
 
@@ -920,12 +920,12 @@ const particleStyle = (i) => {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   padding: 32px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(20, 184, 166, 0.05));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.05), rgba(8, 147, 170, 0.05));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 24px;
   backdrop-filter: blur(10px);
   margin-bottom: clamp(3rem, 6vw, 5rem);
-  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+  box-shadow: 0 8px 32px rgba(12, 169, 196, 0.1);
 }
 
 .rk-stat-item {
@@ -933,15 +933,15 @@ const particleStyle = (i) => {
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: rgba(6, 182, 212, 0.03);
+  background: rgba(12, 169, 196, 0.03);
   border-radius: 16px;
   transition: all 0.3s ease;
 }
 
 .rk-stat-item:hover {
-  background: rgba(6, 182, 212, 0.08);
+  background: rgba(12, 169, 196, 0.08);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 6px 20px rgba(12, 169, 196, 0.15);
 }
 
 .rk-stat-icon-wrap {
@@ -953,7 +953,7 @@ const particleStyle = (i) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 12px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.25);
   transition: transform 0.3s;
 }
 
@@ -995,20 +995,20 @@ const particleStyle = (i) => {
   grid-template-columns: 1.5fr 1fr;
   gap: 48px;
   padding: clamp(40px, 6vw, 60px);
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(20, 184, 166, 0.08));
-  border: 2px solid rgba(6, 182, 212, 0.2);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.08), rgba(8, 147, 170, 0.08));
+  border: 2px solid rgba(12, 169, 196, 0.2);
   border-radius: 32px;
   backdrop-filter: blur(20px);
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 16px 48px rgba(12, 169, 196, 0.15);
 }
 
 .rk-cta-bg-pattern {
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(20, 184, 166, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(12, 169, 196, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(8, 147, 170, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -1023,8 +1023,8 @@ const particleStyle = (i) => {
   gap: 8px;
   padding: 10px 20px;
   margin-bottom: 20px;
-  background: rgba(6, 182, 212, 0.15);
-  border: 1.5px solid rgba(6, 182, 212, 0.3);
+  background: rgba(12, 169, 196, 0.15);
+  border: 1.5px solid rgba(12, 169, 196, 0.3);
   border-radius: 50px;
   font-size: 0.88rem;
   font-weight: 700;
@@ -1077,23 +1077,23 @@ const particleStyle = (i) => {
 .rk-cta-btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: #fff;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.3);
 }
 
 .rk-cta-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.4);
 }
 
 .rk-cta-btn-secondary {
   color: var(--color-primary-light);
-  border: 2px solid rgba(6, 182, 212, 0.3);
-  background: rgba(6, 182, 212, 0.05);
+  border: 2px solid rgba(12, 169, 196, 0.3);
+  background: rgba(12, 169, 196, 0.05);
 }
 
 .rk-cta-btn-secondary:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(12, 169, 196, 0.5);
+  background: rgba(12, 169, 196, 0.12);
   transform: translateY(-2px);
 }
 

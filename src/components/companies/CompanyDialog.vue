@@ -405,8 +405,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(6,182,212,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6,182,212,.03) 1px, transparent 1px);
+    linear-gradient(rgba(12, 169, 196,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 169, 196,.03) 1px, transparent 1px);
   background-size: 24px 24px;
   pointer-events: none;
 }
@@ -459,8 +459,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
 
 /* ▶ ACTIVE STATE — impossible to miss */
 .cd-step.is-active {
-  background: linear-gradient(135deg, rgba(6,182,212,.22) 0%, rgba(6,182,212,.12) 100%);
-  box-shadow: inset 0 0 0 1px rgba(6,182,212,.35), 0 4px 12px rgba(6,182,212,.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196,.22) 0%, rgba(12, 169, 196,.12) 100%);
+  box-shadow: inset 0 0 0 1px rgba(12, 169, 196,.35), 0 4px 12px rgba(12, 169, 196,.15);
 }
 
 .cd-create-payroll {
@@ -518,7 +518,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
   width: 3px; height: 65%;
   background: linear-gradient(180deg, var(--color-primary), var(--color-primary-dark));
   border-radius: 0 4px 4px 0;
-  box-shadow: 2px 0 8px rgba(6,182,212,.5);
+  box-shadow: 2px 0 8px rgba(12, 169, 196,.5);
 }
 
 /* Badge circle */
@@ -534,9 +534,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
 }
 .cd-step.is-active .cd-step-badge {
   background: var(--color-primary-soft);
-  border-color: rgba(6,182,212,.5);
+  border-color: rgba(12, 169, 196,.5);
   color: var(--color-primary);
-  box-shadow: 0 0 10px rgba(6,182,212,.2);
+  box-shadow: 0 0 10px rgba(12, 169, 196,.2);
 }
 .cd-step.is-done .cd-step-badge { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.3); color: #4ade80; }
 .cd-step.is-warn .cd-step-badge { background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.3); color: #fbbf24; }
@@ -603,7 +603,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
 .cd-ph-icon {
   width: 36px; height: 36px; border-radius: 9px;
   background: var(--color-primary-soft);
-  border: 1px solid rgba(6,182,212,.25);
+  border: 1px solid rgba(12, 169, 196,.25);
   display: flex; align-items: center; justify-content: center; color: var(--color-primary-dark); flex-shrink: 0;
 }
 
@@ -686,7 +686,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
 }
 .cd-action-primary.is-ready:hover {
   background: linear-gradient(135deg, #0369a1 0%, var(--color-primary-dark) 100%);
-  box-shadow: 0 6px 20px rgba(6,182,212,.4);
+  box-shadow: 0 6px 20px rgba(12, 169, 196,.4);
   transform: translateY(-1px);
 }
 .cd-action-primary.is-ready:active { transform: translateY(0); box-shadow: 0 2px 8px var(--color-primary-soft); }

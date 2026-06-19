@@ -936,7 +936,7 @@ async function saveOne() {
   --c-accent:         var(--color-primary);
   --c-accent-hover:   var(--color-primary-dark);
   --c-accent-soft:    var(--color-primary-soft);
-  --c-accent-mid:     rgba(6,182,212,0.30);
+  --c-accent-mid:     rgba(12, 169, 196,0.30);
   --c-earn:           #166534;
   --c-earn-bg:        #f0fdf4;
   --c-earn-border:    #bbf7d0;

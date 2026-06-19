@@ -368,7 +368,7 @@ watch(() => route.path, () => {
   --rk-carbon-3: #0f1013;
   --rk-dark: var(--rk-carbon-1);
   --rk-light: #ffffff;
-  --rk-glow: rgba(6,182,212,.24);
+  --rk-glow: rgba(12, 169, 196,.24);
   --rk-border: rgba(255,255,255,.07);
   --rk-beam-speed: 1.45s;
   --rk-beam-strength: .95;
@@ -424,7 +424,7 @@ watch(() => route.path, () => {
   display:flex; align-items:center; gap:.6rem; padding:.5rem .6rem; border-radius:8px; cursor:pointer;
 }
 .rk-search__item:hover{ background:var(--color-primary-soft) }
-.rk-search__item.active{ background:rgba(6,182,212,.32); color:#fff }
+.rk-search__item.active{ background:rgba(12, 169, 196,.32); color:#fff }
 .rk-search__info{ flex:1; min-width:0 }
 .rk-search__label{ font-weight:600 }
 .rk-search__desc{ font-size:.75rem; opacity:.8 }
@@ -456,7 +456,7 @@ watch(() => route.path, () => {
   transition: background-color .25s ease;
 }
 .rk-nav:hover::-webkit-scrollbar-thumb{ background: rgba(148,163,184,.28); background-clip: padding-box; }
-.rk-nav:hover::-webkit-scrollbar-thumb:hover{ background: rgba(6,182,212,.55); background-clip: padding-box; }
+.rk-nav:hover::-webkit-scrollbar-thumb:hover{ background: rgba(12, 169, 196,.55); background-clip: padding-box; }
 .rk-nav__group{ padding: 2px 2px 8px }
 .rk-group__head{
   display:flex; align-items:center; gap:.75rem; padding:.6rem .75rem; border-radius:12px; cursor:pointer; transition:.2s;
@@ -585,9 +585,9 @@ watch(() => route.path, () => {
 .rk-fx__c{ width:100px; height:100px; bottom:100px; right:50px }
 
 /* ===== Theme helpers ===== */
-.avatar-primary   { color:#fff; background:var(--color-primary-dark, #0891b2) }
-.avatar-secondary { color:#fff; background:var(--color-accent, #14b8a6) }
-.avatar-accent    { color:#fff; background:var(--color-accent-dark, #0d9488) }
-.avatar-info      { color:#fff; background:var(--color-info, #0891b2) }
+.avatar-primary   { color:#fff; background:var(--color-primary-dark, #0893AA) }
+.avatar-secondary { color:#fff; background:var(--color-accent, #0893AA) }
+.avatar-accent    { color:#fff; background:var(--color-accent-dark, #067C90) }
+.avatar-info      { color:#fff; background:var(--color-info, #0893AA) }
 .avatar-warning   { color:#111; background:#ffca28 }
 </style>

@@ -774,22 +774,22 @@ const onModeChange = () => {
 /* ── Variables de tema ───────────────────────────────────────────── */
 .rk-banner {
   --b-bg:      #ffffff;
-  --b-border:  rgba(6,182,212,.14);
-  --b-shadow:  0 4px 16px rgba(6,182,212,.07), 0 1px 4px rgba(0,0,0,.04);
-  --b-divider: rgba(6,182,212,.18);
+  --b-border:  rgba(12, 169, 196,.14);
+  --b-shadow:  0 4px 16px rgba(12, 169, 196,.07), 0 1px 4px rgba(0,0,0,.04);
+  --b-divider: rgba(12, 169, 196,.18);
   --b-title:   rgba(15,23,42,.85);
   --b-muted:   rgba(15,23,42,.48);
-  --b-icon:    #06b6d4;
+  --b-icon:    #0CA9C4;
   --b-h:       44px;
 }
 .body--dark .rk-banner {
   --b-bg:      rgba(10,16,28,.97);
-  --b-border:  rgba(6,182,212,.18);
+  --b-border:  rgba(12, 169, 196,.18);
   --b-shadow:  0 4px 20px rgba(0,0,0,.35);
-  --b-divider: rgba(6,182,212,.22);
+  --b-divider: rgba(12, 169, 196,.22);
   --b-title:   rgba(255,255,255,.90);
   --b-muted:   rgba(255,255,255,.45);
-  --b-icon:    #22d3ee;
+  --b-icon:    #33BECB;
 }
 
 /* ── Banner card ─────────────────────────────────────────────────── */
@@ -835,7 +835,7 @@ const onModeChange = () => {
   min-height: 36px;
 }
 .rk-modes :deep(.q-btn--active) {
-  box-shadow: 0 4px 12px rgba(6,182,212,.25);
+  box-shadow: 0 4px 12px rgba(12, 169, 196,.25);
 }
 
 /* ── Chips ───────────────────────────────────────────────────────── */

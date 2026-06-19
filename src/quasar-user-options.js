@@ -6,13 +6,13 @@ import '@quasar/extras/material-icons/material-icons.css'
 export default {
   config: {
     brand: {
-      primary:   '#06b6d4',  // cyan  — paleta Recksy
-      secondary: '#ffb400',  // amber — igual que antes
-      accent:    '#14b8a6',  // teal
-      positive:  '#22c55e',
-      negative:  '#ef4444',
-      info:      '#22d3ee',
-      warning:   '#f59e0b',
+      primary:   '#0CA9C4',  // Aurora primary-500
+      secondary: '#ffb400',  // amber
+      accent:    '#0893AA',  // Aurora primary-600
+      positive:  '#22c55e',  // Aurora success-500
+      negative:  '#ef4444',  // Aurora danger-500
+      info:      '#0EA5E9',  // Aurora info-500 (azul)
+      warning:   '#f59e0b',  // Aurora warning-500
       dark:      '#0f172a',
     }
   },

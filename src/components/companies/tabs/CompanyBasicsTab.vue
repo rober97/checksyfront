@@ -232,7 +232,7 @@ watch(() => m.value, emitValid, { deep: true })
   width: 30px; height: 30px; border-radius: 7px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.cbt-icon--blue  { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid rgba(6,182,212,.25); }
+.cbt-icon--blue  { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid rgba(12, 169, 196,.25); }
 .cbt-icon--green { background: var(--color-success-soft); color: var(--color-success); border: 1px solid rgba(22,163,74,.25); }
 
 .cbt-section-title { font-size: .83rem; font-weight: 700; color: var(--text-primary); }

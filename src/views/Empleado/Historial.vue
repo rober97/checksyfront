@@ -1035,7 +1035,7 @@ body.body--dark .attendance-page {
 
 .filmstrip-thumb--active {
   border-color: #fff;
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 0 0 3px rgba(12, 169, 196, 0.5);
 }
 
 .filmstrip-overlay {

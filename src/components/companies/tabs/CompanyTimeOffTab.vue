@@ -303,18 +303,18 @@ watch(() => vm.value, emitValid, { deep: true })
 /* Preset strip */
 .ctt-preset-strip {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 8px 12px; background: var(--color-primary-soft); border: 1px solid rgba(6,182,212,.15);
+  padding: 8px 12px; background: var(--color-primary-soft); border: 1px solid rgba(12, 169, 196,.15);
   border-radius: 10px;
 }
 .ctt-preset-label { font-size: .72rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 5px; margin-right: 4px; }
 .ctt-preset-btn {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 11px; border: 1.5px solid rgba(6,182,212,.25); border-radius: 7px;
+  padding: 5px 11px; border: 1.5px solid rgba(12, 169, 196,.25); border-radius: 7px;
   background: var(--card-background); color: var(--color-primary-dark); font-family: inherit; font-size: .76rem; font-weight: 700;
   cursor: pointer; transition: all .13s;
 }
-.ctt-preset-btn:hover { background: var(--color-primary-soft); border-color: rgba(6,182,212,.5); box-shadow: 0 2px 8px rgba(6,182,212,.15); }
-.body--dark .ctt-preset-btn { background: var(--color-primary-soft); border-color: rgba(6,182,212,.25); color: var(--color-primary); }
+.ctt-preset-btn:hover { background: var(--color-primary-soft); border-color: rgba(12, 169, 196,.5); box-shadow: 0 2px 8px rgba(12, 169, 196,.15); }
+.body--dark .ctt-preset-btn { background: var(--color-primary-soft); border-color: rgba(12, 169, 196,.25); color: var(--color-primary); }
 .body--dark .ctt-preset-btn:hover { background: var(--color-primary-soft); }
 
 .ctt-grid { display: grid; grid-template-columns: 1fr 200px; gap: 14px; align-items: start; }
@@ -333,11 +333,11 @@ watch(() => vm.value, emitValid, { deep: true })
   width: 28px; height: 28px; border-radius: 7px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.ctt-ci--indigo { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid rgba(6,182,212,.25); }
-.ctt-ci--teal   { background: var(--color-accent-soft); color: var(--color-accent-dark); border: 1px solid rgba(13,148,136,.25); }
+.ctt-ci--indigo { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid rgba(12, 169, 196,.25); }
+.ctt-ci--teal   { background: var(--color-accent-soft); color: var(--color-accent-dark); border: 1px solid rgba(6, 124, 144,.25); }
 .ctt-ci--orange { background: var(--color-warning-soft); color: var(--color-warning); border: 1px solid rgba(217,119,6,.25); }
-.body--dark .ctt-ci--indigo { background: var(--color-primary-soft); border-color: rgba(6,182,212,.25); color: var(--color-primary); }
-.body--dark .ctt-ci--teal   { background: var(--color-accent-soft); border-color: rgba(45,212,191,.2); color: var(--color-accent); }
+.body--dark .ctt-ci--indigo { background: var(--color-primary-soft); border-color: rgba(12, 169, 196,.25); color: var(--color-primary); }
+.body--dark .ctt-ci--teal   { background: var(--color-accent-soft); border-color: rgba(51, 190, 203,.2); color: var(--color-accent); }
 .body--dark .ctt-ci--orange { background: var(--color-warning-soft); border-color: rgba(253,186,116,.2); color: var(--color-warning); }
 
 .ctt-card-title { font-size: .84rem; font-weight: 700; color: var(--text-primary); flex: 1; }
@@ -382,7 +382,7 @@ watch(() => vm.value, emitValid, { deep: true })
   background: #f0fdfa; border: 1px solid #99f6e4;
   font-size: .76rem; color: #0f766e; font-weight: 600;
 }
-.body--dark .ctt-next-transfer { background: rgba(13,148,136,.08); border-color: rgba(13,148,136,.25); color: #2dd4bf; }
+.body--dark .ctt-next-transfer { background: rgba(6, 124, 144,.08); border-color: rgba(6, 124, 144,.25); color: #33BECB; }
 
 /* Cap note */
 .ctt-cap-field { margin-top: 10px; }
@@ -401,7 +401,7 @@ watch(() => vm.value, emitValid, { deep: true })
 
 .ctt-summary-card {
   background: var(--background-color);
-  border: 1px solid rgba(6,182,212,.15); border-radius: 12px; padding: 14px;
+  border: 1px solid rgba(12, 169, 196,.15); border-radius: 12px; padding: 14px;
   color: var(--text-primary);
 }
 .ctt-sum-section { margin-bottom: 4px; }

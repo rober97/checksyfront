@@ -1082,7 +1082,7 @@ const horaBonita   = ts => date.formatDate(ts, 'HH:mm');
 const formatFecha  = ts => date.formatDate(ts, 'DD/MM/YYYY');
 const openInMaps   = m => { const { lat, lng } = m?.ubicacion||{}; if (lat&&lng) window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank'); };
 
-const AVATAR_COLORS = ['#0891b2','#06b6d4','#0d9488','#14b8a6','#0ea5e9','#22d3ee','#2dd4bf'];
+const AVATAR_COLORS = ['#0893AA','#0CA9C4','#067C90','#0893AA','#067C90','#33BECB','#33BECB'];
 const avatarColor   = (name='') => AVATAR_COLORS[(name||'?').charCodeAt(0) % AVATAR_COLORS.length];
 
 /* ── Export/Print ───────────────────────────── */
@@ -1128,18 +1128,18 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   --c-text:      var(--text-primary, #0f1117);
   --c-text2:     var(--text-secondary, #5a6482);
   --c-text3:     var(--text-muted, #9aa1b9);
-  --c-primary:   var(--color-primary, #06b6d4);
-  --c-primary-l: var(--color-primary-soft, rgba(8,145,178,0.12));
+  --c-primary:   var(--color-primary, #0CA9C4);
+  --c-primary-l: var(--color-primary-soft, rgba(8, 147, 170,0.12));
   --c-ok:        var(--color-success, #16a34a);
   --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
   --c-warn:      var(--color-warning, #d97706);
   --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
   --c-err:       var(--color-danger, #dc2626);
   --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
-  --c-all:       var(--color-primary, #06b6d4);
-  --c-all-l:     var(--color-primary-soft, rgba(8,145,178,0.12));
-  --c-teal:      var(--color-accent, #0d9488);
-  --c-teal-l:    var(--color-accent-soft, rgba(13,148,136,0.12));
+  --c-all:       var(--color-primary, #0CA9C4);
+  --c-all-l:     var(--color-primary-soft, rgba(8, 147, 170,0.12));
+  --c-teal:      var(--color-accent, #067C90);
+  --c-teal-l:    var(--color-accent-soft, rgba(6, 124, 144,0.12));
   --shadow-sm:   var(--app-shadow-sm, 0 1px 3px rgba(0,0,0,0.07));
   --shadow-md:   var(--app-shadow-md, 0 4px 16px rgba(0,0,0,0.08));
   --shadow-lg:   var(--app-shadow-lg, 0 12px 36px rgba(0,0,0,0.1));
@@ -1166,11 +1166,11 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   --c-text:      var(--text-primary, #e8eaf2);
   --c-text2:     var(--text-secondary, #9aa3b8);
   --c-text3:     var(--text-muted, #6b7488);
-  --c-primary-l: var(--color-primary-soft, rgba(34,211,238,0.16));
+  --c-primary-l: var(--color-primary-soft, rgba(51, 190, 203,0.16));
   --c-ok-l:      var(--color-success-soft, rgba(34,197,94,0.18));
   --c-warn-l:    var(--color-warning-soft, rgba(245,158,11,0.18));
   --c-err-l:     var(--color-danger-soft, rgba(248,113,113,0.18));
-  --c-all-l:     var(--color-primary-soft, rgba(34,211,238,0.16));
+  --c-all-l:     var(--color-primary-soft, rgba(51, 190, 203,0.16));
   --shadow-sm:   var(--app-shadow-sm, 0 2px 8px rgba(0,0,0,0.3));
   --shadow-md:   var(--app-shadow-md, 0 10px 30px rgba(0,0,0,0.38));
   --shadow-lg:   var(--app-shadow-lg, 0 20px 60px rgba(0,0,0,0.5));
@@ -1197,7 +1197,7 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   width:52px; height:52px; border-radius:16px; position:relative;
   background:linear-gradient(135deg,var(--c-primary),var(--c-teal));
   color:#fff; display:flex; align-items:center; justify-content:center;
-  box-shadow:0 8px 24px rgba(8,145,178,0.35); flex-shrink:0;
+  box-shadow:0 8px 24px rgba(8, 147, 170,0.35); flex-shrink:0;
 }
 .rk-icon-pulse {
   position:absolute; inset:-6px;
@@ -1392,8 +1392,8 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   --c-text:     var(--text-primary, #0f1117);
   --c-text2:    var(--text-secondary, #5a6482);
   --c-text3:    var(--text-muted, #9aa1b9);
-  --c-primary:  var(--color-primary, #06b6d4);
-  --c-primary-l:var(--color-primary-soft, rgba(8,145,178,0.12));
+  --c-primary:  var(--color-primary, #0CA9C4);
+  --c-primary-l:var(--color-primary-soft, rgba(8, 147, 170,0.12));
   --c-ok:       var(--color-success, #16a34a);
   --c-ok-l:     var(--color-success-soft, rgba(22,163,74,0.12));
   --c-err:      var(--color-danger, #dc2626);
@@ -1418,7 +1418,7 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   --c-text:      var(--text-primary, #e8eaf2);
   --c-text2:     var(--text-secondary, #9aa3b8);
   --c-text3:     var(--text-muted, #6b7488);
-  --c-primary-l: var(--color-primary-soft, rgba(34,211,238,0.16));
+  --c-primary-l: var(--color-primary-soft, rgba(51, 190, 203,0.16));
   --c-ok-l:      var(--color-success-soft, rgba(34,197,94,0.18));
   --c-err-l:     var(--color-danger-soft, rgba(248,113,113,0.18));
 }
@@ -1427,7 +1427,7 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .rk-modal-header {
   display:flex; align-items:center; justify-content:space-between;
   padding:20px 24px;
-  background:linear-gradient(135deg,var(--c-primary),var(--c-teal,#0d9488));
+  background:linear-gradient(135deg,var(--c-primary),var(--c-teal,#067C90));
   color:#fff; flex-shrink:0;
 }
 .modal-header-left  { display:flex; align-items:center; gap:14px; }
@@ -1587,7 +1587,7 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
   padding:0; cursor:pointer; background:var(--c-surface);
   transition:transform 0.12s, box-shadow 0.12s, border-color 0.12s;
 }
-.titem-photo:hover { transform:scale(1.06); border-color:var(--c-primary); box-shadow:0 4px 14px var(--color-primary-soft, rgba(8,145,178,0.28)); }
+.titem-photo:hover { transform:scale(1.06); border-color:var(--c-primary); box-shadow:0 4px 14px var(--color-primary-soft, rgba(8, 147, 170,0.28)); }
 .titem-photo-img { width:100%; height:100%; }
 .titem-photo-ov {
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;

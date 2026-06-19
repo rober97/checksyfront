@@ -94,10 +94,10 @@ function onOpenHelp () { emit('help') }
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 .body--light .rk-head{
-  background: linear-gradient(180deg, rgba(6,182,212,0.08), rgba(6,182,212,0.02));
+  background: linear-gradient(180deg, rgba(12, 169, 196,0.08), rgba(12, 169, 196,0.02));
 }
 .body--dark .rk-head{
-  background: linear-gradient(180deg, rgba(6,182,212,0.12), rgba(6,182,212,0.04));
+  background: linear-gradient(180deg, rgba(12, 169, 196,0.12), rgba(12, 169, 196,0.04));
 }
 
 /* Icon badge */
@@ -105,10 +105,10 @@ function onOpenHelp () { emit('help') }
   width: 36px; height: 36px;
   border-radius: 12px;
   background:
-    radial-gradient(circle at 30% 20%, rgba(6,182,212,0.38), rgba(6,182,212,0) 68%);
-  border: 1px solid rgba(6,182,212,0.28);
+    radial-gradient(circle at 30% 20%, rgba(12, 169, 196,0.38), rgba(12, 169, 196,0) 68%);
+  border: 1px solid rgba(12, 169, 196,0.28);
   color: var(--color-primary);
-  box-shadow: inset 0 0 16px rgba(6,182,212,0.15);
+  box-shadow: inset 0 0 16px rgba(12, 169, 196,0.15);
 }
 
 /* Subtítulo */

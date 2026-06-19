@@ -334,7 +334,7 @@ const activeCompanyOptions = computed(() =>
 )
 
 /* ── Helpers de presentación ───────────────────── */
-const AVATAR_COLORS = ["#06b6d4","#0891b2","#14b8a6","#0d9488","#f59e0b","#ef4444","#22d3ee"]
+const AVATAR_COLORS = ["#0CA9C4","#0893AA","#0893AA","#067C90","#f59e0b","#ef4444","#33BECB"]
 const avatarColor = (name="") => AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
 const initials = (fn="", ln="") => ((fn?.[0]||"") + (ln?.[0]||"") || "U").toUpperCase()
 const statusNice = (s) => ({ active: 'Activo', inactive: 'Inactivo', suspended: 'Suspendido', pending: 'Pendiente' }[s] || s || '—')
@@ -538,16 +538,16 @@ onMounted(() => {
   --c-text:      var(--text-primary, #0f1117);
   --c-text2:     var(--text-secondary, #5a6482);
   --c-text3:     var(--text-muted, #9aa1b9);
-  --c-primary:   var(--color-primary, #06b6d4);
-  --c-primary-l: var(--color-primary-soft, rgba(8,145,178,0.12));
+  --c-primary:   var(--color-primary, #0CA9C4);
+  --c-primary-l: var(--color-primary-soft, rgba(8, 147, 170,0.12));
   --c-ok:        var(--color-success, #16a34a);
   --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
   --c-warn:      var(--color-warning, #d97706);
   --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
   --c-err:       var(--color-danger, #dc2626);
   --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
-  --c-teal:      var(--color-accent, #14b8a6);
-  --c-teal-l:    var(--color-accent-soft, rgba(13,148,136,0.12));
+  --c-teal:      var(--color-accent, #0893AA);
+  --c-teal-l:    var(--color-accent-soft, rgba(6, 124, 144,0.12));
   --shadow-sm:   var(--app-shadow-sm);
   --shadow-md:   var(--app-shadow-md);
   --shadow-lg:   var(--app-shadow-lg);
@@ -600,7 +600,7 @@ onMounted(() => {
   background:linear-gradient(135deg, var(--c-primary), var(--c-teal));
   color:#fff;
   display:flex; align-items:center; justify-content:center;
-  box-shadow:0 8px 24px rgba(6,182,212,0.35); flex-shrink:0;
+  box-shadow:0 8px 24px rgba(12, 169, 196,0.35); flex-shrink:0;
 }
 .rk-header-text { flex:1; min-width:240px; }
 .rk-title { font-family:var(--ff-display); font-size:26px; font-weight:700; letter-spacing:-0.5px; margin:0 0 4px; line-height:1.2; }
@@ -615,11 +615,11 @@ onMounted(() => {
   color:#fff;
   font-size:13.5px; font-weight:600; font-family:var(--ff-body);
   cursor:pointer;
-  box-shadow:0 6px 20px rgba(6,182,212,0.35);
+  box-shadow:0 6px 20px rgba(12, 169, 196,0.35);
   transition:transform 0.15s, box-shadow 0.15s;
   white-space:nowrap;
 }
-.rk-btn-new:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(6,182,212,0.45); }
+.rk-btn-new:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(12, 169, 196,0.45); }
 
 /* ══════════════════════════════════════════════════
    KPIs
@@ -780,7 +780,7 @@ onMounted(() => {
 .company-chip.is-active {
   background:linear-gradient(135deg, var(--c-primary), var(--c-teal));
   color:#fff;
-  box-shadow:0 2px 8px rgba(6,182,212,0.35);
+  box-shadow:0 2px 8px rgba(12, 169, 196,0.35);
 }
 .company-chip.more-chip {
   background:var(--c-surface2);
@@ -825,8 +825,8 @@ onMounted(() => {
   --d-text:      var(--text-primary, #0f1117);
   --d-text2:     var(--text-secondary, #475569);
   --d-text3:     var(--text-muted, #94a3b8);
-  --d-primary:   var(--color-primary, #06b6d4);
-  --d-teal:      var(--color-accent, #14b8a6);
+  --d-primary:   var(--color-primary, #0CA9C4);
+  --d-teal:      var(--color-accent, #0893AA);
   --d-err:       var(--color-danger, #dc2626);
   --d-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
   --d-shadow:    0 24px 60px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08);
@@ -877,7 +877,7 @@ onMounted(() => {
   color: #fff;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 14px rgba(6,182,212,0.35);
+  box-shadow: 0 6px 14px rgba(12, 169, 196,0.35);
 }
 .rk-admin-dialog .rk-dialog-text { flex: 1; min-width: 0; }
 .rk-admin-dialog .rk-dialog-title {

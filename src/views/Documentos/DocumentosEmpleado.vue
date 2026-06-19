@@ -394,7 +394,7 @@
                 </div>
                 <div
                   class="rk-kpi-count text-weight-bold"
-                  :style="tabType === kpi.name ? `color: var(--kpi-active-color, #06b6d4)` : ''"
+                  :style="tabType === kpi.name ? `color: var(--kpi-active-color, #0CA9C4)` : ''"
                 >
                   {{ kpi.count }}
                 </div>
@@ -1494,17 +1494,17 @@ function countByType(t) {
 }
 
 const kpiColorMap = {
-  primary: '#06b6d4',
-  cyan: '#06b6d4',
-  teal: '#14b8a6',
+  primary: '#0CA9C4',
+  cyan: '#0CA9C4',
+  teal: '#0893AA',
   green: '#22c55e',
   orange: '#f97316',
-  purple: '#06b6d4',
-  blue: '#06b6d4',
+  purple: '#0CA9C4',
+  blue: '#0CA9C4',
   red: '#ef4444',
 };
 function kpiColorHex(color) {
-  return kpiColorMap[color] || '#06b6d4';
+  return kpiColorMap[color] || '#0CA9C4';
 }
 
 /* ====== UX helpers ====== */
@@ -1533,7 +1533,7 @@ function loadingOff() {
 // ===========================
 // Variables y mixins
 // ===========================
-// Paleta del sistema: cyan #06b6d4 · teal #14b8a6 · dark accent #22d3ee
+// Paleta del sistema: cyan #0CA9C4 · teal #0893AA · dark accent #33BECB
 $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 $transition-spring: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -1672,9 +1672,9 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     right: 0;
     height: 320px;
     background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.07) 0%,
-      rgba(20, 184, 166, 0.04) 50%,
-      rgba(6, 182, 212, 0.02) 100%
+      rgba(12, 169, 196, 0.07) 0%,
+      rgba(8, 147, 170, 0.04) 50%,
+      rgba(12, 169, 196, 0.02) 100%
     );
     z-index: 0;
     pointer-events: none;
@@ -1683,9 +1683,9 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 .body--dark .q-page::before {
   background: linear-gradient(135deg,
-    rgba(6, 182, 212, 0.12) 0%,
-    rgba(20, 184, 166, 0.08) 50%,
-    rgba(6, 182, 212, 0.04) 100%
+    rgba(12, 169, 196, 0.12) 0%,
+    rgba(8, 147, 170, 0.08) 50%,
+    rgba(12, 169, 196, 0.04) 100%
   );
 }
 
@@ -1710,9 +1710,9 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     right: 0;
     height: 3px;
     background: linear-gradient(90deg,
-      #06b6d4 0%,
-      #14b8a6 50%,
-      #06b6d4 100%
+      #0CA9C4 0%,
+      #0893AA 50%,
+      #0CA9C4 100%
     );
     opacity: 0.6;
     transition: opacity 0.3s ease;
@@ -1726,7 +1726,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   // Header con gradiente sutil
   > .q-card__section:first-child {
     background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.03) 0%,
+      rgba(12, 169, 196, 0.03) 0%,
       transparent 100%
     );
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -1737,15 +1737,15 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 .body--dark .rk-docs-card {
   background: rgba(10, 16, 28, 0.92);
   @include glass-effect-dark(0.92);
-  border-color: rgba(6, 182, 212, 0.14);
-  box-shadow: $shadow-lg, 0 0 0 1px rgba(6, 182, 212, 0.06);
+  border-color: rgba(12, 169, 196, 0.14);
+  box-shadow: $shadow-lg, 0 0 0 1px rgba(12, 169, 196, 0.06);
 
   > .q-card__section:first-child {
     background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.07) 0%,
+      rgba(12, 169, 196, 0.07) 0%,
       transparent 100%
     );
-    border-bottom-color: rgba(6, 182, 212, 0.1);
+    border-bottom-color: rgba(12, 169, 196, 0.1);
   }
 }
 
@@ -1762,7 +1762,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     inset: -2px;
     border-radius: inherit;
     padding: 2px;
-    background: linear-gradient(135deg, #06b6d4, #14b8a6);
+    background: linear-gradient(135deg, #0CA9C4, #0893AA);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -1808,8 +1808,8 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.06) 0%,
-      rgba(20, 184, 166, 0.03) 100%
+      rgba(12, 169, 196, 0.06) 0%,
+      rgba(8, 147, 170, 0.03) 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -1848,8 +1848,8 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 .body--dark .q-tabs :deep(.q-tab) {
   &::before {
     background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.12) 0%,
-      rgba(20, 184, 166, 0.07) 100%
+      rgba(12, 169, 196, 0.12) 0%,
+      rgba(8, 147, 170, 0.07) 100%
     );
   }
 }
@@ -1873,29 +1873,29 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
   
   &:hover {
-    border-color: rgba(6, 182, 212, 0.35);
-    box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.07);
+    border-color: rgba(12, 169, 196, 0.35);
+    box-shadow: 0 0 0 4px rgba(12, 169, 196, 0.07);
   }
 }
 
 .q-input :deep(.q-field__control--focused),
 .q-select :deep(.q-field__control--focused) {
-  border-color: rgba(6, 182, 212, 0.55) !important;
-  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.12) !important;
+  border-color: rgba(12, 169, 196, 0.55) !important;
+  box-shadow: 0 0 0 4px rgba(12, 169, 196, 0.12) !important;
 }
 
 .body--dark .q-input :deep(.q-field__control),
 .body--dark .q-select :deep(.q-field__control) {
   &:hover {
-    border-color: rgba(34, 211, 238, 0.4);
-    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.1);
+    border-color: rgba(51, 190, 203, 0.4);
+    box-shadow: 0 0 0 4px rgba(51, 190, 203, 0.1);
   }
 }
 
 .body--dark .q-input :deep(.q-field__control--focused),
 .body--dark .q-select :deep(.q-field__control--focused) {
-  border-color: rgba(34, 211, 238, 0.6) !important;
-  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.14) !important;
+  border-color: rgba(51, 190, 203, 0.6) !important;
+  box-shadow: 0 0 0 4px rgba(51, 190, 203, 0.14) !important;
 }
 
 // ===========================
@@ -1940,8 +1940,8 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.04) 0%,
-      rgba(20, 184, 166, 0.02) 100%
+      rgba(12, 169, 196, 0.04) 0%,
+      rgba(8, 147, 170, 0.02) 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -1950,7 +1950,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   &:hover {
     transform: translateY(-4px) scale(1.01);
     box-shadow: $shadow-lg;
-    border-color: rgba(6, 182, 212, 0.22);
+    border-color: rgba(12, 169, 196, 0.22);
 
     &::before {
       opacity: 1;
@@ -1958,19 +1958,19 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
     .rk-kpi-icon {
       transform: scale(1.15) rotate(6deg);
-      filter: drop-shadow(0 3px 6px rgba(6, 182, 212, 0.4));
+      filter: drop-shadow(0 3px 6px rgba(12, 169, 196, 0.4));
     }
   }
 
   &.rk-kpi-active {
-    border-color: rgba(6, 182, 212, 0.35);
-    box-shadow: $shadow-md, 0 0 0 3px rgba(6, 182, 212, 0.1);
+    border-color: rgba(12, 169, 196, 0.35);
+    box-shadow: $shadow-md, 0 0 0 3px rgba(12, 169, 196, 0.1);
 
     &::before {
       opacity: 1;
       background: linear-gradient(135deg,
-        rgba(6, 182, 212, 0.07) 0%,
-        rgba(20, 184, 166, 0.04) 100%
+        rgba(12, 169, 196, 0.07) 0%,
+        rgba(8, 147, 170, 0.04) 100%
       );
     }
 
@@ -2022,7 +2022,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   min-width: 2ch;
   text-align: right;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  background: linear-gradient(135deg, #0CA9C4, #0893AA);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -2040,20 +2040,20 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .body--dark .rk-kpi {
-  border-color: rgba(6, 182, 212, 0.1);
+  border-color: rgba(12, 169, 196, 0.1);
 
   &:hover {
-    box-shadow: $shadow-xl, 0 0 0 1px rgba(6, 182, 212, 0.12);
-    border-color: rgba(34, 211, 238, 0.28);
+    box-shadow: $shadow-xl, 0 0 0 1px rgba(12, 169, 196, 0.12);
+    border-color: rgba(51, 190, 203, 0.28);
   }
 
   &.rk-kpi-active {
-    border-color: rgba(34, 211, 238, 0.3);
-    box-shadow: $shadow-md, 0 0 0 3px rgba(34, 211, 238, 0.1);
+    border-color: rgba(51, 190, 203, 0.3);
+    box-shadow: $shadow-md, 0 0 0 3px rgba(51, 190, 203, 0.1);
   }
 
   .rk-kpi-count {
-    background: linear-gradient(135deg, #22d3ee, #2dd4bf);
+    background: linear-gradient(135deg, #33BECB, #33BECB);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -2085,7 +2085,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     height: 3px;
     background: linear-gradient(90deg,
       transparent 0%,
-      #06b6d4 50%,
+      #0CA9C4 50%,
       transparent 100%
     );
     opacity: 0;
@@ -2095,7 +2095,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   &:hover {
     transform: translateY(-8px) scale(1.02);
     box-shadow: $shadow-2xl;
-    border-color: rgba(6, 182, 212, 0.22);
+    border-color: rgba(12, 169, 196, 0.22);
     
     &::before {
       opacity: 1;
@@ -2143,19 +2143,19 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 .body--dark .rk-doc-card {
   background: rgba(10, 16, 28, 0.78);
   @include glass-effect-dark(0.78);
-  border-color: rgba(6, 182, 212, 0.13);
+  border-color: rgba(12, 169, 196, 0.13);
 
   &::before {
     background: linear-gradient(90deg,
       transparent 0%,
-      #22d3ee 50%,
+      #33BECB 50%,
       transparent 100%
     );
   }
 
   &:hover {
-    box-shadow: $shadow-2xl, 0 0 0 1px rgba(6, 182, 212, 0.18);
-    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: $shadow-2xl, 0 0 0 1px rgba(12, 169, 196, 0.18);
+    border-color: rgba(51, 190, 203, 0.3);
   }
 }
 
@@ -2227,8 +2227,8 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 .q-table :deep(thead tr) {
   background: linear-gradient(135deg,
-    rgba(6, 182, 212, 0.05) 0%,
-    rgba(20, 184, 166, 0.03) 100%
+    rgba(12, 169, 196, 0.05) 0%,
+    rgba(8, 147, 170, 0.03) 100%
   );
 }
 
@@ -2236,7 +2236,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   transition: $transition-smooth;
 
   &:hover {
-    background: rgba(6, 182, 212, 0.04);
+    background: rgba(12, 169, 196, 0.04);
     transform: scale(1.005);
   }
 }
@@ -2247,13 +2247,13 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 .body--dark .q-table :deep(thead tr) {
   background: linear-gradient(135deg,
-    rgba(6, 182, 212, 0.1) 0%,
-    rgba(20, 184, 166, 0.06) 100%
+    rgba(12, 169, 196, 0.1) 0%,
+    rgba(8, 147, 170, 0.06) 100%
   );
 }
 
 .body--dark .q-table :deep(tbody tr:hover) {
-  background: rgba(34, 211, 238, 0.07);
+  background: rgba(51, 190, 203, 0.07);
 }
 
 .body--dark .q-table :deep(td) {
@@ -2333,7 +2333,7 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .q-spinner-gears {
-  filter: drop-shadow(0 4px 12px rgba(6, 182, 212, 0.35));
+  filter: drop-shadow(0 4px 12px rgba(12, 169, 196, 0.35));
 }
 
 // ===========================
@@ -2389,11 +2389,11 @@ kbd {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  background: linear-gradient(135deg, #0CA9C4, #0893AA);
   border-radius: 10px;
 
   &:hover {
-    background: linear-gradient(135deg, #0891b2, #0d9488);
+    background: linear-gradient(135deg, #0893AA, #067C90);
   }
 }
 
@@ -2403,10 +2403,10 @@ kbd {
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #22d3ee, #2dd4bf);
+    background: linear-gradient(135deg, #33BECB, #33BECB);
 
     &:hover {
-      background: linear-gradient(135deg, #06b6d4, #14b8a6);
+      background: linear-gradient(135deg, #0CA9C4, #0893AA);
     }
   }
 }
@@ -2474,7 +2474,7 @@ kbd {
 // ===========================
 .rk-doc-card:focus-within,
 .rk-kpi:focus-within {
-  outline: 3px solid rgba(6, 182, 212, 0.5);
+  outline: 3px solid rgba(12, 169, 196, 0.5);
   outline-offset: 2px;
 }
 

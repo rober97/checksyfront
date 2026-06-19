@@ -499,16 +499,16 @@ onBeforeUnmount(() => {
   --c-text:      var(--text-primary, #0f1117);
   --c-text2:     var(--text-secondary, #5a6482);
   --c-text3:     var(--text-muted, #9aa1b9);
-  --c-primary:   var(--color-primary, #06b6d4);
-  --c-primary-l: var(--color-primary-soft, rgba(8,145,178,0.12));
+  --c-primary:   var(--color-primary, #0CA9C4);
+  --c-primary-l: var(--color-primary-soft, rgba(8, 147, 170,0.12));
   --c-ok:        var(--color-success, #16a34a);
   --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
   --c-warn:      var(--color-warning, #d97706);
   --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
   --c-err:       var(--color-danger, #dc2626);
   --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
-  --c-all:       var(--color-accent, #14b8a6);
-  --c-all-l:     var(--color-accent-soft, rgba(13,148,136,0.12));
+  --c-all:       var(--color-accent, #0893AA);
+  --c-all-l:     var(--color-accent-soft, rgba(6, 124, 144,0.12));
   --shadow-sm:   var(--app-shadow-sm);
   --shadow-md:   var(--app-shadow-md);
   --shadow-lg:   var(--app-shadow-lg);
@@ -588,7 +588,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(6,182,212,0.35);
+  box-shadow: 0 8px 24px rgba(12, 169, 196,0.35);
   flex-shrink: 0;
 }
 .rk-title {
@@ -828,10 +828,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
   font-family: var(--ff-body);
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(6,182,212,0.35);
+  box-shadow: 0 4px 14px rgba(12, 169, 196,0.35);
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.rk-btn-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(6,182,212,0.4); }
+.rk-btn-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(12, 169, 196,0.4); }
 
 /* ══════════════════════════════════════════════════════
    TABLA WRAP

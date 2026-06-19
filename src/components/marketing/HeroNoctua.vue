@@ -41,8 +41,8 @@
                 />
                 <defs>
                   <linearGradient id="grad" x1="0%" x2="100%">
-                    <stop offset="0%" style="stop-color: #06b6d4; stop-opacity: 0.6" />
-                    <stop offset="100%" style="stop-color: #22d3ee; stop-opacity: 0.8" />
+                    <stop offset="0%" style="stop-color: #0CA9C4; stop-opacity: 0.6" />
+                    <stop offset="100%" style="stop-color: #33BECB; stop-opacity: 0.8" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -262,15 +262,15 @@ const navigateTo = (routeName) => {
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-primary-dark: #0891b2;
-  --color-accent: #14b8a6;
+  --color-primary: #0CA9C4;
+  --color-primary-light: #33BECB;
+  --color-primary-dark: #0893AA;
+  --color-accent: #0893AA;
   --color-bg-dark: #0a0e14;
   --color-bg-darker: #050810;
-  --color-surface: rgba(6, 182, 212, 0.05);
-  --color-surface-hover: rgba(6, 182, 212, 0.1);
-  --color-border: rgba(6, 182, 212, 0.15);
+  --color-surface: rgba(12, 169, 196, 0.05);
+  --color-surface-hover: rgba(12, 169, 196, 0.1);
+  --color-border: rgba(12, 169, 196, 0.15);
   --color-text: rgba(255, 255, 255, 0.95);
   --color-text-muted: rgba(255, 255, 255, 0.65);
 }
@@ -298,8 +298,8 @@ const navigateTo = (routeName) => {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(6, 182, 212, 0.04) 1.5px, transparent 1.5px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1.5px, transparent 1.5px);
+    linear-gradient(rgba(12, 169, 196, 0.04) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, rgba(12, 169, 196, 0.04) 1.5px, transparent 1.5px);
   background-size: 80px 80px;
   mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
   -webkit-mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
@@ -448,18 +448,18 @@ const navigateTo = (routeName) => {
 }
 
 .rk-badge-main {
-  background: rgba(6, 182, 212, 0.12);
-  border: 1.5px solid rgba(6, 182, 212, 0.3);
+  background: rgba(12, 169, 196, 0.12);
+  border: 1.5px solid rgba(12, 169, 196, 0.3);
   color: var(--color-primary-light);
   padding-left: 16px;
-  box-shadow: 0 4px 24px rgba(6, 182, 212, 0.15),
+  box-shadow: 0 4px 24px rgba(12, 169, 196, 0.15),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .rk-badge-main:hover {
-  background: rgba(6, 182, 212, 0.18);
-  border-color: rgba(6, 182, 212, 0.5);
-  box-shadow: 0 6px 32px rgba(6, 182, 212, 0.25),
+  background: rgba(12, 169, 196, 0.18);
+  border-color: rgba(12, 169, 196, 0.5);
+  box-shadow: 0 6px 32px rgba(12, 169, 196, 0.25),
               inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
@@ -531,7 +531,7 @@ const navigateTo = (routeName) => {
   background-clip: text;
   z-index: 1;
   font-weight: 900;
-  text-shadow: 0 0 40px rgba(6, 182, 212, 0.3);
+  text-shadow: 0 0 40px rgba(12, 169, 196, 0.3);
 }
 
 .rk-underline {
@@ -542,7 +542,7 @@ const navigateTo = (routeName) => {
   height: 12px;
   z-index: 0;
   animation: draw 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
-  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+  filter: drop-shadow(0 0 8px rgba(12, 169, 196, 0.4));
 }
 
 @keyframes draw {
@@ -611,7 +611,7 @@ const navigateTo = (routeName) => {
 .rk-btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #fff;
-  box-shadow: 0 10px 32px rgba(6, 182, 212, 0.35),
+  box-shadow: 0 10px 32px rgba(12, 169, 196, 0.35),
               inset 0 1px 0 rgba(255, 255, 255, 0.25);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
 }
@@ -622,7 +622,7 @@ const navigateTo = (routeName) => {
 
 .rk-btn-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 40px rgba(6, 182, 212, 0.5),
+  box-shadow: 0 14px 40px rgba(12, 169, 196, 0.5),
               inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
@@ -643,20 +643,20 @@ const navigateTo = (routeName) => {
 
 .rk-btn-secondary {
   background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(6, 182, 212, 0.2);
+  border: 2px solid rgba(12, 169, 196, 0.2);
   color: var(--color-text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .rk-btn-secondary::before {
-  background: rgba(6, 182, 212, 0.12);
+  background: rgba(12, 169, 196, 0.12);
 }
 
 .rk-btn-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(6, 182, 212, 0.4);
+  border-color: rgba(12, 169, 196, 0.4);
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.2);
 }
 
 .rk-btn-secondary:hover::before {
@@ -673,8 +673,8 @@ const navigateTo = (routeName) => {
   flex-wrap: wrap;
   gap: 24px;
   padding: 32px 0;
-  border-top: 1.5px solid rgba(6, 182, 212, 0.12);
-  border-bottom: 1.5px solid rgba(6, 182, 212, 0.12);
+  border-top: 1.5px solid rgba(12, 169, 196, 0.12);
+  border-bottom: 1.5px solid rgba(12, 169, 196, 0.12);
   margin-bottom: 40px;
   animation: fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both;
 }
@@ -697,7 +697,7 @@ const navigateTo = (routeName) => {
 .rk-trust-item .q-icon {
   color: var(--color-primary-light);
   font-size: 20px;
-  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+  filter: drop-shadow(0 0 8px rgba(12, 169, 196, 0.4));
 }
 
 .rk-stats {
@@ -705,11 +705,11 @@ const navigateTo = (routeName) => {
   align-items: center;
   gap: 28px;
   padding: 28px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(20, 184, 166, 0.05));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.05), rgba(8, 147, 170, 0.05));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 20px;
   backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1),
+  box-shadow: 0 8px 32px rgba(12, 169, 196, 0.1),
               inset 0 1px 0 rgba(255, 255, 255, 0.05);
   animation: fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
   position: relative;
@@ -720,7 +720,7 @@ const navigateTo = (routeName) => {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent, rgba(6, 182, 212, 0.08), transparent);
+  background: linear-gradient(135deg, transparent, rgba(12, 169, 196, 0.08), transparent);
   animation: shimmer 3s linear infinite;
 }
 
@@ -763,7 +763,7 @@ const navigateTo = (routeName) => {
 .rk-divider {
   width: 1.5px;
   height: 48px;
-  background: linear-gradient(to bottom, transparent, rgba(6, 182, 212, 0.3), transparent);
+  background: linear-gradient(to bottom, transparent, rgba(12, 169, 196, 0.3), transparent);
 }
 
 .rk-hero-visual {
@@ -793,14 +793,14 @@ const navigateTo = (routeName) => {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  background: rgba(6, 182, 212, 0.08);
+  background: rgba(12, 169, 196, 0.08);
   backdrop-filter: blur(20px);
-  border: 1.5px solid rgba(6, 182, 212, 0.2);
+  border: 1.5px solid rgba(12, 169, 196, 0.2);
   border-radius: 14px;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--color-text);
-  box-shadow: 0 10px 40px rgba(6, 182, 212, 0.2),
+  box-shadow: 0 10px 40px rgba(12, 169, 196, 0.2),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
   animation: floatup 6s ease-in-out infinite;
   position: relative;
@@ -811,7 +811,7 @@ const navigateTo = (routeName) => {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent, rgba(6, 182, 212, 0.15), transparent);
+  background: linear-gradient(135deg, transparent, rgba(12, 169, 196, 0.15), transparent);
   opacity: 0;
   transition: opacity 0.4s;
 }
@@ -831,7 +831,7 @@ const navigateTo = (routeName) => {
 .rk-badge-float .q-icon {
   color: var(--color-primary-light);
   font-size: 20px;
-  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5));
+  filter: drop-shadow(0 0 8px rgba(12, 169, 196, 0.5));
 }
 
 @keyframes floatup {
@@ -846,17 +846,17 @@ const navigateTo = (routeName) => {
 .rk-visual-card {
   position: relative;
   padding: 24px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.03), rgba(20, 184, 166, 0.03));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.03), rgba(8, 147, 170, 0.03));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 28px;
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(20px);
-  box-shadow: 0 20px 60px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 20px 60px rgba(12, 169, 196, 0.15);
 }
 
 .rk-visual-card:hover {
-  border-color: rgba(6, 182, 212, 0.4);
-  box-shadow: 0 30px 80px rgba(6, 182, 212, 0.25);
+  border-color: rgba(12, 169, 196, 0.4);
+  box-shadow: 0 30px 80px rgba(12, 169, 196, 0.25);
 }
 
 .rk-glow {
@@ -900,13 +900,13 @@ const navigateTo = (routeName) => {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(12, 169, 196, 0.2);
 }
 
 .rk-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), transparent 60%);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.1), transparent 60%);
   border-radius: 20px;
   pointer-events: none;
 }
@@ -916,7 +916,7 @@ const navigateTo = (routeName) => {
   align-items: center;
   justify-content: center;
   min-height: 320px;
-  background: rgba(6, 182, 212, 0.05);
+  background: rgba(12, 169, 196, 0.05);
 }
 
 .rk-kpis {
@@ -927,8 +927,8 @@ const navigateTo = (routeName) => {
 
 .rk-kpi {
   padding: 18px;
-  background: rgba(6, 182, 212, 0.05);
-  border: 1.5px solid rgba(6, 182, 212, 0.12);
+  background: rgba(12, 169, 196, 0.05);
+  border: 1.5px solid rgba(12, 169, 196, 0.12);
   border-radius: 14px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInKpi 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -951,16 +951,16 @@ const navigateTo = (routeName) => {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), transparent);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.1), transparent);
   opacity: 0;
   transition: opacity 0.4s;
 }
 
 .rk-kpi:hover {
-  background: rgba(6, 182, 212, 0.08);
-  border-color: rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.08);
+  border-color: rgba(12, 169, 196, 0.25);
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.2);
 }
 
 .rk-kpi:hover::before {
@@ -1001,7 +1001,7 @@ const navigateTo = (routeName) => {
   gap: 4px;
   padding: 4px 10px;
   border-radius: 8px;
-  background: rgba(6, 182, 212, 0.12);
+  background: rgba(12, 169, 196, 0.12);
 }
 
 .text-positive {
@@ -1016,14 +1016,14 @@ const navigateTo = (routeName) => {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  background: rgba(6, 182, 212, 0.1);
+  background: rgba(12, 169, 196, 0.1);
   backdrop-filter: blur(20px);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
+  border: 1.5px solid rgba(12, 169, 196, 0.25);
   border-radius: 14px;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--color-text);
-  box-shadow: 0 10px 40px rgba(6, 182, 212, 0.25),
+  box-shadow: 0 10px 40px rgba(12, 169, 196, 0.25),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 3;
   animation: floatup 6s ease-in-out infinite;
@@ -1033,7 +1033,7 @@ const navigateTo = (routeName) => {
 .rk-badge-bottom .q-icon {
   color: var(--color-primary-light);
   font-size: 20px;
-  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5));
+  filter: drop-shadow(0 0 8px rgba(12, 169, 196, 0.5));
 }
 
 .rk-scroll {
@@ -1067,11 +1067,11 @@ const navigateTo = (routeName) => {
 .rk-mouse {
   width: 28px;
   height: 44px;
-  border: 2.5px solid rgba(6, 182, 212, 0.4);
+  border: 2.5px solid rgba(12, 169, 196, 0.4);
   border-radius: 14px;
   position: relative;
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2),
-              inset 0 0 10px rgba(6, 182, 212, 0.1);
+  box-shadow: 0 0 20px rgba(12, 169, 196, 0.2),
+              inset 0 0 10px rgba(12, 169, 196, 0.1);
 }
 
 .rk-wheel {
@@ -1103,8 +1103,8 @@ const navigateTo = (routeName) => {
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(6, 182, 212, 0.6);
-  text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+  color: rgba(12, 169, 196, 0.6);
+  text-shadow: 0 0 10px rgba(12, 169, 196, 0.3);
 }
 
 /* Responsive */

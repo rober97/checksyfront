@@ -279,8 +279,8 @@ body.body--dark .type-badge--salida {
 }
 
 .mood-badge--great {
-  background: var(--color-primary-soft, rgba(6, 182, 212, 0.12));
-  color: var(--color-primary-dark, #0891b2);
+  background: var(--color-primary-soft, rgba(12, 169, 196, 0.12));
+  color: var(--color-primary-dark, #0893AA);
 }
 
 .mood-badge--good {
@@ -289,8 +289,8 @@ body.body--dark .type-badge--salida {
 }
 
 .mood-badge--ok {
-  background: var(--color-accent-soft, rgba(20, 184, 166, 0.12));
-  color: var(--color-accent-dark, #0d9488);
+  background: var(--color-accent-soft, rgba(8, 147, 170, 0.12));
+  color: var(--color-accent-dark, #067C90);
 }
 
 .mood-badge--tired {
@@ -336,20 +336,20 @@ body.body--dark .note-content {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-primary-dark, #0891b2);
-  background: var(--color-primary-soft, rgba(6, 182, 212, 0.10));
+  color: var(--color-primary-dark, #0893AA);
+  background: var(--color-primary-soft, rgba(12, 169, 196, 0.10));
   text-decoration: none;
   transition: all 0.3s;
 }
 
 .location-link:hover {
-  background: rgba(6, 182, 212, 0.18);
+  background: rgba(12, 169, 196, 0.18);
   transform: translateY(-1px);
 }
 
 body.body--dark .location-link {
-  color: var(--color-primary, #22d3ee);
-  background: var(--color-primary-soft, rgba(34, 211, 238, 0.14));
+  color: var(--color-primary, #33BECB);
+  background: var(--color-primary-soft, rgba(51, 190, 203, 0.14));
 }
 
 .photo-button {
@@ -366,13 +366,13 @@ body.body--dark .location-link {
 }
 
 .photo-button:hover {
-  border-color: var(--color-primary, #06b6d4);
+  border-color: var(--color-primary, #0CA9C4);
   transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.3);
 }
 
 body.body--dark .photo-button {
-  border-color: var(--color-primary-soft, rgba(34, 211, 238, 0.25));
+  border-color: var(--color-primary-soft, rgba(51, 190, 203, 0.25));
 }
 
 .photo-thumb {

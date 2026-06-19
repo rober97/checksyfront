@@ -375,7 +375,7 @@ onMounted(async () => {
 }
 .rk-contract-banner {
   border-radius: 10px;
-  background: var(--color-primary-soft, rgba(6, 182, 212, 0.08));
+  background: var(--color-primary-soft, rgba(12, 169, 196, 0.08));
   color: var(--text-secondary, #5a6482);
   font-size: 12.5px;
 }

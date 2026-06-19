@@ -183,13 +183,13 @@ const dayNum    = d => { try { return d.slice(8,10) } catch { return '??' } }
   background: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
-.cht-card--flat { background: var(--color-primary-soft); box-shadow: none; border-color: rgba(6,182,212,.15); }
-.body--dark .cht-card--flat { background: var(--color-primary-soft); border-color: rgba(6,182,212,.15); }
+.cht-card--flat { background: var(--color-primary-soft); box-shadow: none; border-color: rgba(12, 169, 196,.15); }
+.body--dark .cht-card--flat { background: var(--color-primary-soft); border-color: rgba(12, 169, 196,.15); }
 
 .cht-card-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
 .cht-card-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.cht-ci--blue { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid rgba(6,182,212,.25); }
-.cht-ci--teal { background: var(--color-accent-soft); color: var(--color-accent-dark); border: 1px solid rgba(13,148,136,.25); }
+.cht-ci--blue { background: var(--color-primary-soft); color: var(--color-primary-dark); border: 1px solid rgba(12, 169, 196,.25); }
+.cht-ci--teal { background: var(--color-accent-soft); color: var(--color-accent-dark); border: 1px solid rgba(6, 124, 144,.25); }
 
 .cht-card-title { font-size: .82rem; font-weight: 700; color: var(--text-primary); }
 .cht-card-sub { font-size: .71rem; color: #9ca3af; margin-top: 1px; }
@@ -210,13 +210,13 @@ const dayNum    = d => { try { return d.slice(8,10) } catch { return '??' } }
 .cht-quick-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .cht-qchip {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 9px; border: 1.5px solid rgba(6,182,212,.2); border-radius: 6px;
+  padding: 3px 9px; border: 1.5px solid rgba(12, 169, 196,.2); border-radius: 6px;
   background: var(--card-background); color: var(--color-primary-dark); font-size: .73rem; font-weight: 700;
   cursor: pointer; transition: all .12s; font-family: inherit;
 }
-.cht-qchip:hover { background: var(--color-primary-soft); border-color: rgba(6,182,212,.4); }
+.cht-qchip:hover { background: var(--color-primary-soft); border-color: rgba(12, 169, 196,.4); }
 .cht-qchip.is-added { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
-.body--dark .cht-qchip { background: var(--color-primary-soft); border-color: rgba(6,182,212,.2); color: var(--color-primary); }
+.body--dark .cht-qchip { background: var(--color-primary-soft); border-color: rgba(12, 169, 196,.2); color: var(--color-primary); }
 .body--dark .cht-qchip.is-added { background: var(--color-primary-dark); color: #fff; border-color: var(--color-primary-dark); }
 
 /* List panel */
@@ -249,7 +249,7 @@ const dayNum    = d => { try { return d.slice(8,10) } catch { return '??' } }
   background: var(--surface-soft); border: 1px solid var(--border-color); border-radius: 8px;
   transition: border-color .12s;
 }
-.cht-chip:hover { border-color: rgba(6,182,212,.4); }
+.cht-chip:hover { border-color: rgba(12, 169, 196,.4); }
 .body--dark .cht-chip { background: var(--background-color); border-color: var(--border-color); }
 .body--dark .cht-chip:hover { border-color: var(--color-primary-dark); }
 
@@ -257,7 +257,7 @@ const dayNum    = d => { try { return d.slice(8,10) } catch { return '??' } }
   display: flex; flex-direction: column; align-items: center;
   width: 28px; height: 30px; border-radius: 5px;
   background: linear-gradient(180deg, var(--color-primary-dark) 0%, var(--color-primary-dark) 35%, var(--card-background) 35%, var(--card-background) 100%);
-  border: 1px solid rgba(6,182,212,.3); overflow: hidden;
+  border: 1px solid rgba(12, 169, 196,.3); overflow: hidden;
 }
 
 .cht-chip-month { font-size: .48rem; font-weight: 800; color: #fff; line-height: 1.7; letter-spacing: .02em; }

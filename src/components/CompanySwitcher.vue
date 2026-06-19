@@ -392,7 +392,7 @@ onMounted(() => {
 }
 
 .rk-pill-trigger.is-clickable:focus-visible {
-  outline: 2px solid var(--color-primary, #06b6d4);
+  outline: 2px solid var(--color-primary, #0CA9C4);
   outline-offset: 2px;
 }
 
@@ -450,7 +450,7 @@ onMounted(() => {
 }
 
 .rk-pill-trigger.is-open .rk-pill-chevron {
-  background: var(--color-primary, #06b6d4);
+  background: var(--color-primary, #0CA9C4);
   color: #ffffff;
   transform: rotate(180deg);
 }
@@ -539,7 +539,7 @@ onMounted(() => {
 
 .rk-pill-menu .rk-menu-header .q-icon {
   font-size: 20px;
-  color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #0CA9C4);
 }
 
 .rk-pill-menu .rk-menu-header-text {
@@ -708,7 +708,7 @@ onMounted(() => {
 }
 
 .rk-pill-menu .rk-menu-check {
-  color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #0CA9C4);
 }
 
 .rk-pill-menu .rk-menu-arrow {
@@ -721,7 +721,7 @@ onMounted(() => {
 }
 
 .rk-pill-menu .rk-menu-item:hover .rk-menu-arrow {
-  color: var(--color-primary, #06b6d4);
+  color: var(--color-primary, #0CA9C4);
   transform: translateX(2px);
 }
 

@@ -137,9 +137,9 @@ watch(() => props.mood, (val) => localMood.value = val);
 
 .search-input:focus {
   outline: none;
-  border-color: var(--color-primary, #06b6d4);
+  border-color: var(--color-primary, #0CA9C4);
   background: white;
-  box-shadow: 0 0 0 4px var(--color-primary-soft, rgba(6, 182, 212, 0.12)),
+  box-shadow: 0 0 0 4px var(--color-primary-soft, rgba(12, 169, 196, 0.12)),
               0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -214,8 +214,8 @@ body.body--dark .filter-select :deep(.q-field__control) {
 }
 
 .filter-select :deep(.q-field--focused .q-field__control) {
-  border-color: var(--color-primary, #06b6d4);
-  box-shadow: 0 0 0 4px var(--color-primary-soft, rgba(6, 182, 212, 0.12));
+  border-color: var(--color-primary, #0CA9C4);
+  box-shadow: 0 0 0 4px var(--color-primary-soft, rgba(12, 169, 196, 0.12));
 }
 
 .columns-btn {
@@ -229,9 +229,9 @@ body.body--dark .filter-select :deep(.q-field__control) {
 }
 
 .columns-btn:hover {
-  border-color: var(--color-primary, #06b6d4);
-  color: var(--color-primary, #06b6d4);
-  background: var(--color-primary-soft, rgba(6, 182, 212, 0.08));
+  border-color: var(--color-primary, #0CA9C4);
+  color: var(--color-primary, #0CA9C4);
+  background: var(--color-primary-soft, rgba(12, 169, 196, 0.08));
 }
 
 body.body--dark .columns-btn {
@@ -240,8 +240,8 @@ body.body--dark .columns-btn {
 }
 
 body.body--dark .columns-btn:hover {
-  border-color: var(--color-primary, #22d3ee);
-  color: var(--color-primary, #22d3ee);
+  border-color: var(--color-primary, #33BECB);
+  color: var(--color-primary, #33BECB);
 }
 
 @media (max-width: 768px) {

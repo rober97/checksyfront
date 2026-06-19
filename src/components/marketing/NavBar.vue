@@ -269,9 +269,9 @@ onUnmounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
 
 :root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
+  --color-primary: #0CA9C4;
+  --color-primary-light: #33BECB;
+  --color-accent: #0893AA;
 }
 
 /* Header Principal */
@@ -284,15 +284,15 @@ onUnmounted(() => {
   background: rgba(10, 14, 20, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(6, 182, 212, 0.08);
+  border-bottom: 1px solid rgba(12, 169, 196, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Sora', -apple-system, sans-serif;
 }
 
 .rk-header.scrolled {
   background: rgba(10, 14, 20, 0.95);
-  border-bottom-color: rgba(6, 182, 212, 0.15);
-  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+  border-bottom-color: rgba(12, 169, 196, 0.15);
+  box-shadow: 0 8px 32px rgba(12, 169, 196, 0.1);
 }
 
 .rk-header-glow {
@@ -354,13 +354,13 @@ onUnmounted(() => {
   inset: 0;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.35);
   transition: all 0.3s ease;
 }
 
 .rk-brand:hover .rk-logo-bg {
   transform: rotate(-5deg) scale(1.05);
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.5);
 }
 
 .rk-logo-icon {
@@ -456,7 +456,7 @@ onUnmounted(() => {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(6, 182, 212, 0.08);
+  background: rgba(12, 169, 196, 0.08);
   border-radius: 10px;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -512,16 +512,16 @@ onUnmounted(() => {
   font-size: 0.95rem;
   letter-spacing: 0.3px;
   color: rgba(255, 255, 255, 0.9);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
-  background: rgba(6, 182, 212, 0.05);
+  border: 1.5px solid rgba(12, 169, 196, 0.25);
+  background: rgba(12, 169, 196, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rk-btn-ghost:hover {
-  background: rgba(6, 182, 212, 0.12);
-  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(12, 169, 196, 0.12);
+  border-color: rgba(12, 169, 196, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 6px 20px rgba(12, 169, 196, 0.2);
 }
 
 .rk-btn-cta {
@@ -533,14 +533,14 @@ onUnmounted(() => {
   letter-spacing: 0.3px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: #fff;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 6px 20px rgba(12, 169, 196, 0.35);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .rk-btn-cta:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 28px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 10px 28px rgba(12, 169, 196, 0.5);
 }
 
 .rk-btn-shine {
@@ -578,14 +578,14 @@ onUnmounted(() => {
   height: 48px;
   padding: 0;
   border-radius: 10px;
-  background: rgba(6, 182, 212, 0.08);
-  border: 1.5px solid rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.08);
+  border: 1.5px solid rgba(12, 169, 196, 0.2);
   transition: all 0.3s ease;
 }
 
 .rk-menu-btn:hover {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(12, 169, 196, 0.15);
+  border-color: rgba(12, 169, 196, 0.3);
 }
 
 .rk-hamburger {
@@ -641,7 +641,7 @@ onUnmounted(() => {
   background: linear-gradient(135deg, rgba(10, 14, 20, 0.98), rgba(13, 27, 42, 0.98));
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-left: 1px solid rgba(6, 182, 212, 0.15);
+  border-left: 1px solid rgba(12, 169, 196, 0.15);
 }
 
 .rk-drawer-content {
@@ -666,8 +666,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.08);
-  border: 1.5px solid rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.08);
+  border: 1.5px solid rgba(12, 169, 196, 0.2);
   border-radius: 10px;
   color: var(--color-primary-light);
   cursor: pointer;
@@ -675,8 +675,8 @@ onUnmounted(() => {
 }
 
 .rk-close-btn:hover {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(12, 169, 196, 0.15);
+  border-color: rgba(12, 169, 196, 0.3);
   transform: rotate(90deg);
 }
 
@@ -688,7 +688,7 @@ onUnmounted(() => {
   height: 1px;
   background: linear-gradient(90deg, 
     transparent 0%,
-    rgba(6, 182, 212, 0.2) 50%,
+    rgba(12, 169, 196, 0.2) 50%,
     transparent 100%
   );
 }
@@ -707,18 +707,18 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   padding: 18px 16px;
-  background: rgba(6, 182, 212, 0.04);
-  border: 1.5px solid rgba(6, 182, 212, 0.1);
+  background: rgba(12, 169, 196, 0.04);
+  border: 1.5px solid rgba(12, 169, 196, 0.1);
   border-radius: 14px;
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rk-drawer-link:hover {
-  background: rgba(6, 182, 212, 0.1);
-  border-color: rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.1);
+  border-color: rgba(12, 169, 196, 0.25);
   transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.15);
 }
 
 .rk-drawer-link-icon {
@@ -731,7 +731,7 @@ onUnmounted(() => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 12px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
 }
 
 .rk-drawer-link-icon .q-icon {
@@ -776,7 +776,7 @@ onUnmounted(() => {
 
 .rk-drawer-link-arrow {
   font-size: 20px;
-  color: rgba(6, 182, 212, 0.5);
+  color: rgba(12, 169, 196, 0.5);
   transition: all 0.3s ease;
 }
 
@@ -798,7 +798,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 16px;
   padding-top: 24px;
-  border-top: 1px solid rgba(6, 182, 212, 0.1);
+  border-top: 1px solid rgba(12, 169, 196, 0.1);
 }
 
 .rk-drawer-social {
@@ -813,8 +813,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.08);
-  border: 1.5px solid rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.08);
+  border: 1.5px solid rgba(12, 169, 196, 0.2);
   border-radius: 10px;
   color: var(--color-primary-light);
   text-decoration: none;
@@ -822,10 +822,10 @@ onUnmounted(() => {
 }
 
 .rk-social-link:hover {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(12, 169, 196, 0.15);
+  border-color: rgba(12, 169, 196, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.2);
 }
 
 .rk-social-link .q-icon {

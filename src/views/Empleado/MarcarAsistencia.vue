@@ -891,17 +891,17 @@ function parseHorasToMin(str) {
 
 /* === VARIABLES === */
 .rk-attendance-page {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
+  --color-primary: #0CA9C4;
+  --color-primary-light: #33BECB;
+  --color-accent: #0893AA;
   --color-success: #22c55e;
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
   --surface-1: rgba(255, 255, 255, 0.95);
-  --surface-2: rgba(6, 182, 212, 0.04);
-  --surface-3: rgba(6, 182, 212, 0.08);
-  --border-1: rgba(6, 182, 212, 0.12);
-  --border-2: rgba(6, 182, 212, 0.2);
+  --surface-2: rgba(12, 169, 196, 0.04);
+  --surface-3: rgba(12, 169, 196, 0.08);
+  --border-1: rgba(12, 169, 196, 0.12);
+  --border-2: rgba(12, 169, 196, 0.2);
   --text-primary: rgba(15, 23, 42, 0.95);
   --text-secondary: rgba(15, 23, 42, 0.7);
   --text-muted: rgba(15, 23, 42, 0.5);
@@ -914,10 +914,10 @@ function parseHorasToMin(str) {
 
 .body--dark .rk-attendance-page {
   --surface-1: rgba(17, 24, 39, 0.95);
-  --surface-2: rgba(6, 182, 212, 0.06);
-  --surface-3: rgba(6, 182, 212, 0.1);
-  --border-1: rgba(6, 182, 212, 0.15);
-  --border-2: rgba(6, 182, 212, 0.25);
+  --surface-2: rgba(12, 169, 196, 0.06);
+  --surface-3: rgba(12, 169, 196, 0.1);
+  --border-1: rgba(12, 169, 196, 0.15);
+  --border-2: rgba(12, 169, 196, 0.25);
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-muted: rgba(255, 255, 255, 0.5);
@@ -985,7 +985,7 @@ function parseHorasToMin(str) {
   border: 1.5px solid var(--border-1);
   border-left: 4px solid;
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.15);
   animation: slideInRight 0.3s ease;
 }
 
@@ -1040,7 +1040,7 @@ function parseHorasToMin(str) {
   backdrop-filter: blur(20px);
   border: 1.5px solid var(--border-1);
   border-radius: 20px;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.12);
   animation: fadeInDown 0.6s ease;
 }
 
@@ -1068,7 +1068,7 @@ function parseHorasToMin(str) {
 
 .rk-avatar-ring.active {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
+  box-shadow: 0 0 0 4px rgba(12, 169, 196, 0.1);
   animation: ringPulse 2s ease-in-out infinite;
 }
 
@@ -1170,7 +1170,7 @@ function parseHorasToMin(str) {
   border-color: var(--border-2);
   color: var(--color-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.15);
 }
 
 .rk-icon-btn.active {
@@ -1206,7 +1206,7 @@ function parseHorasToMin(str) {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(242, 250, 255, 0.96)),
     var(--surface-1);
-  border: 1.5px solid rgba(6, 182, 212, 0.18);
+  border: 1.5px solid rgba(12, 169, 196, 0.18);
   border-left: 5px solid var(--color-primary);
   border-radius: 20px;
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
@@ -1263,8 +1263,8 @@ function parseHorasToMin(str) {
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.18);
+  background: rgba(12, 169, 196, 0.1);
+  border: 1px solid rgba(12, 169, 196, 0.18);
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 700;
@@ -1305,12 +1305,12 @@ function parseHorasToMin(str) {
   border: 1.5px solid var(--border-1);
   border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.12);
   transition: all 0.3s ease;
 }
 
 .rk-form-card:hover {
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.15);
 }
 
 .rk-form {
@@ -1376,7 +1376,7 @@ function parseHorasToMin(str) {
   background: var(--surface-3);
   border-color: var(--border-2);
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 8px 20px rgba(12, 169, 196, 0.15);
 }
 
 .rk-type-btn.active.type-entrada {
@@ -1491,16 +1491,16 @@ kbd {
   background: var(--surface-3);
   border-color: var(--border-2);
   transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 16px rgba(6, 182, 212, 0.12);
+  box-shadow: 0 8px 16px rgba(12, 169, 196, 0.12);
 }
 
 .rk-mood-btn.active {
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 8px 20px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 8px 20px rgba(12, 169, 196, 0.25);
 }
 
-.rk-mood-btn.mood-great { background: linear-gradient(135deg, var(--color-primary), #0891b2); }
+.rk-mood-btn.mood-great { background: linear-gradient(135deg, var(--color-primary), #0893AA); }
 .rk-mood-btn.mood-good { background: linear-gradient(135deg, var(--color-success), #16a34a); }
 .rk-mood-btn.mood-ok { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); }
 .rk-mood-btn.mood-tired { background: linear-gradient(135deg, var(--color-warning), #d97706); }
@@ -1560,7 +1560,7 @@ kbd {
 .rk-kpi-mini:hover {
   border-color: var(--border-2);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.12);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.12);
 }
 
 .rk-kpi-icon {
@@ -1572,8 +1572,8 @@ kbd {
   border-radius: 12px;
 }
 
-.rk-icon-primary { background: rgba(6, 182, 212, 0.12); color: var(--color-primary); }
-.rk-icon-teal { background: rgba(20, 184, 166, 0.12); color: var(--color-accent); }
+.rk-icon-primary { background: rgba(12, 169, 196, 0.12); color: var(--color-primary); }
+.rk-icon-teal { background: rgba(8, 147, 170, 0.12); color: var(--color-accent); }
 .rk-icon-green { background: rgba(34, 197, 94, 0.12); color: var(--color-success); }
 .rk-icon-orange { background: rgba(245, 158, 11, 0.12); color: var(--color-warning); }
 
@@ -1600,12 +1600,12 @@ kbd {
   border: 1.5px solid var(--border-1);
   border-radius: 16px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.08);
+  box-shadow: 0 2px 8px rgba(12, 169, 196, 0.08);
   transition: all 0.3s ease;
 }
 
 .rk-info-card:hover {
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.12);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.12);
 }
 
 .rk-card-header {
@@ -1977,7 +1977,7 @@ kbd {
   backdrop-filter: blur(20px) saturate(180%);
   border: 1.5px solid var(--border-1);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 8px 32px rgba(12, 169, 196, 0.15);
   animation: slideUp 0.5s ease;
 }
 
@@ -2021,7 +2021,7 @@ kbd {
   font-weight: 800;
   cursor: pointer;
   box-shadow:
-    0 18px 40px rgba(6, 182, 212, 0.3),
+    0 18px 40px rgba(12, 169, 196, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transition: all 0.3s ease;
   overflow: hidden;
@@ -2030,7 +2030,7 @@ kbd {
 
 .rk-submit-btn:hover:not(:disabled) {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.4);
 }
 
 .rk-submit-btn:disabled {
@@ -2303,16 +2303,16 @@ kbd {
 
 .rk-dialog-btn.rk-btn-primary {
   min-width: 200px;
-  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  background: linear-gradient(135deg, #0893AA, #0CA9C4);
   border-color: transparent;
   color: #fff;
   box-shadow:
-    0 14px 30px rgba(6, 182, 212, 0.28),
+    0 14px 30px rgba(12, 169, 196, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .rk-dialog-btn.rk-btn-primary:hover {
-  box-shadow: 0 18px 34px rgba(6, 182, 212, 0.34);
+  box-shadow: 0 18px 34px rgba(12, 169, 196, 0.34);
 }
 
 .rk-dialog-btn.rk-btn-danger {
@@ -2353,7 +2353,7 @@ kbd {
 
 .rk-confirm-item--highlight {
   background: linear-gradient(135deg, rgba(236, 254, 255, 0.96), rgba(240, 249, 255, 0.98));
-  border-color: rgba(6, 182, 212, 0.24);
+  border-color: rgba(12, 169, 196, 0.24);
 }
 
 .rk-confirm-text {
@@ -2618,22 +2618,22 @@ kbd {
 }
 
 .body--dark .rk-submit-btn {
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.4);
 }
 
 .body--dark .rk-submit-btn:hover:not(:disabled) {
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.5);
 }
 
 .body--dark .rk-summary-banner {
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(17, 24, 39, 0.92));
-  border-color: rgba(34, 211, 238, 0.22);
+  border-color: rgba(51, 190, 203, 0.22);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
 }
 
 .body--dark .rk-summary-subtitle {
-  background: rgba(34, 211, 238, 0.14);
-  border-color: rgba(34, 211, 238, 0.22);
+  background: rgba(51, 190, 203, 0.14);
+  border-color: rgba(51, 190, 203, 0.22);
 }
 
 .body--dark .rk-summary-geo {
@@ -2676,7 +2676,7 @@ kbd {
 }
 
 .body--dark .rk-confirm-item--highlight {
-  background: linear-gradient(135deg, rgba(8, 145, 178, 0.18), rgba(14, 116, 144, 0.22));
-  border-color: rgba(34, 211, 238, 0.24);
+  background: linear-gradient(135deg, rgba(8, 147, 170, 0.18), rgba(14, 116, 144, 0.22));
+  border-color: rgba(51, 190, 203, 0.24);
 }
 </style>

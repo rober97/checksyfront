@@ -690,8 +690,8 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
   --rk-text:         #0f1117;
   --rk-text-2:       #5a6482;
   --rk-text-3:       #9aa1b9;
-  --rk-accent:       #06b6d4;
-  --rk-accent-soft:  rgba(6, 182, 212, 0.10);
+  --rk-accent:       #0CA9C4;
+  --rk-accent-soft:  rgba(12, 169, 196, 0.10);
   --rk-success:      #16a34a;
   --rk-success-soft: rgba(22, 163, 74, 0.12);
   --rk-warn:         #d97706;

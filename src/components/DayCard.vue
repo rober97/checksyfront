@@ -96,7 +96,7 @@ function toggleExpand() {
 }
 
 .day-container:hover {
-  border-color: var(--color-primary-soft, rgba(6, 182, 212, 0.25));
+  border-color: var(--color-primary-soft, rgba(12, 169, 196, 0.25));
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
@@ -107,7 +107,7 @@ body.body--dark .day-container {
 }
 
 body.body--dark .day-container:hover {
-  border-color: var(--color-primary-soft, rgba(34, 211, 238, 0.25));
+  border-color: var(--color-primary-soft, rgba(51, 190, 203, 0.25));
 }
 
 .day-header {
@@ -122,11 +122,11 @@ body.body--dark .day-container:hover {
 }
 
 .day-header:hover {
-  background: var(--color-primary-soft, rgba(6, 182, 212, 0.04));
+  background: var(--color-primary-soft, rgba(12, 169, 196, 0.04));
 }
 
 body.body--dark .day-header:hover {
-  background: var(--color-primary-soft, rgba(34, 211, 238, 0.07));
+  background: var(--color-primary-soft, rgba(51, 190, 203, 0.07));
 }
 
 .day-header-left {
@@ -221,39 +221,39 @@ body.body--dark .day-date {
 }
 
 .meta-chip--time {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(20, 184, 166, 0.08) 100%);
-  color: var(--color-primary-dark, #0891b2);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.12) 0%, rgba(8, 147, 170, 0.08) 100%);
+  color: var(--color-primary-dark, #0893AA);
 }
 
 body.body--dark .meta-chip--time {
-  background: var(--color-primary-soft, rgba(34, 211, 238, 0.14));
-  color: var(--color-primary, #22d3ee);
+  background: var(--color-primary-soft, rgba(51, 190, 203, 0.14));
+  color: var(--color-primary, #33BECB);
 }
 
 .meta-chip--count {
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
-  color: var(--color-accent-dark, #0d9488);
+  background: linear-gradient(135deg, rgba(8, 147, 170, 0.12) 0%, rgba(12, 169, 196, 0.08) 100%);
+  color: var(--color-accent-dark, #067C90);
 }
 
 body.body--dark .meta-chip--count {
-  background: var(--color-accent-soft, rgba(45, 212, 191, 0.14));
-  color: var(--color-accent, #2dd4bf);
+  background: var(--color-accent-soft, rgba(51, 190, 203, 0.14));
+  color: var(--color-accent, #33BECB);
 }
 
 .meta-chip--photos {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.10) 0%, rgba(20, 184, 166, 0.10) 100%);
-  color: var(--color-primary-dark, #0891b2);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.10) 0%, rgba(8, 147, 170, 0.10) 100%);
+  color: var(--color-primary-dark, #0893AA);
   cursor: pointer;
 }
 
 body.body--dark .meta-chip--photos {
-  background: var(--color-accent-soft, rgba(45, 212, 191, 0.14));
-  color: var(--color-accent, #2dd4bf);
+  background: var(--color-accent-soft, rgba(51, 190, 203, 0.14));
+  color: var(--color-accent, #33BECB);
 }
 
 .meta-chip--photos:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.25);
 }
 
 .day-actions {

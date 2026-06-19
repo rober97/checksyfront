@@ -335,31 +335,31 @@ const initials = (label = '') => {
 /* ── Variables de tema ───────────────────────────────────────────── */
 .rk-side {
   --s-bg:          #ffffff;
-  --s-bg-soft:     rgba(6,182,212,.04);
-  --s-border:      rgba(6,182,212,.14);
-  --s-border-hover:rgba(6,182,212,.28);
+  --s-bg-soft:     rgba(12, 169, 196,.04);
+  --s-border:      rgba(12, 169, 196,.14);
+  --s-border-hover:rgba(12, 169, 196,.28);
   --s-title:       rgba(15,23,42,.88);
   --s-muted:       rgba(15,23,42,.52);
   --s-help:        rgba(15,23,42,.48);
-  --s-item-hover:  rgba(6,182,212,.06);
-  --s-item-active: rgba(6,182,212,.11);
-  --s-item-ring:   rgba(6,182,212,.35);
-  --s-icon:        #06b6d4;
+  --s-item-hover:  rgba(12, 169, 196,.06);
+  --s-item-active: rgba(12, 169, 196,.11);
+  --s-item-ring:   rgba(12, 169, 196,.35);
+  --s-icon:        #0CA9C4;
   --s-input-r:     14px;
-  --s-shadow:      0 8px 28px rgba(6,182,212,.08), 0 2px 8px rgba(0,0,0,.05);
+  --s-shadow:      0 8px 28px rgba(12, 169, 196,.08), 0 2px 8px rgba(0,0,0,.05);
 }
 .body--dark .rk-side {
   --s-bg:          var(--card-background);
-  --s-bg-soft:     rgba(6,182,212,.06);
-  --s-border:      rgba(6,182,212,.18);
-  --s-border-hover:rgba(6,182,212,.35);
+  --s-bg-soft:     rgba(12, 169, 196,.06);
+  --s-border:      rgba(12, 169, 196,.18);
+  --s-border-hover:rgba(12, 169, 196,.35);
   --s-title:       rgba(255,255,255,.92);
   --s-muted:       rgba(255,255,255,.48);
   --s-help:        rgba(255,255,255,.42);
-  --s-item-hover:  rgba(6,182,212,.08);
-  --s-item-active: rgba(6,182,212,.16);
-  --s-item-ring:   rgba(6,182,212,.4);
-  --s-icon:        #22d3ee;
+  --s-item-hover:  rgba(12, 169, 196,.08);
+  --s-item-active: rgba(12, 169, 196,.16);
+  --s-item-ring:   rgba(12, 169, 196,.4);
+  --s-icon:        #33BECB;
   --s-shadow:      0 8px 32px rgba(0,0,0,.35);
 }
 
@@ -415,7 +415,7 @@ const initials = (label = '') => {
 }
 .rk-field :deep(.q-field--focused .q-field__control) {
   border-color: var(--s-icon) !important;
-  box-shadow: 0 0 0 3px rgba(6,182,212,.12);
+  box-shadow: 0 0 0 3px rgba(12, 169, 196,.12);
 }
 .rk-field :deep(.q-field__native) { padding: 0 4px; line-height: 1; }
 .rk-field :deep(.q-field__prepend), .rk-field :deep(.q-field__append) {
@@ -453,7 +453,7 @@ const initials = (label = '') => {
   background: var(--s-item-active);
   outline: 1px solid var(--s-item-ring);
 }
-.rk-item .q-avatar { background: linear-gradient(135deg, #06b6d4, #14b8a6); }
+.rk-item .q-avatar { background: linear-gradient(135deg, #0CA9C4, #0893AA); }
 
 /* ── Menú de sugerencias ─────────────────────────────────────────── */
 .rk-menu { border-radius: 14px; overflow: hidden; border: 1px solid var(--s-border); }
@@ -494,7 +494,7 @@ const initials = (label = '') => {
 .rk-chip--selected {
   border-radius: 999px;
   padding: 6px 10px;
-  box-shadow: 0 3px 10px rgba(6,182,212,.2);
+  box-shadow: 0 3px 10px rgba(12, 169, 196,.2);
 }
 
 /* Botón Aplicar */

@@ -949,8 +949,8 @@ onMounted(async () => {
    DESIGN TOKENS
    ══════════════════════════════════════════════════ */
 .rk-request-page {
-  --rk-primary: #0891b2;
-  --rk-primary-light: #22c1dc;
+  --rk-primary: #0893AA;
+  --rk-primary-light: #33BECB;
   --rk-positive: #059669;
   --rk-negative: #dc2626;
   --rk-orange: #d97706;
@@ -973,8 +973,8 @@ onMounted(async () => {
 }
 
 .rk-request-page.is-dark {
-  --rk-primary: #22c1dc;
-  --rk-primary-light: #67e8f9;
+  --rk-primary: #33BECB;
+  --rk-primary-light: #66D2DD;
   --rk-text: #e8eef7;
   --rk-text-muted: #9fb0c8;
   --rk-text-soft: #70819b;
@@ -1076,7 +1076,7 @@ onMounted(async () => {
 }
 
 .rk-main-search :deep(.q-field--focused .q-field__control) {
-  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.14);
+  box-shadow: 0 0 0 3px rgba(8, 147, 170, 0.14);
 }
 
 /* — Action Buttons (top row, right side) — */
@@ -1158,7 +1158,7 @@ onMounted(async () => {
 
 .rk-filter-chip:hover {
   border-color: var(--rk-primary) !important;
-  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.08);
+  box-shadow: 0 0 0 2px rgba(8, 147, 170, 0.08);
 }
 
 .rk-filter-chip :deep(.q-btn__content) {
@@ -1179,7 +1179,7 @@ onMounted(async () => {
 }
 
 .rk-filter-select :deep(.q-field--focused .q-field__control) {
-  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+  box-shadow: 0 0 0 3px rgba(8, 147, 170, 0.12);
 }
 
 .rk-filter-list {
@@ -1190,7 +1190,7 @@ onMounted(async () => {
 }
 
 .rk-filter-active {
-  background: rgba(8, 145, 178, 0.08);
+  background: rgba(8, 147, 170, 0.08);
 }
 
 .rk-clear-filters-inline {
@@ -1209,7 +1209,7 @@ onMounted(async () => {
 
 /* Acento por métrica: define color principal y tono de fondo del icono.
    El fondo del card se mantiene neutro (rk-surface) para no saturar la UI. */
-.bg-primary-gradient  { --metric-c: #0891b2; --metric-cl: rgba(8, 145, 178, 0.10); }
+.bg-primary-gradient  { --metric-c: #0893AA; --metric-cl: rgba(8, 147, 170, 0.10); }
 .bg-orange-gradient   { --metric-c: #d97706; --metric-cl: rgba(217, 119, 6, 0.10); }
 .bg-positive-gradient { --metric-c: #059669; --metric-cl: rgba(5, 150, 105, 0.10); }
 .bg-negative-gradient { --metric-c: #dc2626; --metric-cl: rgba(220, 38, 38, 0.10); }
@@ -1315,7 +1315,7 @@ onMounted(async () => {
 
 .rk-employee-avatar {
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
+  box-shadow: 0 4px 12px rgba(8, 147, 170, 0.2);
 }
 
 .rk-employee-name {
@@ -1365,7 +1365,7 @@ onMounted(async () => {
 
 .rk-type-badge--vacaciones {
   background: var(--color-primary-soft);
-  border-color: rgba(6, 182, 212, 0.15);
+  border-color: rgba(12, 169, 196, 0.15);
   color: var(--color-primary-dark);
 }
 .rk-type-badge--compensatorio {
@@ -1375,7 +1375,7 @@ onMounted(async () => {
 }
 .rk-type-badge--personal {
   background: var(--color-accent-soft);
-  border-color: rgba(20, 184, 166, 0.15);
+  border-color: rgba(8, 147, 170, 0.15);
   color: var(--color-accent-dark);
 }
 .rk-type-badge--medica {
@@ -1385,7 +1385,7 @@ onMounted(async () => {
 }
 .rk-type-badge--familiar {
   background: var(--color-info-soft);
-  border-color: rgba(8, 145, 178, 0.15);
+  border-color: rgba(8, 147, 170, 0.15);
   color: var(--color-info);
 }
 .rk-type-badge--default {
@@ -1469,11 +1469,11 @@ onMounted(async () => {
 }
 
 .rk-selection-toolbar {
-  border: 1px solid rgba(8, 145, 178, 0.2);
+  border: 1px solid rgba(8, 147, 170, 0.2);
   border-radius: var(--rk-radius);
-  background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%);
+  background: linear-gradient(135deg, #0893AA 0%, #067C90 100%);
   color: white;
-  box-shadow: 0 12px 32px rgba(8, 145, 178, 0.25);
+  box-shadow: 0 12px 32px rgba(8, 147, 170, 0.25);
 }
 
 @keyframes rk-slideUp {
@@ -1502,7 +1502,7 @@ onMounted(async () => {
 }
 
 .rk-premium-table :deep(tbody tr:hover) {
-  background: rgba(8, 145, 178, 0.04);
+  background: rgba(8, 147, 170, 0.04);
 }
 
 .rk-request-page.is-dark .rk-premium-table :deep(tbody tr:hover) {

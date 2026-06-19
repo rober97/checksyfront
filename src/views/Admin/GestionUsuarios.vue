@@ -538,7 +538,7 @@ const formatDate  = (d) => {
 };
 
 // Color avatar determinístico
-const AVATAR_COLORS = ["#0891b2","#06b6d4","#0d9488","#14b8a6","#0ea5e9","#22d3ee","#2dd4bf"];
+const AVATAR_COLORS = ["#0893AA","#0CA9C4","#067C90","#0893AA","#067C90","#33BECB","#33BECB"];
 const avatarColor = (name="") => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
 const roleOptions = [
@@ -662,20 +662,20 @@ onBeforeUnmount(() => {
   --c-text:      var(--text-primary, #0f1117);
   --c-text2:     var(--text-secondary, #5a6482);
   --c-text3:     var(--text-muted, #9aa1b9);
-  --c-primary:   var(--color-primary, #06b6d4);
-  --c-primary-l: var(--color-primary-soft, rgba(6,182,212,0.12));
+  --c-primary:   var(--color-primary, #0CA9C4);
+  --c-primary-l: var(--color-primary-soft, rgba(12, 169, 196,0.12));
   --c-ok:        var(--color-success, #16a34a);
   --c-ok-l:      var(--color-success-soft, rgba(22,163,74,0.12));
   --c-warn:      var(--color-warning, #d97706);
   --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
   --c-err:       var(--color-danger, #dc2626);
   --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
-  --c-all:       var(--color-primary, #06b6d4);
-  --c-all-l:     var(--color-primary-soft, rgba(6,182,212,0.12));
-  --c-purple:    var(--color-accent-dark, #0891b2);
-  --c-purple-l:  var(--color-accent-soft, rgba(8,145,178,0.12));
-  --c-teal:      var(--color-accent, #0d9488);
-  --c-teal-l:    var(--color-accent-soft, rgba(13,148,136,0.12));
+  --c-all:       var(--color-primary, #0CA9C4);
+  --c-all-l:     var(--color-primary-soft, rgba(12, 169, 196,0.12));
+  --c-purple:    var(--color-accent-dark, #0893AA);
+  --c-purple-l:  var(--color-accent-soft, rgba(8, 147, 170,0.12));
+  --c-teal:      var(--color-accent, #067C90);
+  --c-teal-l:    var(--color-accent-soft, rgba(6, 124, 144,0.12));
   --shadow-sm:   var(--app-shadow-sm, 0 1px 3px rgba(0,0,0,0.07));
   --shadow-md:   var(--app-shadow-md, 0 4px 16px rgba(0,0,0,0.08));
   --shadow-lg:   var(--app-shadow-lg, 0 12px 36px rgba(0,0,0,0.1));
@@ -702,13 +702,13 @@ onBeforeUnmount(() => {
   --c-text:      var(--text-primary, #e8eaf2);
   --c-text2:     var(--text-secondary, #9aa3b8);
   --c-text3:     var(--text-muted, #6b7488);
-  --c-primary-l: var(--color-primary-soft, rgba(34,211,238,0.16));
+  --c-primary-l: var(--color-primary-soft, rgba(51, 190, 203,0.16));
   --c-ok-l:      var(--color-success-soft, rgba(34,197,94,0.18));
   --c-warn-l:    var(--color-warning-soft, rgba(245,158,11,0.18));
   --c-err-l:     var(--color-danger-soft, rgba(248,113,113,0.18));
-  --c-all-l:     var(--color-primary-soft, rgba(34,211,238,0.16));
-  --c-purple-l:  var(--color-accent-soft, rgba(45,212,191,0.16));
-  --c-teal-l:    var(--color-accent-soft, rgba(45,212,191,0.16));
+  --c-all-l:     var(--color-primary-soft, rgba(51, 190, 203,0.16));
+  --c-purple-l:  var(--color-accent-soft, rgba(51, 190, 203,0.16));
+  --c-teal-l:    var(--color-accent-soft, rgba(51, 190, 203,0.16));
   --shadow-sm:   var(--app-shadow-sm, 0 2px 8px rgba(0,0,0,0.3));
   --shadow-md:   var(--app-shadow-md, 0 10px 30px rgba(0,0,0,0.38));
   --shadow-lg:   var(--app-shadow-lg, 0 20px 60px rgba(0,0,0,0.5));
@@ -739,7 +739,7 @@ onBeforeUnmount(() => {
   width:52px; height:52px; border-radius:16px;
   background:var(--c-all); color:#fff;
   display:flex; align-items:center; justify-content:center;
-  box-shadow:0 8px 24px rgba(6,182,212,0.35); flex-shrink:0;
+  box-shadow:0 8px 24px rgba(12, 169, 196,0.35); flex-shrink:0;
 }
 .rk-title { font-family:var(--ff-display); font-size:26px; font-weight:700; letter-spacing:-0.5px; margin:0 0 2px; line-height:1.2; }
 .rk-subtitle { font-size:13.5px; color:var(--c-text2); margin:0; line-height:1.4; }
@@ -860,11 +860,11 @@ onBeforeUnmount(() => {
   padding:7px 16px; border-radius:10px; border:none;
   background:var(--c-all); color:#fff;
   font-size:13px; font-weight:600; font-family:var(--ff-body);
-  cursor:pointer; box-shadow:0 4px 14px rgba(6,182,212,0.35);
+  cursor:pointer; box-shadow:0 4px 14px rgba(12, 169, 196,0.35);
   transition:transform 0.15s, box-shadow 0.15s;
   white-space:nowrap;
 }
-.rk-btn-new:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(6,182,212,0.4); }
+.rk-btn-new:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(12, 169, 196,0.4); }
 
 /* ══════════════════════════════════════════════════
    TABLA WRAP
@@ -970,9 +970,9 @@ onBeforeUnmount(() => {
   overflow:hidden; text-overflow:ellipsis;
 }
 .company-chip.is-active {
-  background:linear-gradient(135deg, #06b6d4, #0d9488);
+  background:linear-gradient(135deg, #0CA9C4, #067C90);
   color:#fff;
-  box-shadow:0 2px 6px rgba(6,182,212,0.35);
+  box-shadow:0 2px 6px rgba(12, 169, 196,0.35);
 }
 .company-chip.more-chip {
   background:var(--c-surface2);

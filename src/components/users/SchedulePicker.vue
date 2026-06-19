@@ -304,18 +304,18 @@ watch(
   transition: border-color 0.15s, background 0.15s;
   position: relative;
 }
-.rk-mode-card:hover:not(.is-disabled) { border-color: rgba(6, 182, 212, 0.4); }
+.rk-mode-card:hover:not(.is-disabled) { border-color: rgba(12, 169, 196, 0.4); }
 .rk-mode-card.is-active {
-  border-color: var(--q-primary, #06b6d4);
-  background: rgba(6, 182, 212, 0.06);
+  border-color: var(--q-primary, #0CA9C4);
+  background: rgba(12, 169, 196, 0.06);
 }
 .rk-mode-card.is-disabled { cursor: not-allowed; opacity: 0.7; }
 .rk-mode-icon {
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 8px;
-  background: rgba(6, 182, 212, 0.1);
-  color: var(--q-primary, #06b6d4);
+  background: rgba(12, 169, 196, 0.1);
+  color: var(--q-primary, #0CA9C4);
   flex-shrink: 0;
 }
 .rk-mode-body { flex: 1; min-width: 0; }
@@ -327,7 +327,7 @@ watch(
 }
 .rk-mode-check {
   position: absolute; top: 8px; right: 8px;
-  color: var(--q-primary, #06b6d4);
+  color: var(--q-primary, #0CA9C4);
 }
 
 /* Detail blocks */
@@ -338,10 +338,10 @@ watch(
   gap: 10px;
   padding: 12px;
   border-radius: 10px;
-  background: rgba(6, 182, 212, 0.06);
-  border: 1px solid rgba(6, 182, 212, 0.18);
+  background: rgba(12, 169, 196, 0.06);
+  border: 1px solid rgba(12, 169, 196, 0.18);
 }
-.rk-detail-icon { color: var(--q-primary, #06b6d4); margin-top: 2px; }
+.rk-detail-icon { color: var(--q-primary, #0CA9C4); margin-top: 2px; }
 .rk-detail-text { font-size: 13px; color: var(--rk-muted); line-height: 1.4; }
 .rk-helper { font-size: 11px; color: var(--rk-muted); }
 .rk-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -352,9 +352,9 @@ watch(
   --rk-surface: var(--card-background);
   --rk-muted: #9aa3b2;
 }
-.body--dark .rk-mode-card.is-active { background: rgba(6, 182, 212, 0.16); }
+.body--dark .rk-mode-card.is-active { background: rgba(12, 169, 196, 0.16); }
 .body--dark .rk-detail--oncall {
-  background: rgba(6, 182, 212, 0.10);
-  border-color: rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.10);
+  border-color: rgba(12, 169, 196, 0.25);
 }
 </style>

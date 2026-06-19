@@ -882,11 +882,11 @@ async function confirmDeactivate(row) {
 }
 
 .hero-afp {
-  background: linear-gradient(135deg, #0e7490 0%, var(--color-primary) 100%);
+  background: linear-gradient(135deg, #067C90 0%, var(--color-primary) 100%);
 }
 
 .hero-health {
-  background: linear-gradient(135deg, var(--color-accent-dark, #0d9488) 0%, var(--color-accent) 100%);
+  background: linear-gradient(135deg, var(--color-accent-dark, #067C90) 0%, var(--color-accent) 100%);
 }
 
 .hero-cesantia {

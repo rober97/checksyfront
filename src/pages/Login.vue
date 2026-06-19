@@ -585,7 +585,7 @@ body.body--dark .login-card {
   color: #fff;
   border-radius: 14px;
   background: radial-gradient(120% 120% at 20% 15%, #4f8cff, #2e6bff 60%),
-    linear-gradient(90deg, #2e6bff, #14b8a6);
+    linear-gradient(90deg, #2e6bff, #0893AA);
   box-shadow: 0 10px 24px rgba(46, 107, 255, 0.35),
     inset 0 0 14px rgba(255, 255, 255, 0.25);
 }

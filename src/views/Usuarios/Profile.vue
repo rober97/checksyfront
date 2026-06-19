@@ -584,7 +584,7 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   height: 140px;
-  background: linear-gradient(135deg, var(--color-primary, #06b6d4) 0%, var(--color-accent, #14b8a6) 60%, var(--color-primary-dark, #0891b2) 100%);
+  background: linear-gradient(135deg, var(--color-primary, #0CA9C4) 0%, var(--color-accent, #0893AA) 60%, var(--color-primary-dark, #0893AA) 100%);
 }
 
 .rk-profile-hero__content {
@@ -622,7 +622,7 @@ onMounted(() => {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  background: linear-gradient(135deg, #0CA9C4, #0893AA);
   color: #fff;
   border: 3px solid #fff;
   display: flex;
@@ -630,7 +630,7 @@ onMounted(() => {
   justify-content: center;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 6px 14px rgba(6, 182, 212, 0.45);
+  box-shadow: 0 6px 14px rgba(12, 169, 196, 0.45);
 }
 
 .rk-profile-hero.is-dark .rk-profile-hero__upload-btn {
@@ -742,11 +742,11 @@ onMounted(() => {
 }
 
 .rk-stat-card__icon--cyan {
-  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  background: linear-gradient(135deg, #0CA9C4, #0893AA);
 }
 
 .rk-stat-card__icon--violet {
-  background: linear-gradient(135deg, var(--color-accent, #14b8a6), var(--color-accent-dark, #0d9488));
+  background: linear-gradient(135deg, var(--color-accent, #0893AA), var(--color-accent-dark, #067C90));
 }
 
 .rk-stat-card__icon--amber {
@@ -797,7 +797,7 @@ onMounted(() => {
 }
 
 .rk-section-card__title .q-icon {
-  color: #06b6d4;
+  color: #0CA9C4;
 }
 
 .rk-section-card__hint {

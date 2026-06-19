@@ -178,30 +178,30 @@ const clearFilters = () => {
 /* ── Variables de tema ───────────────────────────────────────────── */
 .rk-tools {
   --t-bg:           #ffffff;
-  --t-bg-soft:      rgba(6,182,212,.04);
-  --t-border:       rgba(6,182,212,.14);
+  --t-bg-soft:      rgba(12, 169, 196,.04);
+  --t-border:       rgba(12, 169, 196,.14);
   --t-title:        rgba(15,23,42,.85);
   --t-muted:        rgba(15,23,42,.50);
-  --t-icon:         #06b6d4;
-  --t-btn-border:   rgba(6,182,212,.22);
-  --t-btn-hover:    rgba(6,182,212,.08);
-  --t-filter-active-bg: rgba(6,182,212,.12);
-  --t-filter-active-border: rgba(6,182,212,.4);
-  --t-filter-active-color: #0891b2;
-  --t-shadow:       0 6px 20px rgba(6,182,212,.07), 0 2px 6px rgba(0,0,0,.04);
+  --t-icon:         #0CA9C4;
+  --t-btn-border:   rgba(12, 169, 196,.22);
+  --t-btn-hover:    rgba(12, 169, 196,.08);
+  --t-filter-active-bg: rgba(12, 169, 196,.12);
+  --t-filter-active-border: rgba(12, 169, 196,.4);
+  --t-filter-active-color: #0893AA;
+  --t-shadow:       0 6px 20px rgba(12, 169, 196,.07), 0 2px 6px rgba(0,0,0,.04);
 }
 .body--dark .rk-tools {
   --t-bg:           var(--card-background);
-  --t-bg-soft:      rgba(6,182,212,.06);
-  --t-border:       rgba(6,182,212,.18);
+  --t-bg-soft:      rgba(12, 169, 196,.06);
+  --t-border:       rgba(12, 169, 196,.18);
   --t-title:        rgba(255,255,255,.90);
   --t-muted:        rgba(255,255,255,.48);
-  --t-icon:         #22d3ee;
-  --t-btn-border:   rgba(6,182,212,.28);
-  --t-btn-hover:    rgba(6,182,212,.1);
-  --t-filter-active-bg:     rgba(6,182,212,.18);
-  --t-filter-active-border: rgba(6,182,212,.5);
-  --t-filter-active-color:  #22d3ee;
+  --t-icon:         #33BECB;
+  --t-btn-border:   rgba(12, 169, 196,.28);
+  --t-btn-hover:    rgba(12, 169, 196,.1);
+  --t-filter-active-bg:     rgba(12, 169, 196,.18);
+  --t-filter-active-border: rgba(12, 169, 196,.5);
+  --t-filter-active-color:  #33BECB;
   --t-shadow:       0 6px 24px rgba(0,0,0,.3);
 }
 
@@ -252,7 +252,7 @@ const clearFilters = () => {
 .rk-field :deep(.q-field__control:hover) { border-color: var(--t-icon) !important; }
 .rk-field :deep(.q-field--focused .q-field__control) {
   border-color: var(--t-icon) !important;
-  box-shadow: 0 0 0 3px rgba(6,182,212,.12);
+  box-shadow: 0 0 0 3px rgba(12, 169, 196,.12);
 }
 .rk-field :deep(.q-field__native) { padding-top: 0; padding-bottom: 0; }
 .rk-field :deep(.q-field__prepend) { color: var(--t-icon); }

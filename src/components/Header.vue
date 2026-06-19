@@ -680,13 +680,13 @@ onBeforeUnmount(() => {
 /* Theme Variables */
 .rk-header {
   --header-bg: rgba(255, 255, 255, 0.92);
-  --header-border: color-mix(in srgb, var(--color-primary, #06b6d4) 12%, transparent);
+  --header-border: color-mix(in srgb, var(--color-primary, #0CA9C4) 12%, transparent);
   --text-primary: rgba(15, 23, 42, 0.95);
   --text-secondary: rgba(15, 23, 42, 0.7);
   --text-muted: rgba(15, 23, 42, 0.5);
-  --surface-1: color-mix(in srgb, var(--color-primary, #06b6d4) 6%, transparent);
-  --surface-2: color-mix(in srgb, var(--color-primary, #06b6d4) 10%, transparent);
-  --border-1: color-mix(in srgb, var(--color-primary, #06b6d4) 18%, transparent);
+  --surface-1: color-mix(in srgb, var(--color-primary, #0CA9C4) 6%, transparent);
+  --surface-2: color-mix(in srgb, var(--color-primary, #0CA9C4) 10%, transparent);
+  --border-1: color-mix(in srgb, var(--color-primary, #0CA9C4) 18%, transparent);
   backdrop-filter: saturate(1.2) blur(16px);
   border-bottom: 1.5px solid var(--header-border);
   background: var(--header-bg);
@@ -695,13 +695,13 @@ onBeforeUnmount(() => {
 
 .body--dark .rk-header {
   --header-bg: rgba(10, 14, 20, 0.92);
-  --header-border: color-mix(in srgb, var(--color-primary, #06b6d4) 22%, transparent);
+  --header-border: color-mix(in srgb, var(--color-primary, #0CA9C4) 22%, transparent);
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-muted: rgba(255, 255, 255, 0.5);
-  --surface-1: color-mix(in srgb, var(--color-primary, #06b6d4) 10%, transparent);
-  --surface-2: color-mix(in srgb, var(--color-primary, #06b6d4) 16%, transparent);
-  --border-1: color-mix(in srgb, var(--color-primary, #06b6d4) 24%, transparent);
+  --surface-1: color-mix(in srgb, var(--color-primary, #0CA9C4) 10%, transparent);
+  --surface-2: color-mix(in srgb, var(--color-primary, #0CA9C4) 16%, transparent);
+  --border-1: color-mix(in srgb, var(--color-primary, #0CA9C4) 24%, transparent);
 }
 
 /* Header Bar */
@@ -774,7 +774,7 @@ onBeforeUnmount(() => {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary, #06b6d4) 30%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary, #0CA9C4) 30%, transparent);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: visible;
   flex-shrink: 0;
@@ -782,7 +782,7 @@ onBeforeUnmount(() => {
 
 .rk-home-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary, #06b6d4) 45%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary, #0CA9C4) 45%, transparent);
 }
 
 .rk-home-btn:active {
@@ -986,7 +986,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
 }
 
 .rk-notif-icon .q-icon {
@@ -1312,7 +1312,7 @@ onBeforeUnmount(() => {
 
 .rk-command-item.active .rk-command-item-icon {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
 }
 
 .rk-command-item-icon .q-icon {
@@ -1389,7 +1389,7 @@ onBeforeUnmount(() => {
 
 /* Tooltip */
 .rk-tooltip {
-  background: rgba(6, 182, 212, 0.95);
+  background: rgba(12, 169, 196, 0.95);
   backdrop-filter: blur(10px);
   font-size: 0.85rem;
   padding: 8px 12px;
@@ -1469,7 +1469,7 @@ onBeforeUnmount(() => {
 .rk-command-palette {
   width: min(640px, 95vw);
   background: var(--card-background);
-  border: 1.5px solid rgba(6, 182, 212, 0.18);
+  border: 1.5px solid rgba(12, 169, 196, 0.18);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
@@ -1577,7 +1577,7 @@ onBeforeUnmount(() => {
 
 .rk-command-item.active .rk-command-item-icon {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.35);
 }
 
 .rk-command-item-icon .q-icon {

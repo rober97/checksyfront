@@ -28,8 +28,8 @@
               <path d="M0,4 Q50,0 100,4 T200,4" fill="none" stroke="url(#grad-faq)" stroke-width="2"/>
               <defs>
                 <linearGradient id="grad-faq" x1="0%" x2="100%">
-                  <stop offset="0%" style="stop-color: #06b6d4; stop-opacity: 0.6" />
-                  <stop offset="100%" style="stop-color: #14b8a6; stop-opacity: 0.8" />
+                  <stop offset="0%" style="stop-color: #0CA9C4; stop-opacity: 0.6" />
+                  <stop offset="100%" style="stop-color: #0893AA; stop-opacity: 0.8" />
                 </linearGradient>
               </defs>
             </svg>
@@ -265,11 +265,11 @@ const leave = (el) => {
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-  --color-primary: #06b6d4;
-  --color-primary-light: #22d3ee;
-  --color-accent: #14b8a6;
+  --color-primary: #0CA9C4;
+  --color-primary-light: #33BECB;
+  --color-accent: #0893AA;
   --color-bg-dark: #0a0e14;
-  --color-surface: rgba(6, 182, 212, 0.05);
+  --color-surface: rgba(12, 169, 196, 0.05);
 }
 
 /* Section */
@@ -293,8 +293,8 @@ const leave = (el) => {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(6, 182, 212, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(6, 182, 212, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(12, 169, 196, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 169, 196, 0.02) 1px, transparent 1px);
   background-size: 80px 80px;
   opacity: 0.5;
 }
@@ -395,8 +395,8 @@ const leave = (el) => {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--color-primary-light);
-  background: rgba(6, 182, 212, 0.1);
-  border: 1.5px solid rgba(6, 182, 212, 0.25);
+  background: rgba(12, 169, 196, 0.1);
+  border: 1.5px solid rgba(12, 169, 196, 0.25);
   border-radius: 50px;
   backdrop-filter: blur(10px);
   position: relative;
@@ -490,8 +490,8 @@ const leave = (el) => {
 
 .rk-category-card {
   padding: 28px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(20, 184, 166, 0.05));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.05), rgba(8, 147, 170, 0.05));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 20px;
   backdrop-filter: blur(10px);
 }
@@ -505,7 +505,7 @@ const leave = (el) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 14px;
   margin-bottom: 20px;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 6px 20px rgba(12, 169, 196, 0.3);
 }
 
 .rk-category-icon-wrap .q-icon {
@@ -530,7 +530,7 @@ const leave = (el) => {
 .rk-category-count {
   display: inline-flex;
   padding: 6px 14px;
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(12, 169, 196, 0.15);
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -540,8 +540,8 @@ const leave = (el) => {
 /* Contact Card */
 .rk-contact-card {
   padding: 28px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(20, 184, 166, 0.08));
-  border: 1.5px solid rgba(6, 182, 212, 0.2);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.08), rgba(8, 147, 170, 0.08));
+  border: 1.5px solid rgba(12, 169, 196, 0.2);
   border-radius: 20px;
   backdrop-filter: blur(10px);
   text-align: center;
@@ -556,7 +556,7 @@ const leave = (el) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 50%;
   margin: 0 auto 20px;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.3);
 }
 
 .rk-contact-icon .q-icon {
@@ -583,15 +583,15 @@ const leave = (el) => {
   padding: 12px 20px;
   font-weight: 700;
   color: var(--color-primary-light);
-  border: 2px solid rgba(6, 182, 212, 0.3);
-  background: rgba(6, 182, 212, 0.08);
+  border: 2px solid rgba(12, 169, 196, 0.3);
+  background: rgba(12, 169, 196, 0.08);
   border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .rk-contact-btn:hover {
-  border-color: rgba(6, 182, 212, 0.5);
-  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(12, 169, 196, 0.5);
+  background: rgba(12, 169, 196, 0.15);
   transform: translateY(-2px);
 }
 
@@ -612,8 +612,8 @@ const leave = (el) => {
 /* FAQ Item */
 .rk-faq-item {
   position: relative;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.03), rgba(20, 184, 166, 0.03));
-  border: 1.5px solid rgba(6, 182, 212, 0.12);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.03), rgba(8, 147, 170, 0.03));
+  border: 1.5px solid rgba(12, 169, 196, 0.12);
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -621,13 +621,13 @@ const leave = (el) => {
 
 .rk-faq-item:hover,
 .rk-faq-item.active {
-  border-color: rgba(6, 182, 212, 0.25);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.1);
+  border-color: rgba(12, 169, 196, 0.25);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.1);
 }
 
 .rk-faq-item.expanded {
-  border-color: rgba(6, 182, 212, 0.35);
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.15);
+  border-color: rgba(12, 169, 196, 0.35);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.15);
 }
 
 /* FAQ Question */
@@ -646,7 +646,7 @@ const leave = (el) => {
 }
 
 .rk-faq-question:hover {
-  background: rgba(6, 182, 212, 0.05);
+  background: rgba(12, 169, 196, 0.05);
 }
 
 .rk-question-content {
@@ -662,7 +662,7 @@ const leave = (el) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(12, 169, 196, 0.15);
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 800;
@@ -696,7 +696,7 @@ const leave = (el) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.12);
+  background: rgba(12, 169, 196, 0.12);
   border-radius: 50%;
   flex-shrink: 0;
   transition: all 0.3s ease;
@@ -729,7 +729,7 @@ const leave = (el) => {
 
 .rk-answer-content {
   padding: 20px;
-  background: rgba(6, 182, 212, 0.04);
+  background: rgba(12, 169, 196, 0.04);
   border-radius: 12px;
   border-left: 3px solid var(--color-primary);
 }
@@ -752,8 +752,8 @@ const leave = (el) => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.1);
+  border: 1px solid rgba(12, 169, 196, 0.2);
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -763,8 +763,8 @@ const leave = (el) => {
 }
 
 .rk-answer-link:hover {
-  background: rgba(6, 182, 212, 0.18);
-  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(12, 169, 196, 0.18);
+  border-color: rgba(12, 169, 196, 0.4);
   transform: translateY(-2px);
 }
 
@@ -795,8 +795,8 @@ const leave = (el) => {
   justify-content: space-around;
   gap: 24px;
   padding: 32px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(20, 184, 166, 0.05));
-  border: 1.5px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.05), rgba(8, 147, 170, 0.05));
+  border: 1.5px solid rgba(12, 169, 196, 0.15);
   border-radius: 20px;
   backdrop-filter: blur(10px);
 }
@@ -816,7 +816,7 @@ const leave = (el) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 12px;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 16px rgba(12, 169, 196, 0.3);
 }
 
 .rk-stat-icon-wrap .q-icon {
@@ -850,15 +850,15 @@ const leave = (el) => {
 .rk-stat-divider {
   width: 1px;
   height: 40px;
-  background: rgba(6, 182, 212, 0.2);
+  background: rgba(12, 169, 196, 0.2);
 }
 
 /* Bottom CTA Banner */
 .rk-faq-banner {
   position: relative;
   padding: 40px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(20, 184, 166, 0.08));
-  border: 2px solid rgba(6, 182, 212, 0.25);
+  background: linear-gradient(135deg, rgba(12, 169, 196, 0.08), rgba(8, 147, 170, 0.08));
+  border: 2px solid rgba(12, 169, 196, 0.25);
   border-radius: 24px;
   backdrop-filter: blur(20px);
   overflow: hidden;
@@ -869,8 +869,8 @@ const leave = (el) => {
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(20, 184, 166, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(12, 169, 196, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(8, 147, 170, 0.1) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -892,7 +892,7 @@ const leave = (el) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.4);
 }
 
 .rk-banner-icon .q-icon {
@@ -925,14 +925,14 @@ const leave = (el) => {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: #fff;
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 24px rgba(12, 169, 196, 0.3);
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
 .rk-banner-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 12px 32px rgba(12, 169, 196, 0.4);
 }
 
 .rk-banner-btn .q-icon {

@@ -143,7 +143,7 @@
             title="Asistencias"
             :value="asistencias"
             icon="event_available"
-            icon-gradient="linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)"
+            icon-gradient="linear-gradient(135deg, #0CA9C4 0%, #0893AA 100%)"
             format-type="auto"
             trend="positive"
           />
@@ -154,7 +154,7 @@
             title="Días Vacaciones"
             :value="vacaciones"
             icon="beach_access"
-            icon-gradient="linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)"
+            icon-gradient="linear-gradient(135deg, #33BECB 0%, #0CA9C4 100%)"
             format-type="decimal"
             :decimals="0"
             subtitle="Disponibles este año"
@@ -187,7 +187,7 @@
             title="Empresas Registradas"
             :value="empresas"
             icon="apartment"
-            icon-gradient="linear-gradient(135deg, #0891b2 0%, #0d9488 100%)"
+            icon-gradient="linear-gradient(135deg, #0893AA 0%, #067C90 100%)"
             format-type="auto"
             trend="positive"
           />
@@ -198,7 +198,7 @@
             title="Días Administrativos"
             :value="diasAdmin"
             icon="calendar_today"
-            icon-gradient="linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)"
+            icon-gradient="linear-gradient(135deg, #33BECB 0%, #0CA9C4 100%)"
             format-type="decimal"
             :decimals="0"
             subtitle="Disponibles"
@@ -210,7 +210,7 @@
             title="Último Check-in"
             :value="ultimoCheck || '—'"
             icon="access_time"
-            icon-gradient="linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)"
+            icon-gradient="linear-gradient(135deg, #0CA9C4 0%, #0893AA 100%)"
             format-type="time"
             variant="highlight"
             subtitle="Hora de entrada"
@@ -719,7 +719,7 @@ const attendanceGaugeSeries = computed(() => [attendancePct.value]);
 const attendanceGaugeOptions = computed(() => ({
   chart: { fontFamily: "inherit", background: "transparent" },
   theme: { mode: chartTheme.value },
-  colors: ["#06b6d4"],
+  colors: ["#0CA9C4"],
   plotOptions: {
     radialBar: {
       hollow: { size: "62%" },
@@ -736,7 +736,7 @@ const attendanceGaugeOptions = computed(() => ({
   },
   fill: {
     type: "gradient",
-    gradient: { shade: "dark", type: "horizontal", gradientToColors: ["#14b8a6"], stops: [0, 100] },
+    gradient: { shade: "dark", type: "horizontal", gradientToColors: ["#0893AA"], stops: [0, 100] },
   },
   stroke: { lineCap: "round" },
   labels: ["Presentes hoy"],
@@ -1068,17 +1068,17 @@ const lastUpdatedText = computed(() =>
   flex-wrap: wrap;
 
   &.admin {
-    background: linear-gradient(135deg, #06b6d4 0%, #0d9488 100%);
+    background: linear-gradient(135deg, #0CA9C4 0%, #067C90 100%);
     color: white;
   }
 
   &.company {
-    background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
+    background: linear-gradient(135deg, #0893AA 0%, #33BECB 100%);
     color: white;
   }
 
   &.employee {
-    background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, #33BECB 0%, #0CA9C4 100%);
     color: white;
   }
 }
@@ -1202,14 +1202,14 @@ const lastUpdatedText = computed(() =>
 }
 .rk-hc-bar__fill {
   height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, #06b6d4, #14b8a6); transition: width .5s ease;
+  background: linear-gradient(90deg, #0CA9C4, #0893AA); transition: width .5s ease;
 }
 .rk-hc-legend {
   display: flex; gap: 1.2rem; font-size: .82rem; color: var(--text-secondary); flex-wrap: wrap;
 }
 .rk-hc-legend b { color: var(--text-primary); }
 .rk-hc-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
-.dot--active { background: #14b8a6; }
+.dot--active { background: #0893AA; }
 .dot--inactive { background: #94a3b8; }
 .rk-hc-btn { margin-top: auto; align-self: flex-start; }
 

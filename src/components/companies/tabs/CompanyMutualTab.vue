@@ -217,7 +217,7 @@ watch(
   gap: 12px;
   padding: 14px 16px;
   background: var(--color-primary-soft);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(12, 169, 196, 0.2);
   border-radius: 12px;
 }
 .cmt-info-icon {
@@ -257,8 +257,8 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 182, 212, 0.12);
-  color: rgb(6, 182, 212);
+  background: rgba(12, 169, 196, 0.12);
+  color: rgb(12, 169, 196);
   border-radius: 8px;
 }
 .cmt-card-title {
