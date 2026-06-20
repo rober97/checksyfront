@@ -8,16 +8,36 @@
         <p class="rates-subtitle">
           Configura las tasas de AFP, salud, cesantía y otros descuentos para el cálculo de liquidaciones.
         </p>
+        <div v-if="lastSyncLabel" class="last-sync">
+          <q-icon name="cloud_done" size="14px" color="positive" />
+          Última actualización con Previred: <strong>{{ lastSyncLabel }}</strong>
+          <span v-if="lastSync?.period" class="last-sync-period">· período {{ lastSync.period }}</span>
+        </div>
+        <div v-else class="last-sync muted">
+          <q-icon name="cloud_off" size="14px" />
+          Aún no se ha sincronizado con Previred
+        </div>
       </div>
-      <q-btn
-        unelevated
-        no-caps
-        color="primary"
-        icon="add"
-        label="Nueva tasa"
-        class="btn-new"
-        @click="openCreate"
-      />
+      <div class="header-actions">
+        <q-btn
+          outline
+          no-caps
+          color="primary"
+          icon="sync"
+          label="Sincronizar con Previred"
+          class="btn-sync"
+          @click="openPrevired"
+        />
+        <q-btn
+          unelevated
+          no-caps
+          color="primary"
+          icon="add"
+          label="Nueva tasa"
+          class="btn-new"
+          @click="openCreate"
+        />
+      </div>
     </div>
 
     <!-- Tabs as pill buttons -->
@@ -300,6 +320,102 @@
         </div>
       </q-card>
     </q-dialog>
+
+    <!-- ===================== PREVIRED SYNC DIALOG ===================== -->
+    <q-dialog v-model="previredDlg.open" persistent transition-show="slide-up" transition-hide="slide-down">
+      <q-card class="dialog-card previred-card">
+        <div class="dialog-hero hero-previred">
+          <div class="hero-icon-wrap">
+            <q-icon name="sync" size="28px" color="white" />
+          </div>
+          <div class="hero-text">
+            <div class="hero-title">Sincronizar con Previred</div>
+            <div class="hero-sub">
+              Indicadores previsionales
+              <template v-if="store.previred.snapshot?.period">— {{ store.previred.snapshot.period }}</template>
+            </div>
+          </div>
+          <q-btn icon="close" flat round dense color="white" class="hero-close" @click="previredDlg.open = false" />
+        </div>
+
+        <q-card-section class="dialog-body previred-body">
+          <!-- Loading -->
+          <div v-if="store.previred.loadingPreview" class="text-center q-pa-xl">
+            <q-spinner-dots size="40px" color="primary" />
+            <div class="text-grey-6 q-mt-sm">Consultando Previred…</div>
+          </div>
+
+          <template v-else>
+            <!-- Summary + bulk actions -->
+            <div class="previred-summary">
+              <span class="psum-chip new"><strong>{{ countByStatus('new') }}</strong> nuevos</span>
+              <span class="psum-chip changed"><strong>{{ countByStatus('changed') }}</strong> cambian</span>
+              <span class="psum-chip same"><strong>{{ countByStatus('unchanged') }}</strong> sin cambios</span>
+              <q-space />
+              <q-btn flat dense no-caps size="sm" color="primary" label="Solo cambios" @click="selectByStatus(['new','changed'])" />
+              <q-btn flat dense no-caps size="sm" color="grey-7" label="Todos" @click="selectByStatus(['new','changed','unchanged'])" />
+              <q-btn flat dense no-caps size="sm" color="grey-7" label="Ninguno" @click="clearSelection" />
+            </div>
+
+            <!-- Warnings -->
+            <div v-if="(store.previred.snapshot?.warnings || []).length" class="previred-warn">
+              <q-icon name="warning" size="16px" />
+              <span>No se pudieron leer: {{ store.previred.snapshot.warnings.join(', ') }}</span>
+            </div>
+
+            <!-- Items -->
+            <div v-if="previredItems.length" class="previred-list">
+              <div
+                v-for="it in previredItems"
+                :key="itemId(it)"
+                class="pv-row"
+                :class="{ off: !isChecked(it) }"
+                @click="toggleItem(it)"
+              >
+                <q-icon
+                  :name="isChecked(it) ? 'check_box' : 'check_box_outline_blank'"
+                  :color="isChecked(it) ? 'primary' : 'grey-5'"
+                  size="22px"
+                  class="pv-check"
+                />
+                <div class="pv-main">
+                  <div class="pv-label">
+                    {{ it.label || it.key }}
+                    <span v-if="it.kind === 'indicator'" class="pv-tag">indicador</span>
+                    <span v-else-if="it.consumed === false" class="pv-tag soft">no usado aún</span>
+                  </div>
+                  <div class="pv-values">
+                    <span class="pv-old">{{ fmtCandidateValue(it, it.current) }}</span>
+                    <q-icon name="arrow_forward" size="13px" color="grey-5" />
+                    <span class="pv-new">{{ fmtCandidateValue(it, it.value) }}</span>
+                  </div>
+                </div>
+                <span class="pv-status" :class="it.status">{{ statusLabel(it.status) }}</span>
+              </div>
+            </div>
+            <div v-else class="text-center text-grey-6 q-pa-lg">Sin indicadores para mostrar.</div>
+          </template>
+        </q-card-section>
+
+        <div class="dialog-footer previred-footer">
+          <div v-if="store.previred.validFrom" class="pv-validfrom">
+            <q-icon name="event" size="14px" /> Vigencia desde {{ formatDate(store.previred.validFrom) }}
+          </div>
+          <q-space />
+          <q-btn flat no-caps label="Cancelar" color="grey-7" @click="previredDlg.open = false" />
+          <q-btn
+            unelevated no-caps
+            color="primary"
+            icon="cloud_upload"
+            :label="`Aplicar ${selectedCount} seleccionados`"
+            :loading="store.previred.applying"
+            :disable="selectedCount === 0 || store.previred.loadingPreview"
+            class="btn-save"
+            @click="applyPrevired"
+          />
+        </div>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -405,7 +521,112 @@ async function reloadAll() {
     $q.notify({ type: 'negative', message: e?.message || 'Error cargando tasas' })
   }
 }
-onMounted(reloadAll)
+onMounted(() => {
+  reloadAll()
+  store.loadPreviredStatus().catch(() => {})
+})
+
+// ─── Previred sync ───────────────────────────────────────────────
+const previredDlg = reactive({ open: false })
+const selected = ref(new Set())
+
+const lastSync = computed(() => store.previred.lastSync)
+const lastSyncLabel = computed(() => fmtDateTime(lastSync.value?.createdAt || lastSync.value?.updatedAt))
+
+const previredItems = computed(() => [
+  ...(store.previred.params || []),
+  ...(store.previred.indicators || []),
+])
+const selectedCount = computed(() =>
+  previredItems.value.filter((it) => selected.value.has(itemId(it))).length
+)
+
+function itemId(it) {
+  return `${it.kind}:${it.type || ''}:${it.scope || ''}:${it.key || ''}:${it.entitySlug || ''}`
+}
+function isChecked(it) {
+  return selected.value.has(itemId(it))
+}
+function toggleItem(it) {
+  const id = itemId(it)
+  const s = new Set(selected.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  selected.value = s
+}
+function selectByStatus(statuses) {
+  const s = new Set()
+  for (const it of previredItems.value) if (statuses.includes(it.status)) s.add(itemId(it))
+  selected.value = s
+}
+function clearSelection() {
+  selected.value = new Set()
+}
+function countByStatus(status) {
+  return previredItems.value.filter((it) => it.status === status).length
+}
+function statusLabel(status) {
+  return status === 'new' ? 'Nuevo' : status === 'changed' ? 'Cambia' : 'Igual'
+}
+
+function fmtClp(n) {
+  return '$' + Math.round(Number(n)).toLocaleString('es-CL')
+}
+function fmtCandidateValue(it, v) {
+  if (v === null || v === undefined || v === '') return '—'
+  if (it.kind === 'indicator') {
+    return Number.isInteger(Number(v))
+      ? fmtClp(v)
+      : '$' + Number(v).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+  if (it.unit === 'rate') return (Number(v) * 100).toFixed(2) + '%'
+  return fmtClp(v)
+}
+function fmtDateTime(d) {
+  if (!d) return null
+  const dt = new Date(d)
+  if (Number.isNaN(dt.getTime())) return null
+  return dt.toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+async function openPrevired() {
+  previredDlg.open = true
+  clearSelection()
+  store.previred.params = []
+  store.previred.indicators = []
+  store.previred.snapshot = null
+  try {
+    await store.loadPreviredPreview()
+    selectByStatus(['new', 'changed'])
+  } catch (e) {
+    previredDlg.open = false
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message || e?.message || 'No se pudo conectar con Previred',
+    })
+  }
+}
+
+async function applyPrevired() {
+  const items = previredItems.value.filter((it) => selected.value.has(itemId(it)))
+  if (!items.length) {
+    $q.notify({ type: 'warning', message: 'Selecciona al menos un indicador' })
+    return
+  }
+  try {
+    const res = await store.applyPrevired(items)
+    const errs = res?.errors?.length || 0
+    $q.notify({
+      type: errs ? 'warning' : 'positive',
+      message: `Se aplicaron ${res.applied} indicadores${errs ? `, ${errs} con error` : ''}`,
+    })
+    previredDlg.open = false
+  } catch (e) {
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message || e?.message || 'Error aplicando indicadores',
+    })
+  }
+}
 
 // ─── Dialog ──────────────────────────────────────────────────────
 const dlg = reactive({
@@ -626,6 +847,41 @@ async function confirmDeactivate(row) {
   padding: 10px 22px;
   font-weight: 600;
   border-radius: 10px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.btn-sync {
+  padding: 10px 18px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.last-sync {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.last-sync strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.last-sync-period {
+  color: var(--text-muted);
+}
+
+.last-sync.muted {
+  color: var(--text-muted);
 }
 
 /* ── Pill tabs ─────────────────────────────────── */
@@ -1106,9 +1362,188 @@ async function confirmDeactivate(row) {
   transition: transform 0.25s ease;
 }
 
+/* ═══════════════════════════════════════════════════
+   PREVIRED SYNC DIALOG
+   ═══════════════════════════════════════════════════ */
+.previred-card {
+  width: 640px;
+}
+
+.hero-previred {
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+}
+
+.previred-body {
+  padding: 18px 22px 8px !important;
+}
+
+.previred-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.psum-chip {
+  font-size: 12.5px;
+  padding: 3px 11px;
+  border-radius: 20px;
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+}
+
+.psum-chip strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.psum-chip.new {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.psum-chip.changed {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.previred-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.previred-list {
+  max-height: 48vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+
+.pv-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.13s ease;
+}
+
+.pv-row:hover {
+  background: var(--surface-soft);
+}
+
+.pv-row.off {
+  opacity: 0.55;
+}
+
+.pv-check {
+  flex-shrink: 0;
+}
+
+.pv-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pv-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pv-tag {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.pv-tag.soft {
+  background: var(--surface-soft);
+  color: var(--text-muted);
+}
+
+.pv-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-old {
+  color: var(--text-muted);
+}
+
+.pv-new {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.pv-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+}
+
+.pv-status.new {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.pv-status.changed {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.previred-footer {
+  align-items: center;
+}
+
+.pv-validfrom {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* ── Dark mode ─────────────────────────────────── */
 /* Most overrides are now handled automatically by tokens.css.
    Only non-token specifics remain below. */
+
+.body--dark .psum-chip.changed,
+.body--dark .pv-status.changed,
+.body--dark .previred-warn {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+}
 
 .body--dark .tab-pill.active {
   background: var(--color-primary);

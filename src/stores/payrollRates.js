@@ -29,7 +29,20 @@ export const usePayrollRatesStore = defineStore("payrollRates", {
     afpRows: [],
     healthRows: [],
     cesantiaRows: [],
-    otherDeductionRows: []
+    otherDeductionRows: [],
+
+    // sincronización con Previred
+    previred: {
+      loadingPreview: false,
+      applying: false,
+      loadingStatus: false,
+      snapshot: null,
+      params: [],
+      indicators: [],
+      summary: null,
+      validFrom: null,
+      lastSync: null
+    }
   }),
 
   actions: {
@@ -210,6 +223,51 @@ export const usePayrollRatesStore = defineStore("payrollRates", {
       await secureAxios.patch(`/payroll/params/${paramId}/deactivate`);
       // recarga
       await this.loadAll({ companyId: null });
+    },
+
+    /* ===================== Sincronización con Previred ===================== */
+
+    async loadPreviredStatus() {
+      this.previred.loadingStatus = true;
+      try {
+        const res = await secureAxios.get("/payroll-sync/previred/status");
+        this.previred.lastSync = res?.data?.lastSync || null;
+        return this.previred.lastSync;
+      } finally {
+        this.previred.loadingStatus = false;
+      }
+    },
+
+    async loadPreviredPreview() {
+      this.previred.loadingPreview = true;
+      try {
+        const res = await secureAxios.get("/payroll-sync/previred/preview");
+        const d = res?.data || {};
+        this.previred.snapshot = d.snapshot || null;
+        this.previred.params = safeArr(d.params);
+        this.previred.indicators = safeArr(d.indicators);
+        this.previred.summary = d.summary || null;
+        this.previred.validFrom = d.validFrom || null;
+        return d;
+      } finally {
+        this.previred.loadingPreview = false;
+      }
+    },
+
+    async applyPrevired(items) {
+      this.previred.applying = true;
+      try {
+        const res = await secureAxios.post("/payroll-sync/previred/apply", {
+          validFrom: this.previred.validFrom,
+          items
+        });
+        if (res?.data?.log) this.previred.lastSync = res.data.log;
+        // refrescar tasas visibles (AFP/cesantía) tras aplicar
+        await this.loadAll({ companyId: null });
+        return res.data;
+      } finally {
+        this.previred.applying = false;
+      }
     }
   }
 });
