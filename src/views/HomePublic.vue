@@ -82,9 +82,9 @@
           </h1>
 
           <p class="rk-hero__lead">
-            Asistencia, desempeño, liquidaciones y cumplimiento DT en una sola
-            suite. Datos en tiempo real y automatizaciones que ahorran horas a tu
-            equipo cada semana.
+            Asistencia, horarios, liquidaciones y cumplimiento DT en una sola
+            plataforma. Marcaje con foto y ubicación, registro inalterable y
+            reportes listos para fiscalización.
           </p>
 
           <div class="rk-hero__cta">
@@ -105,8 +105,8 @@
           </div>
 
           <ul class="rk-hero__trust">
-            <li><q-icon name="verified_user"/> ISO 27001</li>
-            <li><q-icon name="lock"/> Cifrado bancario</li>
+            <li><q-icon name="gavel"/> Cumple normativa DT</li>
+            <li><q-icon name="lock"/> Cifrado en tránsito y reposo</li>
             <li><q-icon name="schedule"/> Sin tarjeta · cancela cuando quieras</li>
           </ul>
         </div>
@@ -198,10 +198,10 @@
     <!-- ======================== TRUST STRIP ======================== -->
     <section class="rk-trust-strip">
       <div class="rk-container">
-        <p class="rk-trust-strip__text">+250 empresas latinoamericanas ya gestionan su talento con Recksy</p>
+        <p class="rk-trust-strip__text">Construido para la normativa laboral chilena</p>
         <ul class="rk-logos">
-          <li v-for="logo in logos" :key="logo">
-            <span class="rk-logo">{{ logo }}</span>
+          <li v-for="item in compliance" :key="item">
+            <span class="rk-logo">{{ item }}</span>
           </li>
         </ul>
       </div>
@@ -230,17 +230,17 @@
 
         <div class="rk-showcase">
           <div class="rk-showcase__copy">
-            <span class="rk-tag"><q-icon name="fingerprint"/> Asistencia</span>
-            <h3 class="rk-showcase__title">Marcaje preciso, sin fraude.</h3>
+            <span class="rk-tag"><q-icon name="photo_camera"/> Asistencia</span>
+            <h3 class="rk-showcase__title">Marcaje con foto, ubicación y respaldo legal.</h3>
             <p class="rk-showcase__text">
-              Biometría, geolocalización y reglas anti-trampas que detectan
-              marcajes irregulares en segundos. Compatible con tablets, móvil y
-              huelleros existentes.
+              Cada marca se registra con foto, ubicación GPS y hora del servidor
+              sincronizada. Queda encadenada con firma SHA-256, por lo que no se
+              puede alterar sin dejar rastro.
             </p>
             <ul class="rk-checks">
-              <li><q-icon name="check_circle"/> Reconocimiento facial y huella digital</li>
-              <li><q-icon name="check_circle"/> Geocercas configurables por sucursal</li>
-              <li><q-icon name="check_circle"/> Detección automática de duplicados</li>
+              <li><q-icon name="check_circle"/> Foto y ubicación en cada marcaje</li>
+              <li><q-icon name="check_circle"/> Registro inalterable (Res. Ex. 38/2024)</li>
+              <li><q-icon name="check_circle"/> Comprobante por correo al trabajador</li>
             </ul>
           </div>
 
@@ -267,17 +267,17 @@
 
         <div class="rk-showcase rk-showcase--reverse">
           <div class="rk-showcase__copy">
-            <span class="rk-tag"><q-icon name="insights"/> Analítica</span>
-            <h3 class="rk-showcase__title">Decisiones con datos, no con corazonadas.</h3>
+            <span class="rk-tag"><q-icon name="insights"/> Reportes</span>
+            <h3 class="rk-showcase__title">Tus números claros y listos para la DT.</h3>
             <p class="rk-showcase__text">
-              Dashboards que se actualizan en tiempo real con las métricas que
-              importan: ausentismo, productividad, rotación. Alertas proactivas
-              antes de que un problema se convierta en uno grande.
+              Resúmenes de asistencia, atrasos y horas extra por trabajador, más
+              el Libro de Asistencia electrónico y los reportes de fiscalización
+              que exige la Dirección del Trabajo.
             </p>
             <ul class="rk-checks">
-              <li><q-icon name="check_circle"/> Dashboards configurables por rol</li>
+              <li><q-icon name="check_circle"/> Libro de Asistencia electrónico semanal</li>
               <li><q-icon name="check_circle"/> Reportes DT listos para fiscalización</li>
-              <li><q-icon name="check_circle"/> Exportación a Excel, PDF y CSV</li>
+              <li><q-icon name="check_circle"/> Exportación a Excel y liquidaciones en PDF</li>
             </ul>
           </div>
 
@@ -363,39 +363,13 @@
       </div>
     </section>
 
-    <!-- ======================== TESTIMONIALS ======================== -->
-    <section class="rk-section rk-section--soft">
-      <div class="rk-container">
-        <div class="rk-section__head">
-          <span class="rk-eyebrow"><span class="rk-eyebrow__dot"></span> Testimonios</span>
-          <h2 class="rk-section__title">Equipos que ya transformaron su gestión.</h2>
-        </div>
-
-        <div class="rk-quotes">
-          <article v-for="q in testimonials" :key="q.author" class="rk-quote">
-            <div class="rk-quote__stars">
-              <q-icon v-for="n in 5" :key="n" name="star"/>
-            </div>
-            <p class="rk-quote__text">{{ q.text }}</p>
-            <div class="rk-quote__person">
-              <div class="rk-quote__avatar" :style="{ background: q.tint, color: q.color }">{{ q.initials }}</div>
-              <div>
-                <div class="rk-quote__author">{{ q.author }}</div>
-                <div class="rk-quote__role">{{ q.role }}</div>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
     <!-- ======================== PRICING ======================== -->
     <section id="planes" class="rk-section">
       <div class="rk-container">
         <div class="rk-section__head">
           <span class="rk-eyebrow"><span class="rk-eyebrow__dot"></span> Planes claros</span>
           <h2 class="rk-section__title">Elige el plan ideal para tu empresa.</h2>
-          <p class="rk-section__lead">Sin sorpresas. Cambia o cancela cuando quieras.</p>
+          <p class="rk-section__lead">Precio por trabajador, sin permanencia. 14 días gratis y sin tarjeta.</p>
 
           <div class="rk-billing">
             <button type="button" class="rk-billing__opt" :class="{ active: !yearly }" @click="yearly = false">Mensual</button>
@@ -416,18 +390,32 @@
             <h3 class="rk-plan__name">{{ p.name }}</h3>
             <p class="rk-plan__desc">{{ p.description }}</p>
 
-            <div class="rk-plan__price">
-              <span class="rk-plan__currency">$</span>
-              <span class="rk-plan__amount">{{ priceFor(p) }}</span>
-              <span class="rk-plan__period">/ mes</span>
+            <div v-if="p.founder" class="rk-plan__founder">★ Precio fundador · primeros 20 clientes</div>
+
+            <!-- Plan con cotización (Empresarial) -->
+            <div v-if="p.quote" class="rk-plan__price">
+              <span class="rk-plan__amount rk-plan__amount--quote">Cotización</span>
             </div>
-            <div class="rk-plan__hint">{{ yearly ? 'Facturado anualmente' : 'Facturado mes a mes' }}</div>
+            <!-- Planes por trabajador -->
+            <div v-else class="rk-plan__price">
+              <span class="rk-plan__currency">$</span>
+              <span class="rk-plan__amount">{{ fmtCLP(priceFor(p)) }}</span>
+              <span class="rk-plan__period">/ trabajador<br>/ mes</span>
+            </div>
+
+            <div class="rk-plan__hint">
+              <template v-if="p.quote">Precio especial por volumen · + IVA</template>
+              <template v-else>
+                <span v-if="p.originalPerUser" class="rk-plan__was">antes ${{ fmtCLP(p.originalPerUser) }}/trab.</span>
+                Mínimo ${{ fmtCLP(minFor(p)) }}/mes · + IVA
+              </template>
+            </div>
 
             <q-btn
               unelevated no-caps
               class="rk-btn full-width"
               :class="p.popular ? 'rk-btn--primary' : 'rk-btn--ghost'"
-              :label="p.popular ? 'Empezar ahora' : 'Elegir plan'"
+              :label="p.quote ? 'Hablar con ventas' : (p.popular ? 'Empezar ahora' : 'Elegir plan')"
               @click="onSelectPlan(p.id)"
             />
 
@@ -564,19 +552,19 @@ const navLinks = [
 ]
 
 const previewKpis = [
-  { label: 'Asistencia',    value: '98.5%', delta: '+2.3%', icon: 'fingerprint',         color: '#0893AA', tint: '#CFFAFE' },
-  { label: 'Productividad', value: '127%',  delta: '+15%',  icon: 'trending_up',         color: '#055E6D', tint: '#CCFBF1' },
-  { label: 'Satisfacción',  value: '4.8/5', delta: '+0.4',  icon: 'sentiment_satisfied', color: '#B45309', tint: '#FEF3C7' },
+  { label: 'Asistencia',  value: '98.5%', delta: '+2.3%', icon: 'event_available', color: '#0893AA', tint: '#CFFAFE' },
+  { label: 'Atrasos',     value: '3',     delta: '-2',    icon: 'schedule',        color: '#B45309', tint: '#FEF3C7' },
+  { label: 'Horas extra', value: '142h',  delta: '+12h',  icon: 'more_time',       color: '#055E6D', tint: '#CCFBF1' },
 ]
 
 const heroStats = [
-  { value: '+250',   label: 'Empresas activas' },
-  { value: '12k+',   label: 'Colaboradores gestionados' },
-  { value: '99.9%',  label: 'Uptime garantizado' },
-  { value: '4.8/5',  label: 'Calificación clientes' },
+  { value: 'SHA-256', label: 'Registro inalterable de marcas' },
+  { value: '48h',     label: 'Ventana de objeción del trabajador' },
+  { value: 'Previred', label: 'Indicadores previsionales sincronizados' },
+  { value: 'DT',      label: 'Libro electrónico y comprobantes' },
 ]
 
-const logos = ['ANDINA', 'TRANSCORP', 'NORTSUR', 'FINTECH', 'AGRO•VAL', 'COPEC+']
+const compliance = ['Ley 21.561 · 40h', 'Res. Ex. 38/2024', 'Libro electrónico DT', 'Previred', 'AFP / Fonasa', 'Cifrado']
 
 const attendance = [
   { initials: 'CV', name: 'Carla Vergara',  role: 'Gerente · Operaciones',  time: '08:42', status: 'on',    statusLabel: 'Presente', tint: '#CFFAFE', color: '#0893AA' },
@@ -594,12 +582,12 @@ const bars = [
 ]
 
 const features = [
-  { icon: 'fingerprint',       title: 'Asistencia precisa',         text: 'Marcaje biométrico, geolocalización y reglas anti-fraude.', color: '#0893AA', tint: '#CFFAFE' },
-  { icon: 'schedule',          title: 'Horarios flexibles',          text: 'Turnos rotativos, partidos o por proyecto en minutos.',    color: '#055E6D', tint: '#CCFBF1' },
-  { icon: 'gavel',             title: 'Cumplimiento DT',             text: 'Libro electrónico y reportes listos para fiscalización.',  color: '#067C90', tint: '#E0F2FE' },
-  { icon: 'payments',          title: 'Liquidaciones automáticas',   text: 'De marcajes a sueldos sin intermediarios.',                color: '#B45309', tint: '#FEF3C7' },
-  { icon: 'insights',          title: 'Dashboards en vivo',          text: 'Métricas claras de ausentismo y desempeño al segundo.',    color: '#055E6D', tint: '#CCFBF1' },
-  { icon: 'health_and_safety', title: 'Bienestar del equipo',        text: 'Pulse surveys y reconocimientos para tu gente.',           color: '#0893AA', tint: '#CFFAFE' },
+  { icon: 'photo_camera',  title: 'Asistencia con respaldo',     text: 'Marcaje con foto y ubicación, encadenado con firma SHA-256.', color: '#0893AA', tint: '#CFFAFE' },
+  { icon: 'schedule',      title: 'Horarios y turnos',           text: 'Jornadas fijas, semanales, rotativas o por demanda (on-call).', color: '#055E6D', tint: '#CCFBF1' },
+  { icon: 'gavel',         title: 'Cumplimiento DT',             text: 'Libro electrónico, comprobantes y ventana de objeción de 48h.', color: '#067C90', tint: '#E0F2FE' },
+  { icon: 'payments',      title: 'Liquidaciones + Previred',    text: 'Sueldos calculados desde las marcas, con indicadores Previred.', color: '#B45309', tint: '#FEF3C7' },
+  { icon: 'notifications_active', title: 'Recordatorios inteligentes', text: 'Avisa entrada y salida según el patrón real de cada persona.', color: '#055E6D', tint: '#CCFBF1' },
+  { icon: 'apartment',     title: 'Multi-empresa y roles',       text: 'RR.HH., trabajador y fiscalizador DT, con acceso por empresa.', color: '#0893AA', tint: '#CFFAFE' },
 ]
 
 const steps = [
@@ -608,23 +596,23 @@ const steps = [
   { icon: 'rocket_launch', title: 'Empieza a medir',  text: 'Activa marcaje, define horarios y observa los resultados.' },
 ]
 
-const testimonials = [
-  { initials: 'CV', author: 'Carla Vergara', role: 'Gerente de Personas · Andina S.A.',
-    text: 'Pasamos de 20 horas semanales en planillas a literalmente cero. Mi equipo ahora dedica el tiempo a las personas, no a Excel.',
-    color: '#0893AA', tint: '#CFFAFE' },
-  { initials: 'MR', author: 'Mario Reyes',   role: 'CFO · Transcorp Logística',
-    text: 'La integración con liquidaciones nos ahorró un proceso completo. La auditoría DT del último mes la cerramos en 2 horas.',
-    color: '#055E6D', tint: '#CCFBF1' },
-  { initials: 'PT', author: 'Paula Toro',    role: 'Head of People · Fintech Latam',
-    text: 'Por fin un software de RR.HH. que mi equipo realmente usa. La app móvil es buenísima y los reportes son claros.',
-    color: '#B45309', tint: '#FEF3C7' },
-]
-
 const yearly = ref(false)
 const pricingPlans = [
-  { id: 'basic', name: 'Esencial',     description: 'Para equipos pequeños',          price: 29, popular: false, features: ['Hasta 20 colaboradores', 'Asistencia y horarios', 'Reportes mensuales', 'Soporte por correo'] },
-  { id: 'pro',   name: 'Profesional',  description: 'Para empresas en crecimiento',   price: 59, popular: true,  features: ['Hasta 100 colaboradores', 'Asistencia avanzada + DT', 'Liquidaciones automáticas', 'Integraciones básicas', 'Soporte prioritario'] },
-  { id: 'ent',   name: 'Empresarial',  description: 'Para organizaciones grandes',    price: 99, popular: false, features: ['Colaboradores ilimitados', 'API + integraciones premium', 'Analítica avanzada', 'SLA y soporte 24/7', 'Onboarding dedicado'] },
+  {
+    id: 'basic', name: 'Esencial', description: 'Para equipos que solo necesitan control horario',
+    pricePerUser: 1490, minMonthly: 19900, popular: false,
+    features: ['Asistencia y horarios', 'App móvil para marcaje', 'Reportes mensuales', 'Soporte por correo'],
+  },
+  {
+    id: 'pro', name: 'Profesional', description: 'Asistencia, DT y liquidaciones, todo en uno',
+    pricePerUser: 2490, originalPerUser: 2990, minMonthly: 39900, popular: true, founder: true,
+    features: ['Todo lo de Esencial', 'Cumplimiento DT (Libro electrónico)', 'Liquidaciones automáticas', 'Sincronización Previred', 'Cadena de aprobación', 'Onboarding y migración gratis', 'Soporte prioritario'],
+  },
+  {
+    id: 'ent', name: 'Empresarial', description: 'Para organizaciones grandes (+100 trabajadores)',
+    quote: true, popular: false,
+    features: ['Todo lo de Profesional', 'Precio especial por volumen', 'API + integraciones premium', 'Analítica avanzada', 'SLA y soporte 24/7', 'Onboarding dedicado'],
+  },
 ]
 
 const faqs = [
@@ -632,7 +620,7 @@ const faqs = [
   { question: '¿Cumple con la Dirección del Trabajo?',            answer: 'Sí. Generamos el Libro de Asistencia electrónico y los comprobantes según la normativa vigente, listos para fiscalización.' },
   { question: '¿Funciona en celular?',                            answer: 'Por supuesto. App móvil para colaboradores y panel web para administradores. Todo se sincroniza al instante.' },
   { question: '¿Puedo migrar desde otra plataforma?',             answer: 'Sí. Importamos tus datos desde Excel, CSV o tu sistema actual. Te acompañamos en todo el proceso.' },
-  { question: '¿Qué tan seguro es Recksy?',                       answer: 'Cifrado en tránsito y en reposo, copias de respaldo diarias, MFA y prácticas alineadas con ISO 27001.' },
+  { question: '¿Qué tan seguro es Recksy?',                       answer: 'Cifrado en tránsito y en reposo, copias de respaldo y bitácora de auditoría de cada cambio. Las marcas quedan encadenadas con firma SHA-256, por lo que no se pueden alterar sin dejar rastro.' },
   { question: '¿Puedo cancelar cuando quiera?',                   answer: 'Sí. No hay permanencia. Cancelas con un clic y exportamos tus datos en formatos estándar.' },
 ]
 
@@ -667,7 +655,15 @@ const scrolled = ref(false)
 const mobileOpen = ref(false)
 const activeSection = ref('#top')
 
-const priceFor = (p) => yearly.value ? Math.round(p.price * 0.8) : p.price
+const fmtCLP = (n) => Number(n).toLocaleString('es-CL')
+const priceFor = (p) => {
+  if (!p.pricePerUser) return null
+  return yearly.value ? Math.round(p.pricePerUser * 0.8 / 10) * 10 : p.pricePerUser
+}
+const minFor = (p) => {
+  if (!p.minMonthly) return null
+  return yearly.value ? Math.round(p.minMonthly * 0.8 / 100) * 100 : p.minMonthly
+}
 
 function goTo(to) {
   if (!to) return
@@ -682,6 +678,7 @@ function handleFooter(to) {
 }
 
 function onSelectPlan(planId) {
+  if (planId === 'ent') return scrollTo('#contacto')
   router.push({ path: '/register', query: { plan: planId, billing: yearly.value ? 'yearly' : 'monthly' } })
 }
 
@@ -1626,9 +1623,20 @@ onBeforeUnmount(() => {
   display: flex; align-items: baseline; gap: 4px; color: var(--c-text-strong);
 }
 .rk-plan__currency { font-size: 22px; font-weight: 700; color: var(--c-text-muted); }
-.rk-plan__amount   { font-size: 48px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
-.rk-plan__period   { font-size: 14px; color: var(--c-text-muted); margin-left: 4px; }
+.rk-plan__amount   { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.rk-plan__amount--quote { font-size: 34px; }
+.rk-plan__period   { font-size: 12.5px; color: var(--c-text-muted); margin-left: 4px; line-height: 1.15; }
 .rk-plan__hint     { font-size: 12.5px; color: var(--c-text-muted); margin-top: 6px; margin-bottom: 22px; }
+.rk-plan__was {
+  display: block; font-size: 12px; color: var(--c-text-muted);
+  text-decoration: line-through; opacity: .7; margin-bottom: 2px;
+}
+.rk-plan__founder {
+  display: inline-block; margin: 0 0 12px;
+  background: var(--c-primary-soft); color: var(--c-primary-dark);
+  font-size: 11.5px; font-weight: 800; letter-spacing: .3px;
+  padding: 5px 12px; border-radius: 999px;
+}
 .rk-plan__features {
   list-style: none; padding: 0; margin: 22px 0 0;
   display: grid; gap: 10px;
@@ -1957,6 +1965,10 @@ onBeforeUnmount(() => {
 .rk-home.is-dark .rk-feature:hover,
 .rk-home.is-dark .rk-quote:hover {
   border-color: var(--c-primary);
+}
+.rk-home.is-dark .rk-plan__founder {
+  background: rgba(51, 190, 203, .14);
+  color: #66D2DD;
 }
 
 /* Step number stroke */

@@ -113,6 +113,9 @@
         <button class="rk-btn-icon rk-btn-export" @click="exportExcel" title="Exportar Excel">
           <q-icon name="file_download" size="16px" />
         </button>
+        <button class="rk-btn-icon rk-btn-export" @click="dialogoImport = true" title="Importar empleados (Excel)">
+          <q-icon name="upload_file" size="16px" />
+        </button>
         <button class="rk-btn-new" @click="abrirDialogoNuevo">
           <q-icon name="person_add" size="16px" />
           Nuevo usuario
@@ -322,6 +325,11 @@
       @updated="reload"
       @deleted="reload"
     />
+    <ImportEmployeesDialog
+      v-model="dialogoImport"
+      :empresas="companiesStore.companies || []"
+      @imported="reload"
+    />
   </q-page>
 </template>
 
@@ -332,6 +340,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useCompaniesStore } from "@/stores/companies";
 import UserCreation from "@/components/UserCreation.vue";
 import EditUserDialog from "@/components/EditUserDialog.vue";
+import ImportEmployeesDialog from "@/components/ImportEmployeesDialog.vue";
 
 const $q = useQuasar();
 const userStore = useUserStore();
@@ -346,6 +355,7 @@ watch(() => $q.dark.isActive, (v) => { isDark.value = v; });
 const loading        = ref(false);
 const dialogoNuevo   = ref(false);
 const dialogoEditar  = ref(false);
+const dialogoImport  = ref(false);
 const userIdEditar   = ref(null);
 const lastCreatedId  = ref(null);
 const selected       = ref([]);

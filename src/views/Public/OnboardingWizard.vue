@@ -208,13 +208,68 @@
 
             <div class="ow-actions">
               <q-btn flat color="grey-7" label="Atrás" @click="goStep(2)" />
-              <q-btn unelevated color="primary" label="Continuar" :disable="!step3Valid" @click="goStep(4)" />
+              <q-btn unelevated color="primary" label="Continuar" :disable="!step3Valid" @click="goStep(hasOpeningBalance ? 4 : 5)" />
             </div>
           </q-step>
 
-          <!-- ───── Paso 4: Contraseña + firma ───── -->
+          <!-- ───── Paso 4: Confirmación de saldo de vacaciones (sólo carga inicial) ───── -->
           <q-step
+            v-if="hasOpeningBalance"
             :name="4"
+            title="Tus vacaciones"
+            icon="beach_access"
+            :done="step > 4"
+          >
+            <p class="ow-step-intro">
+              Al incorporarte al sistema, tu empleador registró el saldo de vacaciones que traías
+              acumulado a la fecha de corte. Revisalo y confirmá si coincide con tu última liquidación.
+            </p>
+
+            <div class="ow-balance-box">
+              <div class="ow-balance-days">{{ openingBalance.vacationDays }}</div>
+              <div class="ow-balance-meta">
+                <div class="ow-balance-label">días hábiles de vacaciones disponibles</div>
+                <div v-if="openingBalance.cutoffDate" class="ow-balance-cutoff">
+                  al {{ formatDate(openingBalance.cutoffDate) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="ow-consent-list" style="margin-top: 16px;">
+              <label class="ow-consent-item" :class="{ 'is-active': form.openingBalanceConfirmed === true }">
+                <q-radio v-model="form.openingBalanceConfirmed" :val="true" />
+                <div class="ow-consent-body">
+                  <div class="ow-consent-title">Sí, el saldo es correcto</div>
+                  <div class="ow-consent-text">Coincide con lo que tengo registrado en mi última liquidación.</div>
+                </div>
+              </label>
+
+              <label class="ow-consent-item" :class="{ 'is-active': form.openingBalanceConfirmed === false }">
+                <q-radio v-model="form.openingBalanceConfirmed" :val="false" />
+                <div class="ow-consent-body">
+                  <div class="ow-consent-title">No coincide</div>
+                  <div class="ow-consent-text">
+                    El número no calza con mi saldo. RR.HH. lo revisará; podés activar tu cuenta igual y
+                    se corregirá después.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div v-if="form.openingBalanceConfirmed === false" class="ow-warn" style="margin-top: 14px;">
+              <q-icon name="info" size="18px" />
+              <div>Tu objeción quedará registrada para que RR.HH. revise y corrija el saldo.</div>
+            </div>
+
+            <div class="ow-actions">
+              <q-btn flat color="grey-7" label="Atrás" @click="goStep(3)" />
+              <q-btn unelevated color="primary" label="Continuar" :disable="form.openingBalanceConfirmed === null" @click="goStep(5)" />
+            </div>
+          </q-step>
+
+          <!-- ───── Paso 5: Contraseña + firma ───── -->
+          <q-step
+            :name="5"
             title="Contraseña"
             icon="lock"
           >
@@ -261,11 +316,11 @@
             </div>
 
             <div class="ow-actions">
-              <q-btn flat color="grey-7" label="Atrás" :disable="submitting" @click="goStep(3)" />
+              <q-btn flat color="grey-7" label="Atrás" :disable="submitting" @click="goStep(hasOpeningBalance ? 4 : 3)" />
               <q-btn
                 unelevated color="primary"
                 :loading="submitting"
-                :disable="!step4Valid"
+                :disable="!step5Valid"
                 label="Firmar electrónicamente y activar"
                 icon="task_alt"
                 @click="submit"
@@ -314,9 +369,23 @@ const form = reactive({
   personalDeviceAgreement: false,
   biometricsAccepted: false,
   geolocationAccepted: false,
+  openingBalanceConfirmed: null, // null = sin responder, true = confirma, false = objeta
   newPassword: '',
   confirmPassword: '',
 })
+
+// Saldo de apertura de vacaciones (sólo presente en empleados de carga inicial)
+const openingBalance = computed(() => data.value?.openingBalance || null)
+const hasOpeningBalance = computed(() => openingBalance.value?.vacationDays != null)
+
+function formatDate(d) {
+  if (!d) return ''
+  try {
+    return new Intl.DateTimeFormat('es-CL', { dateStyle: 'long' }).format(new Date(d))
+  } catch {
+    return String(d)
+  }
+}
 
 // Selectores de dirección (Región -> Comuna en cascada)
 const {
@@ -356,10 +425,16 @@ const step3Valid = computed(() =>
   form.personalDeviceAgreement && form.biometricsAccepted && form.geolocationAccepted
 )
 
-const step4Valid = computed(() =>
+// El saldo debe estar respondido (confirmado u objetado) si corresponde.
+const openingStepValid = computed(() =>
+  !hasOpeningBalance.value || form.openingBalanceConfirmed !== null
+)
+
+const step5Valid = computed(() =>
   (form.newPassword || '').length >= 8 &&
   form.newPassword === form.confirmPassword &&
-  step1Valid.value && step3Valid.value && form.regulationRead
+  step1Valid.value && step3Valid.value && form.regulationRead &&
+  openingStepValid.value
 )
 
 async function load() {
@@ -408,7 +483,7 @@ watch(step, (v, old) => {
 })
 
 async function submit() {
-  if (!step4Valid.value) {
+  if (!step5Valid.value) {
     $q.notify({ type: 'negative', message: 'Revisá que estén completos todos los pasos' })
     return
   }
@@ -435,6 +510,8 @@ async function submit() {
         regulationVersion: data.value?.company?.regulationVersion || '1.0',
         timeOnRegulationStepMs: totalRegMs,
       },
+      // Sólo se envía cuando hay saldo de apertura que confirmar/objetar.
+      ...(hasOpeningBalance.value ? { openingBalanceConfirmed: form.openingBalanceConfirmed } : {}),
       newPassword: form.newPassword,
     }
     const res = await axios.post(
@@ -557,6 +634,18 @@ onMounted(load)
   transition: border-color .15s, background .15s;
 }
 .ow-consent-item:hover { border-color: #c7d2fe; background: #eef2ff; }
+.ow-consent-item.is-active { border-color: #6366f1; background: #eef2ff; }
+
+.ow-balance-box {
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  border: 1px solid #c7d2fe; border-radius: 12px;
+}
+.ow-balance-days { font-size: 2.4rem; font-weight: 800; color: #4f46e5; line-height: 1; }
+.ow-balance-meta { display: flex; flex-direction: column; gap: 2px; }
+.ow-balance-label { font-weight: 700; color: #0f172a; font-size: .92rem; }
+.ow-balance-cutoff { color: #64748b; font-size: .82rem; }
 .ow-consent-body { display: flex; flex-direction: column; gap: 4px; }
 .ow-consent-title { font-weight: 700; color: #0f172a; font-size: .9rem; }
 .ow-consent-text { color: #475569; font-size: .82rem; line-height: 1.55; }

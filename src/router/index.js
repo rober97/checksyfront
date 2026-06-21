@@ -21,6 +21,8 @@ const HorariosModule = () => import(/* webpackChunkName:"admin"     */ '@/views/
 const AsistenciasEmp = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
 const Payroll = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollModule.vue")
 const PayrollRate = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollRate.vue")
+const PerformanceModule = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/PerformanceModule.vue')
+const SaldosApertura = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/SaldosApertura.vue')
 
 const CompanyList = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaList.vue')
 const CompanyForm = () => import(/* webpackChunkName:"empresa"   */ '@/views/Empresa/EmpresaForm.vue')
@@ -191,6 +193,7 @@ const routes = [
       { path: 'dashboard', name: 'RrhhDashboard', component: Dashboard, meta: { title: 'Panel RR.HH.' } },
       { path: 'marcar-asistencia', name: 'RrhhMarcarAsistencia', component: Attendance, meta: { title: 'Marcar asistencia' } },
       { path: 'users', name: 'RrhhUsers', component: UserManagement, meta: { permissions: ['users:read'], title: 'Empleados' } },
+      { path: 'saldos-apertura', name: 'RrhhSaldosApertura', component: SaldosApertura, meta: { permissions: ['users:read'], title: 'Saldos objetados' } },
       { path: 'horarios', name: 'RrhhHorarios', component: HorariosModule, meta: { permissions: ['schedules:read'], title: 'Horarios' } },
       { path: 'programacion-mensual', redirect: { name: 'RrhhHorarios', query: { vista: 'mensual' } } },
       { path: 'attendance', name: 'RrhhAttendance', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },
@@ -198,6 +201,7 @@ const routes = [
       { path: 'requests', name: 'RrhhRequests', component: RequestList, props: true, meta: { title: 'Solicitudes' } },
       { path: 'payroll', name: 'RrhhPayroll', component: Payroll, props: true, meta: { title: 'Liquidaciones' } },
       { path: 'payrollRates', name: 'RrhhPayrollRate', component: PayrollRate, props: true, meta: { title: 'Config Nómina' } },
+      { path: 'desempeno', name: 'RrhhDesempeno', component: PerformanceModule, meta: { title: 'Desempeño' } },
       // DT Compliance de la empresa
       { path: 'dt/reportes', name: 'RrhhDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT' } },
       { path: 'dt/libro', name: 'RrhhDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },

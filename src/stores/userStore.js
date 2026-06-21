@@ -165,6 +165,55 @@ export const useUserStore = defineStore('user', {
       URL.revokeObjectURL(url)
     },
 
+    // ===== Carga inicial — import masivo desde Excel =====
+    // Descarga la plantilla .xlsx (con catálogo de AFP/Salud incluido).
+    async downloadImportTemplate() {
+      const res = await secureAxios.get(`${API_URL}/users/import/template`, { responseType: 'blob' })
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'plantilla_empleados.xlsx'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    },
+
+    // Sube el Excel. commit=false → dry-run (sólo valida y reporta).
+    // Devuelve el reporte fila×fila { mode, total, ok, failed, report, ... }.
+    async importUsers(file, { companyId, commit = false, sendInvites = false, cutoffDate } = {}) {
+      const fd = new FormData()
+      fd.append('file', file)
+      if (companyId) fd.append('companyId', companyId)
+      fd.append('commit', commit ? 'true' : 'false')
+      fd.append('sendInvites', sendInvites ? 'true' : 'false')
+      if (cutoffDate) fd.append('cutoffDate', cutoffDate)
+      const res = await secureAxios.post(`${API_URL}/users/import`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000, // cargas grandes pueden tardar
+      })
+      return res.data
+    },
+
+    // ===== Carga inicial — bandeja de saldos de apertura objetados =====
+    async fetchOpeningDisputes({ company } = {}) {
+      const params = {}
+      if (company) params.company = company
+      const res = await secureAxios.get(`${API_URL}/users/opening-disputes`, { params })
+      return res.data?.items || []
+    },
+
+    // newDays presente → corrige el saldo; ausente → confirma el original.
+    async resolveOpeningDispute(id, { newDays } = {}) {
+      const body = {}
+      if (newDays != null && String(newDays) !== '') body.newDays = Number(newDays)
+      const res = await secureAxios.post(`${API_URL}/users/${id}/resolve-opening-dispute`, body)
+      return res.data
+    },
+
     async fetchUserById(id) {
       try {
         this.loading = true

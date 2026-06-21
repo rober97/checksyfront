@@ -54,12 +54,14 @@ export const MENU = [
       // El superadmin NO marca asistencia porque no tiene contrato laboral.
       { label: 'Marcar asistencia', icon: 'access_time', to: '/rrhh/marcar-asistencia', access: { roles: ['admin_rrhh'] } },
       { label: 'Empleados', icon: 'people', to: '/rrhh/users' },
+      { label: 'Saldos objetados', icon: 'rule', to: '/rrhh/saldos-apertura' },
       { label: 'Horarios', icon: 'schedule', to: '/rrhh/horarios' },
       { label: 'Asistencias', icon: 'assignment_ind', to: '/rrhh/attendance' },
       { label: 'Mi empresa', icon: 'apartment', to: '/rrhh/empresa' },
       { label: 'Solicitudes', icon: 'assignment', to: '/rrhh/requests' },
       { label: 'Liquidaciones', icon: 'payments', to: '/rrhh/payroll' },
       { label: 'Config Nómina', icon: 'percent', to: '/rrhh/payrollRates' },
+      { label: 'Desempeño', icon: 'workspace_premium', to: '/rrhh/desempeno' },
     ]
   },
   {
