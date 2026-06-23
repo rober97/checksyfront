@@ -391,6 +391,45 @@
             </div>
           </div>
 
+          <!-- Panel: resolver objeción del trabajador (empleador) -->
+          <div v-if="resolveObjTarget" class="edit-panel edit-panel-objection">
+            <div class="edit-panel-head">
+              <q-icon name="gavel" size="18px" />
+              <span>Resolver objeción — {{ capitalizar(resolveObjTarget.tipo) }} · {{ formatFecha(resolveObjTarget.timestamp) }} {{ horaBonita(resolveObjTarget.timestamp) }}</span>
+            </div>
+            <div class="edit-panel-note">
+              El trabajador objetó esta modificación. Decide cómo cerrar el caso: <b>revertir</b> al valor original
+              (aceptas la objeción) o <b>sostener</b> la modificación (queda como desacuerdo registrado ante la DT).
+              En ambos casos se notifica al trabajador y queda en la bitácora inmutable.
+            </div>
+            <div v-if="resolveObjTarget.originalSnapshot?.captured" class="edit-panel-note objection-orig">
+              Valor original: <b>{{ capitalizar(resolveObjTarget.originalSnapshot.tipo || resolveObjTarget.tipo) }}</b>
+              · {{ formatFecha(resolveObjTarget.originalSnapshot.timestamp) }} {{ horaBonita(resolveObjTarget.originalSnapshot.timestamp) }}
+            </div>
+            <div class="objection-actions-radio">
+              <label class="obj-radio" :class="{ active: resolveObjForm.action === 'revert' }">
+                <input type="radio" value="revert" v-model="resolveObjForm.action" />
+                <q-icon name="undo" size="16px" /> Revertir al original
+              </label>
+              <label class="obj-radio" :class="{ active: resolveObjForm.action === 'uphold' }">
+                <input type="radio" value="uphold" v-model="resolveObjForm.action" />
+                <q-icon name="verified" size="16px" /> Sostener la modificación
+              </label>
+            </div>
+            <div class="edit-grid">
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Comentario / justificación (opcional)</span>
+                <input type="text" v-model="resolveObjForm.note" class="rk-date-input" placeholder="Ej: Se confirmó la hora con la jefatura y el reloj control" />
+              </label>
+            </div>
+            <div class="edit-actions">
+              <button class="footer-btn footer-btn-close" @click="cancelResolveObjection" :disabled="resolveObjSaving">Cancelar</button>
+              <button class="footer-btn footer-btn-excel" :disabled="!resolveObjCanSubmit || resolveObjSaving" @click="saveResolveObjection">
+                <q-icon name="gavel" size="14px" />{{ resolveObjSaving ? 'Resolviendo…' : 'Resolver objeción' }}
+              </button>
+            </div>
+          </div>
+
           <!-- Aviso de salidas olvidadas -->
           <div v-if="!isFetching && conteos.pendientes > 0" class="pending-banner">
             <div class="pending-banner-icon">
@@ -446,11 +485,25 @@
                           Modificado
                         </q-chip>
                         <q-chip
-                          v-if="m.workerObjected"
+                          v-if="m.workerObjected && !m.objectionResolution"
                           dense square color="negative" text-color="white"
                           icon="gavel" size="sm"
                         >
                           Objetado
+                        </q-chip>
+                        <q-chip
+                          v-if="m.objectionResolution === 'reverted'"
+                          dense square color="positive" text-color="white"
+                          icon="undo" size="sm"
+                        >
+                          Objeción aceptada · revertido
+                        </q-chip>
+                        <q-chip
+                          v-if="m.objectionResolution === 'upheld'"
+                          dense square color="blue-grey" text-color="white"
+                          icon="verified" size="sm"
+                        >
+                          Objeción · modificación sostenida
                         </q-chip>
                       </div>
                       <div class="titem-nota">{{ m.note || 'Sin comentario' }}</div>
@@ -472,6 +525,9 @@
                         </a>
                         <a v-if="m.pending" href="#" class="titem-mapa titem-resolve" @click.prevent="openResolve(m)">
                           <q-icon name="logout" size="12px" />registrar salida
+                        </a>
+                        <a v-if="m.workerObjected && !m.objectionResolution" href="#" class="titem-mapa titem-objection" @click.prevent="openResolveObjection(m)">
+                          <q-icon name="gavel" size="12px" />resolver objeción
                         </a>
                         <a href="#" class="titem-mapa" @click.prevent="openModify(m)">
                           <q-icon name="edit" size="12px" />editar
@@ -522,8 +578,14 @@
                       <q-chip v-if="m.modified" dense color="warning" text-color="white" icon="edit_note">
                         Modificado
                       </q-chip>
-                      <q-chip v-if="m.workerObjected" dense color="negative" text-color="white" icon="gavel">
+                      <q-chip v-if="m.workerObjected && !m.objectionResolution" dense color="negative" text-color="white" icon="gavel">
                         Objetado
+                      </q-chip>
+                      <q-chip v-if="m.objectionResolution === 'reverted'" dense color="positive" text-color="white" icon="undo">
+                        Revertido
+                      </q-chip>
+                      <q-chip v-if="m.objectionResolution === 'upheld'" dense color="blue-grey" text-color="white" icon="verified">
+                        Sostenido
                       </q-chip>
                       <span v-if="!m.modified && !m.workerObjected && !m.pending" class="rk-muted">—</span>
                     </td>
@@ -539,6 +601,10 @@
                       <button v-if="m.pending" class="act-btn act-resolve" @click="openResolve(m)">
                         <q-icon name="logout" size="14px" />
                         <q-tooltip>Registrar salida olvidada</q-tooltip>
+                      </button>
+                      <button v-if="m.workerObjected && !m.objectionResolution" class="act-btn act-objection" @click="openResolveObjection(m)">
+                        <q-icon name="gavel" size="14px" />
+                        <q-tooltip>Resolver objeción (sostener o revertir)</q-tooltip>
                       </button>
                       <button class="act-btn act-map" @click="openModify(m)">
                         <q-icon name="edit" size="14px" />
@@ -731,6 +797,52 @@ async function saveEdit() {
     $q.notify({ type: 'negative', message: err?.response?.data?.message || 'Error al guardar la modificación' });
   } finally {
     editSaving.value = false;
+  }
+}
+
+/* ── Resolver objeción del trabajador (empleador) ── */
+const resolveObjTarget = ref(null);
+const resolveObjSaving = ref(false);
+const resolveObjForm = reactive({ action: '', note: '' });
+
+function openResolveObjection(m) {
+  if (!m?._id) return;
+  editTarget.value = null;
+  resolveTarget.value = null;
+  resolveObjTarget.value = m;
+  resolveObjForm.action = '';
+  resolveObjForm.note = '';
+}
+
+function cancelResolveObjection() {
+  resolveObjTarget.value = null;
+}
+
+const resolveObjCanSubmit = computed(
+  () => !!resolveObjTarget.value?._id && ['uphold', 'revert'].includes(resolveObjForm.action)
+);
+
+async function saveResolveObjection() {
+  if (!resolveObjCanSubmit.value) return;
+  resolveObjSaving.value = true;
+  try {
+    await dt.resolveObjection(resolveObjTarget.value._id, {
+      action: resolveObjForm.action,
+      note: resolveObjForm.note.trim(),
+    });
+    $q.notify({
+      type: 'positive',
+      message: resolveObjForm.action === 'revert'
+        ? 'Objeción aceptada: registro revertido. Se notificó al trabajador.'
+        : 'Modificación sostenida. Se notificó al trabajador.',
+      timeout: 3500,
+    });
+    resolveObjTarget.value = null;
+    if (historialEmpleado.value?._id) await recargarHistorialConRango();
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err?.response?.data?.message || 'No se pudo resolver la objeción' });
+  } finally {
+    resolveObjSaving.value = false;
   }
 }
 
@@ -1631,5 +1743,16 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .titem-resolve { color:#d97706 !important; font-weight:600; }
 .act-resolve { color:#d97706; }
 .act-resolve:hover { background:rgba(245,158,11,0.14); }
+
+/* Resolución de objeción (empleador) */
+.edit-panel-objection { border-color:#b71c1c; background:rgba(183,28,28,0.08); }
+.objection-orig { background:rgba(0,0,0,0.04); border-radius:8px; padding:6px 10px; margin:0 0 12px; }
+.objection-actions-radio { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.obj-radio { display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--c-border, #d1d5db); border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; color:var(--c-text2); user-select:none; }
+.obj-radio input { accent-color:#b71c1c; }
+.obj-radio.active { border-color:#b71c1c; color:#b71c1c; background:rgba(183,28,28,0.06); }
+.titem-objection { color:#b71c1c !important; font-weight:600; }
+.act-objection { color:#b71c1c; }
+.act-objection:hover { background:rgba(183,28,28,0.12); }
 @media(max-width:600px){ .edit-grid { grid-template-columns:1fr; } }
 </style>

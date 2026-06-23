@@ -88,13 +88,32 @@
               <div class="text-caption text-grey-7">Hash SHA-256</div>
               <div class="mono-hash">{{ result.record.hash }}</div>
             </div>
-            <div v-if="result.record.modified" class="col-12">
+            <div v-if="result.record.modified || result.record.objectionResolution" class="col-12">
               <q-banner class="bg-amber-2 text-dark">
                 <q-icon name="edit_note" class="q-mr-xs" />
-                Este registro fue modificado el {{ fmt(result.record.modifiedAt) }}.
-                <span v-if="result.record.workerObjected">
+                <template v-if="result.record.modified">
+                  Este registro fue modificado el {{ fmt(result.record.modifiedAt) }}.
+                </template>
+                <span v-if="result.record.workerObjected && !result.record.objectionResolution">
                   <b>El trabajador objetó la modificación.</b>
                 </span>
+              </q-banner>
+            </div>
+
+            <!-- Desenlace de la objeción una vez resuelta por el empleador -->
+            <div v-if="result.record.objectionResolution === 'reverted'" class="col-12">
+              <q-banner class="bg-green-1 text-dark">
+                <template #avatar><q-icon name="undo" color="positive" size="28px" /></template>
+                <b>Objeción aceptada.</b> El empleador revirtió el registro a su valor original
+                <span v-if="result.record.objectionResolvedAt">el {{ fmt(result.record.objectionResolvedAt) }}</span>.
+              </q-banner>
+            </div>
+            <div v-else-if="result.record.objectionResolution === 'upheld'" class="col-12">
+              <q-banner class="bg-blue-grey-1 text-dark">
+                <template #avatar><q-icon name="verified" color="blue-grey" size="28px" /></template>
+                <b>Modificación sostenida.</b> El empleador revisó la objeción y mantuvo la modificación
+                <span v-if="result.record.objectionResolvedAt">el {{ fmt(result.record.objectionResolvedAt) }}</span>.
+                La objeción del trabajador queda registrada como constancia del desacuerdo.
               </q-banner>
             </div>
 

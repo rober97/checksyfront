@@ -166,6 +166,12 @@ export const useDtStore = defineStore('dt', {
       return data
     },
 
+    /** El empleador resuelve una objeción: { action: 'uphold'|'revert', note } */
+    async resolveObjection(id, payload) {
+      const { data } = await secureAxios.post(`/attendance/${id}/resolve-objection`, payload)
+      return data
+    },
+
     /** Audit log */
     async fetchAuditLog(params = {}) {
       const qs = buildQuery(params)
