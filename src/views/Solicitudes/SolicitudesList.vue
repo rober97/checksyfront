@@ -317,27 +317,33 @@
             <q-td :props="p">
               <q-badge class="rk-type-badge" :class="typeClass(p.row.type)">
                 <q-icon :name="tipoIcon(p.row.type)" class="q-mr-xs" size="14px" />
-                {{ p.row.type }}
+                {{ typeLabel(p.row.type) }}
               </q-badge>
             </q-td>
           </template>
 
-          <!-- Columna: Fechas -->
-          <template #body-cell-fechaInicio="p">
+          <!-- Columna: Período (rango + cuándo) -->
+          <template #body-cell-periodo="p">
             <q-td :props="p">
-              <div class="rk-date-cell">
-                <div class="rk-date-main">{{ formatDate(p.row.startDate) }}</div>
-                <div class="rk-date-sub">{{ formatDateDistance(p.row.startDate) }}</div>
+              <div class="rk-period-cell">
+                <div class="rk-period-main">
+                  <q-icon name="event" size="14px" class="rk-period-icon" />
+                  {{ formatRange(p.row.startDate, p.row.endDate) }}
+                </div>
+                <div class="rk-period-sub" :class="periodHintClass(p.row.startDate)">
+                  {{ periodHint(p.row.startDate) }}
+                </div>
               </div>
             </q-td>
           </template>
 
-          <template #body-cell-fechaFin="p">
+          <!-- Columna: Duración (días, claramente etiquetado) -->
+          <template #body-cell-duracion="p">
             <q-td :props="p">
-              <div class="rk-date-cell">
-                <div class="rk-date-main">{{ formatDate(p.row.endDate) }}</div>
-                <div class="rk-date-sub">{{ formatDuration(p.row.startDate, p.row.endDate) }}</div>
-              </div>
+              <span class="rk-duration-chip">
+                <q-icon name="hourglass_bottom" size="13px" class="q-mr-xs" />
+                {{ formatDuration(p.row.startDate, p.row.endDate) }}
+              </span>
             </q-td>
           </template>
 
@@ -523,20 +529,21 @@ const pagination = ref({
   descending: false,
 });
 
-/* Opciones */
+/* Opciones — los valores usan los códigos del backend para que el filtro
+   compare contra row.status / row.type (antes comparaba español vs inglés). */
 const estadoOpts = [
   { label: "Todas las solicitudes", value: "all", icon: "apps" },
-  { label: "Pendientes", value: "Pendiente", icon: "hourglass_empty" },
-  { label: "Aprobadas", value: "Aprobado", icon: "check_circle" },
-  { label: "Rechazadas", value: "Rechazado", icon: "cancel" },
+  { label: "Pendientes", value: "PENDING", icon: "hourglass_empty" },
+  { label: "Aprobadas", value: "APPROVED", icon: "check_circle" },
+  { label: "Rechazadas", value: "REJECTED", icon: "cancel" },
+  { label: "Canceladas", value: "CANCELLED", icon: "do_not_disturb" },
 ];
 
 const tipoOpts = [
-  { label: "Vacaciones", value: "Vacaciones" },
-  { label: "Día compensatorio", value: "Día compensatorio" },
-  { label: "Permiso personal", value: "Permiso personal" },
-  { label: "Licencia médica", value: "Licencia médica" },
-  { label: "Permiso familiar", value: "Permiso familiar" },
+  { label: "Vacaciones", value: "VACATION" },
+  { label: "Día administrativo", value: "ADMIN_DAY" },
+  { label: "Día compensatorio", value: "COMP_DAY" },
+  { label: "Permiso / otro", value: "OTHER" },
 ];
 
 /* Computed Labels */
@@ -556,8 +563,8 @@ const totalCount = computed(() => store.list?.length || 0);
 const pendingCount = computed(() => 
   store.list?.filter(r => r.status === "PENDING").length || 0
 );
-const approvedCount = computed(() => 
-  store.list?.filter(r => r.status === "APROVED").length || 0
+const approvedCount = computed(() =>
+  store.list?.filter(r => r.status === "APPROVED").length || 0
 );
 const rejectedCount = computed(() => 
   store.list?.filter(r => r.status === "REJECTED").length || 0
@@ -578,7 +585,7 @@ const metrics = computed(() => [
     icon: "schedule",
     color: "orange",
     cardClass: "bg-orange-gradient",
-    filter: () => { estadoFilter.value = "Pendiente"; reload(); }
+    filter: () => { estadoFilter.value = "PENDING"; reload(); }
   },
   {
     label: "Aprobadas",
@@ -586,7 +593,7 @@ const metrics = computed(() => [
     icon: "check_circle",
     color: "positive",
     cardClass: "bg-positive-gradient",
-    filter: () => { estadoFilter.value = "Aprobado"; reload(); }
+    filter: () => { estadoFilter.value = "APPROVED"; reload(); }
   },
   {
     label: "Rechazadas",
@@ -594,7 +601,7 @@ const metrics = computed(() => [
     icon: "cancel",
     color: "negative",
     cardClass: "bg-negative-gradient",
-    filter: () => { estadoFilter.value = "Rechazado"; reload(); }
+    filter: () => { estadoFilter.value = "REJECTED"; reload(); }
   }
 ]);
 
@@ -634,20 +641,20 @@ const columns = [
     width: "150px"
   },
   {
-    name: "fechaInicio",
-    label: "Inicio",
+    name: "periodo",
+    label: "Período",
     field: "startDate",
     align: "left",
     sortable: true,
-    width: "140px"
+    width: "200px"
   },
   {
-    name: "fechaFin",
-    label: "Fin",
+    name: "duracion",
+    label: "Duración",
     field: "endDate",
     align: "left",
     sortable: true,
-    width: "140px"
+    width: "110px"
   },
   {
     name: "estado",
@@ -696,38 +703,49 @@ const statusClass = (status) => {
   return 'rk-status-badge--pending'
 }
 
+/* Tipos: el backend manda códigos (VACATION, ADMIN_DAY, COMP_DAY, OTHER).
+   Antes la tabla mostraba el código crudo y el estilo caía a "default". */
+const typeLabel = (type) => {
+  const map = {
+    VACATION: "Vacaciones",
+    ADMIN_DAY: "Día administrativo",
+    COMP_DAY: "Día compensatorio",
+    PERMISSION: "Permiso",
+    OTHER: "Permiso / otro",
+  };
+  return map[type] || type || "—";
+};
+
 const tipoColor = (t) => {
   const colors = {
-    "Vacaciones": "primary",
-    "Día compensatorio": "positive",
-    "Permiso personal": "primary",
-    "Licencia médica": "warning",
-    "Permiso familiar": "primary"
+    VACATION: "primary",
+    ADMIN_DAY: "info",
+    COMP_DAY: "positive",
+    OTHER: "grey",
   };
   return colors[t] || "grey";
 };
 
 const tipoIcon = (t) => {
   const icons = {
-    "Vacaciones": "beach_access",
-    "Día compensatorio": "autorenew",
-    "Permiso personal": "person",
-    "Licencia médica": "local_hospital",
-    "Permiso familiar": "family_restroom"
+    VACATION: "beach_access",
+    ADMIN_DAY: "event_available",
+    COMP_DAY: "autorenew",
+    PERMISSION: "person",
+    OTHER: "more_horiz",
   };
   return icons[t] || "help";
 };
 
 const typeClass = (type) => {
   const map = {
-    "Vacaciones": "rk-type-badge--vacaciones",
-    "Día compensatorio": "rk-type-badge--compensatorio",
-    "Permiso personal": "rk-type-badge--personal",
-    "Licencia médica": "rk-type-badge--medica",
-    "Permiso familiar": "rk-type-badge--familiar"
-  }
-  return map[type] || 'rk-type-badge--default'
-}
+    VACATION: "rk-type-badge--vacaciones",
+    ADMIN_DAY: "rk-type-badge--familiar",
+    COMP_DAY: "rk-type-badge--compensatorio",
+    OTHER: "rk-type-badge--default",
+  };
+  return map[type] || "rk-type-badge--default";
+};
 
 const getInitials = (name) => {
   if (!name) return "?";
@@ -754,12 +772,44 @@ const formatDateDistance = (dateStr) => {
 };
 
 const formatDuration = (start, end) => {
-  if (!start || !end) return "";
+  if (!start) return "—";
   const startDate = new Date(start);
-  const endDate = new Date(end);
+  const endDate = new Date(end || start);
   const diff = endDate.getTime() - startDate.getTime();
-  const days = Math.ceil(diff / (1000 * 3600 * 24)) + 1;
+  const days = Math.max(1, Math.floor(diff / (1000 * 3600 * 24)) + 1);
   return `${days} día${days !== 1 ? 's' : ''}`;
+};
+
+/* Rango compacto: "22/06 → 23/06 2026". Un solo día → una fecha. */
+const formatRange = (start, end) => {
+  if (!start) return "—";
+  const s = new Date(start);
+  const e = new Date(end || start);
+  const sameDay = s.toDateString() === e.toDateString();
+  if (sameDay) return date.formatDate(s, "DD/MM/YYYY");
+  const sameYear = s.getFullYear() === e.getFullYear();
+  const left = date.formatDate(s, sameYear ? "DD/MM" : "DD/MM/YYYY");
+  const right = date.formatDate(e, "DD/MM/YYYY");
+  return `${left} → ${right}`;
+};
+
+/* Pista temporal del inicio: "Hoy", "Mañana", "En 3 días", "Hace 10 días". */
+const periodHint = (start) => {
+  const d = formatDateDistance(start);
+  if (!d) return "";
+  if (d === "Hoy") return "Empieza hoy";
+  if (d === "Mañana") return "Empieza mañana";
+  if (d === "Ayer") return "Empezó ayer";
+  if (d.startsWith("En ")) return `Empieza ${d.toLowerCase()}`;
+  return d; // "Hace N días"
+};
+
+const periodHintClass = (start) => {
+  if (!start) return "";
+  const days = Math.ceil((new Date(start).getTime() - Date.now()) / (1000 * 3600 * 24));
+  if (days > 0) return "rk-period-sub--future";
+  if (days === 0) return "rk-period-sub--today";
+  return "rk-period-sub--past";
 };
 
 /* Acciones */
@@ -800,27 +850,18 @@ const rejectRow = async (row) => {
 };
 
 const verDetalle = (row) => {
+  const rowGen = (label, value) =>
+    `<div class="row q-mb-sm"><div class="col-4 text-grey-7">${label}</div><div class="col-8 text-weight-medium">${value}</div></div>`;
   $q.dialog({
     title: `Solicitud de ${row.empleado}`,
     message: `
-      <div class="q-gutter-y-md">
-        <div class="row">
-          <div class="col-4"><strong>Tipo:</strong></div>
-          <div class="col-8"><q-badge color="${tipoColor(row.type)}">${row.type}</q-badge></div>
-        </div>
-        <div class="row">
-          <div class="col-4"><strong>Período:</strong></div>
-          <div class="col-8">${formatDate(row.startDate)} - ${formatDate(row.endDate)}</div>
-        </div>
-        <div class="row">
-          <div class="col-4"><strong>Duración:</strong></div>
-          <div class="col-8">${formatDuration(row.startDate, row.endDate)}</div>
-        </div>
-        <div class="row">
-          <div class="col-4"><strong>Estado:</strong></div>
-          <div class="col-8"><q-badge color="${estadoColor(row.status)}">${row.status}</q-badge></div>
-        </div>
-        ${row.notas ? `<div class="row"><div class="col-4"><strong>Notas:</strong></div><div class="col-8">${row.notas}</div></div>` : ''}
+      <div>
+        ${rowGen('Tipo', typeLabel(row.type))}
+        ${rowGen('Período', formatRange(row.startDate, row.endDate))}
+        ${rowGen('Duración', formatDuration(row.startDate, row.endDate))}
+        ${rowGen('Estado', statusLabel(row.status))}
+        ${row.selfApproved ? rowGen('Autorización', 'Representante del empleador (Art. 4 CT)') : ''}
+        ${row.notas ? rowGen('Notas', row.notas) : ''}
       </div>
     `,
     html: true,
@@ -840,9 +881,14 @@ const bulkApprove = async () => {
   }).onOk(async () => {
     try {
       const ids = selection.value.map((r) => r._id);
-      await store.bulkUpdate(ids, "Aprobado");
+      const { ok, fail } = await store.bulkSetStatus(ids, "APPROVED");
       selection.value = [];
-      $q.notify({ type: "positive", message: `${ids.length} solicitudes aprobadas`, position: "top-right", timeout: 4000, icon: "check_circle" });
+      await fetchServer();
+      $q.notify({
+        type: fail ? "warning" : "positive",
+        message: fail ? `${ok} aprobadas, ${fail} no se pudieron` : `${ok} solicitudes aprobadas`,
+        position: "top-right", timeout: 4000, icon: "check_circle"
+      });
     } catch {
       $q.notify({ type: "negative", message: "No se pudo aprobar la selección", position: "top-right" });
     }
@@ -860,9 +906,14 @@ const bulkReject = async () => {
   }).onOk(async () => {
     try {
       const ids = selection.value.map((r) => r._id);
-      await store.bulkUpdate(ids, "Rechazado");
+      const { ok, fail } = await store.bulkSetStatus(ids, "REJECTED");
       selection.value = [];
-      $q.notify({ type: "positive", message: `${ids.length} solicitudes rechazadas`, position: "top-right", timeout: 4000, icon: "cancel" });
+      await fetchServer();
+      $q.notify({
+        type: fail ? "warning" : "positive",
+        message: fail ? `${ok} rechazadas, ${fail} no se pudieron` : `${ok} solicitudes rechazadas`,
+        position: "top-right", timeout: 4000, icon: "cancel"
+      });
     } catch {
       $q.notify({ type: "negative", message: "No se pudo rechazar la selección", position: "top-right" });
     }
@@ -871,19 +922,16 @@ const bulkReject = async () => {
 
 const exportar = async () => {
   try {
-    const blob = await store.exportCSV({
-      q: search.value,
-      estado: estadoFilter.value === "all" ? "" : estadoFilter.value,
-      tipo: tipoFilter.value || "",
-      desde: desde.value || "",
-      hasta: hasta.value || "",
-      sortBy: pagination.value.sortBy,
-      descending: pagination.value.descending,
+    const blob = await store.exportXlsx({
+      status: estadoFilter.value === "all" ? "" : estadoFilter.value,
+      type: tipoFilter.value || "",
+      from: desde.value || "",
+      to: hasta.value || "",
     });
     const url = window.URL.createObjectURL(new Blob([blob]));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `solicitudes_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `solicitudes_${new Date().toISOString().slice(0, 10)}.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
     $q.notify({ type: "info", message: "Exportación completada", position: "top-right", timeout: 3000, icon: "file_download" });
@@ -1345,6 +1393,51 @@ onMounted(async () => {
 .rk-date-sub {
   color: var(--rk-text-muted);
   font-size: 12px;
+}
+
+/* Period & Duration cells (rediseño de columnas de fecha) */
+.rk-period-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rk-period-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rk-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rk-period-icon {
+  color: var(--rk-primary);
+  opacity: 0.85;
+}
+
+.rk-period-sub {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.rk-period-sub--future { color: var(--rk-primary); }
+.rk-period-sub--today  { color: #d97706; }
+.rk-period-sub--past   { color: var(--rk-text-soft); }
+
+.rk-duration-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--rk-surface-2);
+  border: 1px solid var(--rk-border);
+  color: var(--rk-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ══════════════════════════════════════════════════

@@ -169,7 +169,6 @@ export const useRequestsStore = defineStore('requests', {
         const cfg = isFD ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined
 
         const res = await secureAxios.post(`${API_URL}/requests`, payload, cfg)
-        debugger
         const created = normalizeRequest(res?.data?.data || res?.data)
 
         if (created) {
@@ -179,7 +178,6 @@ export const useRequestsStore = defineStore('requests', {
         }
         return created
       } catch (err) {
-        debugger
         console.error('[requests.createRequest] ', err)
         const status = err?.response?.status
         const msg =
@@ -201,7 +199,7 @@ export const useRequestsStore = defineStore('requests', {
       try {
         this.loading = true
         this.error = null
-        const res = await secureAxios.patch(`${API_URL}/solicitudes/${id}/cancelar`)
+        const res = await secureAxios.patch(`${API_URL}/requests/${id}/cancelar`)
         const updated = normalizeRequest(res?.data?.data || res?.data)
 
         this.myRequests = this.myRequests.map(r => (String(r._id) === String(id) ? updated : r))
@@ -308,7 +306,7 @@ export const useRequestsStore = defineStore('requests', {
     async exportXlsx(params = {}) {
       try {
         const q = toQuery(params)
-        const url = q ? `${API_URL}/solicitudes/export/xlsx?${q}` : `${API_URL}/solicitudes/export/xlsx`
+        const url = q ? `${API_URL}/requests/export/xlsx?${q}` : `${API_URL}/requests/export/xlsx`
         const res = await secureAxios.get(url, { responseType: 'blob' })
         return res.data // blob → tú decides descargar en el componente
       } catch (err) {
@@ -329,18 +327,19 @@ export const useRequestsStore = defineStore('requests', {
       })
     },
 
-    async bulkUpdate(ids, estado) {
-      await secureAxios.patch(`/requests/bulk`, { ids, estado })
-      this.items = this.items.map(r => ids.includes(r._id) ? { ...r, estado } : r)
-    },
-
-    async exportCSV(params = {}) {
-      // Ajusta a tu export real (CSV/Excel)
-      const { data } = await secureAxios.get('/requests/export', {
-        params: { ...this.lastQuery, ...params },
-        responseType: 'blob'
-      })
-      return data // Blob
+    /**
+     * Aprueba/rechaza en lote. No existe endpoint bulk en el backend, así que
+     * reutilizamos PATCH /requests/:id por cada id (con eso cada decisión dispara
+     * su notificación al trabajador). status: 'APPROVED' | 'REJECTED' | 'CANCELLED'.
+     * Devuelve { ok, fail } con los conteos.
+     */
+    async bulkSetStatus(ids = [], status) {
+      const results = await Promise.allSettled(
+        ids.map(id => this.setStatus(id, status))
+      )
+      const ok = results.filter(r => r.status === 'fulfilled').length
+      const fail = results.length - ok
+      return { ok, fail }
     },
   }
 })
