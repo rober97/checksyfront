@@ -1456,36 +1456,46 @@ onMounted(async () => {
   letter-spacing: 0.01em;
 }
 
+/* Colores explícitos (antes algunos usaban vars globales que podían dejar el
+   texto del mismo color que el fondo → badge teal sin texto visible). */
 .rk-type-badge--vacaciones {
-  background: var(--color-primary-soft);
-  border-color: rgba(12, 169, 196, 0.15);
-  color: var(--color-primary-dark);
+  background: rgba(8, 147, 170, 0.12);
+  border-color: rgba(8, 147, 170, 0.22);
+  color: #0a6c80;
 }
 .rk-type-badge--compensatorio {
-  background: rgba(5, 150, 105, 0.1);
-  border-color: rgba(5, 150, 105, 0.15);
+  background: rgba(5, 150, 105, 0.12);
+  border-color: rgba(5, 150, 105, 0.2);
   color: #047857;
 }
 .rk-type-badge--personal {
-  background: var(--color-accent-soft);
-  border-color: rgba(8, 147, 170, 0.15);
-  color: var(--color-accent-dark);
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: #1d4ed8;
 }
 .rk-type-badge--medica {
-  background: rgba(217, 119, 6, 0.1);
-  border-color: rgba(217, 119, 6, 0.15);
+  background: rgba(217, 119, 6, 0.12);
+  border-color: rgba(217, 119, 6, 0.2);
   color: #b45309;
 }
 .rk-type-badge--familiar {
-  background: var(--color-info-soft);
-  border-color: rgba(8, 147, 170, 0.15);
-  color: var(--color-info);
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.2);
+  color: #6d28d9;
 }
 .rk-type-badge--default {
-  background: rgba(100, 116, 139, 0.1);
-  border-color: rgba(100, 116, 139, 0.15);
+  background: rgba(100, 116, 139, 0.12);
+  border-color: rgba(100, 116, 139, 0.2);
   color: #475569;
 }
+
+/* Legibilidad en modo oscuro: subimos el texto a tonos claros */
+.rk-request-page.is-dark .rk-type-badge--vacaciones { color: #5fd0e0; }
+.rk-request-page.is-dark .rk-type-badge--compensatorio { color: #4ade80; }
+.rk-request-page.is-dark .rk-type-badge--personal { color: #93b4ff; }
+.rk-request-page.is-dark .rk-type-badge--medica { color: #fbbf77; }
+.rk-request-page.is-dark .rk-type-badge--familiar { color: #c4b5fd; }
+.rk-request-page.is-dark .rk-type-badge--default { color: #cbd5e1; }
 
 .rk-status-badge--pending {
   background: rgba(217, 119, 6, 0.1);

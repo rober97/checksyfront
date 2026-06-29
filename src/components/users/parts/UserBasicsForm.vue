@@ -257,8 +257,12 @@
               clearable
               dense
               outlined
+              :readonly="!canAdministerChain"
+              :disable="!canAdministerChain"
               label="Aprobador (jefatura)"
-              hint="Recibe y autoriza las solicitudes de vacaciones/permisos de esta persona. Si se deja vacío, recae en el representante del empleador o RR.HH."
+              :hint="canAdministerChain
+                ? 'Recibe y autoriza las solicitudes de esta persona. Si se deja vacío, recae en el representante del empleador.'
+                : 'Solo el representante del empleador puede definir la cadena de aprobación.'"
               class="rk-input"
             >
               <template #prepend>
@@ -267,8 +271,16 @@
             </q-select>
           </div>
 
-          <!-- Facultad del empleador: sólo el superadmin puede asignarla -->
-          <div v-if="canPickRole" class="rk-input-wrap rk-employer-rep">
+          <!-- Aviso de gobernanza para quien NO puede administrar la cadena -->
+          <div v-if="!canAdministerChain" class="rk-chain-note">
+            <q-icon name="lock" size="15px" class="q-mr-xs" />
+            Definir quién aprueba (jefatura y facultad del empleador) es un acto de la
+            facultad del empleador. Tu rol de RR.HH. opera las solicitudes, pero no
+            rediseña la cadena de aprobación (separación de funciones).
+          </div>
+
+          <!-- Facultad del empleador: la confiere el representante existente o el superadmin -->
+          <div v-if="canAdministerChain" class="rk-input-wrap rk-employer-rep">
             <q-toggle
               v-model="local.isEmployerRepresentative"
               color="primary"
@@ -277,7 +289,8 @@
             <p class="rk-section-desc rk-employer-rep__desc">
               Ostenta la facultad del empleador (Art. 4 Cód. del Trabajo): puede
               autorizar solicitudes de cualquier persona de la empresa, incluidas
-              las suyas (quedan registradas como auto-autorización en la bitácora).
+              las suyas (quedan registradas como auto-autorización en la bitácora)
+              y administrar la cadena de aprobación.
             </p>
           </div>
         </div>
@@ -434,6 +447,15 @@ import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
 const canPickRole = computed(() => String(authStore.user?.role || '') === 'superadmin')
+
+// Quién puede ADMINISTRAR la cadena de aprobación (asignar jefatura y conferir
+// la facultad del empleador): el superadmin (bootstrap) o un representante del
+// empleador. Coincide con la regla server-side (governance/approvalChain.js);
+// el backend la valida igual aunque se manipule la UI.
+const canAdministerChain = computed(() =>
+  String(authStore.user?.role || '') === 'superadmin' ||
+  authStore.user?.isEmployerRepresentative === true
+)
 
 // Opciones de jefatura. Las provee el contenedor ya scopeadas a la empresa
 // y sin el propio usuario (no puede ser su propia jefatura).
@@ -779,6 +801,20 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
 /* Representante del empleador */
 .rk-employer-rep__desc {
   margin-top: 6px;
+}
+
+/* Aviso de gobernanza (cadena bloqueada para RR.HH. sin facultad) */
+.rk-chain-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--rk-text-2);
+  background: rgba(100, 116, 139, 0.08);
+  border: 1px solid rgba(100, 116, 139, 0.16);
+  border-radius: 10px;
+  padding: 8px 10px;
 }
 
 /* Section grid */
