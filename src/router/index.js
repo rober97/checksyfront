@@ -19,6 +19,7 @@ const Dashboard = () => import(/* webpackChunkName:"dashboard" */ '@/views/Dashb
 const UserManagement = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/GestionUsuarios.vue')
 const HorariosModule = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/HorariosModule.vue')
 const AsistenciasEmp = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AsistenciasPorEmpleado.vue')
+const AprobacionesJerarquia = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/AprobacionesJerarquia.vue')
 const Payroll = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollModule.vue")
 const PayrollRate = () => import(/* webpackChunkName:"admin"     */ "@/views/Admin//Payroll/PayrollRate.vue")
 const PerformanceModule = () => import(/* webpackChunkName:"admin"     */ '@/views/Admin/PerformanceModule.vue')
@@ -199,6 +200,7 @@ const routes = [
       { path: 'attendance', name: 'RrhhAttendance', component: AsistenciasEmp, meta: { permissions: ['attendance:read'], title: 'Asistencias' } },
       { path: 'empresa', name: 'RrhhEmpresa', component: CompanyDetail, props: true, meta: { title: 'Mi empresa' } },
       { path: 'requests', name: 'RrhhRequests', component: RequestList, props: true, meta: { title: 'Solicitudes' } },
+      { path: 'aprobaciones', name: 'RrhhAprobaciones', component: AprobacionesJerarquia, meta: { title: 'Aprobaciones y jerarquía' } },
       { path: 'payroll', name: 'RrhhPayroll', component: Payroll, props: true, meta: { title: 'Liquidaciones' } },
       { path: 'payrollRates', name: 'RrhhPayrollRate', component: PayrollRate, props: true, meta: { title: 'Config Nómina' } },
       { path: 'desempeno', name: 'RrhhDesempeno', component: PerformanceModule, meta: { title: 'Desempeño' } },

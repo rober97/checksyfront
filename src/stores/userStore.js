@@ -125,20 +125,22 @@ export const useUserStore = defineStore('user', {
   },
 
   actions: {
-    async fetchUsers() {
+    async fetchUsers(params = {}) {
       try {
         this.loading = true
         this.error = null
 
-        const res = await secureAxios.get(`${API_URL}/users`)
+        const res = await secureAxios.get(`${API_URL}/users`, { params })
         if (res.data) {
           this.users = res.data.items || []
         } else {
           this.error = res.data.message || 'Error al cargar usuarios'
         }
+        return this.users
       } catch (err) {
         console.error('[fetchUsers] Error:', err)
         this.error = 'No se pudieron obtener los usuarios'
+        return []
       } finally {
         this.loading = false
       }

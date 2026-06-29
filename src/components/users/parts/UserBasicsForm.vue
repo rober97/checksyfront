@@ -245,53 +245,33 @@
           </div>
         </div>
 
+        <!-- Solo-lectura: la cadena se administra en su propio módulo (gobernanza /
+             separación de funciones). Aquí solo se MUESTRA el contexto. -->
         <div class="rk-section-grid rk-single-col">
-          <div class="rk-input-wrap">
-            <q-select
-              v-model="local.approverId"
-              :options="approverSelectOptions"
-              option-value="value"
-              option-label="label"
-              emit-value
-              map-options
-              clearable
-              dense
-              outlined
-              :readonly="!canAdministerChain"
-              :disable="!canAdministerChain"
-              label="Aprobador (jefatura)"
-              :hint="canAdministerChain
-                ? 'Recibe y autoriza las solicitudes de esta persona. Si se deja vacío, recae en el representante del empleador.'
-                : 'Solo el representante del empleador puede definir la cadena de aprobación.'"
-              class="rk-input"
-            >
-              <template #prepend>
-                <q-icon name="supervisor_account" class="rk-input-icon" />
-              </template>
-            </q-select>
+          <div class="rk-readonly-row">
+            <div class="rk-readonly-item">
+              <span class="rk-readonly-label">Aprobador (jefatura)</span>
+              <div class="rk-readonly-value">
+                <q-icon name="supervisor_account" size="16px" class="q-mr-xs" />
+                {{ currentApproverLabel }}
+              </div>
+            </div>
+            <div class="rk-readonly-item">
+              <span class="rk-readonly-label">Representante del empleador</span>
+              <div class="rk-readonly-value">
+                <q-badge v-if="local.isEmployerRepresentative" color="primary" label="Sí" />
+                <span v-else class="rk-readonly-muted">No</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Aviso de gobernanza para quien NO puede administrar la cadena -->
-          <div v-if="!canAdministerChain" class="rk-chain-note">
-            <q-icon name="lock" size="15px" class="q-mr-xs" />
-            Definir quién aprueba (jefatura y facultad del empleador) es un acto de la
-            facultad del empleador. Tu rol de RR.HH. opera las solicitudes, pero no
-            rediseña la cadena de aprobación (separación de funciones).
-          </div>
-
-          <!-- Facultad del empleador: la confiere el representante existente o el superadmin -->
-          <div v-if="canAdministerChain" class="rk-input-wrap rk-employer-rep">
-            <q-toggle
-              v-model="local.isEmployerRepresentative"
-              color="primary"
-              label="Representante del empleador"
-            />
-            <p class="rk-section-desc rk-employer-rep__desc">
-              Ostenta la facultad del empleador (Art. 4 Cód. del Trabajo): puede
-              autorizar solicitudes de cualquier persona de la empresa, incluidas
-              las suyas (quedan registradas como auto-autorización en la bitácora)
-              y administrar la cadena de aprobación.
-            </p>
+          <div class="rk-chain-note">
+            <q-icon name="account_tree" size="15px" class="q-mr-xs" />
+            <span>
+              La cadena de aprobación se administra en
+              <router-link to="/rrhh/aprobaciones" class="rk-chain-link">Aprobaciones y jerarquía</router-link>.
+              La define el representante del empleador; no se edita desde la ficha (separación de funciones).
+            </span>
           </div>
         </div>
       </div>
@@ -448,18 +428,18 @@ import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
 const canPickRole = computed(() => String(authStore.user?.role || '') === 'superadmin')
 
-// Quién puede ADMINISTRAR la cadena de aprobación (asignar jefatura y conferir
-// la facultad del empleador): el superadmin (bootstrap) o un representante del
-// empleador. Coincide con la regla server-side (governance/approvalChain.js);
-// el backend la valida igual aunque se manipule la UI.
-const canAdministerChain = computed(() =>
-  String(authStore.user?.role || '') === 'superadmin' ||
-  authStore.user?.isEmployerRepresentative === true
-)
-
 // Opciones de jefatura. Las provee el contenedor ya scopeadas a la empresa
 // y sin el propio usuario (no puede ser su propia jefatura).
 const approverSelectOptions = computed(() => props.approverOptions || [])
+
+// Etiqueta de solo-lectura del aprobador actual (la edición vive en el módulo
+// "Aprobaciones y jerarquía"). Resuelve el nombre desde las opciones recibidas.
+const currentApproverLabel = computed(() => {
+  const id = local.approverId
+  if (!id) return 'Sin asignar (recae en el representante del empleador)'
+  const opt = approverSelectOptions.value.find(o => String(o.value) === String(id))
+  return opt ? opt.label : 'Asignado'
+})
 
 /* Props / Emits */
 const props = defineProps({
@@ -807,7 +787,7 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
 .rk-chain-note {
   display: flex;
   align-items: flex-start;
-  gap: 2px;
+  gap: 4px;
   font-size: 12px;
   line-height: 1.4;
   color: var(--rk-text-2);
@@ -816,6 +796,37 @@ function onCompanyCreated (company) { if (company?._id) local.empresa = company.
   border-radius: 10px;
   padding: 8px 10px;
 }
+.rk-chain-link {
+  color: var(--rk-primary, #0893AA);
+  font-weight: 600;
+  text-decoration: none;
+}
+.rk-chain-link:hover { text-decoration: underline; }
+
+/* Solo-lectura de la cadena en la ficha */
+.rk-readonly-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin-bottom: 8px;
+}
+.rk-readonly-item { display: flex; flex-direction: column; gap: 3px; }
+.rk-readonly-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--rk-text-2);
+}
+.rk-readonly-value {
+  display: flex;
+  align-items: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rk-text, inherit);
+}
+.rk-readonly-muted { color: var(--rk-text-2); font-weight: 500; }
+@media (max-width: 600px) { .rk-readonly-row { grid-template-columns: 1fr; } }
 
 /* Section grid */
 .rk-section-grid {

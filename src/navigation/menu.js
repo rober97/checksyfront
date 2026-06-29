@@ -59,6 +59,7 @@ export const MENU = [
       { label: 'Asistencias', icon: 'assignment_ind', to: '/rrhh/attendance' },
       { label: 'Mi empresa', icon: 'apartment', to: '/rrhh/empresa' },
       { label: 'Solicitudes', icon: 'assignment', to: '/rrhh/requests' },
+      { label: 'Aprobaciones y jerarquía', icon: 'account_tree', to: '/rrhh/aprobaciones' },
       { label: 'Liquidaciones', icon: 'payments', to: '/rrhh/payroll' },
       { label: 'Config Nómina', icon: 'percent', to: '/rrhh/payrollRates' },
       { label: 'Desempeño', icon: 'workspace_premium', to: '/rrhh/desempeno' },
