@@ -111,6 +111,49 @@ export const useAuthStore = defineStore('auth', {
 
 
 
+    /* =========================
+       RECUPERACIÓN DE CONTRASEÑA (público) — OTP por email
+       Paso 1: solicitar el código. Por anti-enumeración el backend SIEMPRE
+       responde OK, exista o no el correo.
+    ========================= */
+    async requestPasswordReset(email) {
+      this.loading = true
+      this.error = null
+      try {
+        const { data } = await publicAxios.post('/auth/password/forgot', { email })
+        if (data?.success === false) {
+          throw new Error(data?.message || 'No se pudo enviar el código')
+        }
+        return data
+      } catch (err) {
+        const msg = err?.response?.data?.message || err?.message || 'Error de servidor'
+        this.error = msg
+        throw new Error(msg)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    /* Paso 2: validar el código (6 dígitos) y fijar la nueva contraseña.
+       payload: { email, code, newPassword } */
+    async resetPassword(payload) {
+      this.loading = true
+      this.error = null
+      try {
+        const { data } = await publicAxios.post('/auth/password/reset', payload)
+        if (data?.success === false) {
+          throw new Error(data?.message || 'No se pudo restablecer la contraseña')
+        }
+        return data
+      } catch (err) {
+        const msg = err?.response?.data?.message || err?.message || 'Error de servidor'
+        this.error = msg
+        throw new Error(msg)
+      } finally {
+        this.loading = false
+      }
+    },
+
     /**
      * Cambia la empresa activa del admin_rrhh.
      * Llama al backend para re-emitir el JWT (porque companyId va en el token)

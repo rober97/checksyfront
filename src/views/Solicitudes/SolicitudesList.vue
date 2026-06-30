@@ -681,18 +681,29 @@ const columns = [
   },
 ];
 
-/* Helpers */
-const estadoColor = (s) =>
-  s === "Aprobado" ? "positive" : s === "Rechazado" ? "negative" : "orange";
+/* Helpers — todos normalizan a los códigos del backend (inglés). */
+const estadoColor = (s) => {
+  const n = String(s || '').toUpperCase()
+  if (n === 'APPROVED' || n === 'APROBADO') return 'positive'
+  if (n === 'REJECTED' || n === 'RECHAZADO') return 'negative'
+  if (n === 'CANCELLED' || n === 'CANCELADO') return 'grey'
+  return 'orange'
+}
 
-const estadoIcon = (s) =>
-  s === "Aprobado" ? "check_circle" : s === "Rechazado" ? "cancel" : "schedule";
+const estadoIcon = (s) => {
+  const n = String(s || '').toUpperCase()
+  if (n === 'APPROVED' || n === 'APROBADO') return 'check_circle'
+  if (n === 'REJECTED' || n === 'RECHAZADO') return 'cancel'
+  if (n === 'CANCELLED' || n === 'CANCELADO') return 'do_not_disturb'
+  return 'schedule'
+}
 
 const statusLabel = (status) => {
   const normalized = String(status || '').toUpperCase()
   if (normalized === 'APPROVED' || normalized === 'APROVED' || normalized === 'APROBADO') return 'Aprobada'
   if (normalized === 'REJECTED' || normalized === 'RECHAZADO') return 'Rechazada'
   if (normalized === 'PENDING' || normalized === 'PENDIENTE') return 'Pendiente'
+  if (normalized === 'CANCELLED' || normalized === 'CANCELADO') return 'Cancelada'
   return status || 'Sin estado'
 }
 
@@ -700,6 +711,7 @@ const statusClass = (status) => {
   const normalized = String(status || '').toUpperCase()
   if (normalized === 'APPROVED' || normalized === 'APROVED' || normalized === 'APROBADO') return 'rk-status-badge--approved'
   if (normalized === 'REJECTED' || normalized === 'RECHAZADO') return 'rk-status-badge--rejected'
+  if (normalized === 'CANCELLED' || normalized === 'CANCELADO') return 'rk-status-badge--cancelled'
   return 'rk-status-badge--pending'
 }
 
@@ -1498,27 +1510,39 @@ onMounted(async () => {
 .rk-request-page.is-dark .rk-type-badge--default { color: #cbd5e1; }
 
 .rk-status-badge--pending {
-  background: rgba(217, 119, 6, 0.1);
-  border-color: rgba(217, 119, 6, 0.15);
-  color: #b45309;
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.28);
+  color: #92400e;
 }
 .rk-status-badge--approved {
-  background: rgba(5, 150, 105, 0.1);
-  border-color: rgba(5, 150, 105, 0.15);
-  color: #047857;
+  background: rgba(5, 150, 105, 0.14);
+  border-color: rgba(5, 150, 105, 0.28);
+  color: #065f46;
 }
 .rk-status-badge--rejected {
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.15);
-  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(220, 38, 38, 0.28);
+  color: #991b1b;
+}
+.rk-status-badge--cancelled {
+  background: rgba(100, 116, 139, 0.16);
+  border-color: rgba(100, 116, 139, 0.3);
+  color: #475569;
 }
 .rk-status-badge--self {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.18);
-  color: #6d28d9;
+  background: rgba(124, 58, 237, 0.14);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: #5b21b6;
   font-size: 0.68rem;
   min-height: 24px;
 }
+
+/* Estados legibles también en modo oscuro */
+.rk-request-page.is-dark .rk-status-badge--pending  { color: #fcd34d; }
+.rk-request-page.is-dark .rk-status-badge--approved { color: #6ee7b7; }
+.rk-request-page.is-dark .rk-status-badge--rejected { color: #fca5a5; }
+.rk-request-page.is-dark .rk-status-badge--cancelled{ color: #cbd5e1; }
+.rk-request-page.is-dark .rk-status-badge--self     { color: #c4b5fd; }
 
 /* Notes Cell */
 .rk-notes-cell {

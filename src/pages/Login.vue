@@ -196,7 +196,7 @@ function focusPassword() {
   passwordRef.value?.focus?.();
 }
 function forgotPassword() {
-  console.info("Recuperación de contraseña");
+  router.push("/forgot-password");
 }
 
 //function soporte () { window.open('mailto:soporte@recksy.cl', '_blank') }

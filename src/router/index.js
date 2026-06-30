@@ -13,6 +13,7 @@ import InspectorLayout from '@/layouts/InspectorLayout.vue'
 const HomePublic = () => import(/* webpackChunkName:"public"    */ '@/views/HomePublic.vue')
 const Login = () => import(/* webpackChunkName:"public"    */ '@/views/Login.vue')
 const Register = () => import(/* webpackChunkName:"public"    */ '@/views/Register.vue')
+const ForgotPassword = () => import(/* webpackChunkName:"public"    */ '@/views/ForgotPassword.vue')
 const NotFound = () => import(/* webpackChunkName:"misc"      */ '@/views/NotFound.vue')
 const Dashboard = () => import(/* webpackChunkName:"dashboard" */ '@/views/Dashboard.vue')
 
@@ -118,6 +119,7 @@ const routes = [
   { path: '/', name: 'Home', component: HomePublic, meta: { public: true, title: 'Inicio' } },
   { path: '/login', name: 'Login', component: Login, meta: { public: true, onlyGuests: true, title: 'Iniciar sesión' } },
   { path: '/register', name: 'Register', component: Register, meta: { public: true, onlyGuests: true, title: 'Registro' } },
+  { path: '/forgot-password', name: 'ForgotPassword', component: ForgotPassword, meta: { public: true, onlyGuests: true, title: 'Recuperar contraseña' } },
 
   // ===== Verificador público DT (Res. Ex. 38/2024) =====
   // Accesible sin login para que cualquiera (incluida la DT) pueda validar un comprobante por su hash.
