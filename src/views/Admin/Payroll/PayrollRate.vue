@@ -111,8 +111,6 @@
         @click="openEdit(row)"
       >
         <!-- Left accent bar -->
-        <div class="card-accent" :class="row.active ? 'accent-active' : 'accent-inactive'" />
-
         <div class="card-body">
           <!-- Top row: name + status -->
           <div class="card-top">
@@ -990,19 +988,6 @@ async function confirmDeactivate(row) {
 
 .rate-card.inactive {
   opacity: 0.5;
-}
-
-.card-accent {
-  width: 4px;
-  flex-shrink: 0;
-}
-
-.accent-active {
-  background: linear-gradient(180deg, var(--color-success), var(--color-success));
-}
-
-.accent-inactive {
-  background: var(--border-color);
 }
 
 .card-body {

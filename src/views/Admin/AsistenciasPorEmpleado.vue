@@ -687,12 +687,15 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, date } from 'quasar';
 import { useAsistenciaStore } from '@/stores/asistenciaStore';
 import { fetchAttendancePhotoUrl } from '@/utils/attendancePhoto';
 import { useDtStore } from '@/stores/dtStore';
 
 const $q = useQuasar();
+const route = useRoute();
+const router = useRouter();
 const asistenciaStore = useAsistenciaStore();
 const dt = useDtStore();
 
@@ -1040,7 +1043,50 @@ const loadData = async () => {
   finally { loading.value = false; }
 };
 
-onMounted(() => { loadData(); initSticky(); });
+onMounted(async () => {
+  await loadData();
+  initSticky();
+  await maybeOpenObjectionFromQuery();
+});
+
+/* ── Apertura desde notificación de objeción ──
+   El header enruta aquí con ?resolveObjection=<attId>&employeeId=<id> cuando el
+   empleador clickea la notificación "Modificación objetada por el trabajador".
+   Abrimos el historial de ese trabajador y el diálogo sostener/revertir sobre
+   la marca objetada. Limpiamos el query para no re-disparar al refrescar. */
+async function maybeOpenObjectionFromQuery() {
+  const attendanceId = route.query.resolveObjection;
+  if (!attendanceId) return;
+  const employeeId = route.query.employeeId;
+  router.replace({ query: {} }).catch(() => {});
+
+  if (!employeeId) {
+    $q.notify({ type: 'warning', message: 'No se pudo identificar al trabajador de la objeción.' });
+    return;
+  }
+
+  const empleado =
+    rawEmployees.value.find(e => String(e._id) === String(employeeId)) || { _id: employeeId };
+  await verHistorial(empleado);
+
+  const marca = (historialEmpleado.value?.asistencias || [])
+    .find(a => String(a._id) === String(attendanceId));
+  if (!marca) {
+    $q.notify({ type: 'warning', message: 'No se encontró la marca objetada en el rango cargado. Ajusta las fechas para ubicarla.' });
+    return;
+  }
+  if (marca.objectionResolution) {
+    $q.notify({ type: 'info', message: 'Esta objeción ya fue resuelta.' });
+    return;
+  }
+  openResolveObjection(marca);
+}
+
+// Cubre el caso en que el empleador ya está en esta página y clickea la
+// notificación: onMounted no se re-dispara, pero el query sí cambia.
+watch(() => route.query.resolveObjection, (val) => {
+  if (val) maybeOpenObjectionFromQuery();
+});
 
 /* ── Modal ──────────────────────────────────── */
 const verHistorial = async (empleado) => {

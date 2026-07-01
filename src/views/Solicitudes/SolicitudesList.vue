@@ -315,10 +315,10 @@
           <!-- Columna: Tipo -->
           <template #body-cell-tipo="p">
             <q-td :props="p">
-              <q-badge class="rk-type-badge" :class="typeClass(p.row.type)">
+              <span class="rk-type-badge" :class="typeClass(p.row.type)">
                 <q-icon :name="tipoIcon(p.row.type)" class="q-mr-xs" size="14px" />
                 {{ typeLabel(p.row.type) }}
-              </q-badge>
+              </span>
             </q-td>
           </template>
 
@@ -351,15 +351,15 @@
           <template #body-cell-estado="p">
             <q-td :props="p">
               <div class="column items-start q-gutter-xs">
-                <q-badge class="rk-status-badge" :class="statusClass(p.row.status)">
+                <span class="rk-status-badge" :class="statusClass(p.row.status)">
                   <q-icon :name="estadoIcon(p.row.status)" class="q-mr-xs" size="12px" />
                   {{ statusLabel(p.row.status) }}
-                </q-badge>
-                <q-badge v-if="p.row.selfApproved" class="rk-status-badge rk-status-badge--self">
+                </span>
+                <span v-if="p.row.selfApproved" class="rk-status-badge rk-status-badge--self">
                   <q-icon name="gavel" class="q-mr-xs" size="12px" />
                   Autorizada como representante
                   <q-tooltip>Auto-autorizada por el representante del empleador (Art. 4 Cód. del Trabajo). Queda registrada en bitácora.</q-tooltip>
-                </q-badge>
+                </span>
               </div>
             </q-td>
           </template>
@@ -1285,15 +1285,6 @@ onMounted(async () => {
   color: var(--rk-text);
 }
 
-.rk-metric-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--metric-c);
-  opacity: 0.85;
-}
-
 .rk-metric-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--rk-shadow-md);
@@ -1471,34 +1462,34 @@ onMounted(async () => {
 /* Colores explícitos (antes algunos usaban vars globales que podían dejar el
    texto del mismo color que el fondo → badge teal sin texto visible). */
 .rk-type-badge--vacaciones {
-  background: rgba(8, 147, 170, 0.12);
-  border-color: rgba(8, 147, 170, 0.22);
-  color: #0a6c80;
+  background: rgba(8, 147, 170, 0.16);
+  border-color: rgba(8, 147, 170, 0.38);
+  color: #08596b;
 }
 .rk-type-badge--compensatorio {
-  background: rgba(5, 150, 105, 0.12);
-  border-color: rgba(5, 150, 105, 0.2);
-  color: #047857;
+  background: rgba(5, 150, 105, 0.16);
+  border-color: rgba(5, 150, 105, 0.36);
+  color: #036348;
 }
 .rk-type-badge--personal {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.2);
-  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.16);
+  border-color: rgba(37, 99, 235, 0.36);
+  color: #1a44b8;
 }
 .rk-type-badge--medica {
-  background: rgba(217, 119, 6, 0.12);
-  border-color: rgba(217, 119, 6, 0.2);
-  color: #b45309;
+  background: rgba(217, 119, 6, 0.16);
+  border-color: rgba(217, 119, 6, 0.36);
+  color: #9a4a08;
 }
 .rk-type-badge--familiar {
-  background: rgba(124, 58, 237, 0.12);
-  border-color: rgba(124, 58, 237, 0.2);
-  color: #6d28d9;
+  background: rgba(124, 58, 237, 0.16);
+  border-color: rgba(124, 58, 237, 0.36);
+  color: #5f21c9;
 }
 .rk-type-badge--default {
-  background: rgba(100, 116, 139, 0.12);
-  border-color: rgba(100, 116, 139, 0.2);
-  color: #475569;
+  background: rgba(100, 116, 139, 0.16);
+  border-color: rgba(100, 116, 139, 0.36);
+  color: #3f4a5c;
 }
 
 /* Legibilidad en modo oscuro: subimos el texto a tonos claros */
@@ -1510,29 +1501,29 @@ onMounted(async () => {
 .rk-request-page.is-dark .rk-type-badge--default { color: #cbd5e1; }
 
 .rk-status-badge--pending {
-  background: rgba(217, 119, 6, 0.14);
-  border-color: rgba(217, 119, 6, 0.28);
-  color: #92400e;
+  background: rgba(217, 119, 6, 0.18);
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #7c3608;
 }
 .rk-status-badge--approved {
-  background: rgba(5, 150, 105, 0.14);
-  border-color: rgba(5, 150, 105, 0.28);
-  color: #065f46;
+  background: rgba(5, 150, 105, 0.18);
+  border-color: rgba(5, 150, 105, 0.4);
+  color: #04533d;
 }
 .rk-status-badge--rejected {
-  background: rgba(220, 38, 38, 0.14);
-  border-color: rgba(220, 38, 38, 0.28);
-  color: #991b1b;
+  background: rgba(220, 38, 38, 0.18);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #8f1616;
 }
 .rk-status-badge--cancelled {
-  background: rgba(100, 116, 139, 0.16);
-  border-color: rgba(100, 116, 139, 0.3);
-  color: #475569;
+  background: rgba(100, 116, 139, 0.2);
+  border-color: rgba(100, 116, 139, 0.42);
+  color: #3f4a5c;
 }
 .rk-status-badge--self {
-  background: rgba(124, 58, 237, 0.14);
-  border-color: rgba(124, 58, 237, 0.3);
-  color: #5b21b6;
+  background: rgba(124, 58, 237, 0.18);
+  border-color: rgba(124, 58, 237, 0.42);
+  color: #52189f;
   font-size: 0.68rem;
   min-height: 24px;
 }

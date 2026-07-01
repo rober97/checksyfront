@@ -401,12 +401,67 @@ function openNotif(n) {
     openMissedExitResolver(n);
     return;
   }
+  // Objeción del trabajador a una modificación: llevamos al empleador a la
+  // página de asistencias, abriendo el historial de ese trabajador y el
+  // diálogo "sostener / revertir" sobre la marca objetada (con el contexto
+  // original vs. modificado que exige la decisión).
+  if (n.action === "resolve-objection") {
+    const attendanceId = n.meta?.attendanceId || null;
+    const employeeId = n.meta?.employeeId || n.meta?.employee?.id || null;
+    if (attendanceId) {
+      router.push({
+        path: "/rrhh/attendance",
+        query: {
+          resolveObjection: String(attendanceId),
+          ...(employeeId ? { employeeId: String(employeeId) } : {}),
+        },
+      });
+      return;
+    }
+  }
+  // Resto de notificaciones accionables: navegamos al lugar donde se resuelven
+  // (el mismo destino que los CTA de los correos). Si no hay destino conocido,
+  // caemos al toast informativo.
+  const dest = notifDestination(n);
+  if (dest) {
+    router.push(dest);
+    return;
+  }
   $q.notify({
     type: n.resolved ? "positive" : "info",
     message: n.title,
     caption: n.body,
     icon: n.icon,
   });
+}
+
+/**
+ * Resuelve a dónde llevar al usuario cuando clickea una notificación accionable.
+ * Devuelve un location object para router.push, o null si no hay destino
+ * (ahí openNotif cae al toast informativo). El mapeo espeja los CTA de los
+ * correos y se decide por el `kind`/`action` de la notificación (no por el rol),
+ * porque una misma persona puede recibir avisos de aprobador y de trabajador.
+ */
+function notifDestination(n) {
+  const kind = n.meta?.kind || null;
+  const action = n.action || n.meta?.action || null;
+  const requestId = n.meta?.requestId || null;
+
+  // Solicitud nueva por aprobar → panel de solicitudes (aprobador).
+  if (action === "review-request" || kind === "REQUEST_PENDING") {
+    return {
+      path: "/rrhh/requests",
+      query: requestId ? { requestId: String(requestId) } : undefined,
+    };
+  }
+  // Resultado de mi solicitud (aprobada/rechazada) → mis solicitudes (trabajador).
+  if (kind === "REQUEST_DECISION") {
+    return {
+      path: "/employee/requests",
+      query: requestId ? { requestId: String(requestId) } : undefined,
+    };
+  }
+  return null;
 }
 
 /* Resolver de salida olvidada (desde la web) */
