@@ -263,6 +263,13 @@
                 <div class="mstat-num">{{ conteos.salidas }}</div>
                 <div class="mstat-lbl">Salidas</div>
               </div>
+              <div
+                class="mstat mstat-hours"
+                :title="conteos.diasTrabajados ? `${conteos.diasTrabajados} día(s) trabajado(s) · promedio ${formatDuracion(conteos.promedioMin)}/día` : 'Sin jornadas cerradas en el rango'"
+              >
+                <div class="mstat-num">{{ formatDuracion(conteos.minutosTrabajados) }}</div>
+                <div class="mstat-lbl">Trabajadas</div>
+              </div>
               <div v-if="conteos.pendientes > 0" class="mstat mstat-pending" :title="`${conteos.pendientes} entrada(s) sin salida registrada`">
                 <div class="mstat-num">{{ conteos.pendientes }}</div>
                 <div class="mstat-lbl">Pendientes</div>
@@ -456,6 +463,9 @@
                   <div class="tday-info">
                     <span class="tday-fecha">{{ grupo.fechaLarga }}</span>
                     <span class="tday-count">{{ grupo.items.length }} marca{{ grupo.items.length !== 1 ? 's' : '' }}</span>
+                    <span v-if="grupo.minutos > 0" class="tday-hours">
+                      <q-icon name="schedule" size="12px" />{{ formatDuracion(grupo.minutos) }}
+                    </span>
                   </div>
                 </div>
                 <div class="tday-items">
@@ -519,6 +529,9 @@
                     </button>
                     <div class="titem-right">
                       <div class="titem-hora">{{ horaBonita(m.timestamp) }}</div>
+                      <div v-if="m.sessionMin" class="titem-dur" title="Duración de la jornada (entrada → salida)">
+                        <q-icon name="schedule" size="11px" />{{ formatDuracion(m.sessionMin) }}
+                      </div>
                       <div class="q-gutter-xs">
                         <a v-if="m.ubicacion?.lat" href="#" class="titem-mapa" @click.prevent="openInMaps(m)">
                           <q-icon name="place" size="12px" />mapa
@@ -564,7 +577,10 @@
                     :class="{ 'rk-tr-modified': m.modified, 'rk-tr-pending': m.pending }"
                   >
                     <td class="rk-td rk-mono">{{ formatFecha(m.timestamp) }}</td>
-                    <td class="rk-td rk-mono">{{ horaBonita(m.timestamp) }}</td>
+                    <td class="rk-td rk-mono">
+                      {{ horaBonita(m.timestamp) }}
+                      <span v-if="m.sessionMin" class="rk-dur" title="Duración de la jornada">· {{ formatDuracion(m.sessionMin) }}</span>
+                    </td>
                     <td class="rk-td">
                       <span class="rk-badge" :class="`badge-${m.tipo}`">
                         <span class="badge-dot" />
@@ -626,6 +642,11 @@
         <div class="rk-modal-footer">
           <div class="footer-info">
             {{ conteos.total }} marcas · {{ conteos.entradas }} entradas · {{ conteos.salidas }} salidas
+            <template v-if="conteos.minutosTrabajados > 0">
+              · <strong>{{ formatDuracion(conteos.minutosTrabajados) }}</strong> trabajadas
+              en {{ conteos.diasTrabajados }} día{{ conteos.diasTrabajados !== 1 ? 's' : '' }}
+              (prom. {{ formatDuracion(conteos.promedioMin) }}/día)
+            </template>
           </div>
           <div class="footer-actions">
             <button class="footer-btn footer-btn-print" @click="imprimirHistorial">
@@ -1193,13 +1214,63 @@ const entradasPendientesIds = computed(() => {
   return pending;
 });
 
+/* Jornadas: pareo entrada→salida sobre el historial COMPLETO (mismo criterio que
+   entradasPendientesIds) para calcular horas efectivamente trabajadas. Cada jornada
+   se atribuye al día de la ENTRADA, aunque la salida cruce medianoche. */
+const sesiones = computed(() => {
+  const all = historialEmpleado.value?.asistencias || [];
+  const sorted = [...all].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const out = [];
+
+  for (let i = 0; i < sorted.length; i++) {
+    const entrada = sorted[i];
+    if (entrada.tipo !== 'entrada') continue;
+
+    let salida = null;
+    for (let j = i + 1; j < sorted.length; j++) {
+      if (sorted[j].tipo === 'salida') { salida = sorted[j]; break; }
+      if (sorted[j].tipo === 'entrada') break;
+    }
+    if (!salida) continue;
+
+    const min = Math.round((new Date(salida.timestamp) - new Date(entrada.timestamp)) / 60000);
+    if (min <= 0) continue;
+
+    out.push({
+      entradaId: String(entrada._id),
+      salidaId:  String(salida._id),
+      fechaClave: date.formatDate(entrada.timestamp, 'YYYY-MM-DD'),
+      minutos: min,
+    });
+  }
+  return out;
+});
+
+/* salidaId → minutos de la jornada que cierra, para mostrar la duración en la marca. */
+const salidaDuracionMap = computed(() => {
+  const map = new Map();
+  for (const s of sesiones.value) map.set(s.salidaId, s.minutos);
+  return map;
+});
+
+/* fechaClave → minutos trabajados ese día (suma de jornadas de la entrada). */
+const minutosPorDia = computed(() => {
+  const map = new Map();
+  for (const s of sesiones.value) map.set(s.fechaClave, (map.get(s.fechaClave) || 0) + s.minutos);
+  return map;
+});
+
 const historialFiltradoYTipado = computed(() => {
   const base = filtroTipo.value
     ? historialFiltrado.value.filter(a => a.tipo === filtroTipo.value)
     : historialFiltrado.value;
   return [...base]
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    .map(m => ({ ...m, pending: entradasPendientesIds.value.has(String(m._id)) }));
+    .map(m => ({
+      ...m,
+      pending: entradasPendientesIds.value.has(String(m._id)),
+      sessionMin: m.tipo === 'salida' ? (salidaDuracionMap.value.get(String(m._id)) || null) : null,
+    }));
 });
 
 const gruposPorDia = computed(() => {
@@ -1210,12 +1281,13 @@ const gruposPorDia = computed(() => {
       const fechaLarga = new Intl.DateTimeFormat('es-ES', {
         weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
       }).format(new Date(m.timestamp));
-      map.set(clave, { fechaClave: clave, fechaLarga, items: [], hasPending: false });
+      map.set(clave, { fechaClave: clave, fechaLarga, items: [], hasPending: false, minutos: 0 });
     }
     const dia = map.get(clave);
     dia.items.push(m);
     if (m.pending) dia.hasPending = true;
   }
+  for (const dia of map.values()) dia.minutos = minutosPorDia.value.get(dia.fechaClave) || 0;
   return Array.from(map.values());
 });
 
@@ -1225,13 +1297,35 @@ const conteos = computed(() => {
     if (m.tipo === 'entrada') entradas++;
     else if (m.tipo === 'salida') salidas++;
   }
+  // Horas trabajadas: sólo jornadas cuyo día de entrada cae en el rango visible
+  // (respeta el filtro de fechas; independiente del filtro por tipo).
+  const diasVisibles = new Set(
+    historialFiltrado.value.map(a => date.formatDate(a.timestamp, 'YYYY-MM-DD'))
+  );
+  let minutosTrabajados = 0, diasTrabajados = 0;
+  for (const clave of diasVisibles) {
+    const min = minutosPorDia.value.get(clave) || 0;
+    if (min > 0) { minutosTrabajados += min; diasTrabajados++; }
+  }
+
   return {
     entradas,
     salidas,
     total: historialFiltradoYTipado.value.length,
     pendientes: entradasPendientesIds.value.size,
+    minutosTrabajados,
+    diasTrabajados,
+    promedioMin: diasTrabajados ? Math.round(minutosTrabajados / diasTrabajados) : 0,
   };
 });
+
+/* Formatea minutos → "8h 31m" / "45m" / "—". */
+const formatDuracion = (min) => {
+  if (!min || min <= 0) return '—';
+  const h = Math.floor(min / 60), m = min % 60;
+  if (!h) return `${m}m`;
+  return m ? `${h}h ${m}m` : `${h}h`;
+};
 
 /* ── Helpers ────────────────────────────────── */
 const estadoIcono  = t => t === 'entrada' ? 'login' : t === 'salida' ? 'logout' : 'radio_button_unchecked';
@@ -1605,6 +1699,8 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .mstat-out .mstat-num { color:#fca5a5; }
 .mstat-pending .mstat-num { color:#fbbf24; }
 .mstat-pending { background:rgba(251,191,36,0.18); }
+.mstat-hours .mstat-num { color:#93c5fd; }
+.mstat-hours { background:rgba(59,130,246,0.16); }
 
 /* Aviso de salidas olvidadas */
 .pending-banner {
@@ -1692,6 +1788,11 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .tday-dot { width:10px; height:10px; border-radius:50%; background:var(--c-primary); flex-shrink:0; box-shadow:0 0 0 3px var(--c-primary-l); }
 .tday-fecha { font-family:var(--ff-display); font-size:14px; font-weight:700; text-transform:capitalize; }
 .tday-count { font-size:11.5px; color:var(--c-text3); margin-left:6px; }
+.tday-hours {
+  display:inline-flex; align-items:center; gap:3px; margin-left:8px;
+  font-size:11.5px; font-weight:600; color:#3b82f6;
+  padding:1px 8px; border-radius:999px; background:rgba(59,130,246,0.12);
+}
 .tday-items { display:flex; flex-direction:column; gap:6px; padding-left:22px; }
 
 .titem { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px; background:var(--c-surface2); border:1px solid var(--c-border); transition:background 0.12s; }
@@ -1705,6 +1806,8 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .titem-nota { font-size:11.5px; color:var(--c-text3); margin-top:2px; }
 .titem-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
 .titem-hora  { font-family:var(--ff-mono); font-size:13px; font-weight:700; color:var(--c-text); }
+.titem-dur   { display:inline-flex; align-items:center; gap:3px; font-family:var(--ff-mono); font-size:11px; font-weight:600; color:#3b82f6; }
+.rk-dur      { font-size:11px; color:#3b82f6; font-weight:600; }
 .titem-mapa  { font-size:11px; color:var(--c-primary); text-decoration:none; display:inline-flex; align-items:center; gap:2px; }
 .titem-mapa:hover { text-decoration:underline; }
 

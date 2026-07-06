@@ -422,7 +422,11 @@ async function openCycle() {
   acting.value = true
   try {
     const { data } = await secureAxios.post(`/performance/cycles/${currentCycle.value._id}/open`)
-    $q.notify({ type: 'positive', message: `Ciclo abierto · ${data?.data?.reviewsCreated || 0} fichas generadas` })
+    const d = data?.data || {}
+    const parts = []
+    if (d.reviewsCreated) parts.push(`${d.reviewsCreated} generadas`)
+    if (d.reviewsUpdated) parts.push(`${d.reviewsUpdated} actualizadas`)
+    $q.notify({ type: 'positive', message: `Fichas: ${parts.join(' · ') || 'sin cambios'}` })
     await loadCycleDetail()
   } catch (e) {
     notifyErr(e, 'No se pudo abrir el ciclo')
