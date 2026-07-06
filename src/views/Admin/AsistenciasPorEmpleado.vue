@@ -380,6 +380,11 @@
               <label class="edit-field">
                 <span class="filter-label">Hora de salida</span>
                 <input type="datetime-local" v-model="resolveForm.timestamp" class="rk-date-input" />
+                <span v-if="resolveEstimate" class="edit-hint">
+                  <q-icon name="smart_toy" size="13px" />
+                  Sugerido por {{ resolveEstimate.method === 'contract' ? 'jornada de contrato' : 'histórico del trabajador' }}
+                  ({{ resolveEstimate.confidence === 'high' ? 'alta' : 'baja' }} confianza)
+                </span>
               </label>
               <label class="edit-field">
                 <span class="filter-label">Comentario (opcional)</span>
@@ -488,7 +493,18 @@
                           Salida pendiente
                         </q-chip>
                         <q-chip
-                          v-if="m.modified"
+                          v-if="m.origin === 'SYSTEM_ESTIMATED'"
+                          dense square color="deep-orange" text-color="white"
+                          icon="smart_toy" size="sm"
+                        >
+                          Estimada por sistema
+                          <q-tooltip>
+                            Cierre por presunción: nadie registró la salida en la ventana.
+                            Hora estimada según histórico/contrato. El trabajador puede objetarla en cualquier momento.
+                          </q-tooltip>
+                        </q-chip>
+                        <q-chip
+                          v-if="m.modified && m.origin !== 'SYSTEM_ESTIMATED'"
                           dense square color="warning" text-color="white"
                           icon="edit_note" size="sm"
                         >
@@ -591,7 +607,10 @@
                       <q-chip v-if="m.pending" dense color="orange" text-color="white" icon="warning_amber">
                         Salida pendiente
                       </q-chip>
-                      <q-chip v-if="m.modified" dense color="warning" text-color="white" icon="edit_note">
+                      <q-chip v-if="m.origin === 'SYSTEM_ESTIMATED'" dense color="deep-orange" text-color="white" icon="smart_toy">
+                        Estimada por sistema
+                      </q-chip>
+                      <q-chip v-if="m.modified && m.origin !== 'SYSTEM_ESTIMATED'" dense color="warning" text-color="white" icon="edit_note">
                         Modificado
                       </q-chip>
                       <q-chip v-if="m.workerObjected && !m.objectionResolution" dense color="negative" text-color="white" icon="gavel">
@@ -758,18 +777,29 @@ function cancelEdit() {
 /* ── Registrar salida olvidada (admin) ────── */
 const resolveTarget = ref(null);
 const resolveSaving = ref(false);
+const resolveEstimate = ref(null);
 const resolveForm = reactive({ timestamp: '', note: '', reason: '' });
 
-function openResolve(m) {
+async function openResolve(m) {
   if (!m?._id) return;
   editTarget.value = null;
   resolveTarget.value = m;
-  // Sugerencia: entrada + 8h; si cae en el futuro, ahora.
+  // Default local: entrada + 8h; si cae en el futuro, ahora.
   let def = new Date(new Date(m.timestamp).getTime() + 8 * 3600 * 1000);
   if (def.getTime() > Date.now()) def = new Date();
   resolveForm.timestamp = toLocalInput(def);
   resolveForm.note = '';
   resolveForm.reason = '';
+  resolveEstimate.value = null;
+  // Mejor sugerencia: estimación del servidor (mediana histórica / contrato).
+  try {
+    const res = await dt.getMissedExitEstimate(m._id);
+    const ts = res?.estimate?.timestamp;
+    if (ts && resolveTarget.value?._id === m._id) {
+      resolveForm.timestamp = toLocalInput(new Date(ts));
+      resolveEstimate.value = res.estimate;
+    }
+  } catch { /* sin estimación: se queda el default local */ }
 }
 
 function cancelResolve() {

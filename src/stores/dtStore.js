@@ -160,6 +160,12 @@ export const useDtStore = defineStore('dt', {
       return data
     },
 
+    /** Estimación de la hora de salida para una entrada huérfana (mediana/contrato) */
+    async getMissedExitEstimate(id) {
+      const { data } = await secureAxios.get(`/attendance/missed-exit/${id}/estimate`)
+      return data
+    },
+
     /** Objeción del trabajador (ventana 48h) */
     async objectModification(id) {
       const { data } = await secureAxios.post(`/attendance/${id}/object`)
