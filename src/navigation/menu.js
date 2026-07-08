@@ -19,6 +19,7 @@ export const MENU = [
     access: { roles: ['superadmin'] },
     children: [
       { label: 'Dashboard', icon: 'dashboard', to: '/superadmin/dashboard', exact: true },
+      { label: 'Analítica web', icon: 'insights', to: '/superadmin/analitica' },
       { label: 'Empresas', icon: 'apartment', to: '/superadmin/empresas' },
       { label: 'Administradores RR.HH.', icon: 'badge', to: '/superadmin/admins-rrhh' },
     ]

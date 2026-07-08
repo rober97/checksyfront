@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { hasAllPermissions, hasAnyPermission } from '@/utils/permissions'
+import { trackPageview } from '@/utils/analytics'
 
 // ====== Layouts (eager: el shell carga rápido)
 import AdminLayout from '@/layouts/AdminLayout.vue'
@@ -63,6 +64,7 @@ const InspectorAsistencias = () => import(/* webpackChunkName:"inspector" */ '@/
 const SuperadminDashboard = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Dashboard.vue')
 const SuperadminEmpresas = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Empresas.vue')
 const SuperadminAdminsRrhh = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/AdminsRrhh.vue')
+const SuperadminAnalitica = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Analitica.vue')
 
 // ====== Utilidades de autorización y navegación
 const BASE = process.env.BASE_URL || '/'
@@ -172,6 +174,7 @@ const routes = [
       { path: 'empresas/new', name: 'SuperadminEmpresaNew', component: CompanyForm, meta: { title: 'Nueva empresa' } },
       { path: 'empresas/:id', name: 'SuperadminEmpresaDetail', component: CompanyDetail, props: true, meta: { title: 'Detalle empresa' } },
       { path: 'admins-rrhh', name: 'SuperadminAdminsRrhh', component: SuperadminAdminsRrhh, meta: { title: 'Administradores RR.HH.' } },
+      { path: 'analitica', name: 'SuperadminAnalitica', component: SuperadminAnalitica, meta: { title: 'Analítica web' } },
       // Reportes y herramientas DT globales
       { path: 'dt/reportes', name: 'SuperadminDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT (global)' } },
       { path: 'dt/libro', name: 'SuperadminDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },
@@ -360,6 +363,16 @@ router.beforeEach(async (to, from, next) => {
 router.afterEach((to) => {
   const title = to.meta?.title ? `${to.meta.title} • ${APP_TITLE}` : APP_TITLE
   if (typeof document !== 'undefined') document.title = title
+
+  // Analítica web: sólo medimos el tráfico del SITIO PÚBLICO (landing, login,
+  // verificador, etc.), no la navegación interna de usuarios autenticados.
+  // Usamos el PATRÓN de la ruta (p.ej. /onboarding/:token) en lugar de la URL
+  // real para no guardar tokens ni hashes que viajan en el path.
+  if (to.meta?.public) {
+    const hasParams = to.params && Object.keys(to.params).length > 0
+    const pattern = to.matched?.[to.matched.length - 1]?.path
+    trackPageview(hasParams && pattern ? pattern : to.path)
+  }
 
   if (to.query?.redirect && window?.history?.replaceState) {
     const { redirect, ...rest } = to.query
