@@ -71,25 +71,38 @@
       </div>
 
       <!-- Quick stats -->
-      <div class="rk-stats-row">
-        <div class="rk-stat">
-          <span class="rk-stat-val">{{ payslips.length }}</span>
-          <span class="rk-stat-lbl">Total</span>
+      <div class="rk-stat-cards">
+        <div class="rk-stat-card rk-stat-card--primary">
+          <div class="rk-stat-card__icon"><q-icon name="groups" size="22px" /></div>
+          <div class="rk-stat-card__body">
+            <div class="rk-stat-card__val">{{ payslips.length }}</div>
+            <div class="rk-stat-card__lbl">Total</div>
+          </div>
+          <div class="rk-stat-card__deco"></div>
         </div>
-        <div class="rk-stat">
-          <q-icon name="edit_note" size="16px" color="warning" />
-          <span class="rk-stat-val">{{ countByStatus('DRAFT') }}</span>
-          <span class="rk-stat-lbl">Borrador</span>
+        <div class="rk-stat-card rk-stat-card--warning">
+          <div class="rk-stat-card__icon"><q-icon name="edit_note" size="22px" /></div>
+          <div class="rk-stat-card__body">
+            <div class="rk-stat-card__val">{{ countByStatus('DRAFT') }}</div>
+            <div class="rk-stat-card__lbl">Borradores</div>
+          </div>
+          <div class="rk-stat-card__deco"></div>
         </div>
-        <div class="rk-stat">
-          <q-icon name="check_circle" size="16px" color="positive" />
-          <span class="rk-stat-val">{{ countByStatus('ISSUED') }}</span>
-          <span class="rk-stat-lbl">Emitidas</span>
+        <div class="rk-stat-card rk-stat-card--positive">
+          <div class="rk-stat-card__icon"><q-icon name="check_circle" size="22px" /></div>
+          <div class="rk-stat-card__body">
+            <div class="rk-stat-card__val">{{ countByStatus('ISSUED') }}</div>
+            <div class="rk-stat-card__lbl">Emitidas</div>
+          </div>
+          <div class="rk-stat-card__deco"></div>
         </div>
-        <div class="rk-stat">
-          <q-icon name="paid" size="16px" color="primary" />
-          <span class="rk-stat-val rk-stat-money">{{ formatMoney(totalLiquido) }}</span>
-          <span class="rk-stat-lbl">Liquido</span>
+        <div class="rk-stat-card rk-stat-card--money">
+          <div class="rk-stat-card__icon"><q-icon name="paid" size="22px" /></div>
+          <div class="rk-stat-card__body">
+            <div class="rk-stat-card__val rk-stat-card__val--money">{{ formatMoney(totalLiquido) }}</div>
+            <div class="rk-stat-card__lbl">Líquido emitido</div>
+          </div>
+          <div class="rk-stat-card__deco"></div>
         </div>
       </div>
 
@@ -423,47 +436,88 @@ function formatPeriod(period) {
   margin-left: auto;
 }
 
-/* Stats */
-.rk-stats-row {
-  display: flex;
-  gap: 16px;
+/* Stat cards */
+.rk-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
 }
 
-.rk-stat {
+.rk-stat-card {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: rgba(0,0,0,.02);
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  overflow: hidden;
   border: 1px solid rgba(0,0,0,.06);
-  border-radius: 8px;
+  background: rgba(0,0,0,.02);
+  transition: transform .25s ease, box-shadow .25s ease;
 }
 
-.body--dark .rk-stat {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.06);
+.rk-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--app-shadow-sm);
 }
 
-.rk-stat-val {
+.body--dark .rk-stat-card {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.07);
+}
+
+.rk-stat-card__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rk-stat-card__val {
+  font-size: 1.6rem;
   font-weight: 800;
-  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.rk-stat-money {
+.rk-stat-card__val--money {
   font-family: 'Space Mono', monospace;
-  font-size: 0.9rem;
+  font-size: 1.25rem;
 }
 
-.rk-stat-lbl {
-  font-size: 0.75rem;
+.rk-stat-card__lbl {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: rgba(0,0,0,.5);
 }
 
-.body--dark .rk-stat-lbl {
+.body--dark .rk-stat-card__lbl {
   color: rgba(255,255,255,.5);
 }
+
+.rk-stat-card__deco {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.10) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.rk-stat-card--primary .rk-stat-card__icon { background: var(--color-primary-soft); color: var(--color-primary); }
+.rk-stat-card--warning .rk-stat-card__icon { background: var(--color-warning-soft); color: var(--color-warning); }
+.rk-stat-card--positive .rk-stat-card__icon { background: var(--color-success-soft, rgba(34,197,94,.14)); color: var(--color-success); }
+.rk-stat-card--money .rk-stat-card__icon { background: var(--color-primary-soft); color: var(--color-primary); }
+.rk-stat-card--money .rk-stat-card__val { color: var(--color-success); }
 
 /* Table */
 .rk-table-wrap {
@@ -593,12 +647,9 @@ function formatPeriod(period) {
     margin-left: 0;
   }
 
-  .rk-stats-row {
-    gap: 8px;
-  }
-
-  .rk-stat {
-    flex: 1 1 calc(50% - 8px);
+  .rk-stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
 </style>

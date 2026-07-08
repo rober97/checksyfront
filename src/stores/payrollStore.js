@@ -239,11 +239,17 @@ export const usePayrollStore = defineStore("payroll", {
       this._startLoading();
       this.error = "";
       try {
-        const { data } = await secureAxios.post(`${baseUrl}/generate`, {
-          companyId,
-          period,
-          employeeIds: Array.isArray(employeeIds) ? employeeIds : undefined,
-        });
+        const { data } = await secureAxios.post(
+          `${baseUrl}/generate`,
+          {
+            companyId,
+            period,
+            employeeIds: Array.isArray(employeeIds) ? employeeIds : undefined,
+          },
+          // La generación calcula la liquidación de cada trabajador; con muchos
+          // empleados puede tardar más que el timeout por defecto (15s).
+          { timeout: 120000 }
+        );
 
         this.lastGenerateResult = data;
         return data;

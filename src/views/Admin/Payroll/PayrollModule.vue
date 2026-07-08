@@ -207,13 +207,27 @@ async function generatePeriod() {
     periodSelected.value = periodInput.value;
     q.value = "";
     status.value = null;
-    $q.notify({
-      type: "positive",
-      message: `Período generado`,
-      caption: `Creados: ${res?.created ?? 0} · Actualizados: ${res?.updated ?? 0}`,
-      icon: "check_circle",
-      position: "top"
-    });
+
+    const failed = Array.isArray(res?.failed) ? res.failed : [];
+    if (failed.length > 0) {
+      $q.notify({
+        type: "warning",
+        message: `${res?.created ?? 0} borrador(es) generado(s), ${failed.length} con configuración incompleta`,
+        icon: "warning",
+        position: "top",
+        timeout: 4000,
+      });
+      showFailedDialog(failed);
+    } else {
+      $q.notify({
+        type: "positive",
+        message: `Período generado`,
+        caption: `Creados: ${res?.created ?? 0} · Actualizados: ${res?.updated ?? 0}`,
+        icon: "check_circle",
+        position: "top"
+      });
+    }
+
     await store.fetchPeriods({ companyId: cid });
     openPeriod(periodInput.value);
   } catch (e) {
@@ -468,6 +482,51 @@ function promptReason() {
       ok: { label: "Anular", color: "negative", unelevated: true },
       persistent: true,
     }).onOk(resolve).onCancel(() => resolve(""));
+  });
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Traduce el mensaje técnico del cálculo a una acción concreta para RR.HH.
+function humanizePayrollReason(message = "") {
+  const m = String(message).toLowerCase();
+  if (m.includes("afpentityid")) return "Falta asignar la AFP en la ficha del empleado.";
+  if (m.includes("healthentityid")) return "Falta asignar la entidad de salud (Fonasa/Isapre) en la ficha.";
+  if (m.includes("isapreuf")) return "El empleado es Isapre pero no tiene el plan en UF.";
+  if (m.includes("contracttype")) return "Falta el tipo de contrato en la ficha del empleado.";
+  if (m.includes("afp_rate")) return "Falta la tasa de AFP del período en Config Nómina.";
+  if (m.includes("fonasa_rate")) return "Falta la tasa de salud del período en Config Nómina.";
+  if (m.includes("cesantia_rate")) return "Falta la tasa de cesantía para su tipo de contrato en Config Nómina.";
+  if (m.includes("uf")) return "Falta el indicador UF del período en Config Nómina.";
+  if (m.includes("utm")) return "Falta el indicador UTM del período en Config Nómina.";
+  return message || "Configuración incompleta.";
+}
+
+function showFailedDialog(failed) {
+  const rows = failed
+    .map((f) => {
+      const name = escapeHtml(f.employeeName || "Empleado sin nombre");
+      const rut = f.employeeRut ? ` <span style="opacity:.6">(${escapeHtml(f.employeeRut)})</span>` : "";
+      const reason = escapeHtml(humanizePayrollReason(f.message));
+      return `<li style="margin-bottom:8px">
+        <strong>${name}</strong>${rut}<br/>
+        <span style="font-size:.85em;opacity:.85">${reason}</span>
+      </li>`;
+    })
+    .join("");
+
+  $q.dialog({
+    title: "Empleados con configuración incompleta",
+    message: `<p style="margin:0 0 10px">No se generó su liquidación. Corrige su ficha o Config Nómina y vuelve a generar:</p>
+      <ul style="margin:0;padding-left:18px">${rows}</ul>`,
+    html: true,
+    ok: { label: "Entendido", color: "primary", unelevated: true },
   });
 }
 

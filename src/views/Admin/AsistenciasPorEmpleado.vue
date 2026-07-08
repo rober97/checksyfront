@@ -382,7 +382,7 @@
                 <input type="datetime-local" v-model="resolveForm.timestamp" class="rk-date-input" />
                 <span v-if="resolveEstimate" class="edit-hint">
                   <q-icon name="smart_toy" size="13px" />
-                  Sugerido por {{ resolveEstimate.method === 'contract' ? 'jornada de contrato' : 'histórico del trabajador' }}
+                  Sugerido por {{ estimateSourceLabel(resolveEstimate.method) }}
                   ({{ resolveEstimate.confidence === 'high' ? 'alta' : 'baja' }} confianza)
                 </span>
               </label>
@@ -800,6 +800,12 @@ async function openResolve(m) {
       resolveEstimate.value = res.estimate;
     }
   } catch { /* sin estimación: se queda el default local */ }
+}
+
+function estimateSourceLabel(method) {
+  if (method === 'schedule') return 'horario asignado';
+  if (method === 'median') return 'histórico del trabajador';
+  return 'jornada de contrato';
 }
 
 function cancelResolve() {

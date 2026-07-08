@@ -39,24 +39,40 @@
           </q-input>
         </div>
 
-        <q-btn
-          unelevated
-          color="primary"
-          icon="bolt"
-          label="Generar borradores"
-          :disable="!isValidPeriod || loading"
-          :loading="loading"
-          class="rk-generate-btn"
-          @click="$emit('generate')"
-        />
+        <div class="rk-generate-zone">
+          <q-btn
+            unelevated
+            color="primary"
+            icon="bolt"
+            label="Generar borradores"
+            :disable="!isValidPeriod || loading"
+            :loading="loading"
+            class="rk-generate-btn"
+            @click="$emit('generate')"
+          />
+          <span class="rk-generate-hint">
+            <q-icon name="info" size="14px" />
+            Incluye a todos los trabajadores con contrato activo (sin importar su rol).
+          </span>
+        </div>
       </div>
 
       <!-- Quick stats -->
-      <div class="rk-stats-row">
-        <div class="rk-stat" v-for="s in stats" :key="s.label">
-          <q-icon :name="s.icon" :color="s.color" size="20px" />
-          <span class="rk-stat-val">{{ s.value }}</span>
-          <span class="rk-stat-lbl">{{ s.label }}</span>
+      <div class="rk-stat-cards">
+        <div
+          v-for="s in stats"
+          :key="s.label"
+          class="rk-stat-card"
+          :class="`rk-stat-card--${s.tone}`"
+        >
+          <div class="rk-stat-card__icon">
+            <q-icon :name="s.icon" size="22px" />
+          </div>
+          <div class="rk-stat-card__body">
+            <div class="rk-stat-card__val">{{ s.value }}</div>
+            <div class="rk-stat-card__lbl">{{ s.label }}</div>
+          </div>
+          <div class="rk-stat-card__deco"></div>
         </div>
       </div>
 
@@ -191,10 +207,10 @@ function onPickPeriod(value) {
 }
 
 const stats = computed(() => [
-  { icon: "folder", color: "primary", value: props.periodRows.length, label: "Períodos" },
-  { icon: "edit_note", color: "warning", value: countStatus('DRAFT'), label: "Borrador" },
-  { icon: "check_circle", color: "positive", value: countStatus('PUBLISHED'), label: "Publicados" },
-  { icon: "lock", color: "grey", value: countStatus('CLOSED'), label: "Cerrados" },
+  { icon: "folder", tone: "primary", value: props.periodRows.length, label: "Períodos" },
+  { icon: "edit_note", tone: "warning", value: countStatus('DRAFT'), label: "Borradores" },
+  { icon: "check_circle", tone: "positive", value: countStatus('PUBLISHED'), label: "Publicados" },
+  { icon: "lock", tone: "neutral", value: countStatus('CLOSED'), label: "Cerrados" },
 ]);
 
 function countStatus(status) {
@@ -278,6 +294,12 @@ function statusLabel(status) {
   justify-content: flex-end;
 }
 
+.rk-generate-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .rk-generate-btn {
   min-height: 38px;
   text-transform: none;
@@ -286,42 +308,97 @@ function statusLabel(status) {
   padding: 0 20px;
 }
 
-/* Stats */
-.rk-stats-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+.rk-generate-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: rgba(0,0,0,.5);
+  max-width: 320px;
+  line-height: 1.3;
 }
 
-.rk-stat {
+.body--dark .rk-generate-hint {
+  color: rgba(255,255,255,.5);
+}
+
+/* Stat cards */
+.rk-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.rk-stat-card {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: rgba(0,0,0,.02);
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  overflow: hidden;
   border: 1px solid rgba(0,0,0,.06);
-  border-radius: 8px;
+  background: rgba(0,0,0,.02);
+  transition: transform .25s ease, box-shadow .25s ease;
 }
 
-.body--dark .rk-stat {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.06);
+.rk-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--app-shadow-sm);
 }
 
-.rk-stat-val {
-  font-size: 1.1rem;
+.body--dark .rk-stat-card {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.07);
+}
+
+.rk-stat-card__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rk-stat-card__val {
+  font-size: 1.6rem;
   font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.rk-stat-lbl {
-  font-size: 0.78rem;
+.rk-stat-card__lbl {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: rgba(0,0,0,.5);
 }
 
-.body--dark .rk-stat-lbl {
+.body--dark .rk-stat-card__lbl {
   color: rgba(255,255,255,.5);
 }
+
+.rk-stat-card__deco {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.10) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Stat card tones */
+.rk-stat-card--primary .rk-stat-card__icon { background: var(--color-primary-soft); color: var(--color-primary); }
+.rk-stat-card--warning .rk-stat-card__icon { background: var(--color-warning-soft); color: var(--color-warning); }
+.rk-stat-card--positive .rk-stat-card__icon { background: var(--color-success-soft, rgba(34,197,94,.14)); color: var(--color-success); }
+.rk-stat-card--neutral .rk-stat-card__icon { background: rgba(120,120,120,.14); color: #8a8f98; }
 
 /* Table */
 .rk-table-wrap {
@@ -404,16 +481,21 @@ function statusLabel(status) {
     flex: 1 1 100%;
   }
 
+  .rk-generate-zone {
+    width: 100%;
+  }
+
   .rk-generate-btn {
     width: 100%;
   }
 
-  .rk-stats-row {
-    gap: 10px;
+  .rk-generate-hint {
+    max-width: none;
   }
 
-  .rk-stat {
-    flex: 1 1 calc(50% - 10px);
+  .rk-stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
 </style>

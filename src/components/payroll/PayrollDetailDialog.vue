@@ -49,11 +49,32 @@
           </div>
           <div class="rk-info-item">
             <span class="rk-info-label">Días pagados</span>
-            <strong class="text-positive">{{ current.daysPaid ?? 0 }}</strong>
+            <strong class="text-positive">{{ coveredDays }}</strong>
           </div>
           <div class="rk-info-item">
             <span class="rk-info-label">Ausencias</span>
-            <strong class="text-negative">{{ current.daysAbsent ?? 0 }}</strong>
+            <strong class="text-negative">{{ absentDayKeys.length }}</strong>
+          </div>
+        </div>
+
+        <!-- Absent days detail -->
+        <div v-if="absentDayKeys.length" class="rk-absences">
+          <div class="rk-absences-head">
+            <q-icon name="event_busy" size="18px" color="negative" />
+            <span>
+              Día{{ absentDayKeys.length !== 1 ? 's' : '' }} contado{{ absentDayKeys.length !== 1 ? 's' : '' }}
+              como ausencia ({{ absentDayKeys.length }})<template v-if="dailyValue > 0"> · descuenta {{ formatMoney(dailyValue) }} c/u</template>
+            </span>
+          </div>
+          <div class="rk-absences-chips">
+            <span v-for="day in absentDayKeys" :key="day" class="rk-absence-chip">
+              <q-icon name="calendar_today" size="12px" />
+              {{ formatDayKey(day) }}
+            </span>
+          </div>
+          <div class="rk-absences-hint">
+            <q-icon name="info" size="13px" />
+            Si el trabajador sí asistió, registra la marca o la solicitud (permiso / licencia / vacación) y regenera el borrador para que cuente el mes completo.
           </div>
         </div>
 
@@ -149,15 +170,61 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { formatPeriodLabel } from "@/utils/payrollPeriod.js";
 
-defineProps({
+const props = defineProps({
   modelValue: { type: Boolean, required: true },
   current: { type: Object, default: null },
   periodSelected: { type: String, default: "" },
 });
 
 defineEmits(["update:modelValue", "issue", "void", "delete", "open-pdf"]);
+
+// Días hábiles esperados que NO fueron cubiertos (sin marca válida ni permiso).
+// Fuente de verdad: snapshot.absentDayKeys del backend. Fallback (liquidaciones
+// antiguas): diferencia de conjuntos expectedDayKeys \ paidDayKeys.
+const absentDayKeys = computed(() => {
+  const snap = props.current?.snapshot || {};
+  if (Array.isArray(snap.absentDayKeys)) return [...snap.absentDayKeys].sort();
+  const expected = Array.isArray(snap.expectedDayKeys) ? snap.expectedDayKeys : [];
+  const paid = new Set(Array.isArray(snap.paidDayKeys) ? snap.paidDayKeys : []);
+  return expected.filter((day) => !paid.has(day)).sort();
+});
+
+// Días pagados derivados de forma consistente con la lista de ausencias, para
+// que "esperados − pagados = ausencias" siempre cuadre en el diálogo (incluso
+// en liquidaciones antiguas con conteo neto obsoleto).
+const coveredDays = computed(() => {
+  const expected = Number(props.current?.daysExpected || 0);
+  return Math.max(0, expected - absentDayKeys.value.length);
+});
+
+// Valor diario del descuento = sueldo base / 30 (mensualización).
+// Se deriva de la línea de sueldo base ya prorrateada: amount = base * payrollDays/30,
+// por lo tanto base/30 = amount / payrollDays.
+const dailyValue = computed(() => {
+  const snap = props.current?.snapshot || {};
+  const payrollDays = Number(snap.payrollDays);
+  const baseLine = (props.current?.lines || []).find(
+    (l) => l.code === "sueldo_base" || l?.meta?.valuePath === "baseSalary"
+  );
+  const baseAmount = Number(baseLine?.amount || 0);
+  if (!baseAmount || !payrollDays) return 0;
+  return Math.round(baseAmount / payrollDays);
+});
+
+function formatDayKey(key) {
+  const [y, m, d] = String(key).split("-").map(Number);
+  if (!y || !m || !d) return key;
+  const date = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  return date.toLocaleDateString("es-CL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
+}
 
 function getInitials(name) {
   if (!name) return "?";
@@ -270,6 +337,59 @@ function statusLabel(s) {
 
 .rk-info-item strong {
   font-size: 1.1rem;
+}
+
+/* Absent days */
+.rk-absences {
+  border: 1px solid var(--color-warning-soft, rgba(245,158,11,.3));
+  background: var(--color-warning-soft, rgba(245,158,11,.08));
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.rk-absences-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-warning, #b45309);
+  margin-bottom: 10px;
+}
+
+.rk-absences-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rk-absence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(0,0,0,.05);
+  border: 1px solid rgba(0,0,0,.08);
+  text-transform: capitalize;
+}
+
+.body--dark .rk-absence-chip {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.10);
+}
+
+.rk-absences-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.75;
 }
 
 /* Financial */
