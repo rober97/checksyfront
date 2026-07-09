@@ -8,7 +8,7 @@
     <div class="row items-center justify-between q-mb-md">
       <div>
         <div class="text-h4 text-weight-bold">Horas extraordinarias</div>
-        <div class="text-grey-7">Autoriza previamente las horas extra de tus trabajadores (máx. 2 h/día)</div>
+        <div class="text-grey-7">Otorga o aprueba las horas extra de tus trabajadores (máx. 2 h/día)</div>
       </div>
       <q-btn flat round icon="refresh" :loading="loading" @click="reload">
         <q-tooltip>Recargar</q-tooltip>
@@ -20,6 +20,39 @@
       La autorización es un acto del empleador y queda registrada en la bitácora. Sólo la
       jefatura del trabajador o el representante del empleador pueden otorgarla.
     </q-banner>
+
+    <!-- Solicitudes de HE pendientes (las pide el trabajador desde la app) -->
+    <q-card v-if="pendingRequests.length" flat bordered class="q-mb-lg">
+      <q-card-section class="row items-center q-gutter-sm bg-orange-1 text-orange-10">
+        <q-icon name="pending_actions" size="24px" />
+        <div class="text-subtitle1 text-weight-bold">
+          Solicitudes de horas extra pendientes ({{ pendingRequests.length }})
+        </div>
+      </q-card-section>
+      <q-separator />
+      <q-list separator>
+        <q-item v-for="r in pendingRequests" :key="r.id">
+          <q-item-section>
+            <q-item-label class="text-weight-bold">{{ r._empleado }}</q-item-label>
+            <q-item-label caption>
+              {{ r.dayKey }} · {{ r.maxMinutes }} min · {{ r.reason || 'Sin motivo indicado' }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <div class="row q-gutter-xs">
+              <q-btn
+                unelevated dense color="positive" icon="check" label="Aprobar"
+                :loading="store.sending" @click="approveRow(r)"
+              />
+              <q-btn
+                outline dense color="negative" icon="close" label="Rechazar"
+                @click="rejectRow(r)"
+              />
+            </div>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-card>
 
     <!-- Formulario de otorgamiento -->
     <q-card flat bordered class="q-mb-lg">
@@ -139,16 +172,20 @@
 
         <template #body-cell-status="p">
           <q-td :props="p">
-            <q-badge :color="p.row.status === 'APPROVED' ? 'positive' : 'grey'"
-                     :label="p.row.status === 'APPROVED' ? 'Vigente' : 'Cancelada'" />
+            <q-badge :color="statusMeta(p.row.status).color" :label="statusMeta(p.row.status).label" />
             <q-badge v-if="p.row.selfApproved" color="orange" class="q-ml-xs" label="Auto (repr.)" />
+            <q-badge v-if="p.row.origin === 'WORKER'" color="blue-grey" class="q-ml-xs" label="Solicitada" />
           </q-td>
         </template>
 
         <template #body-cell-acciones="p">
           <q-td :props="p" class="text-right">
+            <template v-if="p.row.status === 'REQUESTED'">
+              <q-btn flat dense color="positive" icon="check" label="Aprobar" @click="approveRow(p.row)" />
+              <q-btn flat dense color="negative" icon="close" label="Rechazar" @click="rejectRow(p.row)" />
+            </template>
             <q-btn
-              v-if="p.row.status === 'APPROVED'"
+              v-else-if="p.row.status === 'APPROVED'"
               flat dense color="negative" icon="cancel" label="Cancelar"
               @click="confirmCancel(p.row)"
             />
@@ -177,9 +214,21 @@ const form = reactive({ userId: null, dayKey: '', maxMinutes: 120, reason: '' })
 const filters = reactive({ from: '', to: '', status: null })
 
 const statusOptions = [
+  { label: 'Pendiente', value: 'REQUESTED' },
   { label: 'Vigente', value: 'APPROVED' },
-  { label: 'Cancelada', value: 'CANCELLED' },
+  { label: 'Rechazada', value: 'REJECTED' },
+  { label: 'Anulada', value: 'CANCELLED' },
 ]
+
+function statusMeta(s) {
+  switch (s) {
+    case 'REQUESTED': return { color: 'orange', label: 'Pendiente' }
+    case 'APPROVED': return { color: 'positive', label: 'Vigente' }
+    case 'REJECTED': return { color: 'negative', label: 'Rechazada' }
+    case 'CANCELLED': return { color: 'grey', label: 'Anulada' }
+    default: return { color: 'grey', label: s || '—' }
+  }
+}
 
 const columns = [
   { name: 'empleado', label: 'Trabajador', field: '_empleado', align: 'left' },
@@ -221,6 +270,9 @@ const rows = computed(() =>
   (store.list || []).map(a => ({ ...a, _empleado: userMap.value[String(a.userId)] || '—' }))
 )
 
+// Solicitudes que el trabajador pidió desde la app y esperan resolución.
+const pendingRequests = computed(() => rows.value.filter(r => r.status === 'REQUESTED'))
+
 async function loadUsers() {
   const params = { limit: 500 }
   if (String(auth.user?.role || '') === 'superadmin' && auth.user?.company) {
@@ -256,6 +308,32 @@ async function submitGrant() {
   } catch (err) {
     $q.notify({ type: 'negative', message: store.error || 'No se pudo otorgar', position: 'top-right' })
   }
+}
+
+async function approveRow(row) {
+  try {
+    await store.approve(row.id)
+    $q.notify({ type: 'positive', message: `Horas extra aprobadas para ${row._empleado}. Se notificó al trabajador.`, position: 'top-right' })
+  } catch {
+    $q.notify({ type: 'negative', message: store.error || 'No se pudo aprobar', position: 'top-right' })
+  }
+}
+
+function rejectRow(row) {
+  $q.dialog({
+    title: 'Rechazar solicitud',
+    message: `Motivo del rechazo para ${row._empleado} (opcional):`,
+    prompt: { model: '', type: 'text' },
+    cancel: true,
+    persistent: true,
+  }).onOk(async (note) => {
+    try {
+      await store.reject(row.id, note || '')
+      $q.notify({ type: 'positive', message: 'Solicitud rechazada. Se notificó al trabajador.', position: 'top-right' })
+    } catch {
+      $q.notify({ type: 'negative', message: store.error || 'No se pudo rechazar', position: 'top-right' })
+    }
+  })
 }
 
 function confirmCancel(row) {

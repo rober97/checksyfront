@@ -75,5 +75,41 @@ export const useOvertimeAuthStore = defineStore('overtimeAuth', {
         throw err
       }
     },
+
+    // Aprueba una solicitud del trabajador (REQUESTED → APPROVED). Cuatro ojos.
+    async approve(id, note = '') {
+      try {
+        this.sending = true
+        this.error = null
+        const res = await secureAxios.post(`${API_URL}/overtime-authorizations/${id}/approve`, { note })
+        const auth = res?.data?.authorization
+        const i = this.list.findIndex(a => String(a.id) === String(id))
+        if (i >= 0 && auth) this.list.splice(i, 1, auth)
+        return auth
+      } catch (err) {
+        this._setError(err?.response?.data?.message || err.message)
+        throw err
+      } finally {
+        this.sending = false
+      }
+    },
+
+    // Rechaza una solicitud del trabajador (REQUESTED → REJECTED).
+    async reject(id, note = '') {
+      try {
+        this.sending = true
+        this.error = null
+        const res = await secureAxios.post(`${API_URL}/overtime-authorizations/${id}/reject`, { note })
+        const auth = res?.data?.authorization
+        const i = this.list.findIndex(a => String(a.id) === String(id))
+        if (i >= 0 && auth) this.list.splice(i, 1, auth)
+        return auth
+      } catch (err) {
+        this._setError(err?.response?.data?.message || err.message)
+        throw err
+      } finally {
+        this.sending = false
+      }
+    },
   },
 })
