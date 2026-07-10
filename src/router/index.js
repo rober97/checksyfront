@@ -55,6 +55,7 @@ const DtLibroAsistencia = () => import(/* webpackChunkName:"dt" */ '@/views/DT/L
 const EmpComprobante = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/Comprobante.vue')
 const EmpConsentimiento = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/ConsentimientoDT.vue')
 const VerificarComprobante = () => import(/* webpackChunkName:"public" */ '@/views/Public/VerificarComprobante.vue')
+const Contact = () => import(/* webpackChunkName:"public" */ '@/views/Public/Contact.vue')
 const PrivacyTerms = () => import(/* webpackChunkName:"public" */ '@/views/Public/PrivacyTerms.vue')
 const OnboardingWizard = () => import(/* webpackChunkName:"public" */ '@/views/Public/OnboardingWizard.vue')
 const InspectorDashboard = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Dashboard.vue')
@@ -123,6 +124,11 @@ const routes = [
   { path: '/login', name: 'Login', component: Login, meta: { public: true, onlyGuests: true, title: 'Iniciar sesión' } },
   { path: '/register', name: 'Register', component: Register, meta: { public: true, onlyGuests: true, title: 'Registro' } },
   { path: '/forgot-password', name: 'ForgotPassword', component: ForgotPassword, meta: { public: true, onlyGuests: true, title: 'Recuperar contraseña' } },
+
+  // ===== Contacto público (soporte / ventas) =====
+  // Una sola vista con intención por query (?tipo=soporte|ventas).
+  { path: '/contact', name: 'Contact', component: Contact, meta: { public: true, title: 'Contacto' } },
+  { path: '/contacto', redirect: (to) => ({ path: '/contact', query: to.query }) },
 
   // ===== Verificador público DT (Res. Ex. 38/2024) =====
   // Accesible sin login para que cualquiera (incluida la DT) pueda validar un comprobante por su hash.

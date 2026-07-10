@@ -441,7 +441,7 @@
             class="rk-btn rk-btn--ghost"
             icon="support_agent"
             label="Contactar soporte"
-            @click="goTo('/contact')"
+            @click="goTo('/contact?tipo=soporte')"
           />
         </aside>
 
@@ -478,7 +478,7 @@
                 flat no-caps size="lg"
                 class="rk-btn rk-btn--white-ghost rk-btn--lg"
                 label="Hablar con ventas"
-                @click="goTo('/contact')"
+                @click="goTo('/contact?tipo=ventas')"
               />
             </div>
           </div>
@@ -678,7 +678,7 @@ function handleFooter(to) {
 }
 
 function onSelectPlan(planId) {
-  if (planId === 'ent') return scrollTo('#contacto')
+  if (planId === 'ent') return router.push({ path: '/contact', query: { tipo: 'ventas', plan: 'ent' } })
   router.push({ path: '/register', query: { plan: planId, billing: yearly.value ? 'yearly' : 'monthly' } })
 }
 

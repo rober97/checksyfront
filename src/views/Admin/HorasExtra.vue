@@ -18,7 +18,9 @@
     <q-banner rounded class="bg-blue-1 text-blue-9 q-mb-md">
       <template #avatar><q-icon name="gavel" color="primary" /></template>
       La autorización es un acto del empleador y queda registrada en la bitácora. Sólo la
-      jefatura del trabajador o el representante del empleador pueden otorgarla.
+      jefatura del trabajador o el representante del empleador pueden otorgarla, y
+      <b>nadie puede autorizarse horas extra a sí mismo</b> (cuatro ojos): siempre debe
+      resolverlas otra persona.
     </q-banner>
 
     <!-- Solicitudes de HE pendientes (las pide el trabajador desde la app) -->
@@ -173,8 +175,18 @@
         <template #body-cell-status="p">
           <q-td :props="p">
             <q-badge :color="statusMeta(p.row.status).color" :label="statusMeta(p.row.status).label" />
-            <q-badge v-if="p.row.selfApproved" color="orange" class="q-ml-xs" label="Auto (repr.)" />
-            <q-badge v-if="p.row.origin === 'WORKER'" color="blue-grey" class="q-ml-xs" label="Solicitada" />
+            <q-badge v-if="p.row.selfApproved" color="orange" class="q-ml-xs" label="Auto-aprobada">
+              <q-tooltip max-width="320px">
+                El propio trabajador se autorizó estas horas extra actuando como
+                representante del empleador (Art. 4 del Código del Trabajo). Queda
+                registrado en la bitácora para su trazabilidad.
+              </q-tooltip>
+            </q-badge>
+            <q-badge v-if="p.row.origin === 'WORKER'" color="blue-grey" class="q-ml-xs" label="Solicitada">
+              <q-tooltip max-width="320px">
+                La pidió el propio trabajador desde la app; requiere aprobación de la jefatura.
+              </q-tooltip>
+            </q-badge>
           </q-td>
         </template>
 
