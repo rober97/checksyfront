@@ -76,7 +76,7 @@
           <p class="rk-legal__footer">
             Al continuar usando Recksy aceptas estos términos y la política de
             privacidad descrita. Si tienes preguntas, escríbenos a
-            <a href="mailto:soporte@recksy.app">soporte@recksy.app</a>.
+            <a href="mailto:soporte@recksy.com">soporte@recksy.com</a>.
           </p>
         </article>
       </div>
@@ -86,7 +86,7 @@
     <footer class="rk-legal__bottom">
       <div class="rk-legal__container">
         <span>© {{ year }} Recksy</span>
-        <router-link to="/">recksy.app</router-link>
+        <router-link to="/">recksy.com</router-link>
       </div>
     </footer>
   </q-page>
@@ -187,7 +187,7 @@ const sections = [
     icon: 'mail',
     title: '7. Contacto',
     body: [
-      'Si tienes preguntas sobre estos términos, sobre tus datos o quieres ejercer alguno de tus derechos, escríbenos a soporte@recksy.app.',
+      'Si tienes preguntas sobre estos términos, sobre tus datos o quieres ejercer alguno de tus derechos, escríbenos a soporte@recksy.com.',
       'También puedes contactar al responsable de datos de tu empresa, quien gestiona tu cuenta y los registros laborales.',
     ],
   },

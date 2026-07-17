@@ -227,6 +227,7 @@ import { useCompaniesStore } from '@/stores/companies'
 import CompanyBasicsTab   from './tabs/CompanyBasicsTab.vue'
 import CompanyTimeOffTab  from './tabs/CompanyTimeOffTab.vue'
 import CompanyHolidaysTab from './tabs/CompanyHolidaysTab.vue'
+import { chileanHolidayDates } from '@/utils/chileanHolidays'
 import CompanyLogoTab     from './tabs/CompanyLogoTab.vue'
 import CompanyPayrollTab  from './tabs/CompanyPayrollTab.vue'
 import CompanyMutualTab   from './tabs/CompanyMutualTab.vue'
@@ -299,7 +300,7 @@ const autoPublicaSinPlantilla = computed(() =>
 const defaultTimeOff = () => ({ vacation: { accrual: { mode:'DAILY', perYearDays:15, perMonthDays:null, accrueOnBusinessDays:true, startAfterDays:0, prorateFromStartDate:true }, carryOver: { enabled:true, maxCarry:5, resetMonth:1, resetDay:1 }, cap: { enabled:true, maxDays:30 } }, policyVersion:1 })
 const defaultPayroll = () => ({ frequency:'monthly', cutoffDay:25, paydayRule:'last_business_day', paydayDayOfMonth:5, businessDayAdjust:'previous', generateTime:'20:00', timezone:'America/Santiago', autoPublish:true, notifyOnPublish:true, templateId:'', rounding:'0', lastRunAt:null, nextRunAt:null })
 const defaultMutual  = () => ({ entityId: null, additionalRate: 0, resolucionSuseso: '', lastUpdate: null })
-const defaultForm    = () => ({ name:'', rut:'', email:'', phone:'', address:'', status:'active', logo:'', brandColor:'', timeOffPolicy:defaultTimeOff(), payrollConfig:defaultPayroll(), mutual:defaultMutual(), holidays:[], internalRegulationDocId:'', internalRegulationVersion:'1.0' })
+const defaultForm    = () => ({ name:'', rut:'', email:'', phone:'', address:'', status:'active', logo:'', brandColor:'', timeOffPolicy:defaultTimeOff(), payrollConfig:defaultPayroll(), mutual:defaultMutual(), holidays:chileanHolidayDates(new Date().getFullYear()), internalRegulationDocId:'', internalRegulationVersion:'1.0' })
 
 const form = ref(defaultForm())
 

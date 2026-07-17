@@ -52,12 +52,32 @@
         <div class="cht-card cht-card--flat">
           <div class="cht-quick-head">
             <q-icon name="bolt" size="14px" color="amber" />
-            Feriados nacionales Chile {{ currentYear }}
+            Feriados nacionales Chile
+            <q-btn-toggle
+              v-model="year"
+              :options="yearOptions"
+              unelevated dense no-caps size="sm"
+              class="cht-year-toggle"
+              toggle-color="primary"
+            />
+            <q-spinner v-if="loading" size="13px" color="primary" />
+            <q-space />
+            <button type="button" class="cht-qlink" @click="toggleYear">
+              <q-icon :name="allYearAdded ? 'remove_done' : 'done_all'" size="13px" />
+              {{ allYearAdded ? 'Quitar todos' : 'Cargar todos' }}
+            </button>
           </div>
           <div class="cht-quick-chips">
-            <button v-for="f in chFeriados" :key="f.date" class="cht-qchip" :class="{ 'is-added': m.includes(f.date) }" @click="toggleQuick(f.date)">
+            <button
+              v-for="f in yearHolidays" :key="f.date" type="button"
+              class="cht-qchip" :class="{ 'is-added': m.includes(f.date) }"
+              @click="toggleQuick(f.date)"
+            >
               <q-icon :name="m.includes(f.date) ? 'check' : 'add'" size="11px" />
               {{ f.label }}
+              <q-tooltip :delay="400">
+                {{ f.name }} · {{ f.date }}<template v-if="f.inalienable"> · Irrenunciable</template>
+              </q-tooltip>
             </button>
           </div>
         </div>
@@ -93,7 +113,7 @@
               <div class="cht-chip-day">{{ dayNum(d) }}</div>
             </div>
             <div class="cht-chip-date">{{ d }}</div>
-            <button class="cht-chip-remove" @click="remove(d)">
+            <button type="button" class="cht-chip-remove" @click="remove(d)">
               <q-icon name="close" size="12px" />
             </button>
           </div>
@@ -104,8 +124,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useQuasar } from 'quasar'
+import { chileanHolidays, holidayLabel } from '@/utils/chileanHolidays'
+import secureAxios from '@/utils/secureRequest'
 
 const props = defineProps({ modelValue: { type: Array, required: true } })
 const emit  = defineEmits(['update:modelValue', 'validity'])
@@ -120,22 +142,35 @@ const bulkText  = ref('')
 const singleDate = ref('')
 const currentYear = new Date().getFullYear()
 
-const chFeriados = [
-  { date: `${currentYear}-01-01`, label: '1 Ene' },
-  { date: `${currentYear}-04-18`, label: '18 Abr' },
-  { date: `${currentYear}-04-19`, label: '19 Abr' },
-  { date: `${currentYear}-05-01`, label: '1 May' },
-  { date: `${currentYear}-05-21`, label: '21 May' },
-  { date: `${currentYear}-06-29`, label: '29 Jun' },
-  { date: `${currentYear}-07-16`, label: '16 Jul' },
-  { date: `${currentYear}-08-15`, label: '15 Ago' },
-  { date: `${currentYear}-09-18`, label: '18 Sep' },
-  { date: `${currentYear}-09-19`, label: '19 Sep' },
-  { date: `${currentYear}-10-31`, label: '31 Oct' },
-  { date: `${currentYear}-11-01`, label: '1 Nov' },
-  { date: `${currentYear}-12-08`, label: '8 Dic' },
-  { date: `${currentYear}-12-25`, label: '25 Dic' },
-]
+const year = ref(currentYear)
+const yearOptions = [currentYear, currentYear + 1].map(y => ({ label: String(y), value: y }))
+
+// El calculador local es la fuente por defecto: la pantalla funciona sin red. Si el
+// backend responde, sus feriados mandan — cubre los feriados por ley puntual
+// (elecciones, censos) que no se pueden derivar del calendario.
+const remote = ref({})
+const loading = ref(false)
+
+const yearHolidays = computed(() => remote.value[year.value] || chileanHolidays(year.value))
+const allYearAdded = computed(() => yearHolidays.value.every(f => m.value.includes(f.date)))
+
+const withLabels = items => items.map(h => ({ ...h, label: holidayLabel(h.date) }))
+
+async function loadYear(y) {
+  if (remote.value[y]) return
+  loading.value = true
+  try {
+    const { data } = await secureAxios.get(`/holidays/${y}`)
+    const items = Array.isArray(data?.holidays) ? data.holidays : []
+    if (items.length) remote.value = { ...remote.value, [y]: withLabels(items) }
+  } catch {
+    // Silencioso a propósito: el calculador local ya cubre el caso.
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(year, loadYear, { immediate: true })
 
 function parse(txt) {
   return (txt || '').split(/[\s,;|\n]+/).map(s => s.trim()).filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s))
@@ -160,6 +195,18 @@ function addSingle() {
 function toggleQuick(date) {
   if (m.value.includes(date)) m.value = m.value.filter(x => x !== date)
   else m.value = [...new Set([...m.value, date])].sort()
+}
+
+function toggleYear() {
+  const dates = yearHolidays.value.map(f => f.date)
+  if (allYearAdded.value) {
+    m.value = m.value.filter(d => !dates.includes(d))
+    $q.notify({ type: 'info', message: `Feriados de ${year.value} quitados`, position: 'top' })
+  } else {
+    const nuevos = dates.filter(d => !m.value.includes(d))
+    m.value = [...new Set([...m.value, ...dates])].sort()
+    $q.notify({ type: 'positive', message: `${nuevos.length} feriado(s) de ${year.value} agregados`, position: 'top' })
+  }
 }
 
 function remove(d) { m.value = m.value.filter(x => x !== d) }
@@ -206,7 +253,17 @@ const dayNum    = d => { try { return d.slice(8,10) } catch { return '??' } }
 .cht-single-input :deep(.q-field__control) { border-radius: 8px; }
 
 /* Quick feriados */
-.cht-quick-head { display: flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 9px; }
+.cht-quick-head { display: flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 9px; }
+.cht-year-toggle { border: 1px solid rgba(12, 169, 196,.25); border-radius: 6px; overflow: hidden; }
+.cht-year-toggle :deep(.q-btn) { font-size: .68rem; font-weight: 700; padding: 0 7px; min-height: 20px; }
+.cht-qlink {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
+  border: none; background: transparent; border-radius: 5px; cursor: pointer;
+  color: var(--color-primary-dark); font-size: .71rem; font-weight: 700; font-family: inherit;
+  transition: background .12s;
+}
+.cht-qlink:hover { background: rgba(12, 169, 196,.12); }
+.body--dark .cht-qlink { color: var(--color-primary); }
 .cht-quick-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .cht-qchip {
   display: inline-flex; align-items: center; gap: 4px;
