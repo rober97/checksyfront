@@ -118,6 +118,7 @@
 <script setup>
 import { reactive, computed, watch, onMounted } from 'vue'
 import { usePayrollCatalogStore } from '@/stores/payrollCatalogStore'
+import { esMutualValida } from '@/utils/mutual'
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) },
@@ -195,10 +196,7 @@ const lastUpdateText = computed(() => {
 // Validity para el dialog padre
 watch(
   () => [local.entityId, local.additionalRate],
-  ([id, rate]) => {
-    const ok = !!id && Number.isFinite(Number(rate)) && Number(rate) >= 0 && Number(rate) <= 3.4
-    emit('validity', ok)
-  },
+  ([entityId, additionalRate]) => emit('validity', esMutualValida({ entityId, additionalRate })),
   { immediate: true },
 )
 </script>

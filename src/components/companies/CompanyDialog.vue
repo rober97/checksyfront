@@ -191,6 +191,16 @@
         <!-- Action footer -->
         <div class="cd-action-footer">
           <button class="cd-action-ghost" @click="cancelar">Cancelar</button>
+
+          <div v-if="pasosFaltantes.length" class="cd-missing">
+            <q-icon name="info_outline" size="14px" />
+            <span>Falta completar:</span>
+            <button
+              v-for="s in pasosFaltantes" :key="s.value" type="button"
+              class="cd-missing-link" @click="tab = s.value"
+            >{{ s.label }}</button>
+          </div>
+
           <div class="cd-action-right">
             <button
               v-if="!isEdit"
@@ -228,6 +238,7 @@ import CompanyBasicsTab   from './tabs/CompanyBasicsTab.vue'
 import CompanyTimeOffTab  from './tabs/CompanyTimeOffTab.vue'
 import CompanyHolidaysTab from './tabs/CompanyHolidaysTab.vue'
 import { chileanHolidayDates } from '@/utils/chileanHolidays'
+import { esMutualValida } from '@/utils/mutual'
 import CompanyLogoTab     from './tabs/CompanyLogoTab.vue'
 import CompanyPayrollTab  from './tabs/CompanyPayrollTab.vue'
 import CompanyMutualTab   from './tabs/CompanyMutualTab.vue'
@@ -265,6 +276,12 @@ const currentStep  = computed(() => ALL_STEPS.find(s => s.value === tab.value))
 
 const valid    = ref({ basicos: false, payroll: true, mutual: true, politica: true, feriados: true, logo: true, reglamento: true })
 const validAll = computed(() => Object.values(valid.value).every(Boolean))
+
+// Pasos que bloquean el guardado, para poder decirle al usuario qué le falta en vez
+// de dejarle el botón deshabilitado sin explicación.
+const pasosFaltantes = computed(() =>
+  ALL_STEPS.filter(s => visibleSteps.value.includes(s) && valid.value[s.value] === false)
+)
 
 const formProgress = computed(() => {
   const f = form.value; let p = 0
@@ -317,7 +334,7 @@ watch(() => visible.value, v => {
   } else {
     form.value = defaultForm(); logoFile.value=null; logoPreview.value=''
   }
-  valid.value = { basicos:false, payroll:true, mutual: !isEdit.value, politica:true, feriados:true, logo:true, reglamento:true }
+  valid.value = { basicos:false, payroll:true, mutual: !isEdit.value || esMutualValida(form.value.mutual), politica:true, feriados:true, logo:true, reglamento:true }
   snap()
 })
 
@@ -652,6 +669,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', hotkey))
 }
 
 .cd-action-right { display: flex; align-items: center; gap: 8px; }
+
+.cd-missing {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  font-size: .75rem; color: var(--text-secondary); margin: 0 12px; min-width: 0;
+}
+.cd-missing-link {
+  border: 1px solid var(--border-color); border-radius: 5px; padding: 2px 7px;
+  background: var(--card-background); color: var(--color-primary-dark);
+  font-size: .72rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: all .12s;
+}
+.cd-missing-link:hover { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.body--dark .cd-missing-link { color: var(--color-primary); }
 
 .cd-action-ghost {
   padding: 8px 16px; border-radius: 8px;
