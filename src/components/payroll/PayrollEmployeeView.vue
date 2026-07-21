@@ -159,6 +159,15 @@
                 outline
                 class="rk-status-badge"
               />
+              <!-- Días sin marca que aún nadie revisó: se están pagando. -->
+              <div
+                v-if="pendingReviewCount(props.row)"
+                class="rk-pending-review"
+                @click="$emit('open-detail', props.row)"
+              >
+                <q-icon name="event_busy" size="13px" />
+                {{ pendingReviewCount(props.row) }} día(s) por revisar
+              </div>
             </q-td>
           </template>
 
@@ -328,9 +337,33 @@ function statusLabel(status) {
 function formatPeriod(period) {
   return formatPeriodLabel(period);
 }
+
+// Días hábiles sin marca ni permiso que nadie ha confirmado como inasistencia.
+// Se están pagando: solo aplica avisar mientras la liquidación sea borrador.
+function pendingReviewCount(row) {
+  if (row?.status !== "DRAFT") return 0;
+  const pending = row?.snapshot?.pendingAbsenceReview;
+  return Array.isArray(pending) ? pending.length : 0;
+}
 </script>
 
 <style scoped>
+.rk-pending-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-warning, #b45309);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rk-pending-review:hover {
+  text-decoration: underline;
+}
+
 .rk-employee-view {
   position: relative;
   z-index: 1;

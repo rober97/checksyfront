@@ -59,10 +59,12 @@
       v-model="dialogDetail"
       :current="current"
       :period-selected="periodSelected"
+      :saving="savingAbsences"
       @issue="issueOne"
       @void="voidOne"
       @delete="deletePayslipRow"
       @open-pdf="openPdf"
+      @save-absences="saveAbsences"
     />
 
     <!-- PDF Viewer Dialog -->
@@ -106,6 +108,7 @@ const status = ref(null);
 const selected = ref([]);
 const issuingMany = ref(false);
 const dialogDetail = ref(false);
+const savingAbsences = ref(false);
 const current = ref(null);
 const dialogPdf = ref(false);
 const loadingPdf = ref(false);
@@ -329,6 +332,38 @@ async function issueOne(row) {
     if (issuedRow) await openPdf(issuedRow);
   } catch {
     $q.notify({ type: "negative", message: store.error || "Error al emitir", icon: "error", position: "top" });
+  }
+}
+
+// Confirma qué días sin marca se descuentan. `days` es la lista completa: [] paga
+// el mes entero. El backend recalcula y devuelve el borrador actualizado.
+async function saveAbsences({ payslip, days }) {
+  const payslipId = payslip?.id || payslip?._id;
+  if (!payslipId) return;
+
+  savingAbsences.value = true;
+  try {
+    await store.setAbsences({ payslipId, days });
+    $q.notify({
+      type: "positive",
+      message: days.length
+        ? `${days.length} inasistencia(s) confirmada(s)`
+        : "Se paga el mes completo",
+      icon: "check_circle",
+      position: "top",
+      timeout: 2000,
+    });
+    await reload();
+    syncCurrentPayslip();
+  } catch {
+    $q.notify({
+      type: "negative",
+      message: store.error || "Error guardando inasistencias",
+      icon: "error",
+      position: "top",
+    });
+  } finally {
+    savingAbsences.value = false;
   }
 }
 

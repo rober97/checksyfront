@@ -49,32 +49,69 @@
           </div>
           <div class="rk-info-item">
             <span class="rk-info-label">Días pagados</span>
-            <strong class="text-positive">{{ coveredDays }}</strong>
+            <strong class="text-positive">{{ payrollDays }} / 30</strong>
           </div>
           <div class="rk-info-item">
             <span class="rk-info-label">Ausencias</span>
-            <strong class="text-negative">{{ absentDayKeys.length }}</strong>
+            <strong :class="confirmedDays.length ? 'text-negative' : ''">{{ confirmedDays.length }}</strong>
           </div>
         </div>
 
-        <!-- Absent days detail -->
-        <div v-if="absentDayKeys.length" class="rk-absences">
+        <!-- Absence review: un día sin marca NO descuenta hasta que se confirma -->
+        <div v-if="proposedDays.length" class="rk-absences">
           <div class="rk-absences-head">
-            <q-icon name="event_busy" size="18px" color="negative" />
+            <q-icon name="event_busy" size="18px" :color="selectedDays.length ? 'negative' : 'warning'" />
             <span>
-              Día{{ absentDayKeys.length !== 1 ? 's' : '' }} contado{{ absentDayKeys.length !== 1 ? 's' : '' }}
-              como ausencia ({{ absentDayKeys.length }})<template v-if="dailyValue > 0"> · descuenta {{ formatMoney(dailyValue) }} c/u</template>
+              {{ proposedDays.length }} día{{ proposedDays.length !== 1 ? 's' : '' }} hábil{{ proposedDays.length !== 1 ? 'es' : '' }}
+              sin marca ni permiso<template v-if="dailyValue > 0"> · {{ formatMoney(dailyValue) }} por día</template>
             </span>
           </div>
-          <div class="rk-absences-chips">
-            <span v-for="day in absentDayKeys" :key="day" class="rk-absence-chip">
-              <q-icon name="calendar_today" size="12px" />
-              {{ formatDayKey(day) }}
-            </span>
+
+          <div class="rk-absences-list">
+            <label
+              v-for="day in proposedDays"
+              :key="day"
+              class="rk-absence-row"
+              :class="{ 'rk-absence-row--on': selectedDays.includes(day), 'rk-absence-row--locked': !editable }"
+            >
+              <q-checkbox
+                :model-value="selectedDays.includes(day)"
+                :disable="!editable"
+                dense
+                color="negative"
+                @update:model-value="toggleDay(day)"
+              />
+              <span class="rk-absence-day">{{ formatDayKey(day) }}</span>
+              <span class="rk-absence-tag">
+                {{ selectedDays.includes(day) ? 'Se descuenta' : 'Se paga' }}
+              </span>
+            </label>
           </div>
+
           <div class="rk-absences-hint">
             <q-icon name="info" size="13px" />
-            Si el trabajador sí asistió, registra la marca o la solicitud (permiso / licencia / vacación) y regenera el borrador para que cuente el mes completo.
+            <span v-if="editable">
+              Marca solo los días que realmente fueron inasistencia. Los que dejes sin marcar
+              se pagan igual: un olvido de marcaje no debería descontar sueldo. Si el trabajador
+              sí asistió, registra la marca o la solicitud y regenera el borrador.
+            </span>
+            <span v-else>
+              La liquidación ya no es un borrador: las inasistencias quedaron congeladas.
+            </span>
+          </div>
+
+          <div v-if="editable && hasChanges" class="rk-absences-actions">
+            <q-btn flat dense no-caps label="Descartar" @click="resetSelection" />
+            <q-btn
+              unelevated
+              dense
+              no-caps
+              color="primary"
+              icon="save"
+              :loading="saving"
+              :label="selectedDays.length ? `Descontar ${selectedDays.length} día(s)` : 'Pagar mes completo'"
+              @click="saveAbsences"
+            />
           </div>
         </div>
 
@@ -170,35 +207,77 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { formatPeriodLabel } from "@/utils/payrollPeriod.js";
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
   current: { type: Object, default: null },
   periodSelected: { type: String, default: "" },
+  saving: { type: Boolean, default: false },
 });
 
-defineEmits(["update:modelValue", "issue", "void", "delete", "open-pdf"]);
+const emit = defineEmits([
+  "update:modelValue",
+  "issue",
+  "void",
+  "delete",
+  "open-pdf",
+  "save-absences",
+]);
 
-// Días hábiles esperados que NO fueron cubiertos (sin marca válida ni permiso).
-// Fuente de verdad: snapshot.absentDayKeys del backend. Fallback (liquidaciones
-// antiguas): diferencia de conjuntos expectedDayKeys \ paidDayKeys.
-const absentDayKeys = computed(() => {
+// Días hábiles sin marca válida ni permiso: son CANDIDATOS a inasistencia, no
+// descuentos. Fuente de verdad: snapshot.proposedAbsentDayKeys. Fallback para
+// liquidaciones anteriores al cambio: absentDayKeys, o expectedDayKeys \ paidDayKeys.
+const proposedDays = computed(() => {
   const snap = props.current?.snapshot || {};
+  if (Array.isArray(snap.proposedAbsentDayKeys)) return [...snap.proposedAbsentDayKeys].sort();
   if (Array.isArray(snap.absentDayKeys)) return [...snap.absentDayKeys].sort();
   const expected = Array.isArray(snap.expectedDayKeys) ? snap.expectedDayKeys : [];
   const paid = new Set(Array.isArray(snap.paidDayKeys) ? snap.paidDayKeys : []);
   return expected.filter((day) => !paid.has(day)).sort();
 });
 
-// Días pagados derivados de forma consistente con la lista de ausencias, para
-// que "esperados − pagados = ausencias" siempre cuadre en el diálogo (incluso
-// en liquidaciones antiguas con conteo neto obsoleto).
-const coveredDays = computed(() => {
-  const expected = Number(props.current?.daysExpected || 0);
-  return Math.max(0, expected - absentDayKeys.value.length);
+// Las que efectivamente descuentan (ya confirmadas y guardadas).
+const confirmedDays = computed(() => {
+  const snap = props.current?.snapshot || {};
+  return Array.isArray(snap.absentDayKeys) ? [...snap.absentDayKeys].sort() : [];
 });
+
+const payrollDays = computed(() => Number(props.current?.daysPayroll ?? 30));
+const editable = computed(() => props.current?.status === "DRAFT");
+
+// Selección local editable; se re-sincroniza cada vez que cambia la liquidación
+// mostrada o cuando el backend devuelve el borrador recalculado.
+const selectedDays = ref([]);
+
+function resetSelection() {
+  selectedDays.value = [...confirmedDays.value];
+}
+
+watch(
+  () => [props.current?.id || props.current?._id, confirmedDays.value.join(",")],
+  resetSelection,
+  { immediate: true }
+);
+
+const hasChanges = computed(
+  () => [...selectedDays.value].sort().join(",") !== confirmedDays.value.join(",")
+);
+
+function toggleDay(day) {
+  if (!editable.value) return;
+  const index = selectedDays.value.indexOf(day);
+  if (index === -1) selectedDays.value.push(day);
+  else selectedDays.value.splice(index, 1);
+}
+
+function saveAbsences() {
+  emit("save-absences", {
+    payslip: props.current,
+    days: [...selectedDays.value].sort(),
+  });
+}
 
 // Valor diario del descuento = sueldo base / 30 (mensualización).
 // Se deriva de la línea de sueldo base ya prorrateada: amount = base * payrollDays/30,
@@ -358,28 +437,69 @@ function statusLabel(s) {
   margin-bottom: 10px;
 }
 
-.rk-absences-chips {
+.rk-absences-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.rk-absence-chip {
-  display: inline-flex;
+.rk-absence-row {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  background: rgba(0,0,0,.05);
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 8px;
   border: 1px solid rgba(0,0,0,.08);
+  background: rgba(0,0,0,.03);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.rk-absence-row--locked {
+  cursor: default;
+  opacity: .8;
+}
+
+.rk-absence-row--on {
+  border-color: rgba(220,38,38,.35);
+  background: rgba(220,38,38,.07);
+}
+
+.body--dark .rk-absence-row {
+  background: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.10);
+}
+
+.body--dark .rk-absence-row--on {
+  background: rgba(248,113,113,.12);
+  border-color: rgba(248,113,113,.35);
+}
+
+.rk-absence-day {
+  font-size: 0.8rem;
+  font-weight: 600;
   text-transform: capitalize;
 }
 
-.body--dark .rk-absence-chip {
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.10);
+.rk-absence-tag {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  opacity: .65;
+}
+
+.rk-absence-row--on .rk-absence-tag {
+  color: var(--q-negative, #c62828);
+  opacity: 1;
+}
+
+.rk-absences-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .rk-absences-hint {

@@ -115,6 +115,9 @@ function normalizePayslip(item = {}) {
     snapshot.absentDays ?? item.daysAbsent,
     Math.max(daysExpected - daysPaid, 0)
   );
+  // Días que realmente se pagan en la liquidación (mensualización base 30).
+  // Las liquidaciones antiguas no traen payrollDays: se deriva de 30 − ausencias.
+  const daysPayroll = toNumber(snapshot.payrollDays, Math.max(0, 30 - daysAbsent));
   const totalEarn = toNumber(totals.haberes ?? item.totalEarn ?? item.totalHaberes);
   const totalDeduct = toNumber(
     totals.descuentos ?? item.totalDeduct ?? item.totalDiscount
@@ -142,6 +145,8 @@ function normalizePayslip(item = {}) {
     daysExpected,
     daysPaid,
     daysAbsent,
+    daysPayroll,
+    confirmedAbsences: asArray(item.confirmedAbsences),
     totalEarn,
     totalDeduct,
     totalNet,
@@ -293,6 +298,29 @@ export const usePayrollStore = defineStore("payroll", {
         return data;
       } catch (error) {
         this._setError(error, "Error emitiendo liquidación");
+        throw error;
+      } finally {
+        this._stopLoading();
+      }
+    },
+
+    // Confirma qué días sin marca se descuentan. `days` es la lista COMPLETA:
+    // enviar [] deja el mes pagado entero.
+    async setAbsences({ payslipId, days }) {
+      if (!payslipId) throw new Error("payslipId requerido");
+
+      this._startLoading();
+      this.error = "";
+      try {
+        const { data } = await secureAxios.patch(`${baseUrl}/${payslipId}/absences`, {
+          days: Array.isArray(days) ? days : [],
+        });
+
+        const updated = pickPayslipPayload(data);
+        if (updated) this._upsertPayslip(updated);
+        return data;
+      } catch (error) {
+        this._setError(error, "Error guardando inasistencias");
         throw error;
       } finally {
         this._stopLoading();
