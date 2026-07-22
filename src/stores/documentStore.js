@@ -2,6 +2,9 @@
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
 
+// Asegura una clave `id` estable (el backend entrega `_id`).
+const normalizeDoc = (d) => (d && d.id == null && d._id != null ? { ...d, id: String(d._id) } : d)
+
 export const useDocumentStore = defineStore('documents', {
   state: () => ({
     items: [],             // documentos del empleado seleccionado
@@ -10,7 +13,8 @@ export const useDocumentStore = defineStore('documents', {
   }),
 
   getters: {
-    byEmployee: (state) => (employeeId) => state.items.filter(d => d.employeeId === employeeId),
+    byEmployee: (state) => (employeeId) =>
+      state.items.filter(d => String(d.employeeId) === String(employeeId)),
   },
 
   actions: {
@@ -25,7 +29,12 @@ export const useDocumentStore = defineStore('documents', {
         if (q) params.q = q
         const { data } = await secureAxios.get('/documents', { params })
         if (data?.success) {
-          this.items = Array.isArray(data.items) ? data.items : []
+          // El backend serializa Mongo con `_id`; el resto de la app (visor,
+          // descargas, borrado) usa `id`. Sin este mapeo la URL firmada salía
+          // como /documents/undefined/url y devolvía 500.
+          this.items = Array.isArray(data.items)
+            ? data.items.map(normalizeDoc)
+            : []
         } else {
           this.error = data?.message || 'No se pudo cargar documentos'
         }
@@ -51,8 +60,8 @@ export const useDocumentStore = defineStore('documents', {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         if (!data?.success) throw new Error(data?.message || 'No se pudo subir')
-        this.items.unshift(data.item)
-        return data.item
+        this.items.unshift(normalizeDoc(data.item))
+        return normalizeDoc(data.item)
       } finally {
         this.loading = false
       }
@@ -68,7 +77,7 @@ export const useDocumentStore = defineStore('documents', {
       })
       if (!data?.success) throw new Error(data?.message || 'No se pudo subir el lote')
       // opcional: server devuelve items agregados
-      if (Array.isArray(data.items)) this.items = [...data.items, ...this.items]
+      if (Array.isArray(data.items)) this.items = [...data.items.map(normalizeDoc), ...this.items]
       return data
     },
 
