@@ -42,6 +42,7 @@
           :total-liquido="totalLiquido"
           :loading="store.loading"
           :issuing-many="issuingMany"
+          v-model:send-email="sendEmailOnIssue"
           @load="loadPayslips"
           @back-to-periods="goToPeriods"
           @issue-selected="issueSelected"
@@ -50,6 +51,7 @@
           @void-one="voidOne"
           @delete-one="deletePayslipRow"
           @open-pdf="openPdf"
+          @send-email="sendEmailOne"
         />
       </transition>
     </div>
@@ -60,6 +62,7 @@
       :current="current"
       :period-selected="periodSelected"
       :saving="savingAbsences"
+      v-model:send-email="sendEmailOnIssue"
       @issue="issueOne"
       @void="voidOne"
       @delete="deletePayslipRow"
@@ -109,6 +112,16 @@ const selected = ref([]);
 const issuingMany = ref(false);
 const dialogDetail = ref(false);
 const savingAbsences = ref(false);
+
+// ¿Enviar la liquidación al trabajador al emitir? Arranca en NO: mientras se
+// ajusta el cálculo se emite muchas veces, y un correo enviado no se puede
+// retirar (una emisión sin enviar sí se completa después con "Reenviar").
+// Se recuerda la elección para no tener que marcarlo en cada emisión.
+const SEND_EMAIL_KEY = "recksy.payroll.sendEmailOnIssue";
+const sendEmailOnIssue = ref(localStorage.getItem(SEND_EMAIL_KEY) === "true");
+watch(sendEmailOnIssue, (value) => {
+  localStorage.setItem(SEND_EMAIL_KEY, value ? "true" : "false");
+});
 const current = ref(null);
 const dialogPdf = ref(false);
 const loadingPdf = ref(false);
@@ -317,14 +330,28 @@ function openDetail(row) {
 async function issueOne(row) {
   try {
     const payslipId = row.id || row._id;
-    await store.issuePayslip({ payslipId });
+    const res = await store.issuePayslip({ payslipId, sendEmail: sendEmailOnIssue.value });
+
+    // La emisión puede salir bien y el correo fallar. Se avisa distinto: dar por
+    // entregada una liquidación que nadie recibió deja al trabajador sin su copia.
+    const requested = res?.emailRequested === true;
+    const delivered = res?.delivery?.status === "SENT";
+    const emailFailed = requested && !delivered;
     $q.notify({
-      type: "positive",
-      message: "Liquidación emitida",
-      caption: "Abriendo PDF...",
-      icon: "check_circle",
+      type: emailFailed ? "warning" : "positive",
+      message: emailFailed
+        ? "Liquidación emitida, pero no se envió por correo"
+        : delivered
+          ? "Liquidación emitida y enviada"
+          : "Liquidación emitida",
+      caption: emailFailed
+        ? res?.delivery?.lastError || "Reenvíala desde la lista"
+        : delivered
+          ? `Enviada a ${res.delivery.sentTo} · abriendo PDF...`
+          : "Sin enviar al trabajador · abriendo PDF...",
+      icon: emailFailed ? "unsubscribe" : "check_circle",
       position: "top",
-      timeout: 2000,
+      timeout: emailFailed ? 6000 : 2500,
     });
     dialogDetail.value = false;
     await reload();
@@ -364,6 +391,49 @@ async function saveAbsences({ payslip, days }) {
     });
   } finally {
     savingAbsences.value = false;
+  }
+}
+
+// Envía (o reenvía) la liquidación al correo del trabajador. Si ya se entregó,
+// se pide confirmación: mandarla de nuevo le llega igual y puede confundirlo.
+async function sendEmailOne(row) {
+  const payslipId = row?.id || row?._id;
+  if (!payslipId) return;
+
+  if (row?.delivery?.status === "SENT") {
+    const confirmed = await new Promise((resolve) => {
+      $q.dialog({
+        title: "Reenviar liquidación",
+        message: `Ya se envió a ${row.delivery.sentTo || "su correo"}. ¿Enviarla otra vez?`,
+        cancel: true,
+        persistent: true,
+      })
+        .onOk(() => resolve(true))
+        .onCancel(() => resolve(false));
+    });
+    if (!confirmed) return;
+  }
+
+  try {
+    const res = await store.sendPayslipEmail({ payslipId });
+    $q.notify({
+      type: "positive",
+      message: res?.message || "Liquidación enviada",
+      icon: "mark_email_read",
+      position: "top",
+      timeout: 2500,
+    });
+    await reload();
+    syncCurrentPayslip();
+  } catch {
+    $q.notify({
+      type: "negative",
+      message: store.error || "No se pudo enviar la liquidación",
+      icon: "error",
+      position: "top",
+      timeout: 5000,
+    });
+    await reload();
   }
 }
 
@@ -445,7 +515,9 @@ async function issueSelected() {
 
   $q.dialog({
     title: "Confirmar emisión masiva",
-    message: `Se emitirán ${draftCount} liquidación(es). ¿Continuar?`,
+    message: sendEmailOnIssue.value
+      ? `Se emitirán ${draftCount} liquidación(es) y se enviarán por correo a cada trabajador. ¿Continuar?`
+      : `Se emitirán ${draftCount} liquidación(es), sin enviarlas por correo. ¿Continuar?`,
     cancel: { label: "Cancelar", flat: true },
     ok: { label: "Emitir", color: "positive", unelevated: true },
     persistent: true
@@ -457,7 +529,7 @@ async function issueSelected() {
       for (const row of selected.value) {
         if (row.status !== "DRAFT") continue;
         lastIssuedId = row.id || row._id;
-        await store.issuePayslip({ payslipId: lastIssuedId });
+        await store.issuePayslip({ payslipId: lastIssuedId, sendEmail: sendEmailOnIssue.value });
         emitted++;
       }
       $q.notify({

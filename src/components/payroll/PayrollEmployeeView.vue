@@ -57,6 +57,23 @@
           class="rk-filter-select"
         />
 
+        <!-- Se decide antes de emitir: enviar el correo no se puede deshacer. -->
+        <q-checkbox
+          :model-value="sendEmail"
+          dense
+          class="rk-send-toggle"
+          @update:model-value="$emit('update:sendEmail', $event)"
+        >
+          <span class="rk-send-toggle__text">
+            <q-icon :name="sendEmail ? 'mail' : 'mail_lock'" size="15px" />
+            Enviar por correo al emitir
+          </span>
+          <q-tooltip>
+            Desactívalo mientras pruebas: las liquidaciones quedan emitidas pero sin
+            enviar, y puedes mandarlas después desde cada fila.
+          </q-tooltip>
+        </q-checkbox>
+
         <q-btn
           v-if="selected.length > 0"
           unelevated
@@ -110,7 +127,7 @@
       <div class="rk-table-wrap">
         <q-table
           flat
-          :rows="payslips"
+          :rows="filteredPayslips"
           :columns="columns"
           row-key="id"
           selection="multiple"
@@ -168,6 +185,16 @@
                 <q-icon name="event_busy" size="13px" />
                 {{ pendingReviewCount(props.row) }} día(s) por revisar
               </div>
+
+              <!-- Emitida pero no entregada: el trabajador aún no la recibió. -->
+              <div
+                v-if="props.row.status === 'ISSUED' && deliveryStatus(props.row) !== 'SENT'"
+                class="rk-not-delivered"
+                @click="$emit('send-email', props.row)"
+              >
+                <q-icon name="unsubscribe" size="13px" />
+                No enviada
+              </div>
             </q-td>
           </template>
 
@@ -209,6 +236,18 @@
                   @click="$emit('open-pdf', props.row)"
                   class="rk-action-btn"
                 />
+
+                <!-- ISSUED: reenviar por correo al trabajador -->
+                <q-btn
+                  v-if="props.row.status === 'ISSUED'"
+                  flat dense
+                  :color="deliveryStatus(props.row) === 'SENT' ? 'grey' : 'negative'"
+                  :icon="deliveryStatus(props.row) === 'SENT' ? 'mark_email_read' : 'unsubscribe'"
+                  :disable="loading"
+                  @click="$emit('send-email', props.row)"
+                >
+                  <q-tooltip>{{ deliveryTooltip(props.row) }}</q-tooltip>
+                </q-btn>
 
                 <!-- ISSUED: secondary action is Anular -->
                 <q-btn
@@ -261,12 +300,14 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { formatPeriodLabel, normalizePeriodValue } from "@/utils/payrollPeriod.js";
 
 const props = defineProps({
   periodSelected: { type: String, required: true },
   query: { type: String, default: '' },
   status: { type: String, default: null },
+  sendEmail: { type: Boolean, default: false },
   selected: { type: Array, required: true },
   payslips: { type: Array, required: true },
   totalLiquido: { type: Number, default: 0 },
@@ -279,6 +320,7 @@ const emit = defineEmits([
   'update:query',
   'update:status',
   'update:selected',
+  'update:sendEmail',
   'load',
   'back-to-periods',
   'issue-selected',
@@ -287,6 +329,7 @@ const emit = defineEmits([
   'void-one',
   'delete-one',
   'open-pdf',
+  'send-email',
 ]);
 
 const statusOptions = [
@@ -302,6 +345,27 @@ const columns = [
   { name: "actions", label: "", field: "actions", align: "right" },
 ];
 
+// El backend ignora `q` y `status` (devuelve el período completo), y todas las
+// liquidaciones del período ya están en memoria: se filtra en el cliente, que
+// además responde sin ida y vuelta.
+const filteredPayslips = computed(() => {
+  const term = String(props.query || "").trim().toLowerCase();
+  const wanted = props.status || null;
+
+  return props.payslips.filter((row) => {
+    if (wanted && row.status !== wanted) return false;
+    if (!term) return true;
+    return (
+      String(row.employeeName || "").toLowerCase().includes(term) ||
+      String(row.employeeRut || "").toLowerCase().includes(term) ||
+      String(row.employeeEmail || "").toLowerCase().includes(term)
+    );
+  });
+});
+
+// Los contadores se mantienen sobre el período completo a propósito: si
+// reflejaran el filtro, activar "Borrador" mostraría "0 emitidas" y parecería
+// que se perdieron.
 function countByStatus(s) {
   return props.payslips.filter(x => x.status === s).length;
 }
@@ -345,6 +409,24 @@ function pendingReviewCount(row) {
   const pending = row?.snapshot?.pendingAbsenceReview;
   return Array.isArray(pending) ? pending.length : 0;
 }
+
+// Entrega de la liquidación al trabajador. Las emitidas antes de que existiera
+// el envío por correo no tienen `delivery`: cuentan como no entregadas.
+function deliveryStatus(row) {
+  return row?.delivery?.status || "PENDING";
+}
+
+function deliveryTooltip(row) {
+  const delivery = row?.delivery || {};
+  if (delivery.status === "SENT") {
+    const when = delivery.sentAt
+      ? new Date(delivery.sentAt).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+      : "";
+    return `Enviada a ${delivery.sentTo || "—"}${when ? ` el ${when}` : ""}. Click para reenviar.`;
+  }
+  if (delivery.lastError) return `No se envió: ${delivery.lastError}. Click para reintentar.`;
+  return "El trabajador no ha recibido su liquidación. Click para enviarla.";
+}
 </script>
 
 <style scoped>
@@ -360,8 +442,34 @@ function pendingReviewCount(row) {
   white-space: nowrap;
 }
 
-.rk-pending-review:hover {
+.rk-pending-review:hover,
+.rk-not-delivered:hover {
   text-decoration: underline;
+}
+
+.rk-send-toggle {
+  margin-left: auto;
+}
+
+.rk-send-toggle__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  opacity: .8;
+  white-space: nowrap;
+}
+
+.rk-not-delivered {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--q-negative, #c62828);
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .rk-employee-view {

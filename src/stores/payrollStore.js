@@ -286,13 +286,17 @@ export const usePayrollStore = defineStore("payroll", {
       }
     },
 
-    async issuePayslip({ payslipId }) {
+    // `sendEmail` debe pedirse explícitamente: el backend no envía si no llega
+    // en true, para que probar el cálculo nunca alcance al trabajador.
+    async issuePayslip({ payslipId, sendEmail = false }) {
       if (!payslipId) throw new Error("payslipId requerido");
 
       this._startLoading();
       this.error = "";
       try {
-        const { data } = await secureAxios.post(`${baseUrl}/${payslipId}/issue`);
+        const { data } = await secureAxios.post(`${baseUrl}/${payslipId}/issue`, {
+          sendEmail: sendEmail === true,
+        });
         const updated = pickPayslipPayload(data);
         if (updated) this._upsertPayslip(updated);
         return data;
@@ -321,6 +325,25 @@ export const usePayrollStore = defineStore("payroll", {
         return data;
       } catch (error) {
         this._setError(error, "Error guardando inasistencias");
+        throw error;
+      } finally {
+        this._stopLoading();
+      }
+    },
+
+    // Reenvía por correo una liquidación emitida (reintento o a pedido).
+    async sendPayslipEmail({ payslipId }) {
+      if (!payslipId) throw new Error("payslipId requerido");
+
+      this._startLoading();
+      this.error = "";
+      try {
+        const { data } = await secureAxios.post(`${baseUrl}/${payslipId}/send-email`);
+        const updated = pickPayslipPayload(data);
+        if (updated) this._upsertPayslip(updated);
+        return data;
+      } catch (error) {
+        this._setError(error, "Error enviando la liquidación");
         throw error;
       } finally {
         this._stopLoading();

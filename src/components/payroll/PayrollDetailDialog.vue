@@ -168,6 +168,23 @@
       <!-- Footer actions -->
       <q-separator />
       <q-card-actions align="right" class="q-pa-md">
+        <!-- Enviar al trabajador es irreversible: se decide antes de emitir. -->
+        <q-checkbox
+          v-if="current?.status === 'DRAFT'"
+          :model-value="sendEmail"
+          dense
+          class="rk-issue-note"
+          @update:model-value="$emit('update:sendEmail', $event)"
+        >
+          <span class="rk-issue-note__text">
+            <q-icon :name="sendEmail ? 'mail' : 'mail_lock'" size="14px" />
+            {{ sendEmail ? 'Enviar por correo al trabajador' : 'No enviar por correo (solo emitir)' }}
+          </span>
+          <q-tooltip>
+            Si no lo envías ahora, la liquidación queda marcada como "No enviada"
+            y puedes mandarla después desde la lista.
+          </q-tooltip>
+        </q-checkbox>
         <q-btn
           v-if="current?.status === 'DRAFT'"
           unelevated
@@ -215,10 +232,12 @@ const props = defineProps({
   current: { type: Object, default: null },
   periodSelected: { type: String, default: "" },
   saving: { type: Boolean, default: false },
+  sendEmail: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
   "update:modelValue",
+  "update:sendEmail",
   "issue",
   "void",
   "delete",
@@ -554,6 +573,18 @@ function statusLabel(s) {
 }
 
 /* Actions */
+.rk-issue-note {
+  margin-right: auto;
+}
+
+.rk-issue-note__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  opacity: .75;
+}
+
 .q-card-actions .q-btn {
   text-transform: none;
   font-weight: 700;
