@@ -65,6 +65,9 @@ export const MENU = [
       { label: 'Liquidaciones', icon: 'payments', to: '/rrhh/payroll' },
       { label: 'Config Nómina', icon: 'percent', to: '/rrhh/payrollRates' },
       { label: 'Desempeño', icon: 'workspace_premium', to: '/rrhh/desempeno' },
+      // Documentos personales: solo admin_rrhh (es trabajador de la empresa).
+      // El superadmin no tiene contrato laboral, igual que "Marcar asistencia".
+      { label: 'Mis documentos', icon: 'description', to: '/rrhh/mis-documentos', access: { roles: ['admin_rrhh'] } },
     ]
   },
   {

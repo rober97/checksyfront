@@ -217,6 +217,9 @@ const routes = [
       { path: 'payroll', name: 'RrhhPayroll', component: Payroll, props: true, meta: { title: 'Liquidaciones' } },
       { path: 'payrollRates', name: 'RrhhPayrollRate', component: PayrollRate, props: true, meta: { title: 'Config Nómina' } },
       { path: 'desempeno', name: 'RrhhDesempeno', component: PerformanceModule, meta: { title: 'Desempeño' } },
+      // Documentos personales del admin RR.HH. (también es trabajador de la empresa).
+      // Reutiliza el mismo componente del empleado; sin employeeId resuelve al usuario del token.
+      { path: 'mis-documentos', name: 'RrhhMisDocumentos', component: EmployeeDocs, meta: { title: 'Mis documentos' } },
       // DT Compliance de la empresa
       { path: 'dt/reportes', name: 'RrhhDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT' } },
       { path: 'dt/libro', name: 'RrhhDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },
