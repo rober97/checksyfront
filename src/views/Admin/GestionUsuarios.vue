@@ -250,7 +250,7 @@
 
             <!-- Estado -->
             <td class="rk-td">
-              <span class="rk-badge" :class="`badge-${row.status}`">
+              <span class="rk-badge" :class="`badge-${String(row.status || '').toLowerCase()}`">
                 <span class="badge-dot" />
                 {{ statusNice(row.status) }}
               </span>
@@ -392,12 +392,14 @@ const total          = computed(() => rawRows.value.length);
 const activeCount    = computed(() => rawRows.value.filter(r => (r.status||"").toLowerCase() === "active").length);
 const inactiveCount  = computed(() => rawRows.value.filter(r => (r.status||"").toLowerCase() === "inactive").length);
 const suspendedCount = computed(() => rawRows.value.filter(r => (r.status||"").toLowerCase() === "suspended").length);
+const pendingCount   = computed(() => rawRows.value.filter(r => (r.status||"").toLowerCase() === "pending").length);
 
 const kpiCards = computed(() => [
-  { key: "all",       label: "Total",       count: total.value,          icon: "group"        },
-  { key: "active",    label: "Activos",     count: activeCount.value,    icon: "how_to_reg"   },
-  { key: "inactive",  label: "Inactivos",   count: inactiveCount.value,  icon: "person_off"   },
-  { key: "suspended", label: "Suspendidos", count: suspendedCount.value, icon: "block"        },
+  { key: "all",       label: "Total",       count: total.value,          icon: "group"          },
+  { key: "active",    label: "Activos",     count: activeCount.value,    icon: "how_to_reg"     },
+  { key: "pending",   label: "Pendientes",  count: pendingCount.value,   icon: "hourglass_top"  },
+  { key: "inactive",  label: "Inactivos",   count: inactiveCount.value,  icon: "person_off"     },
+  { key: "suspended", label: "Suspendidos", count: suspendedCount.value, icon: "block"          },
 ]);
 const kpiPercent = (count) => total.value ? Math.round((count / total.value) * 100) : 0;
 const setStatusFilter = (key) => { activeStatusFilter.value = key; currentPage.value = 1; };
@@ -539,7 +541,7 @@ const roleNice = (r) => ({
   superadmin: "Superadmin",
   dt_inspector: "Inspector DT",
 }[String(r || '').toLowerCase()] || r || "—");
-const statusNice  = (s) => ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido" }[s] || s || "—");
+const statusNice  = (s) => ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido", pending: "Pendiente" }[String(s || "").toLowerCase()] || s || "—");
 const initials    = (fn="", ln="") => ((fn?.[0]||"") + (ln?.[0]||"") || "U").toUpperCase();
 const formatDate  = (d) => {
   if (!d) return "—";
@@ -680,6 +682,8 @@ onBeforeUnmount(() => {
   --c-warn-l:    var(--color-warning-soft, rgba(217,119,6,0.12));
   --c-err:       var(--color-danger, #dc2626);
   --c-err-l:     var(--color-danger-soft, rgba(220,38,38,0.12));
+  --c-pend:      #7c3aed;
+  --c-pend-l:    rgba(124,58,237,0.12);
   --c-all:       var(--color-primary, #0CA9C4);
   --c-all-l:     var(--color-primary-soft, rgba(12, 169, 196,0.12));
   --c-purple:    var(--color-accent-dark, #0893AA);
@@ -716,6 +720,8 @@ onBeforeUnmount(() => {
   --c-ok-l:      var(--color-success-soft, rgba(34,197,94,0.18));
   --c-warn-l:    var(--color-warning-soft, rgba(245,158,11,0.18));
   --c-err-l:     var(--color-danger-soft, rgba(248,113,113,0.18));
+  --c-pend:      #a78bfa;
+  --c-pend-l:    rgba(167,139,250,0.18);
   --c-all-l:     var(--color-primary-soft, rgba(51, 190, 203,0.16));
   --c-purple-l:  var(--color-accent-soft, rgba(51, 190, 203,0.16));
   --c-teal-l:    var(--color-accent-soft, rgba(51, 190, 203,0.16));
@@ -768,7 +774,8 @@ onBeforeUnmount(() => {
 /* ══════════════════════════════════════════════════
    KPI CARDS
 ══════════════════════════════════════════════════ */
-.rk-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; position:relative; z-index:1; }
+.rk-kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; position:relative; z-index:1; }
+@media(max-width:1280px){ .rk-kpi-grid{ grid-template-columns:repeat(3,1fr); } }
 @media(max-width:900px){ .rk-kpi-grid{ grid-template-columns:repeat(2,1fr); } }
 @media(max-width:500px){ .rk-kpi-grid{ grid-template-columns:1fr; } }
 
@@ -786,6 +793,7 @@ onBeforeUnmount(() => {
 .kpi-active    { --kpi-c:var(--c-ok);      --kpi-cl:var(--c-ok-l);     }
 .kpi-inactive  { --kpi-c:var(--c-warn);    --kpi-cl:var(--c-warn-l);   }
 .kpi-suspended { --kpi-c:var(--c-err);     --kpi-cl:var(--c-err-l);    }
+.kpi-pending   { --kpi-c:var(--c-pend);    --kpi-cl:var(--c-pend-l);   }
 
 .kpi-icon-wrap { width:40px; height:40px; border-radius:12px; background:var(--kpi-cl); color:var(--kpi-c); display:flex; align-items:center; justify-content:center; }
 .kpi-count { font-family:var(--ff-display); font-size:28px; font-weight:700; line-height:1; letter-spacing:-1px; }
@@ -1010,6 +1018,8 @@ onBeforeUnmount(() => {
 .badge-inactive  .badge-dot { background:var(--c-warn); }
 .badge-suspended { background:var(--c-err-l);  color:var(--c-err);  }
 .badge-suspended .badge-dot { background:var(--c-err); }
+.badge-pending   { background:var(--c-pend-l); color:var(--c-pend); }
+.badge-pending   .badge-dot { background:var(--c-pend); }
 
 /* Rol */
 .badge-role-admin       { background:var(--c-purple-l); color:var(--c-purple); }

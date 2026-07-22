@@ -6,7 +6,12 @@ export const useKpiStore = defineStore('kpi', {
   state: () => ({
     loading: false,
     error: null,
-    data: {}
+    data: {},
+    // Panel completo de RR.HH. (GET /kpi/rrhh/dashboard). Lo entrega el backend
+    // ya agregado: dotación, asistencia, solicitudes, saldos, alertas…
+    rrhh: null,
+    rrhhLoading: false,
+    rrhhError: null
   }),
   getters: {
     vacaciones: (s) => s.data.vacaciones ?? 0,
@@ -37,6 +42,28 @@ export const useKpiStore = defineStore('kpi', {
         this.error = 'Error del servidor al cargar KPIs'
       } finally {
         this.loading = false
+      }
+    },
+
+    /**
+     * Panel de RR.HH. La empresa NO se manda: el backend la resuelve desde el
+     * token (scopeToCompany), así que no hay forma de pedir datos de otra.
+     */
+    async fetchRrhhDashboard({ from, to } = {}) {
+      this.rrhhLoading = true
+      this.rrhhError = null
+      try {
+        const res = await secureAxios.get('/kpi/rrhh/dashboard', { params: { from, to } })
+        if (res.data?.success) {
+          this.rrhh = res.data.data || null
+        } else {
+          this.rrhhError = res.data?.message || 'No se pudo cargar el panel'
+        }
+      } catch (e) {
+        console.error('fetchRrhhDashboard error:', e)
+        this.rrhhError = e?.response?.data?.message || 'Error del servidor al cargar el panel'
+      } finally {
+        this.rrhhLoading = false
       }
     }
   }

@@ -78,10 +78,11 @@ export function normalizeUserPatch(p) {
 
 // badge helpers (opcional para centralizar estilo/semántica)
 export function statusNice(s) {
-    return ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido" }[s] || s || "—");
+    return ({ active: "Activo", inactive: "Inactivo", suspended: "Suspendido", pending: "Pendiente" }[String(s || "").toLowerCase()] || s || "—");
 }
 export function statusColor(s) {
-    return s === "active" ? "positive" : s === "inactive" ? "grey" : "warning";
+    const k = String(s || "").toLowerCase();
+    return k === "active" ? "positive" : k === "pending" ? "purple" : k === "inactive" ? "grey" : "warning";
 }
 
 // fechas amigables (para audit)

@@ -8,34 +8,30 @@
         <q-btn flat round dense icon="close" v-close-popup :disable="validating || committing" />
       </q-card-section>
 
-      <q-card-section class="q-gutter-md">
+      <q-card-section class="ie-body scroll">
         <div class="ie-hint">
           Sube el Excel con tus empleados. Primero <b>validamos</b> sin crear nada y te mostramos los
           errores fila por fila; luego confirmas la carga. Para empleados que ya trabajan en la empresa,
           incluye su <b>fecha de ingreso histórica</b> y su <b>saldo de vacaciones</b> a la fecha de corte.
         </div>
 
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6" v-if="empresas && empresas.length > 1">
-            <q-select
-              v-model="companyId"
-              :options="companyOptions"
-              option-value="value"
-              option-label="label"
-              emit-value map-options
-              outlined dense label="Empresa destino"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input v-model="cutoffDate" outlined dense type="date" label="Fecha de corte">
-              <template #prepend><q-icon name="event" /></template>
-            </q-input>
-          </div>
+        <div class="ie-grid">
+          <q-select
+            v-if="empresas && empresas.length > 1"
+            v-model="companyId"
+            :options="companyOptions"
+            option-value="value"
+            option-label="label"
+            emit-value map-options
+            outlined dense label="Empresa destino"
+          />
+          <q-input v-model="cutoffDate" outlined dense type="date" label="Fecha de corte">
+            <template #prepend><q-icon name="event" /></template>
+          </q-input>
         </div>
 
-        <div class="row items-center q-gutter-sm">
+        <div>
           <q-btn outline color="primary" icon="download" label="Descargar plantilla" :loading="downloading" @click="onDownloadTemplate" />
-          <q-space />
         </div>
 
         <q-file
@@ -74,8 +70,10 @@
                   <td>{{ r.name || '—' }}</td>
                   <td>{{ r.rut || '—' }}</td>
                   <td>
-                    <q-icon :name="r.status === 'ok' ? 'check_circle' : 'error'" :color="r.status === 'ok' ? 'positive' : 'negative'" size="16px" />
-                    {{ r.status === 'ok' ? 'OK' : 'Error' }}
+                    <span class="ie-status">
+                      <q-icon :name="r.status === 'ok' ? 'check_circle' : 'error'" :color="r.status === 'ok' ? 'positive' : 'negative'" size="16px" />
+                      {{ r.status === 'ok' ? 'OK' : 'Error' }}
+                    </span>
                   </td>
                   <td>{{ r.message || '' }}</td>
                 </tr>
@@ -87,7 +85,7 @@
         </div>
       </q-card-section>
 
-      <q-card-actions align="right" class="q-pa-md">
+      <q-card-actions align="right" class="q-pa-md ie-actions">
         <q-btn flat label="Cerrar" v-close-popup :disable="validating || committing" />
         <q-btn
           color="primary" outline icon="fact_check" label="Validar"
@@ -207,20 +205,79 @@ async function onCommit() {
 </script>
 
 <style scoped>
-.ie-card { width: 760px; max-width: 92vw; }
-.ie-head { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; }
-.ie-hint { font-size: .85rem; color: #475569; line-height: 1.55; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
-.ie-report { margin-top: 8px; }
-.ie-summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.ie-card {
+  width: 760px; max-width: 92vw;
+  display: flex; flex-direction: column;
+  max-height: 90vh;                       /* las acciones nunca quedan fuera de pantalla */
+  background: var(--card-background);
+  color: var(--text-primary);
+}
+
+/* Cabecera */
+.ie-head {
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  color: #fff;
+  flex: 0 0 auto;
+}
+.ie-head .text-h6 { font-size: 1.15rem; line-height: 1.3; }
+
+/* Cuerpo: una sola columna con gap real (nada de q-gutter + q-col-gutter,
+   que se pisaban por sus márgenes negativos y descuadraban la fila de fechas) */
+.ie-body {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.ie-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ie-grid > *:only-child { grid-column: span 2; max-width: 360px; }
+@media (max-width: 599px) {
+  .ie-grid { grid-template-columns: 1fr; }
+  .ie-grid > *:only-child { grid-column: auto; max-width: none; }
+}
+
+.ie-hint {
+  font-size: .85rem; line-height: 1.55;
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-color);
+  border-radius: 10px; padding: 12px 14px;
+}
+.ie-hint b { color: var(--text-primary); }
+
+/* Reporte */
+.ie-report { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.ie-summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ie-chip { font-size: .8rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
-.ie-chip--total { background: #e0e7ff; color: #3730a3; }
-.ie-chip--ok { background: #dcfce7; color: #166534; }
-.ie-chip--err { background: #fee2e2; color: #991b1b; }
-.ie-mode { font-size: .78rem; color: #64748b; }
-.ie-table-wrap { max-height: 320px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; }
-.ie-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
-.ie-table th { position: sticky; top: 0; background: #f1f5f9; text-align: left; padding: 8px 10px; font-weight: 700; color: #334155; }
-.ie-table td { padding: 7px 10px; border-top: 1px solid #f1f5f9; }
-.ie-table tr.is-err td { background: #fef2f2; }
-.ie-report-hint { margin-top: 8px; font-size: .8rem; color: #64748b; }
+.ie-chip--total { background: var(--color-primary-soft); color: var(--color-primary-dark); }
+.ie-chip--ok    { background: var(--color-success-soft); color: var(--color-success); }
+.ie-chip--err   { background: var(--color-danger-soft);  color: var(--color-danger); }
+.ie-mode { font-size: .78rem; color: var(--text-muted); }
+
+.ie-table-wrap {
+  max-height: 320px; overflow: auto;
+  border: 1px solid var(--border-color); border-radius: 10px;
+  background: var(--card-background);
+}
+.ie-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+.ie-table th {
+  position: sticky; top: 0; z-index: 2;   /* sin z-index, los iconos de las filas se montaban sobre la cabecera */
+  background: var(--surface-soft);
+  border-bottom: 1px solid var(--border-color);
+  text-align: left; padding: 8px 10px; font-weight: 700;
+  color: var(--text-primary); white-space: nowrap;
+}
+.ie-table td {
+  padding: 7px 10px; border-top: 1px solid var(--border-color);
+  color: var(--text-primary); vertical-align: middle;
+}
+.ie-table tbody tr:first-child td { border-top: 0; }
+.ie-table tr.is-err td { background: var(--color-danger-soft); }
+.ie-status { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.ie-report-hint { font-size: .8rem; color: var(--text-muted); }
+
+/* Barra de acciones: siempre visible, pegada al borde inferior de la card */
+.ie-actions {
+  flex: 0 0 auto; gap: 8px; flex-wrap: wrap;
+  border-top: 1px solid var(--border-color);
+  background: var(--card-background);
+}
 </style>
