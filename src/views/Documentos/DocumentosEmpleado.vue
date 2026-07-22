@@ -1,26 +1,20 @@
 <template>
   <q-page class="q-pa-md" :class="pageBgClass">
     <q-card flat bordered class="rk-docs-card q-mt-md">
-      <!-- Header mejorado con breadcrumbs y acciones -->
-      <q-card-section class="row items-center justify-between q-pb-sm">
-        <div class="row items-center col-12 col-md-auto">
-          <q-avatar
-            :color="isDark ? 'primary-7' : 'primary'"
-            text-color="white"
-            size="48px"
-            class="q-mr-md"
-            font-size="20px"
-          >
-            {{ initials(userName) }}
-          </q-avatar>
-          <div>
-            <div class="row items-center q-gutter-xs q-mb-xs">
-              <div
-                class="text-h6 text-weight-medium"
+      <!-- Cabecera compacta: título del módulo + atajo a la última liquidación -->
+      <q-card-section class="rk-doc-head row items-center justify-between no-wrap q-py-sm">
+        <div class="row items-center no-wrap rk-doc-head__left">
+          <div class="rk-doc-head__ico q-mr-sm">
+            <q-icon name="folder_shared" size="20px" />
+          </div>
+          <div class="rk-doc-head__txt">
+            <div class="row items-center q-gutter-xs">
+              <span
+                class="text-subtitle1 text-weight-bold"
                 :class="isDark ? 'text-white' : 'text-primary'"
               >
-                Hola, {{ firstName(userName) }}
-              </div>
+                Mis documentos
+              </span>
               <q-chip
                 v-if="rowsFiltradas.length > 0"
                 dense
@@ -35,35 +29,23 @@
               class="text-caption"
               :class="isDark ? 'text-grey-4' : 'text-grey-7'"
             >
-              Gestiona tus documentos personales: liquidaciones, contratos y más
+              Liquidaciones, contratos y certificados a tu nombre
             </div>
           </div>
         </div>
 
-        <div class="row q-gutter-sm items-center q-mt-sm q-mt-md-none">
-          <q-btn
-            v-if="latestPayslip"
-            :color="isDark ? 'primary-7' : 'primary'"
-            unelevated
-            icon="receipt_long"
-            @click="verDocumento(latestPayslip)"
-            no-caps
-            class="q-px-md"
-          >
-            <div class="column items-start">
-              <div class="text-caption">Última liquidación</div>
-              <div class="text-weight-bold">{{ latestPayslip.period }}</div>
-            </div>
-          </q-btn>
-          <q-btn
-            outline
-            :color="isDark ? 'grey-4' : 'primary'"
-            icon="folder_open"
-            label="Ver todos"
-            @click="scrollToList"
-            no-caps
-          />
-        </div>
+        <q-btn
+          v-if="latestPayslip"
+          :color="isDark ? 'primary-7' : 'primary'"
+          unelevated
+          dense
+          icon="receipt_long"
+          @click="verDocumento(latestPayslip)"
+          no-caps
+          class="q-px-md rk-doc-head__cta"
+        >
+          <span class="q-ml-xs">Última liquidación · {{ latestPayslip.period }}</span>
+        </q-btn>
       </q-card-section>
 
       <q-separator />
@@ -988,7 +970,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useQuasar } from "quasar";
 import { useDocumentStore } from "@/stores/documentStore";
-import { useUserStore } from "@/stores/userStore";
+import { useAuthStore } from "@/stores/authStore";
 
 const pageBgClass = computed(() => isDark.value ? 'bg-grey-10 text-white' : 'bg-grey-1')
 
@@ -999,7 +981,9 @@ const props = defineProps({
 
 const $q = useQuasar();
 const store = useDocumentStore();
-const userStore = useUserStore();
+// El usuario autenticado vive en authStore (userStore.user suele venir null,
+// por eso antes salía "Hola, Usuario" y no se resolvía el employeeId → sin docs).
+const auth = useAuthStore();
 
 /* ====== Estado UI ====== */
 const tabType = ref("all");
@@ -1076,19 +1060,6 @@ const columns = [
 
 /* ====== Helpers ====== */
 const isDark = computed(() => $q.dark.isActive);
-const userName = computed(() =>
-  userStore?.user?.firstName
-    ? `${userStore.user.firstName} ${userStore.user.lastName || ""}`.trim()
-    : "Usuario"
-);
-
-function initials(name = "") {
-  const [a = "", b = ""] = name.split(" ");
-  return ((a[0] || "") + (b[0] || "")).toUpperCase() || "U";
-}
-function firstName(name = "") {
-  return (name || "Usuario").split(" ")[0];
-}
 
 const typeOptions = [
   { label: "Liquidación", value: "payroll" },
@@ -1136,11 +1107,17 @@ const isRecent = (date) => {
 };
 
 function resolveEmployeeId() {
-  return props.employeeId ?? userStore?.user?._id ?? userStore?.user?.id;
+  return props.employeeId ?? auth?.user?._id ?? auth?.user?.id;
 }
 
 /* ====== Computed ====== */
-const rows = computed(() => store.byEmployee(resolveEmployeeId()));
+// El backend ya acota los documentos al empleado; filtramos igual por si el
+// store trae residuos de otra vista. Comparamos como String porque employeeId
+// llega serializado (ObjectId → string) y un === estricto podía fallar.
+const rows = computed(() => {
+  const id = String(resolveEmployeeId() || "");
+  return (store.items || []).filter((d) => !id || String(d.employeeId) === id);
+});
 
 const yearsOptions = computed(() => {
   const allPeriods = (store.items || []).map((d) => d.period).filter(Boolean);
@@ -1730,8 +1707,27 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
       transparent 100%
     );
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    padding: 24px;
+    padding: 12px 20px;
   }
+}
+
+// Cabecera compacta del módulo
+.rk-doc-head__left { min-width: 0; }
+.rk-doc-head__txt { min-width: 0; }
+.rk-doc-head__ico {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #0CA9C4, #0893AA);
+  box-shadow: $shadow-sm;
+}
+.rk-doc-head__cta { white-space: nowrap; }
+@media (max-width: 599px) {
+  .rk-doc-head__cta :deep(span) { display: none; }  // en móvil sólo el icono
 }
 
 .body--dark .rk-docs-card {
