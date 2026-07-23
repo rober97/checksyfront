@@ -97,6 +97,7 @@ export const MENU = [
       { label: 'Mi historial', icon: 'history', to: '/employee/history' },
       { label: 'Mi libro de asistencia', icon: 'menu_book', to: '/employee/libro' },
       { label: 'Mis comprobantes DT', icon: 'receipt_long', to: '/employee/comprobantes' },
+      { label: 'Mi desempeño', icon: 'trending_up', to: '/employee/performance' },
       // "Consentimiento DT" se omite a propósito del menú: es un trámite de
       // primer uso. El router redirige automáticamente al empleado a esta
       // pantalla si todavía no firmó. Una vez firmado queda accesible desde

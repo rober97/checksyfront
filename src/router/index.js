@@ -44,6 +44,7 @@ const ApproveRequests = () => import(/* webpackChunkName:"solicitud" */ '@/views
 const Attendance = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/MarcarAsistencia.vue')
 const History = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/Historial.vue')
 const CreateRequest = () => import(/* webpackChunkName:"solicitud" */ '@/views/Solicitudes/CrearSolicitud.vue')
+const EmpPerformance = () => import(/* webpackChunkName:"empleado"  */ '@/views/Empleado/MiDesempeno.vue')
 const Configuration = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Configuration.vue')
 const Profile = () => import(/* webpackChunkName:"user"      */ '@/views/Usuarios/Profile.vue')
 
@@ -245,6 +246,7 @@ const routes = [
       { path: 'create-request', name: 'CreateRequest', component: CreateRequest, meta: { title: 'Nueva solicitud' } },
       { path: 'documents', name: 'Documents', component: EmployeeDocs, meta: { title: 'Documents' } },
       { path: 'requests', name: 'Requests', component: RequestListEmployee, meta: { title: 'Requests' } },
+      { path: 'performance', name: 'EmpPerformance', component: EmpPerformance, meta: { title: 'Mi desempeño' } },
       // ===== DT Compliance para el trabajador =====
       { path: 'comprobantes', name: 'EmpComprobantes', component: EmpComprobante, meta: { title: 'Mis comprobantes DT' } },
       { path: 'consentimiento', name: 'EmpConsentimiento', component: EmpConsentimiento, meta: { title: 'Consentimiento DT' } },
