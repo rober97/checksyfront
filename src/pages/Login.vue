@@ -235,10 +235,6 @@ async function handleLogin() {
     formError.value = "Revisa los campos del formulario.";
     return;
   }
-  if (!navigator.onLine) {
-    formError.value = "Sin conexión a internet.";
-    return;
-  }
   if (loading.value) return;
 
   loading.value = true;
@@ -248,8 +244,16 @@ async function handleLogin() {
     else localStorage.removeItem("last_email");
     await router.replace("/");
   } catch (err) {
-    formError.value =
-      err?.response?.data?.message || err?.message || "Error de servidor";
+    // Sin respuesta del servidor = fallo de red real (no confiamos en
+    // navigator.onLine: da falsos negativos con VPN e interfaces virtuales).
+    const isNetworkError =
+      !err?.response &&
+      (err?.code === "ERR_NETWORK" ||
+        err?.code === "ECONNABORTED" ||
+        err?.message === "Network Error");
+    formError.value = isNetworkError
+      ? "Sin conexión con el servidor. Revisa tu internet e inténtalo de nuevo."
+      : err?.response?.data?.message || err?.message || "Error de servidor";
   } finally {
     loading.value = false;
   }
