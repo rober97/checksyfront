@@ -112,6 +112,57 @@ export const useAuthStore = defineStore('auth', {
 
 
     /* =========================
+       AMBIENTE DE PRUEBA (público)
+       Crea una empresa demo completa (con trabajadores, asistencia, solicitudes
+       y nómina ya cargados) y deja la sesión abierta como su admin de RR.HH.
+       Es el camino que sigue quien llega desde recksy.com a "probar": el
+       registro clásico no aplica porque esa persona todavía no pertenece a
+       ninguna empresa.
+    ========================= */
+    async demoSignup({ firstName, lastName, email, password, companyName }) {
+      this.loading = true
+      this.error = null
+      try {
+        const { data } = await publicAxios.post('/demo/signup', {
+          firstName, lastName, email, password, companyName,
+        })
+        if (!data?.success) throw new Error(data?.message || 'No se pudo crear el ambiente de prueba')
+
+        this._applySession(data)
+        this.fetchAvatarUrl().catch(() => {})
+        return data
+      } catch (err) {
+        const msg = err?.response?.data?.message || err?.message || 'No se pudo crear el ambiente de prueba'
+        this.error = msg
+        const e = new Error(msg)
+        e.code = err?.response?.data?.code || null
+        e.status = err?.response?.status || null
+        throw e
+      } finally {
+        this.loading = false
+      }
+    },
+
+    /**
+     * Cambia la sesión a la de un trabajador ficticio del ambiente de prueba
+     * (o vuelve a la cuenta de RR.HH. con `exit`). El backend valida que la
+     * empresa sea demo antes de emitir el token.
+     */
+    async demoImpersonate(employeeId = null) {
+      const { data } = await secureAxios.post('/demo/impersonate', { employeeId })
+      if (!data?.success) throw new Error(data?.message || 'No se pudo cambiar de vista')
+      this._applySession(data)
+      return data.user
+    },
+
+    async demoExitImpersonation() {
+      const { data } = await secureAxios.post('/demo/impersonate/exit')
+      if (!data?.success) throw new Error(data?.message || 'No se pudo volver a tu cuenta')
+      this._applySession(data)
+      return data.user
+    },
+
+    /* =========================
        RECUPERACIÓN DE CONTRASEÑA (público) — OTP por email
        Paso 1: solicitar el código. Por anti-enumeración el backend SIEMPRE
        responde OK, exista o no el correo.
@@ -296,6 +347,22 @@ export const useAuthStore = defineStore('auth', {
       }
     }
     ,
+
+    /**
+     * Instala una sesión recibida del backend ({ accessToken, user }).
+     * Lo usan login por demo y el cambio de vista del ambiente de prueba: son
+     * los mismos pasos que hace `login`, y duplicarlos es la forma habitual de
+     * que una de las rutas se olvide de persistir el token y la sesión se
+     * pierda al recargar.
+     */
+    _applySession({ accessToken, user }) {
+      if (accessToken) {
+        this.token = accessToken
+        try { localStorage.setItem('token', accessToken) } catch {}
+        this._applyAuthHeader(accessToken)
+      }
+      if (user) this.user = user
+    },
 
     // Utilidad: aplica header Authorization al cliente seguro
     _applyAuthHeader(token) {

@@ -1,5 +1,11 @@
 <template>
   <q-header reveal elevated class="rk-header">
+    <!-- Barra del ambiente de prueba. Va DENTRO del QHeader (y no colgada del
+         layout) para que Quasar incluya su alto al calcular el offset del
+         contenido; fuera de aquí sumaría un scroll permanente en cada pantalla.
+         Se oculta sola cuando la sesión no es de un ambiente demo. -->
+    <DemoBanner />
+
     <!-- Main Header Bar -->
     <div class="rk-header-bar">
       <!-- Left Section -->
@@ -301,6 +307,7 @@ import { Dark, useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import UserAvatarMenu from "@/components/UserAvatarMenu.vue";
 import CompanySwitcher from "@/components/CompanySwitcher.vue";
+import DemoBanner from "@/components/demo/DemoBanner.vue";
 import { useThemeStore } from "@/stores/themeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useNotificationsStore } from "@/stores/notificationsStore";

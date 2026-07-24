@@ -17,6 +17,37 @@
       </div>
     </div>
 
+    <!--
+      Aprovisionamiento: crear el ambiente implica escribir cientos de registros
+      (empresa, dotación, un mes de asistencia con su cadena de hash, solicitudes).
+      Son varios segundos. Un spinner mudo se lee como "se colgó"; contar lo que
+      se está construyendo convierte la espera en la primera explicación de qué
+      hace el producto.
+    -->
+    <div v-if="provisioning" class="rk-provision">
+      <div class="rk-provision__card">
+        <div class="rk-provision__logo">
+          <q-spinner-orbit color="primary" size="52px" />
+        </div>
+        <h2 class="rk-provision__title">Estamos armando tu empresa de prueba</h2>
+        <p class="rk-provision__sub">{{ companyDisplayName }} · esto toma unos segundos</p>
+
+        <ul class="rk-provision__steps">
+          <li
+            v-for="(task, idx) in provisionTasks"
+            :key="task"
+            class="rk-provision__step"
+            :class="{ 'is-done': idx < provisionIndex, 'is-active': idx === provisionIndex }"
+          >
+            <q-icon v-if="idx < provisionIndex" name="check_circle" size="18px" />
+            <q-spinner v-else-if="idx === provisionIndex" size="16px" />
+            <q-icon v-else name="radio_button_unchecked" size="18px" />
+            <span>{{ task }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
     <div class="rk-center">
       <q-card class="register-card" flat>
         <div class="register-container">
@@ -34,7 +65,7 @@
                 </div>
               </div>
               <h1 class="brand-title">Recksy</h1>
-              <p class="brand-tagline">Plataforma de próxima generación</p>
+              <p class="brand-tagline">Prueba gratis, con datos de ejemplo</p>
             </div>
 
             <div class="steps-sidebar">
@@ -59,21 +90,13 @@
               </div>
             </div>
 
-            <div class="stats-row">
-              <div class="stat-item">
-                <div class="stat-value">10K+</div>
-                <div class="stat-label">Usuarios</div>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <div class="stat-value">99.9%</div>
-                <div class="stat-label">Uptime</div>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <div class="stat-value">24/7</div>
-                <div class="stat-label">Soporte</div>
-              </div>
+            <!-- Reemplaza las métricas genéricas de marketing por lo único que
+                 le importa a quien está a mitad del formulario: qué recibe al
+                 terminar. -->
+            <div class="perks-row">
+              <div class="perk"><q-icon name="bolt" size="16px" /> Empresa lista en segundos</div>
+              <div class="perk"><q-icon name="credit_card_off" size="16px" /> Sin tarjeta de crédito</div>
+              <div class="perk"><q-icon name="badge" size="16px" /> Entra también como trabajador</div>
             </div>
           </div>
 
@@ -175,8 +198,7 @@
                       </div>
                     </template>
                     <template #append>
-                      <q-spinner-dots v-if="checkingEmail" color="primary" size="18px" />
-                      <div v-else-if="emailValid" class="input-status success">
+                      <div v-if="emailValid" class="input-status success">
                         <q-icon name="check_circle" size="18px" />
                       </div>
                     </template>
@@ -190,12 +212,26 @@
                     {{ errors.email }}
                   </div>
                 </transition>
-                <transition name="fade-up">
-                  <div v-if="!errors.email && emailValid" class="field-hint field-hint--success">
-                    <q-icon name="check_circle" size="16px" />
-                    Correo disponible y válido
-                  </div>
-                </transition>
+
+                <!-- Nombre de la empresa: da nombre al ambiente de prueba que
+                     se crea. Es opcional a propósito — pedir un dato más antes
+                     de dejar entrar es la forma más fácil de perder a alguien
+                     que solo quiere mirar. -->
+                <div class="floating-input" :class="{ filled: !!form.companyName }">
+                  <q-input v-model="form.companyName" outlined dense hide-bottom-space maxlength="60">
+                    <template #prepend>
+                      <div class="input-icon">
+                        <q-icon name="business" size="20px" />
+                      </div>
+                    </template>
+                  </q-input>
+                  <label class="floating-label">Nombre de tu empresa</label>
+                </div>
+
+                <div class="field-hint field-hint--info">
+                  <q-icon name="auto_awesome" size="16px" />
+                  Así se llamará tu empresa de prueba. Puedes inventarlo.
+                </div>
 
                 <transition name="slide-down">
                   <div v-if="stepAttempted[0] && !isStepValid(0)" class="validation-summary">
@@ -204,10 +240,7 @@
                       <div class="validation-summary-title">Para continuar necesitas:</div>
                       <ul>
                         <li v-if="!form.firstName.trim()">✗ Ingresar tu nombre</li>
-                        <li v-if="!form.email.trim() || !!errors.email">✗ Un correo electrónico válido</li>
-                        <li v-if="form.email && !errors.email && !emailValid && !checkingEmail">
-                          ✗ Esperar la verificación del correo
-                        </li>
+                        <li v-if="!emailValid">✗ Un correo electrónico válido</li>
                       </ul>
                     </div>
                   </div>
@@ -392,6 +425,13 @@
                     </div>
                     <div class="summary-row">
                       <div class="summary-key">
+                        <q-icon name="business" size="16px" />
+                        Empresa de prueba
+                      </div>
+                      <div class="summary-val">{{ companyDisplayName }}</div>
+                    </div>
+                    <div class="summary-row">
+                      <div class="summary-key">
                         <q-icon name="lock" size="16px" />
                         Contraseña
                       </div>
@@ -403,6 +443,22 @@
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <!-- Expectativa explícita: lo que va a encontrar al entrar. Sin
+                     esto, quien llega a "ver qué es" aterriza en un panel lleno
+                     de datos de gente que no conoce y no entiende de dónde salen. -->
+                <div class="included-card">
+                  <div class="included-title">
+                    <q-icon name="inventory_2" size="16px" />
+                    Al entrar vas a encontrar
+                  </div>
+                  <ul class="included-list">
+                    <li><q-icon name="groups" size="15px" /> 8 trabajadores con contrato, horario y sueldo</li>
+                    <li><q-icon name="fingerprint" size="15px" /> Un mes de marcas reales, con atrasos y ausencias</li>
+                    <li><q-icon name="event_available" size="15px" /> Solicitudes pendientes de tu aprobación</li>
+                    <li><q-icon name="payments" size="15px" /> Liquidaciones listas para generar</li>
+                  </ul>
                 </div>
 
                 <div class="form-options">
@@ -423,9 +479,11 @@
                     </q-icon>
                   </div>
 
-                  <div class="option-row" @click.self="autoLogin = !autoLogin">
-                    <q-toggle v-model="autoLogin" color="primary" size="sm" />
-                    <span class="option-label">Mantener sesión iniciada</span>
+                  <div class="option-row option-row--info">
+                    <q-icon name="schedule" size="20px" color="primary" />
+                    <span class="option-label">
+                      Tu ambiente queda activo <strong>14 días</strong>. Sin tarjeta, y lo eliminamos solo al vencer.
+                    </span>
                   </div>
                 </div>
 
@@ -444,7 +502,12 @@
                 <transition name="slide-down">
                   <div v-if="formError" class="error-banner">
                     <q-icon name="error_outline" size="20px" />
-                    <span>{{ formError }}</span>
+                    <span>
+                      {{ formError }}
+                      <!-- El correo duplicado es el error más común y tiene una
+                           salida concreta: esa persona ya tiene un ambiente. -->
+                      <router-link v-if="emailTaken" to="/login" class="link">Inicia sesión</router-link>
+                    </span>
                   </div>
                 </transition>
 
@@ -490,7 +553,7 @@
               >
                 <template v-if="!loading">
                   <q-icon name="rocket_launch" size="18px" class="q-mr-xs" />
-                  Crear mi cuenta
+                  Crear mi ambiente de prueba
                 </template>
               </q-btn>
             </div>
@@ -524,7 +587,7 @@ const steps = [
   {
     name: 'Tus datos',
     title: 'Cuéntanos quién eres',
-    subtitle: 'Necesitamos algunos datos básicos para crear tu cuenta',
+    subtitle: 'Con esto creamos tu empresa de prueba y tu acceso de administrador',
     icon: 'person_outline',
     desc: 'Nombre y correo'
   },
@@ -538,7 +601,7 @@ const steps = [
   {
     name: 'Confirmar',
     title: 'Todo listo para comenzar',
-    subtitle: 'Revisa tus datos y acepta los términos',
+    subtitle: 'Preparamos tu empresa con datos de ejemplo para que la recorras completa',
     icon: 'task_alt',
     desc: 'Revisión final'
   }
@@ -552,9 +615,16 @@ const form = ref({
   firstName: '',
   lastName: '',
   email: '',
+  companyName: '',
   password: '',
   passwordConfirm: ''
 })
+
+// Nombre que llevará el ambiente de prueba. Si no lo escriben, el backend
+// aplica el mismo criterio; se replica acá solo para el resumen previo.
+const companyDisplayName = computed(() =>
+  form.value.companyName.trim() || `${form.value.firstName.trim() || 'Mi'} Empresa Demo`
+)
 
 const errors = ref({
   firstName: '',
@@ -566,11 +636,41 @@ const errors = ref({
 const showPwd = ref(false)
 const loading = ref(false)
 const formError = ref('')
+const emailTaken = ref(false)
 const accept = ref(false)
-const autoLogin = ref(true)
-const checkingEmail = ref(false)
 const emailValid = ref(false)
 const passwordsMatch = ref(false)
+
+// ===== Aprovisionamiento del ambiente de prueba =====
+const provisioning = ref(false)
+const provisionIndex = ref(0)
+const provisionTasks = [
+  'Creando tu empresa',
+  'Contratando al equipo de prueba',
+  'Cargando un mes de asistencia',
+  'Preparando solicitudes y nómina',
+  'Abriendo tu sesión',
+]
+let provisionTimer = null
+
+/**
+ * Avanza el relato mientras el backend siembra. No refleja el progreso real —
+ * el endpoint es una sola llamada— pero sí el orden real de lo que hace, y se
+ * detiene en el penúltimo paso para no "terminar" antes que el servidor.
+ */
+function startProvisionNarration() {
+  provisionIndex.value = 0
+  provisioning.value = true
+  provisionTimer = setInterval(() => {
+    if (provisionIndex.value < provisionTasks.length - 1) provisionIndex.value++
+  }, 1400)
+}
+
+function stopProvisionNarration() {
+  clearInterval(provisionTimer)
+  provisionTimer = null
+  provisioning.value = false
+}
 
 // ===== Progreso =====
 const progressPercent = computed(() => {
@@ -650,6 +750,8 @@ const validateField = (field) => {
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
         errors.value.email = 'Correo inválido'
         emailValid.value = false
+      } else {
+        emailValid.value = true
       }
       break
     case 'password':
@@ -668,23 +770,14 @@ const validateField = (field) => {
 }
 
 // ===== Email =====
-let emailTimer = null
-
+// Solo se valida el FORMATO. La disponibilidad no se puede consultar sin sesión
+// (y exponer un endpoint público que responda "este correo existe" sería un
+// enumerador de usuarios), así que el duplicado lo resuelve el servidor al
+// enviar: devuelve 409 y se muestra ahí, con un enlace a iniciar sesión.
 const onEmailInput = (val) => {
-  emailValid.value = false
   errors.value.email = ''
-  clearTimeout(emailTimer)
   const email = typeof val === 'string' ? val : form.value.email
-  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    emailTimer = setTimeout(checkEmailAvailability, 700)
-  }
-}
-
-const checkEmailAvailability = async () => {
-  checkingEmail.value = true
-  await new Promise((resolve) => setTimeout(resolve, 800))
-  checkingEmail.value = false
-  emailValid.value = true
+  emailValid.value = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '')
 }
 
 // ===== Contraseña =====
@@ -762,43 +855,54 @@ const genPwd = () => {
 }
 
 // ===== Submit =====
+/**
+ * Crea el ambiente de prueba.
+ *
+ * No es un "registro" en el sentido clásico: el backend construye una empresa
+ * propia con datos de ejemplo y deja la sesión abierta como su admin de RR.HH.
+ * Por eso no hay paso intermedio de login ni pantalla de "revisa tu correo":
+ * quien viene a mirar el producto entra directo a verlo funcionando.
+ */
 const onSubmit = async () => {
   stepAttempted.value[2] = true
   if (!isStepValid(2)) return
 
   formError.value = ''
+  emailTaken.value = false
   loading.value = true
+  startProvisionNarration()
 
   try {
-    await auth.register({
+    await auth.demoSignup({
       firstName: form.value.firstName.trim(),
       lastName: form.value.lastName.trim(),
       email: form.value.email.trim().toLowerCase(),
-      password: form.value.password
+      password: form.value.password,
+      companyName: form.value.companyName.trim(),
     })
+
+    provisionIndex.value = provisionTasks.length
 
     notify({
       type: 'positive',
-      message: '¡Cuenta creada exitosamente!',
+      message: '¡Tu ambiente de prueba está listo!',
+      caption: 'Empieza por la guía de primeros pasos del panel',
       icon: 'celebration',
-      position: 'top'
+      position: 'top',
+      timeout: 4000,
     })
 
-    if (autoLogin.value) {
-      await auth.login({
-        email: form.value.email.trim().toLowerCase(),
-        password: form.value.password
-      })
-      router.replace('/')
-    } else {
-      router.replace('/login')
-    }
+    router.replace('/rrhh/dashboard')
   } catch (e) {
-    formError.value = e?.message || 'Error al crear la cuenta'
+    emailTaken.value = e?.code === 'EMAIL_TAKEN' || e?.status === 409
+    formError.value = e?.message || 'No pudimos crear tu ambiente de prueba'
   } finally {
+    stopProvisionNarration()
     loading.value = false
   }
 }
+
+onBeforeUnmount(() => stopProvisionNarration())
 
 // ===== Canvas partículas =====
 const particlesRef = ref(null)
@@ -1150,27 +1254,21 @@ body.body--dark .sidebar-step-name { color: #f1f5f9; }
 .sidebar-step--active .sidebar-step-number { color: #3b82f6; }
 .sidebar-step--done  .sidebar-step-number { color: #10b981; }
 
-/* Stats */
-.stats-row {
-  display: flex; align-items: center; justify-content: space-around;
+/* Perks del trial (reemplazan las métricas genéricas) */
+.perks-row {
+  display: flex; flex-direction: column; gap: 0.6rem;
   padding: 1rem;
   background: rgba(255,255,255,0.5);
   border: 1px solid rgba(255,255,255,0.6);
   border-radius: 14px;
 }
-body.body--dark .stats-row { background: rgba(15,23,42,0.4); border-color: rgba(51,65,85,0.3); }
-.stat-item { text-align: center; }
-.stat-value {
-  font-size: 1.25rem; font-weight: 700;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+body.body--dark .perks-row { background: rgba(15,23,42,0.4); border-color: rgba(51,65,85,0.3); }
+.perk {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.78rem; font-weight: 500; color: #475569;
 }
-.stat-label { font-size: 0.7rem; color: #64748b; font-weight: 500; margin-top: 2px; }
-body.body--dark .stat-label { color: #94a3b8; }
-.stat-divider { width: 1px; height: 28px; background: rgba(203,213,225,0.3); }
-body.body--dark .stat-divider { background: rgba(51,65,85,0.5); }
+body.body--dark .perk { color: #cbd5e1; }
+.perk .q-icon { color: #3b82f6; flex-shrink: 0; }
 
 /* ===== RIGHT ===== */
 .register-right {
@@ -1327,6 +1425,65 @@ body.body--dark .floating-input.filled .floating-label {
 }
 .field-hint--error   { color: #ef4444; background: rgba(239,68,68,0.06); }
 .field-hint--success { color: #10b981; background: rgba(16,185,129,0.07); }
+.field-hint--info    { color: #3b82f6; background: rgba(59,130,246,0.07); }
+
+/* ===== Qué incluye el ambiente de prueba ===== */
+.included-card {
+  border: 1px dashed rgba(59,130,246,0.35);
+  background: rgba(59,130,246,0.04);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+body.body--dark .included-card { background: rgba(59,130,246,0.08); }
+.included-title {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #3b82f6; margin-bottom: 0.65rem;
+}
+.included-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+.included-list li {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8125rem; color: #475569;
+}
+body.body--dark .included-list li { color: #cbd5e1; }
+.included-list .q-icon { color: #3b82f6; flex-shrink: 0; }
+
+/* ===== Overlay de aprovisionamiento ===== */
+.rk-provision {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15,23,42,0.55);
+  backdrop-filter: blur(8px);
+}
+.rk-provision__card {
+  width: 100%; max-width: 440px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 2.25rem 2rem;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+  animation: cardSlideIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+body.body--dark .rk-provision__card { background: #0f172a; }
+.rk-provision__logo { margin-bottom: 1rem; }
+.rk-provision__title { font-size: 1.2rem; font-weight: 700; margin: 0; color: #1e293b; }
+body.body--dark .rk-provision__title { color: #f1f5f9; }
+.rk-provision__sub { margin: 0.4rem 0 1.5rem; font-size: 0.85rem; color: #64748b; }
+.rk-provision__steps {
+  margin: 0; padding: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 0.7rem; text-align: left;
+}
+.rk-provision__step {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.875rem; color: #94a3b8;
+  transition: color 0.3s ease;
+}
+.rk-provision__step.is-active { color: #3b82f6; font-weight: 600; }
+.rk-provision__step.is-done { color: #10b981; }
 
 /* ===== Validation summary ===== */
 .validation-summary {
@@ -1414,6 +1571,8 @@ body.body--dark .summary-val { color: #f1f5f9; }
 body.body--dark .option-row { background: rgba(15,23,42,0.4); border-color: rgba(51,65,85,0.3); }
 .option-row:hover { background: rgba(241,245,249,0.7); border-color: rgba(203,213,225,0.4); }
 body.body--dark .option-row:hover { background: rgba(15,23,42,0.6); }
+.option-row--info { cursor: default; background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2); }
+.option-row--info:hover { background: rgba(59,130,246,0.07); }
 .option-row--required {
   border-color: rgba(245,158,11,0.5) !important;
   background: rgba(245,158,11,0.05) !important;

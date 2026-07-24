@@ -60,6 +60,11 @@
 
     <!-- Contenedor principal con padding -->
     <div class="dashboard-container">
+      <!-- Guía de primeros pasos: solo aparece en ambientes de prueba. Va antes
+           que todo lo demás porque es lo primero que necesita quien nunca vio
+           la plataforma. -->
+      <DemoChecklist />
+
       <!-- Quick Actions mejorado -->
       <div v-if="quickLinks.length" class="quick-actions-section">
         <div class="section-label">Acceso rápido</div>
@@ -507,6 +512,7 @@ import { useQuasar } from "quasar";
 import { useKpiStore } from "@/stores/kpiStore";
 import { useAuthStore } from "@/stores/authStore";
 import KpiCard from "@/components/KpiCard.vue";
+import DemoChecklist from "@/components/demo/DemoChecklist.vue";
 
 const $q = useQuasar();
 const isDark = computed(() => $q.dark.isActive);
