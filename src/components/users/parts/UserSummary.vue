@@ -132,12 +132,6 @@
           </div>
         </div>
 
-        <div class="rk-kpi" v-if="isEmployee">
-          <div class="rk-kpi-label">Imp. renta</div>
-          <div class="rk-kpi-value">
-            {{ form.payroll.incomeTaxApplies === false ? 'Exento' : 'Afecto' }}
-          </div>
-        </div>
       </div>
 
       <!-- Detalle compacto si hay Isapre -->
@@ -152,15 +146,6 @@
         </span>
       </div>
 
-      <div
-        v-if="isEmployee && form.payroll.incomeTaxApplies === false && form.payroll.incomeTaxNote"
-        class="rk-compact"
-      >
-        <q-icon name="receipt_long" size="16px" class="q-mr-xs" />
-        <span class="text-caption">
-          Exención tributaria: <b>{{ form.payroll.incomeTaxNote }}</b>
-        </span>
-      </div>
     </div>
 
     <q-separator spaced />

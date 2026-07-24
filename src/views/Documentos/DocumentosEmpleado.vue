@@ -854,8 +854,10 @@
               <div class="q-mt-md text-caption">Cargando documento...</div>
             </q-inner-loading>
 
+            <!-- El iframe debe montarse aunque loadingViewer siga en true:
+                 es su propio @load el que apaga el spinner. -->
             <iframe
-              v-if="safeUrl && !loadingViewer"
+              v-if="safeUrl"
               :src="safeUrl"
               class="rk-viewer-frame"
               @load="onIframeLoaded"
@@ -1000,6 +1002,8 @@ const dialogViewer = ref(false);
 const loadingViewer = ref(false);
 const currentDoc = ref(null);
 const safeUrl = ref("");
+// Red de seguridad: algunos visores de PDF no emiten @load en el iframe.
+let viewerLoadTimer = null;
 
 const listSection = ref(null);
 
@@ -1220,6 +1224,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   removeKeyboardShortcuts();
+  clearViewerTimer();
 });
 
 // Auto-scroll al cambiar filtros
@@ -1294,24 +1299,40 @@ function scrollToList() {
 
 async function verDocumento(row) {
   try {
+    clearViewerTimer();
     loadingViewer.value = true;
     safeUrl.value = "";
     currentDoc.value = row;
     const url = await store.getSignedUrl(row.id);
     safeUrl.value = url;
     dialogViewer.value = true;
+    // Si el iframe nunca dispara load/error, no dejamos el spinner colgado.
+    viewerLoadTimer = setTimeout(() => {
+      loadingViewer.value = false;
+      viewerLoadTimer = null;
+    }, 15000);
   } catch (e) {
+    clearViewerTimer();
     loadingViewer.value = false;
     notifyErr(e);
     dialogViewer.value = false;
   }
 }
 
+function clearViewerTimer() {
+  if (viewerLoadTimer) {
+    clearTimeout(viewerLoadTimer);
+    viewerLoadTimer = null;
+  }
+}
+
 function onIframeLoaded() {
+  clearViewerTimer();
   loadingViewer.value = false;
 }
 
 function onIframeError() {
+  clearViewerTimer();
   loadingViewer.value = false;
   $q.notify({
     type: "warning",

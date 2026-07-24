@@ -46,8 +46,6 @@ export function getEmptyUserForm() {
             isapreUf: 0,
             apv: 0,
             cargasFamiliares: [],
-            incomeTaxApplies: true,
-            incomeTaxNote: "",
             banco: "",
             tipoCuenta: "",
             numeroCuenta: "",

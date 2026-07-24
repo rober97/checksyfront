@@ -71,8 +71,6 @@ export function mapFromApi(u = {}) {
             isapreUf: u.payroll?.isapreUf ?? 0,
             apv: u.payroll?.apv ?? 0,
             cargasFamiliares: Array.isArray(u.payroll?.cargasFamiliares) ? u.payroll.cargasFamiliares : [],
-            incomeTaxApplies: u.payroll?.incomeTaxApplies !== false,
-            incomeTaxNote: u.payroll?.incomeTaxNote || "",
             banco: u.payroll?.banco || "",
             tipoCuenta: u.payroll?.tipoCuenta || "",
             numeroCuenta: u.payroll?.numeroCuenta || "",

@@ -69,263 +69,236 @@
         </div>
       </div>
 
-      <!-- Body with Splitter -->
+      <!-- Body -->
       <div class="rk-body">
-        <q-splitter
-          v-model="split"
-          :limits="[60, 75]"
-          class="rk-splitter"
-          separator-class="rk-separator"
-        >
-          <template #before>
-            <div class="rk-form-container">
-              <!-- Tabs Premium -->
-              <div class="rk-tabs-wrapper">
-                <div class="rk-tabs">
-                  <button
-                    v-for="tabItem in tabs"
-                    :key="tabItem.value"
-                    class="rk-tab"
-                    :class="{
-                      active: tab === tabItem.value,
-                      completed: isTabCompleted(tabItem.value),
-                    }"
-                    @click="tab = tabItem.value"
-                  >
-                    <div class="rk-tab-icon">
-                      <q-icon :name="tabItem.icon" />
-                      <div
-                        v-if="isTabCompleted(tabItem.value)"
-                        class="rk-tab-check"
-                      >
-                        <q-icon name="check" />
-                      </div>
-                    </div>
-                    <div class="rk-tab-content">
-                      <span class="rk-tab-label">{{ tabItem.label }}</span>
-                      <span class="rk-tab-desc">{{ tabItem.desc }}</span>
-                    </div>
-                    <div class="rk-tab-indicator"></div>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Form Content -->
-              <q-form
-                ref="formRef"
-                @submit.prevent="submitForm"
-                greedy
-                class="rk-form"
+        <div class="rk-form-container">
+          <!-- Tabs Premium -->
+          <div class="rk-tabs-wrapper">
+            <div class="rk-tabs">
+              <button
+                v-for="tabItem in tabs"
+                :key="tabItem.value"
+                class="rk-tab"
+                :class="{
+                  active: tab === tabItem.value,
+                  completed: isTabCompleted(tabItem.value),
+                }"
+                @click="tab = tabItem.value"
               >
-                <q-tab-panels
-                  v-model="tab"
-                  animated
-                  transition-prev="slide-right"
-                  transition-next="slide-left"
-                  class="rk-panels"
-                >
-                  <!-- Panel: Básicos -->
-                  <q-tab-panel name="basicos" class="rk-panel">
-                    <div class="rk-panel-header">
-                      <q-icon name="badge" class="rk-panel-icon" />
-                      <div>
-                        <h4 class="rk-panel-title">Información básica</h4>
-                        <p class="rk-panel-subtitle">
-                          Datos personales y credenciales de acceso
-                        </p>
+                <div class="rk-tab-icon">
+                  <q-icon :name="tabItem.icon" />
+                  <div
+                    v-if="isTabCompleted(tabItem.value)"
+                    class="rk-tab-check"
+                  >
+                    <q-icon name="check" />
+                  </div>
+                </div>
+                <div class="rk-tab-content">
+                  <span class="rk-tab-label">{{ tabItem.label }}</span>
+                  <span class="rk-tab-desc">{{ tabItem.desc }}</span>
+                </div>
+                <div class="rk-tab-indicator"></div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Form Content -->
+          <q-form
+            ref="formRef"
+            @submit.prevent="submitForm"
+            greedy
+            class="rk-form"
+          >
+            <q-tab-panels
+              v-model="tab"
+              animated
+              transition-prev="slide-right"
+              transition-next="slide-left"
+              class="rk-panels"
+            >
+              <!-- Panel: Básicos -->
+              <q-tab-panel name="basicos" class="rk-panel">
+                <div class="rk-panel-header">
+                  <q-icon name="badge" class="rk-panel-icon" />
+                  <div>
+                    <h4 class="rk-panel-title">Información básica</h4>
+                    <p class="rk-panel-subtitle">
+                      Datos personales y credenciales de acceso
+                    </p>
+                  </div>
+                </div>
+
+                <UserBasicsForm
+                  :model-value="form"
+                  @update:model-value="onBasicsPatch"
+                  :empresas-raw="empresasRaw"
+                  :require-password="!isEditMode"
+                  :horarios="horarios"
+                  :loading-horarios="loadingHorarios"
+                  :approver-options="approverOptions"
+                  @tipo-change="onTipoChange"
+                />
+
+                <!-- Password Card Premium -->
+                <div v-if="!isEditMode" class="rk-password-card">
+                  <div class="rk-password-header">
+                    <div class="rk-password-icon">
+                      <q-icon name="key" />
+                    </div>
+
+                    <div class="rk-password-info">
+                      <h5 class="rk-password-title">
+                        Seguridad de contraseña
+                      </h5>
+                      <div class="rk-password-strength">
+                        <div class="rk-strength-bar-container">
+                          <div
+                            class="rk-strength-bar"
+                            :class="`rk-strength-${passwordStrength}`"
+                            :style="{ width: passwordScore * 100 + '%' }"
+                          ></div>
+                        </div>
+                        <span
+                          class="rk-strength-label"
+                          :class="`rk-strength-${passwordStrength}`"
+                        >
+                          {{ passwordLabel }}
+                        </span>
                       </div>
                     </div>
 
-                    <UserBasicsForm
-                      :model-value="form"
-                      @update:model-value="onBasicsPatch"
-                      :require-password="!isEditMode"
-                      :horarios="horarios"
-                      :loading-horarios="loadingHorarios"
-                      :approver-options="approverOptions"
-                      @tipo-change="onTipoChange"
+                    <q-btn
+                      unelevated
+                      no-caps
+                      color="primary"
+                      icon="auto_fix_high"
+                      label="Generar"
+                      @click="generarPassword"
+                      class="rk-generate-btn"
                     />
+                  </div>
 
-                    <!-- Password Card Premium -->
-                    <div v-if="!isEditMode" class="rk-password-card">
-                      <div class="rk-password-header">
-                        <div class="rk-password-icon">
-                          <q-icon name="key" />
-                        </div>
-
-                        <div class="rk-password-info">
-                          <h5 class="rk-password-title">
-                            Seguridad de contraseña
-                          </h5>
-                          <div class="rk-password-strength">
-                            <div class="rk-strength-bar-container">
-                              <div
-                                class="rk-strength-bar"
-                                :class="`rk-strength-${passwordStrength}`"
-                                :style="{ width: passwordScore * 100 + '%' }"
-                              ></div>
-                            </div>
-                            <span
-                              class="rk-strength-label"
-                              :class="`rk-strength-${passwordStrength}`"
-                            >
-                              {{ passwordLabel }}
-                            </span>
+                  <div class="rk-invite-toggle">
+                    <q-checkbox v-model="invitar" class="rk-checkbox">
+                      <template #default>
+                        <div class="rk-checkbox-content">
+                          <div class="rk-checkbox-icon">
+                            <q-icon name="email" />
+                          </div>
+                          <div>
+                            <strong>Enviar invitación por correo</strong>
+                            <p>
+                              El usuario recibirá un email con sus
+                              credenciales de acceso
+                            </p>
                           </div>
                         </div>
-
-                        <q-btn
-                          unelevated
-                          no-caps
-                          color="primary"
-                          icon="auto_fix_high"
-                          label="Generar"
-                          @click="generarPassword"
-                          class="rk-generate-btn"
-                        />
-                      </div>
-
-                      <div class="rk-invite-toggle">
-                        <q-checkbox v-model="invitar" class="rk-checkbox">
-                          <template #default>
-                            <div class="rk-checkbox-content">
-                              <div class="rk-checkbox-icon">
-                                <q-icon name="email" />
-                              </div>
-                              <div>
-                                <strong>Enviar invitación por correo</strong>
-                                <p>
-                                  El usuario recibirá un email con sus
-                                  credenciales de acceso
-                                </p>
-                              </div>
-                            </div>
-                          </template>
-                        </q-checkbox>
-                      </div>
-                    </div>
-                  </q-tab-panel>
-
-                  <!-- Panel: Personal (Art. 10) -->
-                  <q-tab-panel name="personal" class="rk-panel">
-                    <div class="rk-panel-header">
-                      <q-icon name="person_pin" class="rk-panel-icon" />
-                      <div>
-                        <h4 class="rk-panel-title">Datos personales</h4>
-                        <p class="rk-panel-subtitle">
-                          Requeridos por el Art. 10 del Código del Trabajo para emitir contrato
-                        </p>
-                      </div>
-                    </div>
-
-                    <UserPersonalForm
-                      v-model="form.personalData"
-                      :is-employee="form.tipo === 'empleado'"
-                      :can-upload-doc="isEditMode"
-                      @upload-tutorDoc="onTutorDocUpload"
-                    />
-                  </q-tab-panel>
-
-                  <!-- Panel: Contrato -->
-                  <q-tab-panel name="contrato" class="rk-panel">
-                    <div class="rk-panel-header">
-                      <q-icon name="work" class="rk-panel-icon" />
-                      <div>
-                        <h4 class="rk-panel-title">Contrato y remuneración</h4>
-                        <p class="rk-panel-subtitle">
-                          Detalles laborales y datos de nómina
-                        </p>
-                      </div>
-                    </div>
-
-                    <!-- 👇 Aquí viene lo dinámico -->
-                    <UserContractForm
-                      v-model="form.payroll"
-                      :loading-catalog="loadingCatalog"
-                      :afp-options="afpOptions"
-                      :health-options="healthOptions"
-                      :health-selected-meta="
-                        payrollCatalogStore.getHealthMetaById(
-                          form.payroll.healthEntityId,
-                        )
-                      "
-                      :can-upload-doc="isEditMode"
-                      :overridden-value-paths="overriddenValuePaths"
-                      @upload-cargaDoc="onCargaUpload"
-                    />
-
-                    <div v-if="catalogError" class="rk-catalog-error">
-                      <q-icon name="error" />
-                      <div>
-                        <strong>No se pudo cargar el catálogo de nómina</strong>
-                        <p>{{ catalogError }}</p>
-                      </div>
-                      <q-btn
-                        flat
-                        icon="refresh"
-                        label="Reintentar"
-                        @click="loadPayrollCatalog()"
-                      />
-                    </div>
-                  </q-tab-panel>
-
-                  <!-- Panel: Contacto -->
-                  <q-tab-panel name="contacto" class="rk-panel">
-                    <div class="rk-panel-header">
-                      <q-icon name="home" class="rk-panel-icon" />
-                      <div>
-                        <h4 class="rk-panel-title">Dirección y contacto</h4>
-                        <p class="rk-panel-subtitle">
-                          Información de ubicación y contacto de emergencia
-                        </p>
-                      </div>
-                    </div>
-                    <UserContactForm v-model="form" />
-                  </q-tab-panel>
-
-                  <!-- Panel: Turnos (solo turnos por demanda, en edición) -->
-                  <q-tab-panel v-if="showShiftsTab" name="turnos" class="rk-panel">
-                    <div class="rk-panel-header">
-                      <q-icon name="event_available" class="rk-panel-icon" />
-                      <div>
-                        <h4 class="rk-panel-title">Turnos programados</h4>
-                        <p class="rk-panel-subtitle">
-                          Empleado con turnos por demanda · agenda fechas y horas específicas.
-                          Se enviarán recordatorios automáticos en su app móvil.
-                        </p>
-                      </div>
-                    </div>
-                    <ShiftCalendar
-                      :user-id="props.userId"
-                      :company-id="form.empresa"
-                      :schedule-id="form.workScheduleChoice?.scheduleId"
-                    />
-                  </q-tab-panel>
-
-                </q-tab-panels>
-              </q-form>
-            </div>
-          </template>
-
-          <template #after>
-            <div class="rk-summary-container">
-              <div class="rk-summary-header">
-                <div class="rk-summary-icon">
-                  <q-icon name="preview" />
+                      </template>
+                    </q-checkbox>
+                  </div>
                 </div>
-                <div>
-                  <h4 class="rk-summary-title">Vista previa</h4>
-                  <p class="rk-summary-subtitle">Resumen de la información</p>
+              </q-tab-panel>
+
+              <!-- Panel: Personal (Art. 10) -->
+              <q-tab-panel name="personal" class="rk-panel">
+                <div class="rk-panel-header">
+                  <q-icon name="person_pin" class="rk-panel-icon" />
+                  <div>
+                    <h4 class="rk-panel-title">Datos personales</h4>
+                    <p class="rk-panel-subtitle">
+                      Requeridos por el Art. 10 del Código del Trabajo para emitir contrato
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <UserSummary
-                class="rk-summary-content"
-                :form="form"
-                :empresas-raw="empresasRaw"
-              />
-            </div>
-          </template>
-        </q-splitter>
+
+                <UserPersonalForm
+                  v-model="form.personalData"
+                  :is-employee="form.tipo === 'empleado'"
+                  :can-upload-doc="isEditMode"
+                  @upload-tutorDoc="onTutorDocUpload"
+                />
+              </q-tab-panel>
+
+              <!-- Panel: Contrato -->
+              <q-tab-panel name="contrato" class="rk-panel">
+                <div class="rk-panel-header">
+                  <q-icon name="work" class="rk-panel-icon" />
+                  <div>
+                    <h4 class="rk-panel-title">Contrato y remuneración</h4>
+                    <p class="rk-panel-subtitle">
+                      Detalles laborales y datos de nómina
+                    </p>
+                  </div>
+                </div>
+
+                <!-- 👇 Aquí viene lo dinámico -->
+                <UserContractForm
+                  v-model="form.payroll"
+                  :loading-catalog="loadingCatalog"
+                  :afp-options="afpOptions"
+                  :health-options="healthOptions"
+                  :health-selected-meta="
+                    payrollCatalogStore.getHealthMetaById(
+                      form.payroll.healthEntityId,
+                    )
+                  "
+                  :can-upload-doc="isEditMode"
+                  :overridden-value-paths="overriddenValuePaths"
+                  @upload-cargaDoc="onCargaUpload"
+                />
+
+                <div v-if="catalogError" class="rk-catalog-error">
+                  <q-icon name="error" />
+                  <div>
+                    <strong>No se pudo cargar el catálogo de nómina</strong>
+                    <p>{{ catalogError }}</p>
+                  </div>
+                  <q-btn
+                    flat
+                    icon="refresh"
+                    label="Reintentar"
+                    @click="loadPayrollCatalog()"
+                  />
+                </div>
+              </q-tab-panel>
+
+              <!-- Panel: Contacto -->
+              <q-tab-panel name="contacto" class="rk-panel">
+                <div class="rk-panel-header">
+                  <q-icon name="home" class="rk-panel-icon" />
+                  <div>
+                    <h4 class="rk-panel-title">Dirección y contacto</h4>
+                    <p class="rk-panel-subtitle">
+                      Información de ubicación y contacto de emergencia
+                    </p>
+                  </div>
+                </div>
+                <UserContactForm v-model="form" />
+              </q-tab-panel>
+
+              <!-- Panel: Turnos (solo turnos por demanda, en edición) -->
+              <q-tab-panel v-if="showShiftsTab" name="turnos" class="rk-panel">
+                <div class="rk-panel-header">
+                  <q-icon name="event_available" class="rk-panel-icon" />
+                  <div>
+                    <h4 class="rk-panel-title">Turnos programados</h4>
+                    <p class="rk-panel-subtitle">
+                      Empleado con turnos por demanda · agenda fechas y horas específicas.
+                      Se enviarán recordatorios automáticos en su app móvil.
+                    </p>
+                  </div>
+                </div>
+                <ShiftCalendar
+                  :user-id="props.userId"
+                  :company-id="form.empresa"
+                  :schedule-id="form.workScheduleChoice?.scheduleId"
+                />
+              </q-tab-panel>
+
+            </q-tab-panels>
+          </q-form>
+        </div>
       </div>
 
       <!-- Footer Actions -->
@@ -441,7 +414,6 @@ import UserBasicsForm from "./users/parts/UserBasicsForm.vue";
 import UserPersonalForm from "./users/parts/UserPersonalForm.vue";
 import UserContractForm from "./users/parts/UserContractForm.vue";
 import UserContactForm from "./users/parts/UserContactForm.vue";
-import UserSummary from "./users/parts/UserSummary.vue";
 import ShiftCalendar from "./users/ShiftCalendar.vue";
 
 const $q = useQuasar();
@@ -467,7 +439,6 @@ const dialogVisible = computed({
 
 const formRef = ref(null);
 const tab = ref("basicos");
-const split = ref(65);
 const saving = ref(false);
 const invitar = ref(true);
 const pwdDialog = ref(false);
@@ -601,7 +572,6 @@ watch(
     if (!val) return;
 
     tab.value = "basicos";
-    split.value = 65;
     form.value = getEmptyForm();
     original = null;
     audit.value = { createdAt: null, updatedAt: null, lastLogin: null };
@@ -1139,8 +1109,6 @@ function mapPayload(f) {
       cargasFamiliares: Array.isArray(f.payroll?.cargasFamiliares)
         ? f.payroll.cargasFamiliares
         : [],
-      incomeTaxApplies: f.payroll?.incomeTaxApplies !== false,
-      incomeTaxNote: f.payroll?.incomeTaxNote?.trim() || "",
       banco: f.payroll?.banco || "",
       tipoCuenta: f.payroll?.tipoCuenta || "",
       numeroCuenta: f.payroll?.numeroCuenta || "",
@@ -1222,8 +1190,6 @@ function getEmptyForm() {
       isapreUf: 0,
       apv: 0,
       cargasFamiliares: [],
-      incomeTaxApplies: true,
-      incomeTaxNote: "",
       banco: "",
       tipoCuenta: "",
       numeroCuenta: "",
@@ -1543,7 +1509,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 }
 
 /* ══════════════════════════════════════════════════
-   BODY + SPLITTER
+   BODY
 ══════════════════════════════════════════════════ */
 .rk-body {
   flex: 1;
@@ -1552,22 +1518,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   background: var(--rk-bg);
   min-height: 0;
 }
-.rk-splitter {
-  height: 100%;
-  background: transparent;
-}
-.rk-splitter :deep(.q-splitter__separator) {
-  width: 1px;
-  background: var(--rk-border);
-}
-.rk-splitter :deep(.q-splitter__before),
-.rk-splitter :deep(.q-splitter__after) {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 /* Scrollbars unificados para TODOS los contenedores con scroll
-   dentro del modal (splitter, paneles de tabs, summary). */
+   dentro del modal (paneles de tabs). */
 .rk-user-dialog :deep(*)::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -1896,51 +1848,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 }
 
 /* ══════════════════════════════════════════════════
-   SUMMARY (right pane)
-══════════════════════════════════════════════════ */
-.rk-summary-container {
-  height: 100%;
-  padding: 16px 20px;
-  background: var(--rk-surface);
-  border-left: 1px solid var(--rk-border);
-  overflow-y: auto;
-}
-.rk-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rk-border);
-}
-.rk-summary-icon {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--rk-accent-soft);
-  color: var(--rk-accent);
-  border-radius: 9px;
-  flex-shrink: 0;
-}
-.rk-summary-icon .q-icon { font-size: 17px; }
-.rk-summary-title {
-  font-size: 14px;
-  font-weight: 700;
-  margin: 0;
-  color: var(--rk-text);
-  letter-spacing: -0.1px;
-  line-height: 1.25;
-}
-.rk-summary-subtitle {
-  font-size: 11.5px;
-  color: var(--rk-text-2);
-  margin: 2px 0 0 0;
-  font-weight: 500;
-}
-
-/* ══════════════════════════════════════════════════
    FOOTER
 ══════════════════════════════════════════════════ */
 .rk-footer {
@@ -2057,10 +1964,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
 /* ══════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════ */
-@media (max-width: 1023px) {
-  .rk-summary-container { display: none; }
-}
-
 @media (max-width: 767px) {
   .rk-user-dialog {
     width: 100vw;
@@ -2076,7 +1979,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", hotkeys));
   .rk-tab { border-radius: 8px; }
   .rk-tab-indicator { display: none; }
   .rk-panel { padding: 12px 14px; }
-  .rk-summary-container { padding: 12px 14px; }
   .rk-footer {
     flex-direction: column;
     align-items: stretch;

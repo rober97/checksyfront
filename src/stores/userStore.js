@@ -39,13 +39,7 @@ function normalizePayroll(payroll = {}, role = 'empleado') {
   const isapreUf = Number(normalizeDecimal(payroll?.isapreUf || 0))
   const apv = normalizeMoney(payroll?.apv || 0)
   const cargasFamiliares = Number(payroll?.cargasFamiliares || 0)
-  const incomeTaxNote = cleanText(payroll?.incomeTaxNote, '') || ''
-  const explicitIncomeTax = typeof payroll?.incomeTaxApplies === 'boolean'
-    ? payroll.incomeTaxApplies
-    : null
-
   const isEmployee = role === 'empleado'
-  const incomeTaxApplies = explicitIncomeTax ?? (isEmployee && incomeTaxNote === '' && baseSalary > 0)
 
   const normalized = {
     baseSalary,
@@ -59,8 +53,6 @@ function normalizePayroll(payroll = {}, role = 'empleado') {
     isapreUf,
     apv,
     cargasFamiliares,
-    incomeTaxApplies: isEmployee ? incomeTaxApplies : false,
-    incomeTaxNote: isEmployee && !incomeTaxApplies ? incomeTaxNote : '',
     banco: cleanText(payroll?.banco, ''),
     tipoCuenta: cleanText(payroll?.tipoCuenta, ''),
     numeroCuenta: cleanText(payroll?.numeroCuenta, ''),

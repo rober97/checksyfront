@@ -384,37 +384,6 @@
       </section>
     </div>
 
-    <div class="col-12 col-sm-8">
-      <div class="rk-tax-box">
-        <div class="rk-tax-box__head">
-          <q-icon name="request_quote" size="18px" />
-          <div>
-            <div class="rk-tax-box__title">Impuesto a la renta</div>
-            <div class="rk-tax-box__subtitle">
-              Marca si este trabajador debe participar en el cálculo del impuesto único cuando corresponda.
-            </div>
-          </div>
-        </div>
-
-        <div class="rk-tax-box__controls">
-          <q-toggle
-            v-model="local.incomeTaxApplies"
-            color="primary"
-            label="Empleado afecto a impuesto"
-          />
-
-          <q-input
-            v-model="local.incomeTaxNote"
-            dense
-            outlined
-            label="Observación tributaria"
-            placeholder="Ej: exento por régimen especial"
-            :disable="local.incomeTaxApplies"
-          />
-        </div>
-      </div>
-    </div>
-
     <div class="col-12">
       <section class="rk-form-section">
         <div class="rk-form-section__header">
@@ -733,14 +702,6 @@ watch(
   { immediate: true }
 );
 
-watch(
-  () => local.incomeTaxApplies,
-  (enabled) => {
-    if (enabled) local.incomeTaxNote = "";
-  },
-  { immediate: true }
-);
-
 // Autosugerencia: al elegir/cambiar el tipo de jornada, si las horas están en 0
 // (campo no tocado), precargamos un valor coherente. Nunca pisa un valor ya escrito.
 watch(
@@ -902,55 +863,6 @@ watch(
 }
 
 /* ══════════════════════════════════════════════════
-   TAX BOX — destacado pero neutro
-══════════════════════════════════════════════════ */
-.rk-tax-box {
-  border: 1px solid var(--rk-border);
-  border-radius: 12px;
-  background: var(--rk-surface);
-  padding: 14px 16px;
-}
-
-.rk-tax-box__head {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
-  color: var(--rk-text);
-}
-.rk-tax-box__head .q-icon {
-  color: var(--rk-accent);
-  margin-top: 1px;
-}
-
-.rk-tax-box__title {
-  font-weight: 700;
-  line-height: 1.25;
-  font-size: 13px;
-  color: var(--rk-text);
-}
-
-.rk-tax-box__subtitle {
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: var(--rk-text-2);
-  margin-top: 1px;
-  font-weight: 500;
-}
-
-.rk-tax-box__controls {
-  display: grid;
-  grid-template-columns: minmax(220px, 260px) minmax(220px, 1fr);
-  gap: 10px 12px;
-  align-items: center;
-}
-.rk-tax-box__controls :deep(.q-toggle__label) {
-  font-size: 12.5px;
-  color: var(--rk-text);
-  font-weight: 500;
-}
-
-/* ══════════════════════════════════════════════════
    EXTRA BOX (haberes/descuentos)
 ══════════════════════════════════════════════════ */
 .rk-extra-box {
@@ -974,9 +886,6 @@ watch(
 }
 
 @media (max-width: 768px) {
-  .rk-tax-box__controls {
-    grid-template-columns: 1fr;
-  }
   .rk-form-section {
     padding: 12px 14px;
   }

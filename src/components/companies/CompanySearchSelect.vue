@@ -4,7 +4,7 @@
     ref="selRef"
     v-model="innerValue"
     :label="label"
-    :options="options"
+    :options="displayOptions"
     option-value="_id"
     option-label="name"
     dense
@@ -133,19 +133,6 @@ const emit = defineEmits(["update:modelValue", "created", "creation-error"]);
 
 const $q = useQuasar();
 
-/* v-model */
-const innerValue = ref(props.modelValue ?? null);
-watch(
-  () => props.modelValue,
-  (v) => {
-    innerValue.value = v;
-  }
-);
-watch(innerValue, (v) => {
-  suppressNextEmptyFilter.value = true; // evita limpiar tras seleccionar
-  emit("update:modelValue", v);
-});
-
 /* estado */
 const selRef = ref(null);
 const isOpen = ref(false);
@@ -153,17 +140,72 @@ const options = ref([]);
 const loading = ref(false);
 const query = ref("");
 const lastSearched = ref("");
+// Empresa ya seleccionada (modo edición): sin ella en `options`,
+// map-options no puede traducir el _id y el campo muestra el id crudo.
+const selectedCompany = ref(null);
 
 /* derivados */
 const hasSearched = computed(() => lastSearched.value.length >= props.minChars);
 const displayQuery = computed(
   () => (hasSearched.value ? lastSearched.value : query.value) || ""
 );
+const displayOptions = computed(() => {
+  const sel = selectedCompany.value;
+  if (!sel?._id) return options.value;
+  return options.value.some((o) => String(o._id) === String(sel._id))
+    ? options.value
+    : [sel, ...options.value];
+});
 
 /* anti-loop / rendimiento */
 const cache = new Map(); // q -> items[]
 let inFlight = null; // AbortController
 const suppressNextEmptyFilter = ref(false);
+
+/* Resuelve el nombre de la empresa asignada para poder mostrarlo */
+async function hydrateSelected(v) {
+  if (!v) {
+    selectedCompany.value = null;
+    return;
+  }
+  // El padre puede entregar el objeto completo o solo el id
+  if (typeof v === "object") {
+    if (v._id && v.name) selectedCompany.value = v;
+    return;
+  }
+  const id = String(v);
+  if (String(selectedCompany.value?._id || "") === id) return;
+  const known =
+    options.value.find((o) => String(o._id) === id) ||
+    [...cache.values()].flat().find((o) => String(o._id) === id);
+  if (known) {
+    selectedCompany.value = known;
+    return;
+  }
+  try {
+    const { data } = await secureAxios.get(`/companies/${id}`);
+    const company = data?.company;
+    if (company?._id) selectedCompany.value = company;
+  } catch (err) {
+    // Sin permiso o empresa inexistente: dejamos el campo sin etiqueta
+    console.warn("No se pudo resolver la empresa asignada:", err);
+  }
+}
+
+/* v-model */
+const innerValue = ref(props.modelValue ?? null);
+watch(
+  () => props.modelValue,
+  (v) => {
+    innerValue.value = v;
+    hydrateSelected(v);
+  },
+  { immediate: true }
+);
+watch(innerValue, (v) => {
+  suppressNextEmptyFilter.value = true; // evita limpiar tras seleccionar
+  emit("update:modelValue", v);
+});
 
 function onFilter(val, update) {
   const q = (val || "").trim();
