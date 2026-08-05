@@ -99,20 +99,14 @@ export function buildSummaryGroups(weekly) {
 /* ----------------------------------------------------------------------------
    Horas de contrato sugeridas según el tipo de jornada. Sólo es una SUGERENCIA
    para precargar el campo numérico; el admin siempre puede ajustar el número real.
-   El máximo legal vigente lo define la Ley 21.561 (44 h hasta 04/2026, luego 42, luego 40).
----------------------------------------------------------------------------- */
-export function legalWeeklyLimitForDate(date = new Date()) {
-  const d = date instanceof Date ? date : new Date(date)
-  const year = d.getFullYear()
-  const m = d.getMonth() + 1
-  const day = d.getDate()
-  if (year > 2028 || (year === 2028 && (m > 4 || (m === 4 && day >= 26)))) return 40
-  if (year > 2026 || (year === 2026 && (m > 4 || (m === 4 && day >= 26)))) return 42
-  return 44
-}
 
-export function suggestedContractHours(jornada, refDate = new Date()) {
-  const limit = legalWeeklyLimitForDate(refDate)
+   El máximo legal NO se calcula aquí: llega como parámetro desde el store
+   `legalParams`, que lo lee del backend (payroll_params con vigencia). Si la web
+   guardara su propia tabla de la Ley 21.561, un cambio de ley obligaría a
+   recordar actualizarla en dos lugares.
+---------------------------------------------------------------------------- */
+export function suggestedContractHours(jornada, weeklyLimit = null) {
+  const limit = Number(weeklyLimit) > 0 ? Number(weeklyLimit) : 0
   switch (jornada) {
     case 'completa': return limit   // jornada completa = máximo legal vigente
     case 'parcial':  return 30      // part-time típico (≤ 30 h, art. 40 bis CT)
@@ -130,6 +124,5 @@ export default {
   weeklyTotalHours,
   weeklyTotalHoursLabel,
   buildSummaryGroups,
-  legalWeeklyLimitForDate,
   suggestedContractHours,
 }

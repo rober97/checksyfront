@@ -251,6 +251,51 @@
               <template #prepend><q-icon name="map" /></template>
             </q-input>
           </div>
+
+          <!-- Local/sucursal: la DT exige poder buscar por "local" en los reportes -->
+          <div class="col-12 col-sm-6">
+            <q-input
+              v-model="local.sucursal"
+              label="Local / sucursal"
+              dense outlined clearable
+              class="rk-field"
+              placeholder="Ej: Local Providencia, Bodega Pudahuel"
+              hint="Parámetro de búsqueda de los reportes DT"
+            >
+              <template #prepend><q-icon name="store" /></template>
+            </q-input>
+          </div>
+
+          <!-- Modalidad: habilita la alerta de derecho a desconexión -->
+          <div class="col-12 col-sm-6">
+            <q-select
+              v-model="local.modalidadTrabajo"
+              :options="modalidadTrabajoOptions"
+              label="Modalidad de prestación"
+              dense outlined
+              emit-value map-options
+              class="rk-field"
+              hint="A distancia o teletrabajo activa la alerta de derecho a desconexión (Art. 152 quáter J)"
+            >
+              <template #prepend><q-icon name="home_work" /></template>
+            </q-select>
+          </div>
+
+          <div v-if="isRemoteWork" class="col-12 col-sm-6">
+            <q-input
+              v-model.number="local.desconexionHoras"
+              type="number"
+              label="Horas continuas de desconexión"
+              dense outlined
+              class="rk-field"
+              :min="12"
+              :max="24"
+              :rules="desconexionRules"
+              hint="Mínimo legal: 12 horas continuas en cada período de 24 horas"
+            >
+              <template #prepend><q-icon name="bedtime" /></template>
+            </q-input>
+          </div>
         </div>
       </section>
     </div>
@@ -520,12 +565,13 @@
 </template>
 
 <script setup>
-import { reactive, watch, computed, nextTick } from "vue";
+import { reactive, watch, computed, nextTick, onMounted } from "vue";
 import { normalizeMoney, normalizeDecimal, formatMoney } from "@/utils/format";
 import { req, reqNumber, fechaPasada } from "@/utils/validators";
-import { legalWeeklyLimitForDate, suggestedContractHours } from "@/utils/workHours";
+import { suggestedContractHours } from "@/utils/workHours";
 import UserCargasForm from "./UserCargasForm.vue";
 import { useChileAddress } from "@/composables/useChileAddress.js";
+import { useLegalParamsStore } from "@/stores/legalParams";
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -567,21 +613,47 @@ const jornadaArtOptions = [
   { label: "Art. 38 (excepciones turno)", value: "art38" },
 ];
 
+/* Modalidad de prestación de servicios (Art. 152 quáter G y ss.) */
+const modalidadTrabajoOptions = [
+  { label: "Presencial", value: "presencial" },
+  { label: "Trabajo a distancia", value: "distancia" },
+  { label: "Teletrabajo", value: "teletrabajo" },
+];
+
+const isRemoteWork = computed(() =>
+  ['distancia', 'teletrabajo'].includes(String(local.modalidadTrabajo || ''))
+);
+
+const desconexionRules = [
+  (v) => (Number(v) >= 12) || 'El mínimo legal es 12 horas continuas (Art. 152 quáter J)',
+  (v) => (Number(v) <= 24) || 'No puede exceder 24 horas',
+];
+
 const requiresEndDate = computed(() =>
   ['plazo_fijo', 'obra_faena'].includes(String(local.contractType || '').toLowerCase())
 );
 
-/* ---- Horas semanales de contrato (fuente de verdad de la jornada) ---- */
-const legalLimit = computed(() => legalWeeklyLimitForDate(new Date()));
+/* ---- Horas semanales de contrato (fuente de verdad de la jornada) ----
+   El máximo legal vigente viene del backend (parámetro con vigencia), no de una
+   constante en el front. Mientras no haya cargado es null y no se valida contra
+   un número inventado. */
+const legalParams = useLegalParamsStore();
+onMounted(() => legalParams.fetch());
+const legalLimit = computed(() => legalParams.value('JORNADA_ORDINARIA_SEMANAL'));
 const contractHoursHint = computed(() => {
   const h = Number(local.weeklyContractHours || 0);
+  if (!legalLimit.value) return 'Jornada ordinaria pactada en el contrato.';
   if (!h) return `Jornada ordinaria pactada. Máx. legal vigente: ${legalLimit.value} h/sem.`;
   if (h > legalLimit.value) return `⚠ Supera el máximo legal vigente (${legalLimit.value} h/sem).`;
   return `Máx. legal vigente: ${legalLimit.value} h/sem. Las plantillas no podrán exceder este valor.`;
 });
 const contractHoursRules = [
   (v) => v === null || v === '' || Number(v) >= 0 || 'No puede ser negativo',
-  (v) => !v || Number(v) <= legalLimit.value || `No puede exceder el máximo legal (${legalLimit.value} h/sem)`,
+  (v) =>
+    !v ||
+    !legalLimit.value ||
+    Number(v) <= legalLimit.value ||
+    `No puede exceder el máximo legal (${legalLimit.value} h/sem)`,
 ];
 
 /* ---- Conceptos que sobreescriben los montos recurrentes del contrato ---- */
@@ -636,6 +708,9 @@ function normalizeIncoming(v = {}) {
     ...(v?.lugarTrabajo || {}),
   }
   out.jornadaArt = out.jornadaArt || 'normal'
+  out.sucursal = out.sucursal || ''
+  out.modalidadTrabajo = out.modalidadTrabajo || 'presencial'
+  out.desconexionHoras = Number(out.desconexionHoras || 12)
   out.weeklyContractHours = Number(out.weeklyContractHours || 0)
   out.endDate = out.endDate ? String(out.endDate).slice(0, 10) : ''
   return out
@@ -708,7 +783,7 @@ watch(
   () => local.jornada,
   (j) => {
     if (!Number(local.weeklyContractHours || 0)) {
-      const suggested = suggestedContractHours(j);
+      const suggested = suggestedContractHours(j, legalLimit.value);
       if (suggested) local.weeklyContractHours = suggested;
     }
   }

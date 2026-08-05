@@ -63,6 +63,8 @@ export const useDtStore = defineStore('dt', {
     inspectorTokens: [],
     lastVerify: null,
     consent: null,
+    // Opciones de los parámetros de búsqueda DT (cargos, locales, turnos)
+    reportFilterOptions: { cargos: [], sucursales: [], turnos: [] },
   }),
 
   actions: {
@@ -95,6 +97,21 @@ export const useDtStore = defineStore('dt', {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * Catálogo para los selectores de búsqueda DT: cargos, locales y turnos
+     * reales de la empresa (Dict. 2927/58 §2.9.7).
+     */
+    async fetchReportFilters(params = {}) {
+      const qs = buildQuery(params)
+      const { data } = await secureAxios.get(`/dt/report-filters${qs ? '?' + qs : ''}`)
+      this.reportFilterOptions = {
+        cargos: data.cargos || [],
+        sucursales: data.sucursales || [],
+        turnos: data.turnos || [],
+      }
+      return this.reportFilterOptions
     },
 
     /** Gestión de tokens de fiscalizador DT */

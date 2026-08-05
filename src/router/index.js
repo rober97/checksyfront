@@ -67,6 +67,7 @@ const SuperadminDashboard = () => import(/* webpackChunkName:"superadmin" */ '@/
 const SuperadminEmpresas = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Empresas.vue')
 const SuperadminAdminsRrhh = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/AdminsRrhh.vue')
 const SuperadminAnalitica = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Analitica.vue')
+const SuperadminParametrosLegales = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/ParametrosLegales.vue')
 
 // ====== Utilidades de autorización y navegación
 const BASE = process.env.BASE_URL || '/'
@@ -182,6 +183,7 @@ const routes = [
       { path: 'empresas/:id', name: 'SuperadminEmpresaDetail', component: CompanyDetail, props: true, meta: { title: 'Detalle empresa' } },
       { path: 'admins-rrhh', name: 'SuperadminAdminsRrhh', component: SuperadminAdminsRrhh, meta: { title: 'Administradores RR.HH.' } },
       { path: 'analitica', name: 'SuperadminAnalitica', component: SuperadminAnalitica, meta: { title: 'Analítica web' } },
+      { path: 'parametros-legales', name: 'SuperadminParametrosLegales', component: SuperadminParametrosLegales, meta: { title: 'Parámetros legales' } },
       // Reportes y herramientas DT globales
       { path: 'dt/reportes', name: 'SuperadminDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT (global)' } },
       { path: 'dt/libro', name: 'SuperadminDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },

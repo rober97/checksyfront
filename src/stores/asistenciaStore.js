@@ -17,6 +17,17 @@ function normalizeMood (mood) {
   return map[m] || m
 }
 
+/**
+ * Id idempotente por marca. Permite reintentar la sincronización de una marca
+ * offline sin duplicarla en el libro (el backend indexa clientMarkId como único).
+ */
+function makeClientMarkId () {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 function toQuery (obj) {
   return Object.fromEntries(
     Object.entries(obj).filter(([_, v]) => v !== undefined && v !== null && v !== '')
@@ -124,7 +135,12 @@ export const useAsistenciaStore = defineStore('asistencia', {
       note = '',
       ubicacion = null,     // { lat, lng }
       timestamp = Date.now(),
-      client = null
+      client = null,
+      // Traza offline: si la marca se capturó sin conexión, `capturedAt` es la
+      // hora REAL del evento y manda sobre el reloj del servidor.
+      deferred = false,
+      capturedAt = null,
+      clientMarkId = ''
     }) {
       if (!userId || !tipo || !mood) {
         throw new Error('Faltan campos obligatorios (userId, tipo, mood)')
@@ -150,7 +166,12 @@ export const useAsistenciaStore = defineStore('asistencia', {
           note: note ?? '',
           ubicacion: ubic,
           timestamp,
-          client: clientInfo
+          client: clientInfo,
+          // Zona horaria del dispositivo: el backend la necesita para fijar el
+          // día calendario local de la marca (dayKey).
+          tzOffset: -new Date().getTimezoneOffset(),
+          ...(deferred ? { deferred: true, capturedAt: capturedAt || timestamp } : {}),
+          ...(clientMarkId ? { clientMarkId } : {})
         }
 
         const res = await secureAxios.post('/attendance/new', payload)
@@ -284,31 +305,39 @@ export const useAsistenciaStore = defineStore('asistencia', {
     },
 
     /**
-     * Sincroniza pendientes locales.
-     * 1) Intenta endpoint masivo POST /attendance/bulk
-     * 2) Si falla/no existe, envía uno a uno con crearAsistencia()
+     * Sincroniza las marcas que quedaron pendientes por falta de conexión.
+     *
+     * Van una a una por POST /attendance/new con la traza offline
+     * ({ deferred, capturedAt, clientMarkId }), que es el único camino sellado:
+     *  - conserva la hora REAL del evento (capturedAt manda como hora oficial),
+     *  - la sella como capturada sin conexión (captureMode 'offline', hash v5),
+     *  - es idempotente: si el reintento repite un clientMarkId no se duplica,
+     *  - emite comprobante y queda en la bitácora.
+     *
+     * Antes había un intento previo contra POST /attendance/bulk, que insertaba
+     * sin identidad, sin cadena de hashes ni bitácora. Ese endpoint ya no existe.
      */
     async syncPending (pendientes) {
       if (!Array.isArray(pendientes) || pendientes.length === 0) return { ok: 0, fail: 0 }
-      const payload = pendientes.map(p => ({ ...p, mood: normalizeMood(p.mood) }))
 
-      // 1) Intento bulk
-      try {
-        const bulkRes = await secureAxios.post('/attendance/bulk', { items: payload })
-        if (bulkRes?.data?.success) {
-          return {
-            ok: bulkRes.data.ok ?? payload.length,
-            fail: bulkRes.data.fail ?? 0
-          }
-        }
-      } catch (e) {
-        // sigue al fallback
-      }
-
-      // 2) Fallback uno a uno
       let ok = 0; let fail = 0
-      for (const item of payload) {
-        try { await this.crearAsistencia(item); ok++ } catch { fail++ }
+      for (const p of pendientes) {
+        try {
+          // La hora real de la marca es la que se capturó offline, no la de ahora.
+          const capturedAt = new Date(p.capturedAt || p.timestamp || Date.now()).toISOString()
+          await this.crearAsistencia({
+            ...p,
+            mood: normalizeMood(p.mood),
+            timestamp: capturedAt,
+            deferred: true,
+            capturedAt,
+            // Id estable por marca: si ya se insertó, el backend la deduplica.
+            clientMarkId: p.clientMarkId || makeClientMarkId(),
+          })
+          ok++
+        } catch {
+          fail++
+        }
       }
       return { ok, fail }
     }

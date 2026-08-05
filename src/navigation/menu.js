@@ -22,6 +22,7 @@ export const MENU = [
       { label: 'Analítica web', icon: 'insights', to: '/superadmin/analitica' },
       { label: 'Empresas', icon: 'apartment', to: '/superadmin/empresas' },
       { label: 'Administradores RR.HH.', icon: 'badge', to: '/superadmin/admins-rrhh' },
+      { label: 'Parámetros legales', icon: 'balance', to: '/superadmin/parametros-legales' },
     ]
   },
   {

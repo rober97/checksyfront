@@ -12,7 +12,11 @@
 
     <q-card flat bordered class="q-mb-md">
       <q-card-section>
-        <div class="text-subtitle1 text-weight-medium q-mb-sm">Filtros</div>
+        <div class="text-subtitle1 text-weight-medium q-mb-xs">Parámetros de búsqueda</div>
+        <div class="text-caption text-grey-7 q-mb-sm">
+          Búsqueda individual y grupal, período, turnos, local y cargo o función
+          (Dictamen ORD N°2927/58 §2.9.7).
+        </div>
         <div class="row q-col-gutter-sm">
           <div class="col-12 col-md-3">
             <q-input
@@ -42,6 +46,7 @@
               emit-value
               map-options
               clearable
+              @update:model-value="loadFilterOptions"
             />
           </div>
           <div class="col-12 col-md-3">
@@ -50,7 +55,79 @@
               label="RUT/IDs trabajadores (separados por coma)"
               outlined
               dense
-              placeholder="opcional"
+              placeholder="Individual o grupal"
+              hint="Un RUT para búsqueda individual, varios separados por coma para grupal"
+            />
+          </div>
+
+          <div class="col-12 col-md-3">
+            <q-select
+              v-model="filters.cargo"
+              :options="cargoOptions"
+              label="Cargo o función"
+              outlined
+              dense
+              clearable
+              use-input
+              new-value-mode="add-unique"
+              input-debounce="0"
+              :loading="loadingOptions"
+              @filter="filterCargo"
+            >
+              <template #no-option>
+                <q-item><q-item-section class="text-grey">Sin cargos registrados</q-item-section></q-item>
+              </template>
+            </q-select>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <q-select
+              v-model="filters.sucursal"
+              :options="sucursalOptions"
+              label="Local / sucursal"
+              outlined
+              dense
+              clearable
+              use-input
+              new-value-mode="add-unique"
+              input-debounce="0"
+              :loading="loadingOptions"
+              @filter="filterSucursal"
+            >
+              <template #no-option>
+                <q-item><q-item-section class="text-grey">Sin locales registrados</q-item-section></q-item>
+              </template>
+            </q-select>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <q-select
+              v-model="filters.scheduleId"
+              :options="turnoOptions"
+              label="Turno"
+              outlined
+              dense
+              clearable
+              emit-value
+              map-options
+              :loading="loadingOptions"
+            >
+              <template #no-option>
+                <q-item><q-item-section class="text-grey">Sin turnos configurados</q-item-section></q-item>
+              </template>
+            </q-select>
+          </div>
+
+          <div class="col-12 col-md-3 flex items-center">
+            <q-btn
+              flat
+              dense
+              no-caps
+              icon="filter_alt_off"
+              label="Limpiar filtros"
+              color="grey-7"
+              :disable="!hasActiveFilters"
+              @click="clearFilters"
             />
           </div>
         </div>
@@ -92,7 +169,10 @@
         </div>
         <div class="text-body2 text-grey-8">
           Cada archivo Excel incluye el <b>hash SHA-256 del conjunto</b> consultado,
-          lo que permite a la fiscalización verificar la integridad del extracto.
+          lo que permite a la fiscalización verificar la integridad del extracto,
+          y deja constancia al pie de los <b>criterios de búsqueda</b> con que se generó
+          (período, trabajadores, cargo, local y turno). Las horas se exhiben con
+          <b>hora, minuto y segundo</b>.
           Los registros marcados como "modificados" quedan resaltados con la razón
           declarada y la persona que los alteró. Esta información se conserva por
           al menos 5 años desde la desvinculación del trabajador.
@@ -116,17 +196,74 @@ const $q = useQuasar()
 
 const reports = DT_REPORT_KINDS
 const downloadingKind = ref(null)
+const loadingOptions = ref(false)
 const filters = reactive({
   from: '',
   to: '',
   companyId: '',
   userIds: '',
+  // Parámetros de búsqueda exigidos por la DT además del período y el trabajador
+  cargo: '',
+  sucursal: '',
+  scheduleId: '',
 })
 
 const companyOptions = computed(() =>
   (companies.companies || []).map((c) => ({ label: c.name, value: c._id }))
 )
 const isSuperadmin = computed(() => auth.role === 'superadmin')
+
+/* ---- Opciones de los selectores (cargos, locales, turnos de la empresa) ---- */
+const cargoFilter = ref('')
+const sucursalFilter = ref('')
+
+const cargoOptions = computed(() => {
+  const all = dt.reportFilterOptions?.cargos || []
+  const needle = cargoFilter.value.toLowerCase()
+  return needle ? all.filter((c) => c.toLowerCase().includes(needle)) : all
+})
+const sucursalOptions = computed(() => {
+  const all = dt.reportFilterOptions?.sucursales || []
+  const needle = sucursalFilter.value.toLowerCase()
+  return needle ? all.filter((s) => s.toLowerCase().includes(needle)) : all
+})
+const turnoOptions = computed(() =>
+  (dt.reportFilterOptions?.turnos || []).map((t) => ({
+    label: t.active ? t.name : `${t.name} (inactivo)`,
+    value: t.id,
+  }))
+)
+
+function filterCargo(val, update) {
+  update(() => { cargoFilter.value = val || '' })
+}
+function filterSucursal(val, update) {
+  update(() => { sucursalFilter.value = val || '' })
+}
+
+const hasActiveFilters = computed(
+  () => !!(filters.userIds || filters.cargo || filters.sucursal || filters.scheduleId)
+)
+function clearFilters() {
+  filters.userIds = ''
+  filters.cargo = ''
+  filters.sucursal = ''
+  filters.scheduleId = ''
+}
+
+async function loadFilterOptions() {
+  loadingOptions.value = true
+  try {
+    // El turno seleccionado pertenece a la empresa anterior: al cambiarla se descarta.
+    filters.scheduleId = ''
+    await dt.fetchReportFilters(isSuperadmin.value ? { companyId: filters.companyId } : {})
+  } catch {
+    // Sin catálogo los selectores quedan vacíos, pero admiten texto libre
+    // (new-value-mode), así que la búsqueda por cargo o local sigue disponible.
+  } finally {
+    loadingOptions.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -141,6 +278,7 @@ onMounted(async () => {
   const last = new Date(y, now.getMonth() + 1, 0).getDate()
   filters.from = `${y}-${m}-01`
   filters.to = `${y}-${m}-${String(last).padStart(2, '0')}`
+  await loadFilterOptions()
 })
 
 async function onDownload(kind) {

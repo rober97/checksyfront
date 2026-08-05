@@ -1097,6 +1097,11 @@ function mapPayload(f) {
         city: (f.payroll?.lugarTrabajo?.city || "").trim(),
         region: (f.payroll?.lugarTrabajo?.region || "").trim(),
       },
+      // Local (búsqueda por "local" en reportes DT) y modalidad de prestación
+      // (habilita la alerta de derecho a desconexión).
+      sucursal: (f.payroll?.sucursal || "").trim(),
+      modalidadTrabajo: f.payroll?.modalidadTrabajo || "presencial",
+      desconexionHoras: Number(f.payroll?.desconexionHoras || 12),
 
       // ✅ IDs globales
       afpEntityId: f.payroll?.afpEntityId || null,
@@ -1182,6 +1187,9 @@ function getEmptyForm() {
       cargo: "",
       funciones: "",
       lugarTrabajo: { line1: "", commune: "", city: "", region: "" },
+      sucursal: "",
+      modalidadTrabajo: "presencial",
+      desconexionHoras: 12,
 
       afpEntityId: null,
       healthEntityId: null,

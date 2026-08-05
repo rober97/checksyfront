@@ -411,16 +411,59 @@
               </div>
             </div>
           </div>
+
+          <!-- Identificación (Dict. 2927/58): la marca debe acreditar QUIÉN la
+               hizo. En la web ese factor es la fotografía del momento. -->
+          <div class="rk-photo-block">
+            <div class="rk-confirm-label q-mb-xs">
+              <q-icon name="photo_camera" size="16px" class="q-mr-xs" />
+              Fotografía de identificación (obligatoria)
+            </div>
+
+            <video
+              v-show="cameraOn && !photoData"
+              ref="videoEl"
+              class="rk-photo-preview"
+              autoplay
+              playsinline
+              muted
+            ></video>
+
+            <img v-if="photoData" :src="photoData" class="rk-photo-preview" alt="Foto de la marcación" />
+
+            <div v-if="!cameraOn && !photoData" class="rk-photo-empty">
+              <q-icon name="no_photography" size="28px" />
+              <span>{{ cameraError || "Activa la cámara para tomar tu fotografía" }}</span>
+            </div>
+
+            <div class="rk-photo-actions">
+              <button v-if="!cameraOn && !photoData" class="rk-dialog-btn" @click="startCamera">
+                <q-icon name="videocam" size="18px" class="q-mr-xs" /> Activar cámara
+              </button>
+              <button v-if="cameraOn && !photoData" class="rk-dialog-btn rk-btn-primary" @click="takePhoto">
+                <q-icon name="camera" size="18px" class="q-mr-xs" /> Tomar foto
+              </button>
+              <button v-if="photoData" class="rk-dialog-btn" @click="retakePhoto">
+                <q-icon name="refresh" size="18px" class="q-mr-xs" /> Repetir
+              </button>
+            </div>
+            <canvas ref="photoCanvas" style="display:none"></canvas>
+          </div>
+
           <div v-if="!isOnline" class="rk-offline-warning">
             <q-icon name="wifi_off" />
             <span>Se guardará en la cola offline y se enviará cuando vuelva la conexión.</span>
           </div>
         </div>
         <div class="rk-dialog-footer">
-          <button class="rk-dialog-btn" v-close-popup>Cancelar</button>
-          <button class="rk-dialog-btn rk-btn-primary" :disabled="loading" @click="enviarAsistencia">
+          <button class="rk-dialog-btn" @click="cancelarConfirmacion">Cancelar</button>
+          <button
+            class="rk-dialog-btn rk-btn-primary"
+            :disabled="loading || !photoData"
+            @click="enviarAsistencia"
+          >
             <q-spinner-hourglass v-if="loading" size="18px" class="q-mr-sm" />
-            <span>{{ loading ? "Enviando..." : "Marcar asistencia" }}</span>
+            <span>{{ loading ? "Enviando..." : photoData ? "Marcar asistencia" : "Falta la fotografía" }}</span>
           </button>
         </div>
       </div>
@@ -431,7 +474,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import { useAsistenciaStore } from "@/stores/asistenciaStore";
 import { useUserStore } from "@/stores/userStore";
@@ -737,11 +780,80 @@ function restoreDraft() {
 
 watch(form, saveDraft, { deep: true });
 
+/* ── Fotografía de identificación (Dict. 2927/58 §2.9.4) ──
+   El sistema debe acreditar la identidad de quien marca. En el móvil ese factor
+   es la biometría nativa del equipo; en la web, donde no existe, es la
+   fotografía tomada en el momento. El servidor rechaza la marca sin ninguno de
+   los dos, así que aquí se captura antes de enviar. */
+const videoEl = ref(null);
+const photoCanvas = ref(null);
+const photoData = ref(null);
+const cameraOn = ref(false);
+const cameraError = ref("");
+let mediaStream = null;
+
+async function startCamera() {
+  cameraError.value = "";
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false,
+    });
+    cameraOn.value = true;
+    await nextTick();
+    if (videoEl.value) {
+      videoEl.value.srcObject = mediaStream;
+      await videoEl.value.play().catch(() => {});
+    }
+  } catch (e) {
+    cameraOn.value = false;
+    cameraError.value =
+      e?.name === "NotAllowedError"
+        ? "Permiso de cámara denegado. Habilítalo para poder marcar."
+        : "No se pudo acceder a la cámara de este equipo.";
+  }
+}
+
+function stopCamera() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((t) => t.stop());
+    mediaStream = null;
+  }
+  cameraOn.value = false;
+}
+
+function takePhoto() {
+  const video = videoEl.value;
+  const canvas = photoCanvas.value;
+  if (!video || !canvas || !video.videoWidth) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+  // JPEG con calidad moderada: suficiente para identificar y liviano de subir.
+  photoData.value = canvas.toDataURL("image/jpeg", 0.7);
+  stopCamera();
+}
+
+function retakePhoto() {
+  photoData.value = null;
+  startCamera();
+}
+
+function cancelarConfirmacion() {
+  stopCamera();
+  photoData.value = null;
+  dlgConfirm.value = false;
+}
+
+onBeforeUnmount(stopCamera);
+
 function confirmarEnvio() {
   if (!form.tipo) return showNotification("Selecciona entrada o salida", "warning", "info");
   if (!ALLOWED_MOODS.has(form.estadoAnimo || "")) return showNotification("Selecciona tu estado de ánimo", "warning", "mood");
   if (!currentUserId.value) return showNotification("No se encontró el usuario autenticado", "negative", "error");
+  photoData.value = null;
   dlgConfirm.value = true;
+  startCamera();
 }
 
 async function enviarAsistencia() {
@@ -753,7 +865,15 @@ async function enviarAsistencia() {
     ubicacion: geoEnabled.value && location.value ? { lat: Number(location.value.lat), lng: Number(location.value.lng) } : null,
     timestamp: Date.now(),
     client: { platform: navigator?.userAgentData?.platform || navigator?.platform || "web", appVersion: import.meta?.env?.VITE_APP_VERSION || "web" },
+    // Factor de identificación de la marca (obligatorio en el servidor).
+    photoBase64: photoData.value || null,
+    photoMime: "image/jpeg",
   };
+
+  if (!payload.photoBase64) {
+    showNotification("Falta la fotografía de identificación", "warning", "photo_camera");
+    return;
+  }
 
   if (!ALLOWED_MOODS.has(payload.mood)) {
     showNotification("Estado de ánimo inválido", "negative", "error");
@@ -795,6 +915,9 @@ function resetForm() {
   form.tipo = null;
   form.estadoAnimo = null;
   form.comentario = "";
+  // La foto es de un marcaje puntual: no se reutiliza en el siguiente.
+  stopCamera();
+  photoData.value = null;
   saveDraft();
 }
 
@@ -2380,6 +2503,38 @@ kbd {
   color: var(--text-primary);
   font-weight: 700;
   line-height: 1.35;
+}
+
+/* Fotografía de identificación de la marcación */
+.rk-photo-block {
+  margin-top: 16px;
+}
+.rk-photo-preview {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #000;
+  transform: scaleX(-1); /* espejo: es una selfie */
+}
+.rk-photo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border: 1.5px dashed rgba(120, 120, 120, 0.4);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.rk-photo-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
 }
 
 .rk-offline-warning {

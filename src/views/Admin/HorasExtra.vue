@@ -1,21 +1,34 @@
 <!-- src/views/Admin/HorasExtra.vue
-     Autorización PREVIA de horas extraordinarias (Art. 30-32 CT / Res. Ex. 38).
-     El empleador (jefatura o representante) otorga la HE a un trabajador para un
-     día, con tope de minutos (≤120) y motivo. El backend valida la autoridad de
-     cuatro ojos, evita duplicados y notifica al trabajador. -->
+     Horas extraordinarias (Art. 30-32 CT / Res. Ex. 38). Dos caras del mismo
+     asunto, separadas en pestañas porque la ley las distingue:
+       · Trabajadas   — lo efectivamente ejecutado sobre la jornada pactada.
+       · Autorizaciones — el pacto previo del empleador (tope diario y motivo). -->
 <template>
   <q-page class="q-pa-lg" :class="{ 'is-dark': $q.dark.isActive }">
     <div class="row items-center justify-between q-mb-md">
       <div>
         <div class="text-h4 text-weight-bold">Horas extraordinarias</div>
-        <div class="text-grey-7">Otorga o aprueba las horas extra de tus trabajadores (máx. 2 h/día)</div>
+        <div class="text-grey-7">Qué se trabajó de más, qué está autorizado y qué se paga</div>
       </div>
-      <q-btn flat round icon="refresh" :loading="loading" @click="reload">
+      <q-btn flat round icon="refresh" :loading="loading" @click="reloadActive">
         <q-tooltip>Recargar</q-tooltip>
       </q-btn>
     </div>
 
-    <q-banner rounded class="bg-blue-1 text-blue-9 q-mb-md">
+    <q-tabs v-model="tab" dense align="left" class="text-primary q-mb-md" narrow-indicator>
+      <q-tab name="trabajadas" icon="timer" label="Trabajadas" no-caps />
+      <q-tab name="autorizaciones" icon="gavel" label="Autorizaciones" no-caps>
+        <q-badge v-if="pendingRequests.length" color="orange" floating>{{ pendingRequests.length }}</q-badge>
+      </q-tab>
+    </q-tabs>
+
+    <q-tab-panels v-model="tab" animated keep-alive class="bg-transparent">
+      <q-tab-panel name="trabajadas" class="q-pa-none">
+        <OvertimeWorkedPanel ref="workedPanel" />
+      </q-tab-panel>
+
+      <q-tab-panel name="autorizaciones" class="q-pa-none">
+        <q-banner rounded class="bg-blue-1 text-blue-9 q-mb-md">
       <template #avatar><q-icon name="gavel" color="primary" /></template>
       La autorización es un acto del empleador y queda registrada en la bitácora. Sólo la
       jefatura del trabajador o el representante del empleador pueden otorgarla, y
@@ -103,8 +116,8 @@
               outlined
               dense
               :min="1"
-              :max="120"
-              hint="Máx. 120 (2 h)"
+              :max="heCapMinutes"
+              :hint="`Máx. ${heCapMinutes} min vigente`"
             />
           </div>
 
@@ -204,7 +217,9 @@
           </q-td>
         </template>
       </q-table>
-    </q-card>
+        </q-card>
+      </q-tab-panel>
+    </q-tab-panels>
   </q-page>
 </template>
 
@@ -214,15 +229,29 @@ import { useQuasar } from 'quasar'
 import { useOvertimeAuthStore } from '@/stores/overtimeAuth'
 import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
+import OvertimeWorkedPanel from '@/components/overtime/OvertimeWorkedPanel.vue'
+import { useLegalParamsStore } from '@/stores/legalParams'
 
 const $q = useQuasar()
 const store = useOvertimeAuthStore()
 const userStore = useUserStore()
 const auth = useAuthStore()
 
+const legalParams = useLegalParamsStore()
+// Tope diario de HE vigente (parámetro legal con vigencia, servido por el backend).
+const heCapMinutes = computed(() => legalParams.value('HE_TOPE_DIARIO', 120))
+
+const tab = ref('trabajadas')
+const workedPanel = ref(null)
+
 const loading = computed(() => store.loading)
 
-const form = reactive({ userId: null, dayKey: '', maxMinutes: 120, reason: '' })
+// El botón de recargar actúa sobre la pestaña visible.
+function reloadActive() {
+  return tab.value === 'trabajadas' ? workedPanel.value?.reload?.() : reload()
+}
+
+const form = reactive({ userId: null, dayKey: '', maxMinutes: null, reason: '' })
 const filters = reactive({ from: '', to: '', status: null })
 
 const statusOptions = [
@@ -305,8 +334,8 @@ async function submitGrant() {
   if (!form.userId) { $q.notify({ type: 'warning', message: 'Selecciona un trabajador' }); return }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(form.dayKey)) { $q.notify({ type: 'warning', message: 'Selecciona el día' }); return }
   const min = Number(form.maxMinutes)
-  if (!Number.isFinite(min) || min < 1 || min > 120) {
-    $q.notify({ type: 'warning', message: 'El tope debe estar entre 1 y 120 minutos' }); return
+  if (!Number.isFinite(min) || min < 1 || min > heCapMinutes.value) {
+    $q.notify({ type: 'warning', message: `El tope debe estar entre 1 y ${heCapMinutes.value} minutos` }); return
   }
   try {
     await store.grant({
@@ -316,7 +345,7 @@ async function submitGrant() {
       reason: form.reason || '',
     })
     $q.notify({ type: 'positive', message: 'Horas extra autorizadas. Se notificó al trabajador.', position: 'top-right' })
-    form.userId = null; form.dayKey = ''; form.maxMinutes = 120; form.reason = ''
+    form.userId = null; form.dayKey = ''; form.maxMinutes = heCapMinutes.value; form.reason = ''
   } catch (err) {
     $q.notify({ type: 'negative', message: store.error || 'No se pudo otorgar', position: 'top-right' })
   }
@@ -365,6 +394,7 @@ function confirmCancel(row) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadUsers(), reload()])
+  await Promise.all([legalParams.fetch(), loadUsers(), reload()])
+  if (form.maxMinutes == null) form.maxMinutes = heCapMinutes.value
 })
 </script>
