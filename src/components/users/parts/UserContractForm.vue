@@ -13,7 +13,41 @@
         </div>
 
         <div class="row q-col-gutter-sm">
+          <!-- Cómo viene pactado el sueldo en el contrato. Muchos contratos de
+               jornada parcial y retail fijan un valor hora; en ese caso el
+               mensual lo calcula el sistema y no se escribe a mano. -->
           <div class="col-12 col-sm-6 col-lg-3">
+            <q-select
+              v-model="local.salaryMode"
+              label="Sueldo pactado"
+              :options="salaryModes"
+              dense
+              outlined
+              class="rk-field"
+              emit-value
+              map-options
+            >
+              <template #prepend><q-icon name="payments" /></template>
+            </q-select>
+          </div>
+
+          <div v-if="isHourlySalary" class="col-12 col-sm-6 col-lg-3">
+            <q-input
+              v-model="local.hourlyRate"
+              label="Valor hora (CLP)"
+              dense
+              outlined
+              class="rk-field"
+              :rules="[reqNumber]"
+              @update:model-value="(v) => (local.hourlyRate = normalizeMoney(v))"
+              :hint="hourlyHint"
+            >
+              <template #prepend><q-icon name="attach_money" /></template>
+              <template #append><span class="text-caption text-grey-6">/hora</span></template>
+            </q-input>
+          </div>
+
+          <div v-else class="col-12 col-sm-6 col-lg-3">
             <q-input
               v-model="local.baseSalary"
               label="Sueldo base (CLP)"
@@ -73,6 +107,23 @@
               <template #prepend><q-icon name="schedule" /></template>
               <template #append><span class="text-caption text-grey-6">h/sem</span></template>
             </q-input>
+          </div>
+
+          <!-- Sueldo mensual equivalente: lo calcula el sistema y se recalcula
+               solo si cambia el valor hora o la jornada. Se muestra porque es
+               la cifra que aparecerá en la liquidación. -->
+          <div v-if="isHourlySalary" class="col-12">
+            <div class="rk-derived-salary" :class="{ 'rk-derived-salary--pending': !derivedMonthly }">
+              <q-icon :name="derivedMonthly ? 'calculate' : 'info'" size="18px" />
+              <span v-if="derivedMonthly">
+                Sueldo base mensual: <strong>{{ formatMoney(derivedMonthly) }}</strong>
+                — {{ formatMoney(local.hourlyRate) }}/hora ×
+                {{ local.weeklyContractHours }} h/sem. Se recalcula solo si cambia la jornada.
+              </span>
+              <span v-else>
+                Indica el valor hora y las horas semanales para calcular el sueldo base mensual.
+              </span>
+            </div>
           </div>
 
           <div class="col-12 col-sm-6 col-lg-3">
@@ -138,6 +189,43 @@
               class="rk-field"
               hint="Art. 22 / Art. 38 Cód. del Trabajo"
             />
+          </div>
+
+          <!-- Por qué numeral del Art. 38 está exceptuado. De esto depende si
+               hay que garantizarle domingos de descanso, así que se pide en
+               cuanto se elige esa modalidad. -->
+          <div v-if="isArt38" class="col-12 col-sm-6 col-lg-3">
+            <q-select
+              v-model="local.art38Causal"
+              :options="art38CausalOptions"
+              label="Causal del Art. 38 *"
+              dense outlined
+              emit-value map-options
+              class="rk-field"
+              :rules="[req]"
+              hint="Define si le corresponden domingos garantizados"
+            />
+          </div>
+
+          <div v-if="isArt38" class="col-12">
+            <div class="rk-extra-note">
+              <q-icon name="event_available" size="16px" class="q-mr-xs" />
+              <span>
+                <template v-if="sundayGuaranteeApplies">
+                  Le corresponden al menos <strong>2 domingos de descanso</strong> en cada mes
+                  calendario (Art. 38 inc. 4)<template v-if="local.art38Causal === 'n7_comercio'">, más
+                  <strong>7 domingos al año</strong> de contrato (Art. 38 bis)</template>.
+                  El saldo del mes se controla en el panel de descanso dominical.
+                </template>
+                <template v-else-if="sundayExemptByHours">
+                  Con {{ local.weeklyContractHours }} h/sem no le aplica la garantía de domingos:
+                  el Art. 38 inc. 5 exceptúa las jornadas que no excedan 20 horas semanales.
+                </template>
+                <template v-else>
+                  Los domingos garantizados del Art. 38 inc. 4 alcanzan sólo a los numerales 2 y 7.
+                </template>
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -607,11 +695,66 @@ const jornadas = [
   { label: "Turnos", value: "turnos" },
 ];
 
+/* Cómo pacta el sueldo el contrato. No es una preferencia de la pantalla: queda
+   guardado, porque determina qué cifra exhibe el contrato y desde qué valor se
+   valorizan las horas extraordinarias. */
+const salaryModes = [
+  { label: "Monto mensual", value: "mensual" },
+  { label: "Valor por hora", value: "por_hora" },
+];
+
+const isHourlySalary = computed(() => local.salaryMode === "por_hora");
+
+/* Sueldo mensual equivalente al valor hora pactado.
+   El factor 30/7 (≈4,286 semanas al mes) es el mismo que usa el backend en
+   utils/salary.js; acá sólo se PREVISUALIZA. El monto que se guarda lo calcula
+   el servidor, para que el alta, la edición y el import den el mismo número. */
+const WEEKS_PER_MONTH = 30 / 7;
+const derivedMonthly = computed(() => {
+  const rate = Number(normalizeMoney(local.hourlyRate) || 0);
+  const weekly = Number(local.weeklyContractHours || 0);
+  if (rate <= 0 || weekly <= 0) return 0;
+  return Math.round(rate * weekly * WEEKS_PER_MONTH);
+});
+
+const hourlyHint = computed(() =>
+  derivedMonthly.value
+    ? `${formatMoney(local.hourlyRate)}/hora`
+    : "Indica también las horas semanales de contrato"
+);
+
 const jornadaArtOptions = [
   { label: "Normal (jornada ordinaria)", value: "normal" },
   { label: "Art. 22 (no fiscalizable)", value: "art22" },
   { label: "Art. 38 (excepciones turno)", value: "art38" },
 ];
+
+/* Numeral del Art. 38 por el que se exceptúa del descanso dominical. Sólo el
+   N°2 y el N°7 obligan a garantizar domingos; el N°7 suma además los 7 anuales
+   del Art. 38 bis. */
+const art38CausalOptions = [
+  { label: "N°7 — Comercio con atención al público", value: "n7_comercio" },
+  { label: "N°2 — Faenas de proceso continuo", value: "n2_continuidad" },
+  { label: "Otro numeral del Art. 38", value: "otro" },
+];
+
+const isArt38 = computed(() => local.jornadaArt === "art38");
+
+/* Tope de la excepción por jornada corta (Art. 38 inc. 5). Igual que el resto
+   de los topes, lo entrega el backend como parámetro con vigencia. */
+const sundayExemptLimit = computed(() =>
+  legalParams.value("DOMINGOS_EXCEPCION_JORNADA")
+);
+const sundayExemptByHours = computed(() => {
+  const h = Number(local.weeklyContractHours || 0);
+  const limit = Number(sundayExemptLimit.value || 0);
+  return h > 0 && limit > 0 && h <= limit;
+});
+const sundayGuaranteeApplies = computed(() =>
+  isArt38.value
+    && ["n2_continuidad", "n7_comercio"].includes(local.art38Causal)
+    && !sundayExemptByHours.value
+);
 
 /* Modalidad de prestación de servicios (Art. 152 quáter G y ss.) */
 const modalidadTrabajoOptions = [
@@ -708,6 +851,9 @@ function normalizeIncoming(v = {}) {
     ...(v?.lugarTrabajo || {}),
   }
   out.jornadaArt = out.jornadaArt || 'normal'
+  out.art38Causal = out.jornadaArt === 'art38' ? (out.art38Causal || '') : ''
+  out.salaryMode = out.salaryMode === 'por_hora' ? 'por_hora' : 'mensual'
+  out.hourlyRate = Number(out.hourlyRate || 0)
   out.sucursal = out.sucursal || ''
   out.modalidadTrabajo = out.modalidadTrabajo || 'presencial'
   out.desconexionHoras = Number(out.desconexionHoras || 12)
@@ -777,6 +923,28 @@ watch(
   { immediate: true }
 );
 
+/* Con sueldo pactado por hora, `baseSalary` deja de escribirse a mano y pasa a
+   ser un valor derivado. Se mantiene sincronizado acá para que el resumen, el
+   indicador de avance y la validación del paso vean el mismo monto que va a
+   quedar guardado; el servidor lo recalcula igual al recibir el payload. */
+watch(
+  [() => local.salaryMode, () => local.hourlyRate, () => local.weeklyContractHours],
+  () => {
+    if (!isHourlySalary.value) return;
+    local.baseSalary = derivedMonthly.value;
+  },
+  { immediate: true }
+);
+
+// Al salir del Art. 38 la causal deja de tener sentido: se limpia para que no
+// quede un dato que contradiga la modalidad de jornada (el backend hace lo mismo).
+watch(
+  () => local.jornadaArt,
+  (art) => {
+    if (art !== 'art38') local.art38Causal = '';
+  }
+);
+
 // Autosugerencia: al elegir/cambiar el tipo de jornada, si las horas están en 0
 // (campo no tocado), precargamos un valor coherente. Nunca pisa un valor ya escrito.
 watch(
@@ -807,6 +975,28 @@ watch(
   --rk-accent-soft:  rgba(12, 169, 196, 0.10);
   align-items: start;
   color: var(--rk-text);
+}
+
+/* Sueldo mensual derivado del valor hora — es un dato calculado, no un campo. */
+.rk-derived-salary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--rk-text-2);
+  background: var(--rk-accent-soft);
+  border: 1px solid var(--rk-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.rk-derived-salary strong {
+  color: var(--rk-text);
+  font-weight: 700;
+}
+.rk-derived-salary--pending {
+  background: var(--rk-surface);
+  color: var(--rk-text-3);
 }
 
 .rk-extra-note {

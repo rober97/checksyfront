@@ -38,6 +38,21 @@ export function diffHours(start, end) {
   return +((e - s) / 60).toFixed(2)
 }
 
+/**
+ * Horas de JORNADA EFECTIVA de un turno programado: el lapso menos la colación,
+ * que no es tiempo trabajado (Art. 34). Espeja shiftMinutes() del backend.
+ *
+ * Un turno 10:00–15:30 con 30 min de colación son 5 h de jornada, no 5,5. Si el
+ * día se modeló como dos tramos, la pausa queda entre ellos y cada tramo lleva
+ * breakMinutes 0: nunca se descuenta dos veces.
+ */
+export function shiftHours(shift) {
+  const span = diffHours(shift?.start, shift?.end)
+  if (span <= 0) return 0
+  const pause = Math.max(0, Number(shift?.breakMinutes) || 0) / 60
+  return pause >= span ? span : +(span - pause).toFixed(2)
+}
+
 /** Suma de horas de una lista de tramos [{start,end}, ...]. */
 export function segmentsHours(segments) {
   if (!Array.isArray(segments)) return 0
@@ -120,6 +135,7 @@ export default {
   toMinutes,
   diffHours,
   segmentsHours,
+  shiftHours,
   dayHours,
   weeklyTotalHours,
   weeklyTotalHoursLabel,

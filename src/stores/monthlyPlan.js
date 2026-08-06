@@ -12,6 +12,10 @@ export const useMonthlyPlanStore = defineStore('monthlyPlan', {
     shifts: [],
     unassigned: [],
     range: null,
+    // Saldo de domingos de descanso del mes (Art. 38). Se carga junto con la
+    // malla porque es la misma decisión: al programar un domingo se está
+    // gastando uno de los que hay que garantizar.
+    sundayRest: null,
   }),
 
   actions: {
@@ -38,6 +42,24 @@ export const useMonthlyPlanStore = defineStore('monthlyPlan', {
         this.error = 'Error cargando la programación mensual'
       } finally {
         this.loading = false
+      }
+    },
+
+    /**
+     * Saldo de domingos garantizados del mes. No bloquea la programación: un
+     * fallo acá deja `sundayRest` en null y la malla sigue editable, porque es
+     * información de control y no una precondición para programar.
+     */
+    async fetchSundayRest({ companyId, year, month }) {
+      if (!companyId || !year || !month) return
+      try {
+        const res = await secureAxios.get('/compliance/sunday-rest', {
+          params: { companyId, year, month },
+        })
+        this.sundayRest = res?.data?.success ? res.data.data : null
+      } catch (err) {
+        console.error('[monthlyPlan.fetchSundayRest] error:', err)
+        this.sundayRest = null
       }
     },
 

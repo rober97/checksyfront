@@ -111,6 +111,29 @@
             <div class="rk-module-stat__value">{{ totalPlannedHours }} h</div>
           </div>
         </div>
+        <!-- Sólo aparece si la empresa tiene trabajadores del Art. 38: para el
+             resto es una métrica sin sentido que ensucia la cabecera. -->
+        <div v-if="sundayWatch" class="rk-module-stat">
+          <div class="rk-module-stat__icon">
+            <q-icon name="event_busy" size="20px" :color="sundayWatch.atRisk ? 'negative' : undefined" />
+          </div>
+          <div>
+            <div class="rk-module-stat__label">Domingos garantizados</div>
+            <div class="rk-module-stat__value" :class="{ 'text-negative': sundayWatch.atRisk }">
+              {{ sundayWatch.atRisk ? `${sundayWatch.atRisk} por revisar` : 'Al día' }}
+            </div>
+          </div>
+          <q-tooltip>
+            {{ sundayWatch.applies }} trabajador(es) del Art. 38 con domingos garantizados
+            ({{ sundayWatch.requiredFree }} al mes).
+            <template v-if="sundayWatch.exempt">
+              {{ sundayWatch.exempt }} exceptuado(s) por jornada o duración del contrato.
+            </template>
+            <template v-if="sundayWatch.missingCausal">
+              {{ sundayWatch.missingCausal }} sin causal declarada.
+            </template>
+          </q-tooltip>
+        </div>
       </section>
 
       <!-- Empty state -->
@@ -169,6 +192,34 @@
                           ({{ row.contractHours }} h/sem). El exceso debe registrarse como horas extra.
                         </q-tooltip>
                       </q-icon>
+                      <!-- Domingos garantizados del Art. 38: al programar se
+                           está gastando el saldo del mes, así que se avisa acá
+                           y no cuando el mes ya cerró. -->
+                      <q-icon
+                        v-if="row.sunday?.status === 'INCUMPLE'"
+                        name="event_busy"
+                        color="negative"
+                        size="15px"
+                        class="q-ml-xs"
+                      >
+                        <q-tooltip>
+                          Sólo {{ row.sunday.freeSundays }} de
+                          {{ row.sunday.requiredFree }} domingos de descanso este mes
+                          (Art. 38 inc. 4). Faltan {{ row.sunday.shortfall }}.
+                        </q-tooltip>
+                      </q-icon>
+                      <q-icon
+                        v-else-if="row.sunday?.status === 'SIN_CAUSAL'"
+                        name="help_outline"
+                        color="grey-6"
+                        size="15px"
+                        class="q-ml-xs"
+                      >
+                        <q-tooltip>
+                          Falta declarar la causal del Art. 38 en su contrato: sin ese dato
+                          no se puede saber si le corresponden domingos garantizados.
+                        </q-tooltip>
+                      </q-icon>
                     </div>
                     <div class="rk-grid-emp__role">
                       <span v-if="row.assignment">{{ row.assignment.scheduleId?.name || 'Sin plantilla' }}</span>
@@ -198,8 +249,9 @@
                       v-for="(s, i) in row.shiftsByDate[d.key]"
                       :key="i"
                       class="rk-grid-seg"
+                      :title="s.breakMinutes ? `${s.breakMinutes} min de colación (no se cuentan)` : ''"
                     >
-                      {{ s.start }}–{{ s.end }}
+                      {{ s.start }}–{{ s.end }}<sup v-if="s.breakMinutes" class="rk-grid-seg__break">·{{ s.breakMinutes }}′</sup>
                     </div>
                   </div>
                   <span v-else class="rk-grid-empty">—</span>
@@ -258,6 +310,24 @@
               >
                 <template #prepend><q-icon name="logout" size="16px" /></template>
               </q-input>
+              <!-- Colación dentro del tramo: no es jornada (Art. 34), así que
+                   se descuenta del total. Si el día se parte en dos tramos, la
+                   pausa queda entre ellos y esto va en 0. -->
+              <q-input
+                v-model.number="s.breakMinutes"
+                type="number"
+                min="0"
+                max="240"
+                step="5"
+                dense
+                outlined
+                placeholder="0"
+                style="width: 96px"
+                title="Minutos de colación dentro del turno (no se pagan)"
+              >
+                <template #prepend><q-icon name="restaurant" size="16px" /></template>
+                <template #append><span class="text-caption text-grey-6">min</span></template>
+              </q-input>
               <q-btn
                 v-if="cellDialog.segments.length > 1"
                 flat
@@ -267,6 +337,9 @@
                 icon="close"
                 @click="removeCellSegment(idx)"
               />
+            </div>
+            <div class="text-caption text-grey-6 q-mt-xs">
+              La colación no se cuenta como jornada trabajada.
             </div>
             <q-btn
               flat
@@ -329,7 +402,7 @@ import { useToast } from 'vue-toastification'
 import { useCompaniesStore } from '@/stores/companies'
 import { useMonthlyPlanStore } from '@/stores/monthlyPlan'
 import { useAuthStore } from '@/stores/authStore'
-import { toMinutes, diffHours } from '@/utils/workHours'
+import { shiftHours } from '@/utils/workHours'
 
 const $q = useQuasar()
 const toast = useToast()
@@ -410,7 +483,10 @@ function maxWeeklyPlanned(shiftsByDate) {
   const byWeek = {}
   for (const dKey of Object.keys(shiftsByDate || {})) {
     const wk = isoWeekKey(dKey)
-    const dayHrs = (shiftsByDate[dKey] || []).reduce((sum, s) => sum + diffHours(s.start, s.end), 0)
+    // Jornada efectiva (sin colación): es lo que se compara contra las horas
+    // de contrato. Con el lapso bruto, la media hora de almuerzo de cada turno
+    // hacía aparecer excedidas semanas que estaban dentro de lo pactado.
+    const dayHrs = (shiftsByDate[dKey] || []).reduce((sum, s) => sum + shiftHours(s), 0)
     byWeek[wk] = (byWeek[wk] || 0) + dayHrs
   }
   let max = 0
@@ -460,11 +536,17 @@ const rows = computed(() => {
     })
   }
 
-  // Enriquecer con contrato y aviso de exceso semanal (no bloqueante).
+  // Enriquecer con contrato y avisos (ninguno bloquea la programación).
+  const sundayByUser = new Map(
+    (planStore.sundayRest?.items || []).map((i) => [String(i.userId), i])
+  )
   for (const r of result) {
     r.contractHours = contractHoursOf(r.user)
     r.maxWeekHours = maxWeeklyPlanned(r.shiftsByDate)
     r.exceedsContract = r.contractHours > 0 && r.maxWeekHours > r.contractHours + 0.01
+    // Sólo viene para trabajadores del Art. 38; para el resto queda undefined
+    // y no se muestra nada.
+    r.sunday = sundayByUser.get(r.userId) || null
   }
 
   result.sort((a, b) => {
@@ -476,16 +558,23 @@ const rows = computed(() => {
   return result
 })
 
-const totalPlannedHours = computed(() => {
-  let mins = 0
-  for (const s of shifts.value) {
-    const sm = toMinutes(s.start)
-    let em = toMinutes(s.end)
-    if (sm == null || em == null) continue
-    if (em < sm) em += 24 * 60
-    mins += em - sm
+// Horas planificadas del mes: jornada efectiva, sin colación.
+const totalPlannedHours = computed(() =>
+  shifts.value.reduce((sum, s) => sum + shiftHours(s), 0).toFixed(1)
+)
+
+/* Resumen de domingos garantizados. null cuando la empresa no tiene a nadie
+   bajo el Art. 38: no se muestra un indicador que no aplica. */
+const sundayWatch = computed(() => {
+  const data = planStore.sundayRest
+  if (!data?.summary?.total) return null
+  return {
+    requiredFree: data.requiredFree,
+    applies: data.summary.compliant + data.summary.atRisk,
+    atRisk: data.summary.atRisk,
+    exempt: data.summary.exempt,
+    missingCausal: data.summary.missingCausal || 0,
   }
-  return (mins / 60).toFixed(1)
 })
 
 /* ---------- Carga ---------- */
@@ -499,7 +588,13 @@ async function loadCompanies() {
 
 async function refresh() {
   if (!companyId.value) return
-  await planStore.fetchPlan({ companyId: companyId.value, year: year.value, month: month.value })
+  const params = { companyId: companyId.value, year: year.value, month: month.value }
+  // El saldo de domingos se pide en paralelo: es información de control y no
+  // debe retrasar ni bloquear la aparición de la malla.
+  await Promise.all([
+    planStore.fetchPlan(params),
+    planStore.fetchSundayRest(params),
+  ])
 }
 
 // Un único watcher cubre la carga inicial (companyId pasa de null al valor que
@@ -608,17 +703,12 @@ const cellDialog = reactive({
   totalHours: 0,
 })
 
-const cellTotalHours = computed(() => {
-  let mins = 0
-  for (const s of cellDialog.segments) {
-    const sm = toMinutes(s.start)
-    let em = toMinutes(s.end)
-    if (sm == null || em == null) continue
-    if (em < sm) em += 24 * 60
-    mins += em - sm
-  }
-  return mins / 60
-})
+// Total del día: jornada EFECTIVA, ya descontada la colación de cada tramo.
+// Es el número que se compara contra las horas de contrato, así que tiene que
+// significar lo mismo que ellas.
+const cellTotalHours = computed(() =>
+  cellDialog.segments.reduce((sum, s) => sum + shiftHours(s), 0)
+)
 watch(cellTotalHours, (v) => { cellDialog.totalHours = v }, { immediate: true })
 
 function openCellEditor(row, day) {
@@ -628,8 +718,8 @@ function openCellEditor(row, day) {
   cellDialog.date = day.key
   cellDialog.dateLabel = formatLongDate(day.key)
   cellDialog.segments = existing.length
-    ? existing.map((s) => ({ start: s.start, end: s.end }))
-    : [{ start: '09:00', end: '18:00' }]
+    ? existing.map((s) => ({ start: s.start, end: s.end, breakMinutes: Number(s.breakMinutes || 0) }))
+    : [{ start: '09:00', end: '18:00', breakMinutes: 0 }]
   cellDialog.hasExisting = existing.length > 0
   cellDialog.scheduleId = row.assignment?.scheduleId?._id || row.assignment?.scheduleId || null
   cellDialog.totalHours = 0
@@ -638,7 +728,7 @@ function openCellEditor(row, day) {
 
 function addCellSegment() {
   const last = cellDialog.segments[cellDialog.segments.length - 1]
-  cellDialog.segments.push({ start: last?.end || '14:00', end: '18:00' })
+  cellDialog.segments.push({ start: last?.end || '14:00', end: '18:00', breakMinutes: 0 })
 }
 
 function removeCellSegment(idx) {
@@ -814,6 +904,13 @@ onMounted(async () => {
   color: var(--color-success, #16a34a);
   font-weight: 600;
   white-space: nowrap;
+}
+/* Marca discreta de colación: informa sin competir con el horario del turno. */
+.rk-grid-seg__break {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+  margin-left: 1px;
 }
 .rk-grid-empty {
   font-size: 14px;

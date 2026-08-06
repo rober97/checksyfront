@@ -48,13 +48,23 @@ export function mapFromApi(u = {}) {
             visaExpiry: u.personalData?.visaExpiry ? String(u.personalData.visaExpiry).slice(0, 10) : null,
             tutorAuthorizationDocId: u.personalData?.tutorAuthorizationDocId || null,
         },
+        // OJO al agregar campos a payroll: este objeto es la FOTO CONTRA LA QUE
+        // se diffea el formulario al editar. Un campo que el formulario rellena
+        // (con su default) y que acá falta aparece como "cambio" y se guarda
+        // pisando el valor real de la BD. Todo campo editable en el contrato
+        // tiene que estar hidratado aquí.
         payroll: {
             baseSalary: u.payroll?.baseSalary ?? 0,
+            salaryMode: u.payroll?.salaryMode || "mensual",
+            hourlyRate: u.payroll?.hourlyRate ?? 0,
             contractType: u.payroll?.contractType || "",
             jornada: u.payroll?.jornada || "",
+            weeklyContractHours: u.payroll?.weeklyContractHours ?? 0,
             jornadaArt: u.payroll?.jornadaArt || "normal",
+            art38Causal: u.payroll?.art38Causal || "",
             startDate: u.payroll?.startDate ? String(u.payroll.startDate).slice(0, 10) : "",
             endDate: u.payroll?.endDate ? String(u.payroll.endDate).slice(0, 10) : "",
+            priorServiceYears: u.payroll?.priorServiceYears ?? 0,
             cargo: u.payroll?.cargo || "",
             funciones: u.payroll?.funciones || "",
             lugarTrabajo: {
@@ -63,6 +73,9 @@ export function mapFromApi(u = {}) {
                 city: u.payroll?.lugarTrabajo?.city || "",
                 region: u.payroll?.lugarTrabajo?.region || "",
             },
+            sucursal: u.payroll?.sucursal || "",
+            modalidadTrabajo: u.payroll?.modalidadTrabajo || "presencial",
+            desconexionHoras: u.payroll?.desconexionHoras ?? 12,
             afp: u.payroll?.afp || "",
             afpEntityId: u.payroll?.afpEntityId || null,
             saludSistema: u.payroll?.saludSistema || "",

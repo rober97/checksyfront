@@ -32,11 +32,16 @@ export function getEmptyUserForm() {
         },
         payroll: {
             baseSalary: 0,
+            salaryMode: "mensual",
+            hourlyRate: 0,
             contractType: "",
             jornada: "",
+            weeklyContractHours: 0,
             jornadaArt: "normal",
+            art38Causal: "",
             startDate: "",
             endDate: "",
+            priorServiceYears: 0,
             cargo: "",
             funciones: "",
             lugarTrabajo: { line1: "", commune: "", city: "", region: "" },
@@ -62,6 +67,7 @@ export function normalizeUserPatch(p) {
         const pp = p.payroll;
         [
             "baseSalary",
+            "hourlyRate",
             "apv",
             "gratificacion",
             "bonoColacion",

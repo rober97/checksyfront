@@ -1084,11 +1084,22 @@ function mapPayload(f) {
     } : undefined,
     payroll: {
       baseSalary: normalizeMoney(f.payroll?.baseSalary || 0),
+      // Sueldo pactado por hora: se manda el valor hora y el backend deriva el
+      // mensual con las horas semanales. No se calcula acá para que el alta, la
+      // edición y el import masivo produzcan exactamente el mismo número.
+      salaryMode: f.payroll?.salaryMode === "por_hora" ? "por_hora" : "mensual",
+      hourlyRate: normalizeMoney(f.payroll?.hourlyRate || 0),
       contractType: f.payroll?.contractType || "",
       jornada: f.payroll?.jornada || "",
+      // Jornada pactada: es la fuente de verdad contra la que se validan las
+      // plantillas de horario y la programación mensual.
+      weeklyContractHours: Number(f.payroll?.weeklyContractHours || 0),
       jornadaArt: f.payroll?.jornadaArt || "normal",
+      // Causal del Art. 38: define si le corresponden domingos garantizados.
+      art38Causal: f.payroll?.jornadaArt === "art38" ? (f.payroll?.art38Causal || "") : "",
       startDate: f.payroll?.startDate || null,
       endDate: f.payroll?.endDate || null,
+      priorServiceYears: Number(f.payroll?.priorServiceYears || 0),
       cargo: (f.payroll?.cargo || "").trim(),
       funciones: (f.payroll?.funciones || "").trim(),
       lugarTrabajo: {
@@ -1131,6 +1142,7 @@ function normalizeEditPatch(patch) {
   const payroll = patch.payroll;
   [
     "baseSalary",
+    "hourlyRate",
     "apv",
     "gratificacion",
     "bonoColacion",
@@ -1179,11 +1191,16 @@ function getEmptyForm() {
     },
     payroll: {
       baseSalary: 0,
+      salaryMode: "mensual",
+      hourlyRate: 0,
       contractType: "",
       jornada: "",
+      weeklyContractHours: 0,
       jornadaArt: "normal",
+      art38Causal: "",
       startDate: "",
       endDate: "",
+      priorServiceYears: 0,
       cargo: "",
       funciones: "",
       lugarTrabajo: { line1: "", commune: "", city: "", region: "" },
