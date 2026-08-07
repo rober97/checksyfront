@@ -277,7 +277,9 @@
 
     <!-- Diálogo edición de celda (multi-segment) -->
     <q-dialog v-model="cellDialog.open" persistent>
-      <q-card style="min-width: min(480px, 94vw)">
+      <!-- 520px es lo que necesita la fila de tramo (entrada, salida, colación
+           y el botón de quitar) sin que ningún campo quede apretado. -->
+      <q-card style="min-width: min(520px, 94vw)">
         <q-card-section class="row items-center justify-between q-pb-none">
           <div>
             <div class="text-h6">Editar día</div>
@@ -308,18 +310,18 @@
                 dense
                 outlined
                 placeholder="09:00"
-                style="width: 110px"
+                class="rk-cell-field rk-cell-field--time"
               >
                 <template #prepend><q-icon name="login" size="16px" /></template>
               </q-input>
-              <span class="text-grey-6">—</span>
+              <span class="rk-cell-dash text-grey-6">—</span>
               <q-input
                 v-model="s.end"
                 mask="##:##"
                 dense
                 outlined
                 placeholder="18:00"
-                style="width: 110px"
+                class="rk-cell-field rk-cell-field--time"
               >
                 <template #prepend><q-icon name="logout" size="16px" /></template>
               </q-input>
@@ -335,7 +337,7 @@
                 dense
                 outlined
                 placeholder="0"
-                style="width: 96px"
+                class="rk-cell-field rk-cell-field--break"
                 title="Minutos de colación dentro del turno (no se pagan)"
               >
                 <template #prepend><q-icon name="restaurant" size="16px" /></template>
@@ -1132,11 +1134,42 @@ onMounted(async () => {
   flex-direction: column;
   gap: 8px;
 }
+/* Fila de tramo: entrada — salida · colación.
+   Los anchos van por flex-basis y no fijos en px. Con `width: 96px` en el campo
+   de colación, entre el ícono, el sufijo "min" y los paddings del q-field al
+   input nativo le quedaban 22px: un "30" se veía como "3". */
 .rk-cell-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
+.rk-cell-field {
+  min-width: 0; /* sin esto el contenido impone su propio ancho mínimo */
+}
+.rk-cell-field--time {
+  flex: 1 1 112px;
+  min-width: 108px;
+}
+.rk-cell-field--break {
+  flex: 0 1 138px;
+  min-width: 130px;
+}
+.rk-cell-dash {
+  flex: 0 0 auto;
+}
+/* Las flechitas del input numérico se comen ancho útil y aquí no aportan:
+   el paso se escribe, no se pulsa de a 5 minutos. */
+.rk-cell-field--break :deep(input[type='number']) {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.rk-cell-field--break :deep(input[type='number']::-webkit-outer-spin-button),
+.rk-cell-field--break :deep(input[type='number']::-webkit-inner-spin-button) {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .rk-cell-add { align-self: flex-start; font-size: 12px; }
 
 /* ---------- Avisos del editor de día ---------- */
