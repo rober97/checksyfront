@@ -284,6 +284,13 @@
             <div class="text-caption text-grey-6">
               {{ cellDialog.userName }} · {{ cellDialog.dateLabel }}
             </div>
+            <!-- Contrato del trabajador: sin esto se programa a ciegas y el
+                 descuadre con la jornada pactada recién aparece al cerrar el mes. -->
+            <div v-if="cellDialog.contractHours" class="text-caption text-grey-7 q-mt-xs">
+              <q-icon name="assignment_ind" size="14px" class="q-mr-xs" />
+              Jornada pactada: {{ fmtHours(cellDialog.contractHours) }}/sem
+              <template v-if="cellDialog.isPartTime"> · jornada parcial</template>
+            </div>
           </div>
           <q-btn flat round icon="close" v-close-popup />
         </q-card-section>
@@ -365,33 +372,61 @@
             </div>
           </div>
 
-          <div class="row justify-end q-mt-md">
-            <q-chip
-              dense
-              square
-              :color="cellDialog.totalHours > 0 ? 'primary' : 'grey-5'"
-              text-color="white"
+          <!-- Avisos legales y de contrato. Los que bloquean van primero y
+               deshabilitan Guardar; el backend los revalida igual, pero verlos
+               acá evita el viaje de ida y vuelta con un error críptico. -->
+          <div v-if="cellIssues.length" class="rk-cell-issues q-mt-md">
+            <div
+              v-for="(issue, i) in cellIssues"
+              :key="i"
+              class="rk-cell-issue"
+              :class="`rk-cell-issue--${issue.level}`"
             >
-              Total: {{ cellDialog.totalHours.toFixed(1) }} h
-            </q-chip>
+              <q-icon :name="issue.level === 'error' ? 'error' : 'warning'" size="16px" />
+              <span>{{ issue.text }}</span>
+            </div>
+          </div>
+
+          <!-- Cuánto lleva la semana contra lo pactado. Es el dato que antes
+               obligaba a sumar a mano turno por turno para saber si la malla
+               cerraba en las horas del contrato. -->
+          <div class="rk-cell-totals q-mt-md">
+            <div class="rk-cell-total">
+              <span class="rk-cell-total__label">Este día</span>
+              <span class="rk-cell-total__value">{{ fmtHours(cellDialog.totalHours) }}</span>
+            </div>
+            <div v-if="cellWeek" class="rk-cell-total">
+              <span class="rk-cell-total__label">Semana {{ cellWeek.rangeLabel }}</span>
+              <span class="rk-cell-total__value" :class="cellWeek.toneClass">
+                {{ fmtHours(cellWeek.planned) }}
+                <template v-if="cellWeek.contract"> de {{ fmtHours(cellWeek.contract) }}</template>
+              </span>
+            </div>
+          </div>
+          <div v-if="cellWeek?.hint" class="rk-cell-week-hint" :class="cellWeek.toneClass">
+            {{ cellWeek.hint }}
           </div>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat label="Cancelar" v-close-popup />
+        <q-card-actions class="q-pa-md">
           <q-btn
             v-if="cellDialog.hasExisting"
             flat
-            color="negative"
-            label="Marcar libre"
+            dense
             no-caps
+            color="negative"
+            icon="event_busy"
+            label="Marcar libre"
             @click="saveCellAsFree"
           />
+          <q-space />
+          <q-btn flat label="Cancelar" no-caps v-close-popup />
           <q-btn
             unelevated
             color="primary"
             label="Guardar"
             no-caps
+            :disable="hasBlockingIssue"
             :loading="cellDialog.saving"
             @click="saveCell"
           />
@@ -408,13 +443,16 @@ import { useToast } from 'vue-toastification'
 import { useCompaniesStore } from '@/stores/companies'
 import { useMonthlyPlanStore } from '@/stores/monthlyPlan'
 import { useAuthStore } from '@/stores/authStore'
-import { shiftHours } from '@/utils/workHours'
+import { useLegalParamsStore } from '@/stores/legalParams'
+import { shiftHours, diffHours, toMinutes } from '@/utils/workHours'
 
 const $q = useQuasar()
 const toast = useToast()
 const companiesStore = useCompaniesStore()
 const planStore = useMonthlyPlanStore()
 const authStore = useAuthStore()
+// Topes legales (jornada diaria, colación en jornada parcial) con vigencia.
+const legalParams = useLegalParamsStore()
 
 const companyId = ref(null)
 
@@ -716,6 +754,9 @@ const cellDialog = reactive({
   hasExisting: false,
   scheduleId: null,
   totalHours: 0,
+  // Contrato del trabajador, para validar y contextualizar sin ir a buscarlo.
+  contractHours: 0,
+  isPartTime: false,
 })
 
 // Total del día: jornada EFECTIVA, ya descontada la colación de cada tramo.
@@ -724,6 +765,151 @@ const cellDialog = reactive({
 const cellTotalHours = computed(() =>
   cellDialog.segments.reduce((sum, s) => sum + shiftHours(s), 0)
 )
+
+/* ---------- Validación del día en edición ----------
+   Los topes salen del catálogo legal con vigencia, igual que en el backend.
+   Mientras no hayan cargado quedan en null y esas reglas no se evalúan: es
+   preferible no validar a validar contra un número inventado. */
+const dailyMaxHours = computed(() => legalParams.value('JORNADA_ORDINARIA_DIARIA'))
+const breakMinParcial = computed(() => legalParams.value('COLACION_PARCIAL_MINIMA'))
+const breakMaxParcial = computed(() => legalParams.value('COLACION_PARCIAL_MAXIMA'))
+
+/**
+ * Problemas del día en edición. `error` impide guardar (el backend los rechaza
+ * igual); `warn` sólo advierte, porque puede ser una decisión legítima.
+ */
+const cellIssues = computed(() => {
+  const out = []
+  const segs = cellDialog.segments
+
+  segs.forEach((s, i) => {
+    const n = segs.length > 1 ? `Tramo ${i + 1}: ` : ''
+    const span = diffHours(s.start, s.end)
+    const pause = Number(s.breakMinutes || 0)
+
+    // toMinutes devuelve 0 para "00:00", que es válido: comparar contra null,
+    // nunca por falsy.
+    if (toMinutes(s.start) == null) {
+      out.push({ level: 'error', text: `${n}la hora de entrada no es válida.` })
+      return
+    }
+    if (toMinutes(s.end) == null) {
+      out.push({ level: 'error', text: `${n}la hora de salida no es válida.` })
+      return
+    }
+    if (span <= 0) {
+      out.push({ level: 'error', text: `${n}entrada y salida no pueden ser la misma hora.` })
+      return
+    }
+    if (pause > 0 && pause / 60 >= span) {
+      out.push({ level: 'error', text: `${n}la colación no cabe dentro del turno.` })
+      return
+    }
+
+    // Art. 40 bis A: en jornada parcial la colación va entre media hora y una hora.
+    if (cellDialog.isPartTime && pause > 0) {
+      if (breakMinParcial.value && pause < breakMinParcial.value) {
+        out.push({
+          level: 'error',
+          text: `${n}en jornada parcial la colación no puede ser menor a ${breakMinParcial.value} minutos (Art. 40 bis A).`,
+        })
+      } else if (breakMaxParcial.value && pause > breakMaxParcial.value) {
+        out.push({
+          level: 'error',
+          text: `${n}en jornada parcial la colación no puede superar los ${breakMaxParcial.value} minutos (Art. 40 bis A).`,
+        })
+      }
+    }
+  })
+
+  // Art. 28: la jornada ordinaria no se distribuye en más de 10 h diarias.
+  if (dailyMaxHours.value && cellTotalHours.value > dailyMaxHours.value + 0.01) {
+    out.push({
+      level: 'error',
+      text: `La jornada del día suma ${fmtHours(cellTotalHours.value)} y el máximo diario es ${fmtHours(dailyMaxHours.value)} (Art. 28).`,
+    })
+  } else if (dailyMaxHours.value && cellTotalHours.value === dailyMaxHours.value) {
+    out.push({
+      level: 'warn',
+      text: `El día queda justo en el máximo de ${fmtHours(dailyMaxHours.value)}: cualquier minuto trabajado de más ya es hora extraordinaria.`,
+    })
+  }
+
+  // Tramos que se pisan: sumarían dos veces la misma hora.
+  const ordered = segs
+    .map((s) => ({ from: toMinutes(s.start), to: toMinutes(s.end) }))
+    .filter((s) => s.from != null && s.to != null && s.to > s.from)
+    .sort((a, b) => a.from - b.from)
+  for (let i = 1; i < ordered.length; i++) {
+    if (ordered[i].from < ordered[i - 1].to) {
+      out.push({ level: 'error', text: 'Hay tramos que se superponen en el mismo horario.' })
+      break
+    }
+  }
+
+  return out
+})
+
+const hasBlockingIssue = computed(() => cellIssues.value.some((i) => i.level === 'error'))
+
+/** Horas planificadas de la semana ISO del día en edición, contra el contrato. */
+const cellWeek = computed(() => {
+  if (!cellDialog.date || !cellDialog.userId) return null
+  const row = rows.value.find((r) => r.userId === cellDialog.userId)
+  if (!row) return null
+
+  const targetWeek = isoWeekKey(cellDialog.date)
+  let planned = 0
+  for (const dKey of Object.keys(row.shiftsByDate || {})) {
+    if (isoWeekKey(dKey) !== targetWeek) continue
+    // El día que se está editando cuenta con los tramos del formulario, no con
+    // lo que hay guardado: el objetivo es ver el resultado ANTES de guardar.
+    if (dKey === cellDialog.date) continue
+    planned += (row.shiftsByDate[dKey] || []).reduce((sum, s) => sum + shiftHours(s), 0)
+  }
+  planned += cellTotalHours.value
+
+  const contract = row.contractHours || 0
+  const days = daysOfIsoWeek(cellDialog.date)
+  const rangeLabel = `${days.from} al ${days.to}`
+
+  if (!contract) return { planned, contract: 0, rangeLabel, toneClass: '', hint: '' }
+
+  const diff = +(planned - contract).toFixed(2)
+  if (Math.abs(diff) < 0.02) {
+    return { planned, contract, rangeLabel, toneClass: 'text-positive', hint: 'La semana cierra exactamente en la jornada pactada.' }
+  }
+  if (diff > 0) {
+    return {
+      planned, contract, rangeLabel, toneClass: 'text-warning',
+      hint: `Sobran ${fmtHours(diff)} sobre la jornada pactada. El exceso debe autorizarse como horas extraordinarias.`,
+    }
+  }
+  return {
+    planned, contract, rangeLabel, toneClass: 'text-orange-9',
+    hint: `Faltan ${fmtHours(-diff)} para completar la jornada pactada de la semana.`,
+  }
+})
+
+/** Primer y último día (dd/mm) de la semana ISO que contiene `yyyymmdd`. */
+function daysOfIsoWeek(yyyymmdd) {
+  const [y, m, d] = yyyymmdd.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  const dow = dt.getUTCDay() || 7
+  const monday = new Date(dt.getTime() - (dow - 1) * 86400000)
+  const sunday = new Date(monday.getTime() + 6 * 86400000)
+  const fmt = (x) => `${String(x.getUTCDate()).padStart(2, '0')}/${String(x.getUTCMonth() + 1).padStart(2, '0')}`
+  return { from: fmt(monday), to: fmt(sunday) }
+}
+
+/** "9 h 30m" — más legible que 9.5 h cuando hay minutos de por medio. */
+function fmtHours(hours) {
+  const total = Math.round((Number(hours) || 0) * 60)
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  if (!h) return `${m} min`
+  return m ? `${h} h ${m}m` : `${h} h`
+}
 watch(cellTotalHours, (v) => { cellDialog.totalHours = v }, { immediate: true })
 
 function openCellEditor(row, day) {
@@ -738,6 +924,11 @@ function openCellEditor(row, day) {
   cellDialog.hasExisting = existing.length > 0
   cellDialog.scheduleId = row.assignment?.scheduleId?._id || row.assignment?.scheduleId || null
   cellDialog.totalHours = 0
+  cellDialog.contractHours = row.contractHours || 0
+  // Jornada parcial por tipo de contrato o por tipo de jornada: son dos formas
+  // de declarar lo mismo, igual que en el backend (helpers/jornadaRules.js).
+  cellDialog.isPartTime = ['part_time'].includes(String(row.user?.payroll?.contractType || ''))
+    || String(row.user?.payroll?.jornada || '') === 'parcial'
   cellDialog.open = true
 }
 
@@ -789,6 +980,9 @@ function formatLongDate(yyyymmdd) {
 
 /* ---------- Mount ---------- */
 onMounted(async () => {
+  // Los topes legales no dependen de la empresa: se piden en paralelo para que
+  // el editor de día pueda validar desde la primera apertura.
+  legalParams.fetch()
   // loadCompanies setea companyId → el watcher dispara el refresh
   await loadCompanies()
 })
@@ -944,6 +1138,66 @@ onMounted(async () => {
   gap: 8px;
 }
 .rk-cell-add { align-self: flex-start; font-size: 12px; }
+
+/* ---------- Avisos del editor de día ---------- */
+.rk-cell-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rk-cell-issue {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.rk-cell-issue--error {
+  color: var(--color-danger, #b91c1c);
+  background: var(--color-danger-soft, rgba(185, 28, 28, 0.08));
+  border-color: var(--color-danger-soft, rgba(185, 28, 28, 0.2));
+}
+.rk-cell-issue--warn {
+  color: var(--color-warning-strong, #92400e);
+  background: var(--color-warning-soft, rgba(245, 158, 11, 0.12));
+  border-color: var(--color-warning-soft, rgba(245, 158, 11, 0.25));
+}
+
+/* Totales del día y de la semana: el par que dice si la malla cierra. */
+.rk-cell-totals {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rk-cell-total {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-soft, #f4f6fb);
+  border: 1px solid var(--border-color, rgba(15, 17, 23, 0.08));
+}
+.rk-cell-total__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #64748b);
+}
+.rk-cell-total__value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rk-cell-week-hint {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
 
 /* ---------- Dark mode ----------
    Most rules above already consume CSS tokens (--surface-soft, --border-color,
