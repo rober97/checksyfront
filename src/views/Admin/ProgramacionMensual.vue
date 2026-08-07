@@ -120,14 +120,20 @@
           <div>
             <div class="rk-module-stat__label">Domingos garantizados</div>
             <div class="rk-module-stat__value" :class="{ 'text-negative': sundayWatch.atRisk }">
-              {{ sundayWatch.atRisk ? `${sundayWatch.atRisk} por revisar` : 'Al día' }}
+              {{ sundayWatch.label }}
             </div>
           </div>
           <q-tooltip>
-            {{ sundayWatch.applies }} trabajador(es) del Art. 38 con domingos garantizados
-            ({{ sundayWatch.requiredFree }} al mes).
+            <template v-if="sundayWatch.applies">
+              {{ sundayWatch.applies }} trabajador(es) del Art. 38 con domingos garantizados
+              ({{ sundayWatch.requiredFree }} al mes).
+            </template>
+            <template v-else>
+              Ningún trabajador del Art. 38 tiene domingos garantizados este mes.
+            </template>
             <template v-if="sundayWatch.exempt">
-              {{ sundayWatch.exempt }} exceptuado(s) por jornada o duración del contrato.
+              {{ sundayWatch.exempt }} exceptuado(s) por jornada de hasta
+              {{ sundayWatch.exemptLimit }} h/sem o contrato de hasta 30 días (Art. 38 inc. 5).
             </template>
             <template v-if="sundayWatch.missingCausal">
               {{ sundayWatch.missingCausal }} sin causal declarada.
@@ -564,16 +570,25 @@ const totalPlannedHours = computed(() =>
 )
 
 /* Resumen de domingos garantizados. null cuando la empresa no tiene a nadie
-   bajo el Art. 38: no se muestra un indicador que no aplica. */
+   bajo el Art. 38: no se muestra un indicador que no aplica.
+
+   "Al día" sólo se dice cuando hay alguien a quien cumplirle. Si todos están
+   exceptuados (jornada de hasta 20 h, contrato corto), el rótulo es "No aplica":
+   afirmar que se está cumpliendo una obligación inexistente da una falsa
+   sensación de control sobre una malla que sí trabaja todos los domingos. */
 const sundayWatch = computed(() => {
   const data = planStore.sundayRest
   if (!data?.summary?.total) return null
+  const applies = data.summary.compliant + data.summary.atRisk
+  const atRisk = data.summary.atRisk
   return {
     requiredFree: data.requiredFree,
-    applies: data.summary.compliant + data.summary.atRisk,
-    atRisk: data.summary.atRisk,
+    exemptLimit: data.maxWeeklyHoursExempt,
+    applies,
+    atRisk,
     exempt: data.summary.exempt,
     missingCausal: data.summary.missingCausal || 0,
+    label: atRisk ? `${atRisk} por revisar` : (applies ? 'Al día' : 'No aplica'),
   }
 })
 

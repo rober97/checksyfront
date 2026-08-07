@@ -120,6 +120,15 @@
             <q-td key="executed" :props="props">{{ hhmm(props.row.totals.executedMinutes) }}</q-td>
             <q-td key="marked" :props="props">{{ hhmm(props.row.totals.markedMinutes) }}</q-td>
             <q-td key="detected" :props="props">{{ hhmm(props.row.totals.detectedMinutes) }}</q-td>
+            <q-td key="unscheduled" :props="props">
+              <span :class="props.row.totals.unscheduledMinutes > 0 ? 'text-purple text-weight-bold' : 'text-grey-6'">
+                {{ hhmm(props.row.totals.unscheduledMinutes) }}
+              </span>
+              <q-tooltip v-if="props.row.totals.unscheduledMinutes > 0" max-width="320px">
+                {{ props.row.totals.daysUnscheduled }} día(s) trabajados sin jornada pactada.
+                {{ unscheduledCauseHint(props.row) }}
+              </q-tooltip>
+            </q-td>
             <q-td key="payable" :props="props">
               <span :class="props.row.totals.payableMinutes > 0 ? 'text-positive text-weight-bold' : 'text-grey-6'">
                 {{ hhmm(props.row.totals.payableMinutes) }}
@@ -174,8 +183,13 @@
                     <td class="text-right">{{ hhmm(d.detectedMinutes) }}</td>
                     <td class="text-right">{{ d.authorizedMinutes ? hhmm(d.authorizedMinutes) : '—' }}</td>
                     <td class="text-left">
-                      <q-badge :color="statusMeta(d.status).color" :label="statusMeta(d.status).label">
-                        <q-tooltip max-width="300px">{{ statusMeta(d.status).hint }}</q-tooltip>
+                      <q-badge :color="statusMeta(d.status).color" :label="dayStatusLabel(d)">
+                        <q-tooltip max-width="300px">
+                          {{ statusMeta(d.status).hint }}
+                          <template v-if="d.status === 'SIN_JORNADA' && UNSCHEDULED_CAUSE[d.expectedSource]">
+                            <br>{{ UNSCHEDULED_CAUSE[d.expectedSource] }}
+                          </template>
+                        </q-tooltip>
                       </q-badge>
                     </td>
                     <td class="text-right">
@@ -282,6 +296,9 @@ const columns = [
   { name: 'executed', label: 'HE ejecutadas', field: (r) => r.totals.executedMinutes, align: 'right', sortable: true },
   { name: 'marked', label: 'Marcadas', field: (r) => r.totals.markedMinutes, align: 'right' },
   { name: 'detected', label: 'Sobretiempo', field: (r) => r.totals.detectedMinutes, align: 'right' },
+  // Sin esta columna, un trabajador con decenas de horas en días de descanso
+  // se veía con 0h en toda la fila y sólo aparecía al expandir el detalle.
+  { name: 'unscheduled', label: 'Día no pactado', field: (r) => r.totals.unscheduledMinutes, align: 'right', sortable: true },
   { name: 'payable', label: 'Se pagan', field: (r) => r.totals.payableMinutes, align: 'right', sortable: true },
   { name: 'pending', label: 'Pacto', field: (r) => r.totals.daysWithoutPact, align: 'left' },
 ]
@@ -313,6 +330,32 @@ function sourceLabel(source) {
   })[source] || source
 }
 
+/**
+ * Por qué el trabajador tiene días sin jornada pactada. No es lo mismo un
+ * domingo trabajado de verdad (que exige descanso compensatorio) que un
+ * trabajador al que nadie le programó la malla: el primero es un hecho laboral,
+ * el segundo es un dato faltante que además impide detectar sobretiempo.
+ */
+const UNSCHEDULED_CAUSE = {
+  none: 'No tiene horario asignado: mientras no lo tenga, no hay jornada contra la cual medir sobretiempo.',
+  oncall_unscheduled: 'Trabaja por turnos programados y esos días no estaban en la malla mensual.',
+  rest_day: 'Su plantilla no cubre esos días. Si su contrato es por turnos rotativos, la jornada debe venir de la programación mensual.',
+  holiday: 'Trabajó en día feriado: corresponde descanso compensatorio (Art. 38 CT).',
+}
+
+function unscheduledCauseHint(row) {
+  const sources = new Set(
+    (row.days || [])
+      .filter((d) => d.status === 'SIN_JORNADA')
+      .map((d) => d.expectedSource)
+  )
+  const causes = [...sources].map((s) => UNSCHEDULED_CAUSE[s]).filter(Boolean)
+  // Varias causas distintas en el mismo rango: mejor no elegir una y que el
+  // detalle diario lo aclare, que afirmar la equivocada.
+  if (causes.length !== 1) return 'Revisa el detalle diario para ver el motivo de cada día.'
+  return causes[0]
+}
+
 function statusMeta(status) {
   return ({
     OK: { color: 'positive', label: 'Autorizada', hint: 'Lo ejecutado está dentro del tope autorizado: se paga con recargo del 50%.' },
@@ -322,6 +365,19 @@ function statusMeta(status) {
     ART22: { color: 'grey', label: 'Art. 22', hint: 'Trabajador excluido de la limitación de jornada: no genera horas extraordinarias.' },
     SIN_HE: { color: 'grey-4', label: 'Sin HE', hint: 'Jornada dentro de lo pactado.' },
   })[status] || { color: 'grey', label: status, hint: '' }
+}
+
+/** Etiqueta del día. "Día no pactado" a secas no dice qué hacer; el motivo sí. */
+const UNSCHEDULED_SHORT = {
+  none: 'Sin horario asignado',
+  oncall_unscheduled: 'Turno no programado',
+  rest_day: 'Día de descanso',
+  holiday: 'Feriado trabajado',
+}
+
+function dayStatusLabel(d) {
+  if (d.status !== 'SIN_JORNADA') return statusMeta(d.status).label
+  return UNSCHEDULED_SHORT[d.expectedSource] || statusMeta(d.status).label
 }
 
 function canRegularize(d) {

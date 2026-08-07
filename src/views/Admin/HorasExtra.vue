@@ -301,14 +301,19 @@ function filterEmployees(val, update) {
   update(() => { filterText.value = val || '' })
 }
 
-// Mapa userId → nombre para la tabla.
+// Mapa userId → nombre, sólo como respaldo: el backend ya manda `userName`
+// resuelto. Cruzar contra la lista local dejaba filas en "—" apenas el
+// trabajador no estuviera cargado (otra empresa, paginación, baja).
 const userMap = computed(() => {
   const m = {}
   for (const u of userStore.users || []) m[String(u._id)] = fullName(u)
   return m
 })
 const rows = computed(() =>
-  (store.list || []).map(a => ({ ...a, _empleado: userMap.value[String(a.userId)] || '—' }))
+  (store.list || []).map(a => ({
+    ...a,
+    _empleado: a.userName || userMap.value[String(a.userId)] || '—',
+  }))
 )
 
 // Solicitudes que el trabajador pidió desde la app y esperan resolución.
@@ -327,6 +332,10 @@ async function reload() {
     from: filters.from,
     to: filters.to,
     status: filters.status || '',
+    // Sin esto el superadmin recibía las autorizaciones de todas las empresas
+    // mezcladas con las de la que está viendo. Para RR.HH. el backend ya fuerza
+    // su propia empresa y este parámetro es inocuo.
+    companyId: auth.user?.company || '',
   })
 }
 
