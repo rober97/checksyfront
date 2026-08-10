@@ -115,7 +115,7 @@
           />
         </div>
         <div class="rk-demo-emp__creds-hint">
-          Sirve para los 8 trabajadores que venían cargados —también en la app móvil,
+          Sirve para los trabajadores de ejemplo que venían cargados —también en la app móvil,
           que es donde se marca asistencia con foto y ubicación. Los que crees tú
           eligen su propia contraseña al activar su cuenta.
         </div>

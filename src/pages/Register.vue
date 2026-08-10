@@ -454,7 +454,7 @@
                     Al entrar vas a encontrar
                   </div>
                   <ul class="included-list">
-                    <li><q-icon name="groups" size="15px" /> 8 trabajadores con contrato, horario y sueldo</li>
+                    <li><q-icon name="groups" size="15px" /> 5 trabajadores de ejemplo, cada uno con un contrato distinto</li>
                     <li><q-icon name="fingerprint" size="15px" /> Un mes de marcas reales, con atrasos y ausencias</li>
                     <li><q-icon name="event_available" size="15px" /> Solicitudes pendientes de tu aprobación</li>
                     <li><q-icon name="payments" size="15px" /> Liquidaciones listas para generar</li>
@@ -553,7 +553,7 @@
               >
                 <template v-if="!loading">
                   <q-icon name="rocket_launch" size="18px" class="q-mr-xs" />
-                  Crear mi ambiente de prueba
+                  Crear mi ambiente
                 </template>
               </q-btn>
             </div>
@@ -1614,6 +1614,7 @@ body.body--dark .form-nav { border-top-color: rgba(51,65,85,0.3); }
   font-size: 0.9rem; font-weight: 600;
   min-width: 130px;
 }
+.nav-btn :deep(.q-btn__content) { flex-wrap: nowrap; white-space: nowrap; }
 .nav-btn--back {
   color: #64748b;
   border: 1.5px solid rgba(203,213,225,0.4);
