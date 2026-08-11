@@ -62,6 +62,50 @@ export const useOvertimeAuthStore = defineStore('overtimeAuth', {
       }
     },
 
+    /**
+     * Autoriza varios días de una sola vez (regularización masiva desde el
+     * reporte de ejecutadas). No hay endpoint bulk: el backend valida autoridad
+     * y tope por autorización, así que se emiten de a una y en serie —
+     * paralelizar sólo multiplicaría los conflictos sobre el mismo día.
+     *
+     * Cada ítem: { userId, dayKey, maxMinutes, reason, replaceId? }.
+     * Devuelve { ok, failed: [{ item, message }] }: un día que falla no
+     * cancela los demás, pero tampoco se traga el error.
+     */
+    async grantMany(items = [], onProgress = null) {
+      const failed = []
+      let ok = 0
+      this.sending = true
+      this.error = null
+      try {
+        for (let i = 0; i < items.length; i += 1) {
+          const it = items[i]
+          try {
+            // Ajustar un día ya autorizado = anular y volver a otorgar: deja
+            // las dos huellas en la bitácora, que es lo que corresponde.
+            if (it.replaceId) await this.cancel(it.replaceId)
+            await secureAxios.post(`${API_URL}/overtime-authorizations`, {
+              userId: it.userId,
+              dayKey: it.dayKey,
+              maxMinutes: it.maxMinutes,
+              reason: it.reason || '',
+            })
+            ok += 1
+          } catch (err) {
+            failed.push({
+              item: it,
+              message: err?.response?.data?.message || err.message || 'Error desconocido',
+            })
+          }
+          if (onProgress) onProgress(i + 1, items.length)
+        }
+      } finally {
+        this.sending = false
+      }
+      if (failed.length) this._setError(failed[0].message)
+      return { ok, failed }
+    },
+
     async cancel(id) {
       try {
         this.error = null

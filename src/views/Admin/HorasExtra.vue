@@ -1,409 +1,164 @@
 <!-- src/views/Admin/HorasExtra.vue
      Horas extraordinarias (Art. 30-32 CT / Res. Ex. 38). Dos caras del mismo
-     asunto, separadas en pestañas porque la ley las distingue:
-       · Trabajadas   — lo efectivamente ejecutado sobre la jornada pactada.
-       · Autorizaciones — el pacto previo del empleador (tope diario y motivo). -->
+     asunto, separadas porque la ley las distingue:
+       · Ejecutadas     — lo efectivamente trabajado sobre la jornada pactada.
+       · Autorizaciones — el pacto previo del empleador (tope diario y motivo).
+
+     Ambos paneles se montan de entrada: el contador de solicitudes pendientes
+     tiene que verse aunque RR.HH. nunca abra la pestaña. -->
 <template>
-  <q-page class="q-pa-lg" :class="{ 'is-dark': $q.dark.isActive }">
-    <div class="row items-center justify-between q-mb-md">
-      <div>
-        <div class="text-h4 text-weight-bold">Horas extraordinarias</div>
-        <div class="text-grey-7">Qué se trabajó de más, qué está autorizado y qué se paga</div>
-      </div>
-      <q-btn flat round icon="refresh" :loading="loading" @click="reloadActive">
-        <q-tooltip>Recargar</q-tooltip>
-      </q-btn>
+  <q-page class="rk-page rk-page--overtime" :class="{ 'is-dark': isDark }">
+    <!-- ===== Fondo decorativo ===== -->
+    <div class="rk-bg-mesh" aria-hidden="true">
+      <div class="mesh-orb orb-1" />
+      <div class="mesh-orb orb-2" />
+      <div class="mesh-grid" />
     </div>
 
-    <q-tabs v-model="tab" dense align="left" class="text-primary q-mb-md" narrow-indicator>
-      <q-tab name="trabajadas" icon="timer" label="Trabajadas" no-caps />
-      <q-tab name="autorizaciones" icon="gavel" label="Autorizaciones" no-caps>
-        <q-badge v-if="pendingRequests.length" color="orange" floating>{{ pendingRequests.length }}</q-badge>
-      </q-tab>
-    </q-tabs>
-
-    <q-tab-panels v-model="tab" animated keep-alive class="bg-transparent">
-      <q-tab-panel name="trabajadas" class="q-pa-none">
-        <OvertimeWorkedPanel ref="workedPanel" />
-      </q-tab-panel>
-
-      <q-tab-panel name="autorizaciones" class="q-pa-none">
-        <q-banner rounded class="bg-blue-1 text-blue-9 q-mb-md">
-      <template #avatar><q-icon name="gavel" color="primary" /></template>
-      La autorización es un acto del empleador y queda registrada en la bitácora. Sólo la
-      jefatura del trabajador o el representante del empleador pueden otorgarla, y
-      <b>nadie puede autorizarse horas extra a sí mismo</b> (cuatro ojos): siempre debe
-      resolverlas otra persona.
-    </q-banner>
-
-    <!-- Solicitudes de HE pendientes (las pide el trabajador desde la app) -->
-    <q-card v-if="pendingRequests.length" flat bordered class="q-mb-lg">
-      <q-card-section class="row items-center q-gutter-sm bg-orange-1 text-orange-10">
-        <q-icon name="pending_actions" size="24px" />
-        <div class="text-subtitle1 text-weight-bold">
-          Solicitudes de horas extra pendientes ({{ pendingRequests.length }})
+    <!-- ===== Header ===== -->
+    <div class="rk-header-wrap">
+      <div class="rk-header-inner">
+        <div class="rk-header-icon">
+          <q-icon name="more_time" size="26px" />
         </div>
-      </q-card-section>
-      <q-separator />
-      <q-list separator>
-        <q-item v-for="r in pendingRequests" :key="r.id">
-          <q-item-section>
-            <q-item-label class="text-weight-bold">{{ r._empleado }}</q-item-label>
-            <q-item-label caption>
-              {{ r.dayKey }} · {{ r.maxMinutes }} min · {{ r.reason || 'Sin motivo indicado' }}
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <div class="row q-gutter-xs">
-              <q-btn
-                unelevated dense color="positive" icon="check" label="Aprobar"
-                :loading="store.sending" @click="approveRow(r)"
-              />
-              <q-btn
-                outline dense color="negative" icon="close" label="Rechazar"
-                @click="rejectRow(r)"
-              />
-            </div>
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </q-card>
-
-    <!-- Formulario de otorgamiento -->
-    <q-card flat bordered class="q-mb-lg">
-      <q-card-section>
-        <div class="text-subtitle1 text-weight-bold q-mb-sm">Otorgar autorización</div>
-        <q-form @submit.prevent="submitGrant" class="row q-col-gutter-md">
-          <div class="col-12 col-md-4">
-            <q-select
-              v-model="form.userId"
-              :options="employeeOptions"
-              option-value="value"
-              option-label="label"
-              emit-value
-              map-options
-              use-input
-              input-debounce="200"
-              @filter="filterEmployees"
-              label="Trabajador *"
-              outlined
-              dense
-              :rule="[v => !!v || 'Selecciona un trabajador']"
-            />
-          </div>
-
-          <div class="col-6 col-md-3">
-            <q-input v-model="form.dayKey" label="Día *" outlined dense readonly>
-              <template #append>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-date v-model="form.dayKey" mask="YYYY-MM-DD" today-btn minimal>
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="OK" color="primary" flat />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-            </q-input>
-          </div>
-
-          <div class="col-6 col-md-2">
-            <q-input
-              v-model.number="form.maxMinutes"
-              type="number"
-              label="Tope (min) *"
-              outlined
-              dense
-              :min="1"
-              :max="heCapMinutes"
-              :hint="`Máx. ${heCapMinutes} min vigente`"
-            />
-          </div>
-
-          <div class="col-12 col-md-3">
-            <q-input v-model="form.reason" label="Motivo" outlined dense maxlength="300" />
-          </div>
-
-          <div class="col-12">
-            <q-btn
-              type="submit"
-              color="primary"
-              icon="add_task"
-              label="Otorgar horas extra"
-              :loading="store.sending"
-              unelevated
-            />
-          </div>
-        </q-form>
-      </q-card-section>
-    </q-card>
-
-    <!-- Filtros + tabla -->
-    <q-card flat bordered>
-      <q-card-section class="row items-center q-col-gutter-md">
-        <div class="col-6 col-md-3">
-          <q-input v-model="filters.from" label="Desde" outlined dense readonly>
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover><q-date v-model="filters.from" mask="YYYY-MM-DD" minimal><div class="row justify-end"><q-btn v-close-popup label="OK" color="primary" flat /></div></q-date></q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+        <div class="rk-header-text">
+          <h1 class="rk-title">Horas extraordinarias</h1>
+          <p class="rk-subtitle">
+            Qué se trabajó de más, qué está <span class="rk-accent">autorizado</span> y qué se paga.
+          </p>
         </div>
-        <div class="col-6 col-md-3">
-          <q-input v-model="filters.to" label="Hasta" outlined dense readonly>
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover><q-date v-model="filters.to" mask="YYYY-MM-DD" minimal><div class="row justify-end"><q-btn v-close-popup label="OK" color="primary" flat /></div></q-date></q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+        <div class="rk-header-actions q-ml-auto">
+          <button class="rk-btn-refresh" :disabled="loading" @click="reloadActive">
+            <q-icon name="refresh" size="16px" :class="{ 'ot-spin': loading }" />
+            Actualizar
+          </button>
         </div>
-        <div class="col-6 col-md-3">
-          <q-select v-model="filters.status" :options="statusOptions" emit-value map-options label="Estado" outlined dense clearable />
-        </div>
-        <div class="col-6 col-md-3 flex items-center">
-          <q-btn color="primary" outline icon="search" label="Filtrar" @click="reload" />
-        </div>
-      </q-card-section>
+      </div>
+    </div>
 
-      <q-table
-        :rows="rows"
-        :columns="columns"
-        row-key="id"
-        :loading="loading"
-        flat
-        :pagination="{ rowsPerPage: 20 }"
-        no-data-label="No hay autorizaciones en el rango"
+    <!-- ===== Pestañas ===== -->
+    <nav class="hx-tabs">
+      <button
+        v-for="t in TABS"
+        :key="t.key"
+        class="hx-tab"
+        :class="{ active: tab === t.key }"
+        @click="tab = t.key"
       >
-        <template #body-cell-empleado="p">
-          <q-td :props="p">{{ p.row._empleado }}</q-td>
-        </template>
+        <q-icon :name="t.icon" size="17px" />
+        {{ t.label }}
+        <span v-if="t.key === 'autorizaciones' && pendingCount" class="hx-tab-badge">
+          {{ pendingCount }}
+        </span>
+      </button>
+    </nav>
 
-        <template #body-cell-tope="p">
-          <q-td :props="p">{{ p.row.maxMinutes }} min</q-td>
-        </template>
-
-        <template #body-cell-status="p">
-          <q-td :props="p">
-            <q-badge :color="statusMeta(p.row.status).color" :label="statusMeta(p.row.status).label" />
-            <q-badge v-if="p.row.selfApproved" color="orange" class="q-ml-xs" label="Auto-aprobada">
-              <q-tooltip max-width="320px">
-                El propio trabajador se autorizó estas horas extra actuando como
-                representante del empleador (Art. 4 del Código del Trabajo). Queda
-                registrado en la bitácora para su trazabilidad.
-              </q-tooltip>
-            </q-badge>
-            <q-badge v-if="p.row.origin === 'WORKER'" color="blue-grey" class="q-ml-xs" label="Solicitada">
-              <q-tooltip max-width="320px">
-                La pidió el propio trabajador desde la app; requiere aprobación de la jefatura.
-              </q-tooltip>
-            </q-badge>
-          </q-td>
-        </template>
-
-        <template #body-cell-acciones="p">
-          <q-td :props="p" class="text-right">
-            <template v-if="p.row.status === 'REQUESTED'">
-              <q-btn flat dense color="positive" icon="check" label="Aprobar" @click="approveRow(p.row)" />
-              <q-btn flat dense color="negative" icon="close" label="Rechazar" @click="rejectRow(p.row)" />
-            </template>
-            <q-btn
-              v-else-if="p.row.status === 'APPROVED'"
-              flat dense color="negative" icon="cancel" label="Cancelar"
-              @click="confirmCancel(p.row)"
-            />
-          </q-td>
-        </template>
-      </q-table>
-        </q-card>
-      </q-tab-panel>
-    </q-tab-panels>
+    <!-- ===== Paneles ===== -->
+    <div v-show="tab === 'ejecutadas'">
+      <OvertimeWorkedPanel ref="workedPanel" @granted="authPanel?.reload?.()" />
+    </div>
+    <div v-show="tab === 'autorizaciones'">
+      <OvertimeAuthPanel ref="authPanel" @pending-change="pendingCount = $event" />
+    </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useOvertimeAuthStore } from '@/stores/overtimeAuth'
-import { useUserStore } from '@/stores/userStore'
-import { useAuthStore } from '@/stores/authStore'
+import { useOvertimeReportStore } from '@/stores/overtimeReport'
 import OvertimeWorkedPanel from '@/components/overtime/OvertimeWorkedPanel.vue'
-import { useLegalParamsStore } from '@/stores/legalParams'
+import OvertimeAuthPanel from '@/components/overtime/OvertimeAuthPanel.vue'
 
 const $q = useQuasar()
-const store = useOvertimeAuthStore()
-const userStore = useUserStore()
-const auth = useAuthStore()
+const authStore = useOvertimeAuthStore()
+const reportStore = useOvertimeReportStore()
 
-const legalParams = useLegalParamsStore()
-// Tope diario de HE vigente (parámetro legal con vigencia, servido por el backend).
-const heCapMinutes = computed(() => legalParams.value('HE_TOPE_DIARIO', 120))
+const isDark = ref($q.dark.isActive)
+watch(() => $q.dark.isActive, (v) => { isDark.value = v })
 
-const tab = ref('trabajadas')
+const TABS = [
+  { key: 'ejecutadas', label: 'Ejecutadas', icon: 'timelapse' },
+  { key: 'autorizaciones', label: 'Autorizaciones', icon: 'gavel' },
+]
+
+const tab = ref('ejecutadas')
+const pendingCount = ref(0)
+
 const workedPanel = ref(null)
+const authPanel = ref(null)
 
-const loading = computed(() => store.loading)
+const loading = computed(() =>
+  tab.value === 'ejecutadas' ? reportStore.loading : authStore.loading
+)
 
 // El botón de recargar actúa sobre la pestaña visible.
 function reloadActive() {
-  return tab.value === 'trabajadas' ? workedPanel.value?.reload?.() : reload()
+  return tab.value === 'ejecutadas' ? workedPanel.value?.reload?.() : authPanel.value?.reload?.()
 }
-
-const form = reactive({ userId: null, dayKey: '', maxMinutes: null, reason: '' })
-const filters = reactive({ from: '', to: '', status: null })
-
-const statusOptions = [
-  { label: 'Pendiente', value: 'REQUESTED' },
-  { label: 'Vigente', value: 'APPROVED' },
-  { label: 'Rechazada', value: 'REJECTED' },
-  { label: 'Anulada', value: 'CANCELLED' },
-]
-
-function statusMeta(s) {
-  switch (s) {
-    case 'REQUESTED': return { color: 'orange', label: 'Pendiente' }
-    case 'APPROVED': return { color: 'positive', label: 'Vigente' }
-    case 'REJECTED': return { color: 'negative', label: 'Rechazada' }
-    case 'CANCELLED': return { color: 'grey', label: 'Anulada' }
-    default: return { color: 'grey', label: s || '—' }
-  }
-}
-
-const columns = [
-  { name: 'empleado', label: 'Trabajador', field: '_empleado', align: 'left' },
-  { name: 'dayKey', label: 'Día', field: 'dayKey', align: 'left', sortable: true },
-  { name: 'tope', label: 'Tope', field: 'maxMinutes', align: 'left' },
-  { name: 'reason', label: 'Motivo', field: 'reason', align: 'left' },
-  { name: 'status', label: 'Estado', field: 'status', align: 'left' },
-  { name: 'acciones', label: '', field: 'acciones', align: 'right' },
-]
-
-function fullName(u) {
-  return `${u?.firstName || ''} ${u?.lastName || ''}`.trim() || u?.email || '—'
-}
-
-// Trabajadores de la empresa (excluye superadmin / fiscalizador).
-const workers = computed(() =>
-  (userStore.users || []).filter(u => u.role !== 'superadmin' && u.role !== 'dt_inspector')
-)
-
-// Opciones del selector (con filtro por texto).
-const filterText = ref('')
-const employeeOptions = computed(() => {
-  const q = filterText.value.trim().toLowerCase()
-  return workers.value
-    .filter(u => !q || fullName(u).toLowerCase().includes(q) || (u.rut || '').toLowerCase().includes(q))
-    .map(u => ({ value: u._id, label: `${fullName(u)}${u.rut ? ' — ' + u.rut : ''}` }))
-})
-function filterEmployees(val, update) {
-  update(() => { filterText.value = val || '' })
-}
-
-// Mapa userId → nombre, sólo como respaldo: el backend ya manda `userName`
-// resuelto. Cruzar contra la lista local dejaba filas en "—" apenas el
-// trabajador no estuviera cargado (otra empresa, paginación, baja).
-const userMap = computed(() => {
-  const m = {}
-  for (const u of userStore.users || []) m[String(u._id)] = fullName(u)
-  return m
-})
-const rows = computed(() =>
-  (store.list || []).map(a => ({
-    ...a,
-    _empleado: a.userName || userMap.value[String(a.userId)] || '—',
-  }))
-)
-
-// Solicitudes que el trabajador pidió desde la app y esperan resolución.
-const pendingRequests = computed(() => rows.value.filter(r => r.status === 'REQUESTED'))
-
-async function loadUsers() {
-  const params = { limit: 500 }
-  if (String(auth.user?.role || '') === 'superadmin' && auth.user?.company) {
-    params.company = auth.user.company
-  }
-  await userStore.fetchUsers(params)
-}
-
-async function reload() {
-  await store.fetchAuthorizations({
-    from: filters.from,
-    to: filters.to,
-    status: filters.status || '',
-    // Sin esto el superadmin recibía las autorizaciones de todas las empresas
-    // mezcladas con las de la que está viendo. Para RR.HH. el backend ya fuerza
-    // su propia empresa y este parámetro es inocuo.
-    companyId: auth.user?.company || '',
-  })
-}
-
-async function submitGrant() {
-  if (!form.userId) { $q.notify({ type: 'warning', message: 'Selecciona un trabajador' }); return }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(form.dayKey)) { $q.notify({ type: 'warning', message: 'Selecciona el día' }); return }
-  const min = Number(form.maxMinutes)
-  if (!Number.isFinite(min) || min < 1 || min > heCapMinutes.value) {
-    $q.notify({ type: 'warning', message: `El tope debe estar entre 1 y ${heCapMinutes.value} minutos` }); return
-  }
-  try {
-    await store.grant({
-      userId: form.userId,
-      dayKey: form.dayKey,
-      maxMinutes: min,
-      reason: form.reason || '',
-    })
-    $q.notify({ type: 'positive', message: 'Horas extra autorizadas. Se notificó al trabajador.', position: 'top-right' })
-    form.userId = null; form.dayKey = ''; form.maxMinutes = heCapMinutes.value; form.reason = ''
-  } catch (err) {
-    $q.notify({ type: 'negative', message: store.error || 'No se pudo otorgar', position: 'top-right' })
-  }
-}
-
-async function approveRow(row) {
-  try {
-    await store.approve(row.id)
-    $q.notify({ type: 'positive', message: `Horas extra aprobadas para ${row._empleado}. Se notificó al trabajador.`, position: 'top-right' })
-  } catch {
-    $q.notify({ type: 'negative', message: store.error || 'No se pudo aprobar', position: 'top-right' })
-  }
-}
-
-function rejectRow(row) {
-  $q.dialog({
-    title: 'Rechazar solicitud',
-    message: `Motivo del rechazo para ${row._empleado} (opcional):`,
-    prompt: { model: '', type: 'text' },
-    cancel: true,
-    persistent: true,
-  }).onOk(async (note) => {
-    try {
-      await store.reject(row.id, note || '')
-      $q.notify({ type: 'positive', message: 'Solicitud rechazada. Se notificó al trabajador.', position: 'top-right' })
-    } catch {
-      $q.notify({ type: 'negative', message: store.error || 'No se pudo rechazar', position: 'top-right' })
-    }
-  })
-}
-
-function confirmCancel(row) {
-  $q.dialog({
-    title: 'Cancelar autorización',
-    message: `¿Cancelar la autorización de HE de ${row._empleado} para el ${row.dayKey}?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await store.cancel(row.id)
-      $q.notify({ type: 'positive', message: 'Autorización cancelada', position: 'top-right' })
-    } catch {
-      $q.notify({ type: 'negative', message: store.error || 'No se pudo cancelar', position: 'top-right' })
-    }
-  })
-}
-
-onMounted(async () => {
-  await Promise.all([legalParams.fetch(), loadUsers(), reload()])
-  if (form.maxMinutes == null) form.maxMinutes = heCapMinutes.value
-})
 </script>
+
+<style scoped>
+.rk-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hx-tabs {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 5px;
+  border: 1px solid var(--rk-c-border);
+  border-radius: 14px;
+  background: var(--rk-c-surface);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.hx-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--rk-c-text-2);
+  cursor: pointer;
+  font-family: var(--app-font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.hx-tab:hover {
+  color: var(--rk-c-text);
+  background: var(--rk-c-surface-2);
+}
+
+.hx-tab.active {
+  background: var(--rk-c-primary);
+  color: #fff;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--rk-c-primary) 35%, transparent);
+}
+
+.hx-tab-badge {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--rk-c-warn);
+  color: #fff;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hx-tab.active .hx-tab-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--rk-c-primary);
+}
+</style>

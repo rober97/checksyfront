@@ -1,0 +1,280 @@
+/* =====================================================================
+   HORAS EXTRAORDINARIAS — primitivas compartidas por los paneles del módulo
+   (Ejecutadas y Autorizaciones). Viven fuera de los <style scoped> porque
+   ambos componentes las usan y duplicarlas era garantía de que se separaran.
+   Los colores salen de los tokens de .rk-page--overtime en patterns.css.
+===================================================================== */
+
+.ot-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Selector de rango ── */
+.ot-range-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--rk-c-border);
+  border-radius: 10px;
+  background: var(--rk-c-surface-2);
+  color: var(--rk-c-text);
+  cursor: pointer;
+  font-family: var(--app-font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 0.15s;
+}
+
+.ot-range-pill:hover {
+  border-color: var(--rk-c-primary);
+}
+
+.ot-range-caret {
+  color: var(--rk-c-text-3);
+}
+
+.ot-range-body {
+  display: flex;
+  align-items: stretch;
+}
+
+.ot-range-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  min-width: 152px;
+}
+
+.ot-preset {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  font-family: var(--app-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ot-preset:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.ot-preset.active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* ── Identidad del trabajador ── */
+.ot-user {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.ot-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.ot-user-name {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ot-user-rut {
+  font-size: 11.5px;
+}
+
+/* ── Badges de estado: el color ES la información ── */
+.ot-badge--ok {
+  background: var(--rk-c-ok-soft);
+  color: var(--rk-c-ok);
+}
+
+.ot-badge--ok .badge-dot {
+  background: var(--rk-c-ok);
+}
+
+.ot-badge--warn {
+  background: var(--rk-c-warn-soft);
+  color: var(--rk-c-warn);
+}
+
+.ot-badge--warn .badge-dot {
+  background: var(--rk-c-warn);
+}
+
+.ot-badge--danger {
+  background: var(--rk-c-danger-soft);
+  color: var(--rk-c-danger);
+}
+
+.ot-badge--danger .badge-dot {
+  background: var(--rk-c-danger);
+}
+
+.ot-badge--extra {
+  background: var(--rk-c-extra-soft);
+  color: var(--rk-c-extra);
+}
+
+.ot-badge--extra .badge-dot {
+  background: var(--rk-c-extra);
+}
+
+.ot-badge--neutral {
+  background: var(--rk-c-border);
+  color: var(--rk-c-text-2);
+}
+
+.ot-badge--neutral .badge-dot {
+  background: var(--rk-c-text-3);
+}
+
+/* ── Botones ── */
+.ot-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 11px;
+  background: var(--rk-c-primary, var(--color-primary));
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--app-font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--rk-c-primary, var(--color-primary)) 35%, transparent);
+  transition: transform 0.15s;
+}
+
+.ot-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ot-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ot-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--app-font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.ot-btn-ghost:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ── Diálogos del módulo ── */
+.ot-modal {
+  width: 640px;
+  max-width: 94vw;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--card-background);
+  color: var(--text-primary);
+  box-shadow: var(--app-shadow-lg);
+}
+
+.ot-modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ot-modal-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.ot-modal-title {
+  font-family: var(--app-font-display);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.ot-modal-sub {
+  margin-top: 2px;
+  max-width: 46ch;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.ot-modal-close {
+  margin-left: auto;
+}
+
+.ot-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+}
+
+.ot-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-soft);
+}
+
+/* ── Utilidades ── */
+.ot-spin {
+  animation: ot-spin 0.9s linear infinite;
+}
+
+@keyframes ot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -79,6 +79,39 @@
   --rk-c-ok-soft: rgba(5, 150, 105, 0.12);
 }
 
+/* Horas extraordinarias: cyan de marca para lo ejecutado, verde para lo que
+   se paga, ámbar para lo que espera pacto y violeta para el día no pactado.
+   El estado manda sobre la marca: aquí el color ES la información. */
+.rk-page--overtime {
+  --rk-c-primary: #0893AA;
+  --rk-c-primary-soft: rgba(8, 147, 170, 0.12);
+  --rk-c-accent: #0893AA;
+  --rk-c-accent-soft: rgba(8, 147, 170, 0.12);
+  --rk-c-alt: #067C90;
+  --rk-c-alt-soft: rgba(6, 124, 144, 0.12);
+  --rk-c-ok: #059669;
+  --rk-c-ok-soft: rgba(5, 150, 105, 0.12);
+  --rk-c-extra: #8b5cf6;
+  --rk-c-extra-soft: rgba(139, 92, 246, 0.12);
+}
+
+.rk-page--overtime.is-dark {
+  --rk-c-primary: #33BECB;
+  --rk-c-primary-soft: rgba(51, 190, 203, 0.18);
+  --rk-c-accent: #33BECB;
+  --rk-c-accent-soft: rgba(51, 190, 203, 0.18);
+  --rk-c-alt: #66D2DD;
+  --rk-c-alt-soft: rgba(102, 210, 221, 0.18);
+  --rk-c-ok: #22c55e;
+  --rk-c-ok-soft: rgba(34, 197, 94, 0.18);
+  --rk-c-warn: #f59e0b;
+  --rk-c-warn-soft: rgba(245, 158, 11, 0.18);
+  --rk-c-danger: #f87171;
+  --rk-c-danger-soft: rgba(248, 113, 113, 0.18);
+  --rk-c-extra: #a78bfa;
+  --rk-c-extra-soft: rgba(167, 139, 250, 0.18);
+}
+
 .rk-bg-mesh {
   position: fixed;
   inset: 0;
