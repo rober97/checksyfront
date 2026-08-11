@@ -330,118 +330,6 @@
         <!-- Contenido del modal -->
         <div class="rk-modal-body">
 
-          <!-- Panel de edición inline (Res. Ex. 38/2024) -->
-          <div v-if="editTarget" class="edit-panel">
-            <div class="edit-panel-head">
-              <q-icon name="edit_note" size="18px" />
-              <span>Modificar marca — {{ capitalizar(editTarget.tipo) }} · {{ formatFecha(editTarget.timestamp) }} {{ horaBonita(editTarget.timestamp) }}</span>
-            </div>
-            <div class="edit-panel-note">
-              Queda registrado en la bitácora inmutable. El trabajador será notificado en su correo y tendrá <b>48 horas</b> para objetar.
-            </div>
-            <div class="edit-grid">
-              <label class="edit-field">
-                <span class="filter-label">Tipo</span>
-                <select v-model="editForm.tipo" class="rk-select">
-                  <option v-for="o in EDIT_TIPOS" :key="o.value" :value="o.value">{{ o.label }}</option>
-                </select>
-              </label>
-              <label class="edit-field">
-                <span class="filter-label">Nueva fecha/hora</span>
-                <input type="datetime-local" v-model="editForm.timestamp" class="rk-date-input" />
-              </label>
-              <label class="edit-field edit-field-full">
-                <span class="filter-label">Comentario (opcional)</span>
-                <input type="text" v-model="editForm.note" class="rk-date-input" placeholder="Sin comentario" />
-              </label>
-              <label class="edit-field edit-field-full">
-                <span class="filter-label">Razón de la modificación * (mín. 5 caracteres)</span>
-                <input type="text" v-model="editForm.reason" class="rk-date-input" placeholder="Ej: Corrección de hora solicitada por el trabajador" />
-              </label>
-            </div>
-            <div class="edit-actions">
-              <button class="footer-btn footer-btn-close" @click="cancelEdit" :disabled="editSaving">Cancelar</button>
-              <button class="footer-btn footer-btn-excel" :disabled="!editCanSubmit || editSaving" @click="saveEdit">
-                <q-icon name="save" size="14px" />{{ editSaving ? 'Guardando…' : 'Guardar modificación' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Panel: registrar salida olvidada (admin) -->
-          <div v-if="resolveTarget" class="edit-panel edit-panel-resolve">
-            <div class="edit-panel-head">
-              <q-icon name="logout" size="18px" />
-              <span>Registrar salida olvidada — entrada {{ formatFecha(resolveTarget.timestamp) }} {{ horaBonita(resolveTarget.timestamp) }}</span>
-            </div>
-            <div class="edit-panel-note">
-              Crea la salida faltante a nombre del trabajador. Queda en la bitácora, se marca como generada por administración y se notifica al trabajador (48h para objetar).
-            </div>
-            <div class="edit-grid">
-              <label class="edit-field">
-                <span class="filter-label">Hora de salida</span>
-                <input type="datetime-local" v-model="resolveForm.timestamp" class="rk-date-input" />
-                <span v-if="resolveEstimate" class="edit-hint">
-                  <q-icon name="smart_toy" size="13px" />
-                  Sugerido por {{ estimateSourceLabel(resolveEstimate.method) }}
-                  ({{ resolveEstimate.confidence === 'high' ? 'alta' : 'baja' }} confianza)
-                </span>
-              </label>
-              <label class="edit-field">
-                <span class="filter-label">Comentario (opcional)</span>
-                <input type="text" v-model="resolveForm.note" class="rk-date-input" placeholder="Sin comentario" />
-              </label>
-              <label class="edit-field edit-field-full">
-                <span class="filter-label">Razón * (mín. 5 caracteres)</span>
-                <input type="text" v-model="resolveForm.reason" class="rk-date-input" placeholder="Ej: El trabajador olvidó marcar salida; hora confirmada con su jefatura" />
-              </label>
-            </div>
-            <div class="edit-actions">
-              <button class="footer-btn footer-btn-close" @click="cancelResolve" :disabled="resolveSaving">Cancelar</button>
-              <button class="footer-btn footer-btn-excel" :disabled="!resolveCanSubmit || resolveSaving" @click="saveResolve">
-                <q-icon name="save" size="14px" />{{ resolveSaving ? 'Guardando…' : 'Registrar salida' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Panel: resolver objeción del trabajador (empleador) -->
-          <div v-if="resolveObjTarget" class="edit-panel edit-panel-objection">
-            <div class="edit-panel-head">
-              <q-icon name="gavel" size="18px" />
-              <span>Resolver objeción — {{ capitalizar(resolveObjTarget.tipo) }} · {{ formatFecha(resolveObjTarget.timestamp) }} {{ horaBonita(resolveObjTarget.timestamp) }}</span>
-            </div>
-            <div class="edit-panel-note">
-              El trabajador objetó esta modificación. Decide cómo cerrar el caso: <b>revertir</b> al valor original
-              (aceptas la objeción) o <b>sostener</b> la modificación (queda como desacuerdo registrado ante la DT).
-              En ambos casos se notifica al trabajador y queda en la bitácora inmutable.
-            </div>
-            <div v-if="resolveObjTarget.originalSnapshot?.captured" class="edit-panel-note objection-orig">
-              Valor original: <b>{{ capitalizar(resolveObjTarget.originalSnapshot.tipo || resolveObjTarget.tipo) }}</b>
-              · {{ formatFecha(resolveObjTarget.originalSnapshot.timestamp) }} {{ horaBonita(resolveObjTarget.originalSnapshot.timestamp) }}
-            </div>
-            <div class="objection-actions-radio">
-              <label class="obj-radio" :class="{ active: resolveObjForm.action === 'revert' }">
-                <input type="radio" value="revert" v-model="resolveObjForm.action" />
-                <q-icon name="undo" size="16px" /> Revertir al original
-              </label>
-              <label class="obj-radio" :class="{ active: resolveObjForm.action === 'uphold' }">
-                <input type="radio" value="uphold" v-model="resolveObjForm.action" />
-                <q-icon name="verified" size="16px" /> Sostener la modificación
-              </label>
-            </div>
-            <div class="edit-grid">
-              <label class="edit-field edit-field-full">
-                <span class="filter-label">Comentario / justificación (opcional)</span>
-                <input type="text" v-model="resolveObjForm.note" class="rk-date-input" placeholder="Ej: Se confirmó la hora con la jefatura y el reloj control" />
-              </label>
-            </div>
-            <div class="edit-actions">
-              <button class="footer-btn footer-btn-close" @click="cancelResolveObjection" :disabled="resolveObjSaving">Cancelar</button>
-              <button class="footer-btn footer-btn-excel" :disabled="!resolveObjCanSubmit || resolveObjSaving" @click="saveResolveObjection">
-                <q-icon name="gavel" size="14px" />{{ resolveObjSaving ? 'Resolviendo…' : 'Resolver objeción' }}
-              </button>
-            </div>
-          </div>
-
           <!-- Aviso de salidas olvidadas -->
           <div v-if="!isFetching && conteos.pendientes > 0" class="pending-banner">
             <div class="pending-banner-icon">
@@ -682,6 +570,151 @@
       </div>
     </q-dialog>
 
+    <!-- ===== Diálogo de acciones sobre una marca (Res. Ex. 38/2024) =====
+         Va sobre el modal de historial, en su propia capa: no depende del
+         scroll del listado, así que el panel siempre queda a la vista. -->
+    <q-dialog
+      v-model="panelOpen"
+      no-backdrop-dismiss
+      transition-show="jump-up"
+      transition-hide="jump-down"
+      @hide="onPanelHide"
+    >
+      <div class="rk-panel" :class="[`rk-panel-${panelKind}`, { 'is-dark': isDark }]" role="dialog">
+
+        <!-- Encabezado -->
+        <div class="rk-panel-header">
+          <q-icon :name="panelMeta.icon" size="20px" class="rk-panel-icon" />
+          <div class="rk-panel-titles">
+            <div class="rk-panel-title">{{ panelMeta.title }}</div>
+            <div v-if="panelMeta.sub" class="rk-panel-sub">{{ panelMeta.sub }}</div>
+          </div>
+          <button class="rk-panel-close" @click="closePanel" :disabled="panelSaving" aria-label="Cerrar">
+            <q-icon name="close" size="18px" />
+          </button>
+        </div>
+
+        <div class="rk-panel-body">
+
+          <!-- Modificar marca -->
+          <template v-if="panelKind === 'edit' && editTarget">
+            <div class="edit-panel-note">
+              Queda registrado en la bitácora inmutable. El trabajador será notificado en su correo y tendrá <b>48 horas</b> para objetar.
+            </div>
+            <div class="edit-grid">
+              <label class="edit-field">
+                <span class="filter-label">Tipo</span>
+                <select v-model="editForm.tipo" class="rk-select">
+                  <option v-for="o in EDIT_TIPOS" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </select>
+              </label>
+              <label class="edit-field">
+                <span class="filter-label">Nueva fecha/hora</span>
+                <input type="datetime-local" v-model="editForm.timestamp" class="rk-date-input" />
+              </label>
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Comentario (opcional)</span>
+                <input type="text" v-model="editForm.note" class="rk-date-input" placeholder="Sin comentario" />
+              </label>
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Razón de la modificación * (mín. 5 caracteres)</span>
+                <input
+                  autofocus
+                  type="text" v-model="editForm.reason" class="rk-date-input"
+                  placeholder="Ej: Corrección de hora solicitada por el trabajador"
+                />
+              </label>
+            </div>
+          </template>
+
+          <!-- Registrar salida olvidada -->
+          <template v-else-if="panelKind === 'resolve' && resolveTarget">
+            <div class="edit-panel-note">
+              Crea la salida faltante a nombre del trabajador. Queda en la bitácora, se marca como generada por administración y se notifica al trabajador (48h para objetar).
+            </div>
+            <div class="edit-grid">
+              <label class="edit-field">
+                <span class="filter-label">Hora de salida</span>
+                <input type="datetime-local" v-model="resolveForm.timestamp" class="rk-date-input" />
+                <span v-if="resolveEstimate" class="edit-hint">
+                  <q-icon name="smart_toy" size="13px" />
+                  Sugerido por {{ estimateSourceLabel(resolveEstimate.method) }}
+                  ({{ resolveEstimate.confidence === 'high' ? 'alta' : 'baja' }} confianza)
+                </span>
+              </label>
+              <label class="edit-field">
+                <span class="filter-label">Comentario (opcional)</span>
+                <input type="text" v-model="resolveForm.note" class="rk-date-input" placeholder="Sin comentario" />
+              </label>
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Razón * (mín. 5 caracteres)</span>
+                <input
+                  autofocus
+                  type="text" v-model="resolveForm.reason" class="rk-date-input"
+                  placeholder="Ej: El trabajador olvidó marcar salida; hora confirmada con su jefatura"
+                />
+              </label>
+            </div>
+          </template>
+
+          <!-- Resolver objeción -->
+          <template v-else-if="panelKind === 'objection' && resolveObjTarget">
+            <div class="edit-panel-note">
+              El trabajador objetó esta modificación. Decide cómo cerrar el caso: <b>revertir</b> al valor original
+              (aceptas la objeción) o <b>sostener</b> la modificación (queda como desacuerdo registrado ante la DT).
+              En ambos casos se notifica al trabajador y queda en la bitácora inmutable.
+            </div>
+            <div v-if="resolveObjTarget.originalSnapshot?.captured" class="edit-panel-note objection-orig">
+              Valor original: <b>{{ capitalizar(resolveObjTarget.originalSnapshot.tipo || resolveObjTarget.tipo) }}</b>
+              · {{ formatFecha(resolveObjTarget.originalSnapshot.timestamp) }} {{ horaBonita(resolveObjTarget.originalSnapshot.timestamp) }}
+            </div>
+            <div class="objection-actions-radio">
+              <label class="obj-radio" :class="{ active: resolveObjForm.action === 'revert' }">
+                <input type="radio" value="revert" v-model="resolveObjForm.action" />
+                <q-icon name="undo" size="16px" /> Revertir al original
+              </label>
+              <label class="obj-radio" :class="{ active: resolveObjForm.action === 'uphold' }">
+                <input type="radio" value="uphold" v-model="resolveObjForm.action" />
+                <q-icon name="verified" size="16px" /> Sostener la modificación
+              </label>
+            </div>
+            <div class="edit-grid">
+              <label class="edit-field edit-field-full">
+                <span class="filter-label">Comentario / justificación (opcional)</span>
+                <input type="text" v-model="resolveObjForm.note" class="rk-date-input" placeholder="Ej: Se confirmó la hora con la jefatura y el reloj control" />
+              </label>
+            </div>
+          </template>
+        </div>
+
+        <!-- Acciones -->
+        <div class="rk-panel-footer">
+          <button class="footer-btn footer-btn-close" @click="closePanel" :disabled="panelSaving">Cancelar</button>
+
+          <button
+            v-if="panelKind === 'edit'"
+            class="footer-btn footer-btn-excel" :disabled="!editCanSubmit || editSaving" @click="saveEdit"
+          >
+            <q-icon name="save" size="14px" />{{ editSaving ? 'Guardando…' : 'Guardar modificación' }}
+          </button>
+
+          <button
+            v-else-if="panelKind === 'resolve'"
+            class="footer-btn footer-btn-excel" :disabled="!resolveCanSubmit || resolveSaving" @click="saveResolve"
+          >
+            <q-icon name="save" size="14px" />{{ resolveSaving ? 'Guardando…' : 'Registrar salida' }}
+          </button>
+
+          <button
+            v-else-if="panelKind === 'objection'"
+            class="footer-btn footer-btn-excel" :disabled="!resolveObjCanSubmit || resolveObjSaving" @click="saveResolveObjection"
+          >
+            <q-icon name="gavel" size="14px" />{{ resolveObjSaving ? 'Resolviendo…' : 'Resolver objeción' }}
+          </button>
+        </div>
+      </div>
+    </q-dialog>
+
     <!-- Visor de fotos -->
     <q-dialog v-model="photoViewer.open" maximized transition-show="fade" transition-hide="fade">
       <div class="pv-wrap">
@@ -753,6 +786,66 @@ const editTarget = ref(null);
 const editSaving = ref(false);
 const editForm = reactive({ tipo: '', timestamp: '', note: '', reason: '' });
 
+/* ── Diálogo de acciones sobre una marca ──────
+   Las tres acciones (modificar, salida olvidada, resolver objeción) comparten
+   un q-dialog propio por encima del modal de historial. Al vivir en su propia
+   capa no hay que scrollear el listado para verlo: se muestra siempre centrado,
+   con foco atrapado y cierre con Esc, sin depender de timers ni de scroll. */
+const panelOpen = ref(false);
+const panelKind = ref(null);            // 'edit' | 'resolve' | 'objection'
+
+const panelSaving = computed(() => editSaving.value || resolveSaving.value || resolveObjSaving.value);
+
+const panelMeta = computed(() => {
+  if (panelKind.value === 'edit' && editTarget.value) {
+    const m = editTarget.value;
+    return {
+      icon: 'edit_note',
+      title: `Modificar marca — ${capitalizar(m.tipo)}`,
+      sub: `${formatFecha(m.timestamp)} · ${horaBonita(m.timestamp)}`,
+    };
+  }
+  if (panelKind.value === 'resolve' && resolveTarget.value) {
+    const m = resolveTarget.value;
+    return {
+      icon: 'logout',
+      title: 'Registrar salida olvidada',
+      sub: `Entrada del ${formatFecha(m.timestamp)} · ${horaBonita(m.timestamp)}`,
+    };
+  }
+  if (panelKind.value === 'objection' && resolveObjTarget.value) {
+    const m = resolveObjTarget.value;
+    return {
+      icon: 'gavel',
+      title: `Resolver objeción — ${capitalizar(m.tipo)}`,
+      sub: `${formatFecha(m.timestamp)} · ${horaBonita(m.timestamp)}`,
+    };
+  }
+  return { icon: 'edit_note', title: '', sub: '' };
+});
+
+function openPanel(kind) {
+  panelKind.value = kind;
+  panelOpen.value = true;
+}
+
+function closePanel() {
+  if (panelSaving.value) return;
+  panelOpen.value = false;
+}
+
+/* Se limpia recién al terminar la transición de salida: así el contenido no
+   desaparece a mitad de la animación. Si mientras tanto se abrió otra acción,
+   no se toca nada: los targets nuevos ya son los válidos. */
+function onPanelHide() {
+  if (panelOpen.value) return;
+  editTarget.value = null;
+  resolveTarget.value = null;
+  resolveObjTarget.value = null;
+  resolveEstimate.value = null;
+  panelKind.value = null;
+}
+
 function toLocalInput(d) {
   if (!d) return '';
   const dd = new Date(d);
@@ -763,15 +856,13 @@ function toLocalInput(d) {
 function openModify(m) {
   if (!m?._id) return;
   resolveTarget.value = null;
+  resolveObjTarget.value = null;
   editTarget.value = m;
   editForm.tipo = m.tipo || '';
   editForm.timestamp = toLocalInput(m.serverTimestamp || m.timestamp);
   editForm.note = m.note || '';
   editForm.reason = '';
-}
-
-function cancelEdit() {
-  editTarget.value = null;
+  openPanel('edit');
 }
 
 /* ── Registrar salida olvidada (admin) ────── */
@@ -783,6 +874,7 @@ const resolveForm = reactive({ timestamp: '', note: '', reason: '' });
 async function openResolve(m) {
   if (!m?._id) return;
   editTarget.value = null;
+  resolveObjTarget.value = null;
   resolveTarget.value = m;
   // Default local: entrada + 8h; si cae en el futuro, ahora.
   let def = new Date(new Date(m.timestamp).getTime() + 8 * 3600 * 1000);
@@ -791,6 +883,7 @@ async function openResolve(m) {
   resolveForm.note = '';
   resolveForm.reason = '';
   resolveEstimate.value = null;
+  openPanel('resolve');
   // Mejor sugerencia: estimación del servidor (mediana histórica / contrato).
   try {
     const res = await dt.getMissedExitEstimate(m._id);
@@ -806,10 +899,6 @@ function estimateSourceLabel(method) {
   if (method === 'schedule') return 'horario asignado';
   if (method === 'median') return 'histórico del trabajador';
   return 'jornada de contrato';
-}
-
-function cancelResolve() {
-  resolveTarget.value = null;
 }
 
 const resolveCanSubmit = computed(
@@ -828,7 +917,7 @@ async function saveResolve() {
     };
     await dt.adminResolveMissedExit(resolveTarget.value._id, payload);
     $q.notify({ type: 'positive', message: 'Salida registrada. Se notificó al trabajador.', timeout: 3000 });
-    resolveTarget.value = null;
+    panelOpen.value = false;
     if (historialEmpleado.value?._id) await recargarHistorialConRango();
   } catch (err) {
     $q.notify({ type: 'negative', message: err?.response?.data?.message || 'No se pudo registrar la salida' });
@@ -851,7 +940,7 @@ async function saveEdit() {
     if (editForm.timestamp) payload.timestamp = new Date(editForm.timestamp).toISOString();
     await dt.modifyAttendance(editTarget.value._id, payload);
     $q.notify({ type: 'positive', message: 'Modificación registrada. Se notificó al trabajador.', timeout: 3000 });
-    editTarget.value = null;
+    panelOpen.value = false;
     if (historialEmpleado.value?._id) await recargarHistorialConRango();
   } catch (err) {
     $q.notify({ type: 'negative', message: err?.response?.data?.message || 'Error al guardar la modificación' });
@@ -872,10 +961,7 @@ function openResolveObjection(m) {
   resolveObjTarget.value = m;
   resolveObjForm.action = '';
   resolveObjForm.note = '';
-}
-
-function cancelResolveObjection() {
-  resolveObjTarget.value = null;
+  openPanel('objection');
 }
 
 const resolveObjCanSubmit = computed(
@@ -897,7 +983,7 @@ async function saveResolveObjection() {
         : 'Modificación sostenida. Se notificó al trabajador.',
       timeout: 3500,
     });
-    resolveObjTarget.value = null;
+    panelOpen.value = false;
     if (historialEmpleado.value?._id) await recargarHistorialConRango();
   } catch (err) {
     $q.notify({ type: 'negative', message: err?.response?.data?.message || 'No se pudo resolver la objeción' });
@@ -1914,30 +2000,95 @@ onBeforeUnmount(() => { if (observer && toolbarSentinel.value) observer.unobserv
 .pv-error { color:#fff; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; opacity:0.85; }
 .pv-retry { margin-top:6px; background:#fff; color:#111; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600; }
 
-/* ── Panel de edición inline ── */
-.edit-panel { border:1px solid var(--c-primary); background:var(--c-primary-l); border-radius:14px; padding:16px; margin-bottom:18px; }
-.edit-panel-head { display:flex; align-items:center; gap:8px; font-weight:700; color:var(--c-text); font-size:14px; }
-.edit-panel-note { font-size:12px; color:var(--c-text2); margin:6px 0 14px; }
+/* ── Diálogo de acciones sobre una marca ── */
+.rk-panel {
+  --c-surface:  var(--card-background, #ffffff);
+  --c-surface2: var(--surface-soft, #f7f8fc);
+  --c-border:   var(--border-color, rgba(0,0,0,0.08));
+  --c-text:     var(--text-primary, #0f1117);
+  --c-text2:    var(--text-secondary, #5a6482);
+  --c-text3:    var(--text-muted, #9aa1b9);
+  --c-primary:  var(--color-primary, #0CA9C4);
+  --c-primary-l:var(--color-primary-soft, rgba(8, 147, 170,0.12));
+  --c-ok:       var(--color-success, #16a34a);
+  --c-ok-l:     var(--color-success-soft, rgba(22,163,74,0.12));
+  --c-err:      var(--color-danger, #dc2626);
+  --c-err-l:    var(--color-danger-soft, rgba(220,38,38,0.12));
+  --ff-body:    'DM Sans','Segoe UI',system-ui,sans-serif;
+  --ff-display: 'Sora','DM Sans',system-ui,sans-serif;
+  --panel-accent: var(--c-primary);
+
+  width:620px; max-width:95vw; max-height:90vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  background:var(--c-surface); color:var(--c-text);
+  border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,0.28);
+  font-family:var(--ff-body);
+}
+.rk-panel.is-dark {
+  --c-surface:   var(--card-background, #1a1e27);
+  --c-surface2:  var(--surface-soft, #20242f);
+  --c-border:    var(--border-color, rgba(255,255,255,0.09));
+  --c-text:      var(--text-primary, #e8eaf2);
+  --c-text2:     var(--text-secondary, #9aa3b8);
+  --c-text3:     var(--text-muted, #6b7488);
+  --c-primary-l: var(--color-primary-soft, rgba(51, 190, 203,0.16));
+  --c-ok-l:      var(--color-success-soft, rgba(34,197,94,0.18));
+  --c-err-l:     var(--color-danger-soft, rgba(248,113,113,0.18));
+}
+/* En oscuro el granate se pierde: se aclara el acento. */
+.rk-panel-objection.is-dark { --panel-accent:#ef5350; }
+.rk-panel-resolve   { --panel-accent:#f59e0b; }
+.rk-panel-objection { --panel-accent:#b71c1c; }
+
+.rk-panel-header {
+  display:flex; align-items:center; gap:12px; flex-shrink:0;
+  padding:16px 20px;
+  border-top:3px solid var(--panel-accent);
+  border-bottom:1px solid var(--c-border);
+  background:var(--c-surface2);
+}
+.rk-panel-icon   { color:var(--panel-accent); flex-shrink:0; }
+.rk-panel-titles { flex:1; min-width:0; }
+.rk-panel-title  { font-family:var(--ff-display); font-size:15px; font-weight:700; line-height:1.25; }
+.rk-panel-sub    { font-size:12px; color:var(--c-text2); margin-top:2px; }
+.rk-panel-close {
+  flex-shrink:0; width:32px; height:32px; border-radius:9px; border:none; cursor:pointer;
+  background:transparent; color:var(--c-text2);
+  display:flex; align-items:center; justify-content:center; transition:background 0.12s, color 0.12s;
+}
+.rk-panel-close:hover:not(:disabled) { background:var(--c-border); color:var(--c-text); }
+.rk-panel-close:disabled { opacity:0.4; cursor:not-allowed; }
+
+.rk-panel-body   { padding:18px 20px; overflow-y:auto; flex:1; min-height:0; }
+.rk-panel-footer {
+  display:flex; justify-content:flex-end; gap:10px; flex-shrink:0;
+  padding:14px 20px; border-top:1px solid var(--c-border); background:var(--c-surface2);
+}
+.rk-panel-footer .footer-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+.edit-panel-note { font-size:12.5px; color:var(--c-text2); margin:0 0 16px; line-height:1.5; }
 .edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .edit-field { display:flex; flex-direction:column; gap:5px; }
 .edit-field-full { grid-column:1 / -1; }
 .edit-field .rk-select, .edit-field .rk-date-input { width:100%; }
-.edit-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
-.edit-actions .footer-btn:disabled { opacity:0.5; cursor:not-allowed; }
-.edit-panel-resolve { border-color:#f59e0b; background:rgba(245,158,11,0.10); }
+.edit-hint { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; color:var(--c-text2); }
 .titem-resolve { color:#d97706 !important; font-weight:600; }
 .act-resolve { color:#d97706; }
 .act-resolve:hover { background:rgba(245,158,11,0.14); }
 
 /* Resolución de objeción (empleador) */
-.edit-panel-objection { border-color:#b71c1c; background:rgba(183,28,28,0.08); }
-.objection-orig { background:rgba(0,0,0,0.04); border-radius:8px; padding:6px 10px; margin:0 0 12px; }
+.objection-orig { background:var(--c-surface2); border:1px solid var(--c-border); border-radius:8px; padding:8px 10px; margin:0 0 14px; }
 .objection-actions-radio { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 .obj-radio { display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--c-border, #d1d5db); border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; color:var(--c-text2); user-select:none; }
-.obj-radio input { accent-color:#b71c1c; }
-.obj-radio.active { border-color:#b71c1c; color:#b71c1c; background:rgba(183,28,28,0.06); }
+.obj-radio input { accent-color:var(--panel-accent, #b71c1c); }
+.obj-radio.active { border-color:var(--panel-accent, #b71c1c); color:var(--panel-accent, #b71c1c); background:rgba(183,28,28,0.06); }
 .titem-objection { color:#b71c1c !important; font-weight:600; }
 .act-objection { color:#b71c1c; }
 .act-objection:hover { background:rgba(183,28,28,0.12); }
-@media(max-width:600px){ .edit-grid { grid-template-columns:1fr; } }
+@media(max-width:600px){
+  .edit-grid { grid-template-columns:1fr; }
+  /* En móvil el diálogo ocupa el ancho útil y las acciones se estiran. */
+  .rk-panel { width:100%; max-width:100%; max-height:92dvh; }
+  .rk-panel-footer .footer-btn { flex:1; justify-content:center; }
+}
 </style>
