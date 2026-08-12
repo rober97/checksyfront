@@ -121,6 +121,14 @@
               <p class="form-subtitle">{{ steps[currentStep].subtitle }}</p>
             </div>
 
+            <!--
+              Solo el cuerpo del paso hace scroll. La navegación y el footer
+              quedan anclados abajo: el paso 3 no cabe entero en la tarjeta y,
+              cuando el botón viajaba con el contenido, quien no scrolleaba
+              simplemente no encontraba cómo empezar la prueba.
+            -->
+            <div ref="scrollBodyRef" class="form-scroll">
+
             <!-- ===== PASO 1: Datos personales ===== -->
             <transition name="step-slide" mode="out-in">
               <div v-if="currentStep === 0" key="step0" class="step-body">
@@ -514,6 +522,8 @@
               </div>
             </transition>
 
+            </div><!-- /.form-scroll -->
+
             <!-- ===== NAVEGACIÓN ===== -->
             <div class="form-nav">
               <q-btn
@@ -609,6 +619,18 @@ const steps = [
 
 const currentStep = ref(0)
 const stepAttempted = ref([false, false, false])
+
+// Contenedor scrolleable del paso. La navegación vive fuera de él, así que
+// siempre está a la vista; lo único que hay que mover es el contenido.
+const scrollBodyRef = ref(null)
+
+/** Lleva el cuerpo del paso al final, donde están los términos y el aviso de error. */
+const scrollBodyToEnd = () => {
+  nextTick(() => {
+    const el = scrollBodyRef.value
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  })
+}
 
 // ===== Formulario =====
 const form = ref({
@@ -709,7 +731,7 @@ const nextStep = () => {
   if (isStepValid(currentStep.value)) {
     currentStep.value++
     nextTick(() => {
-      document.querySelector('.register-right')?.scrollTo({ top: 0, behavior: 'smooth' })
+      scrollBodyRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
     })
   } else {
     const btn = document.querySelector('.nav-btn--next')
@@ -717,11 +739,19 @@ const nextStep = () => {
       btn.classList.add('shake')
       setTimeout(() => btn.classList.remove('shake'), 600)
     }
+    // El resumen de lo que falta se pinta al final del paso; sin esto queda
+    // fuera de la vista y el botón parece no responder.
+    scrollBodyToEnd()
   }
 }
 
 const prevStep = () => {
-  if (currentStep.value > 0) currentStep.value--
+  if (currentStep.value > 0) {
+    currentStep.value--
+    nextTick(() => {
+      scrollBodyRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
 }
 
 const validateCurrentStep = () => {
@@ -865,7 +895,10 @@ const genPwd = () => {
  */
 const onSubmit = async () => {
   stepAttempted.value[2] = true
-  if (!isStepValid(2)) return
+  if (!isStepValid(2)) {
+    scrollBodyToEnd()
+    return
+  }
 
   formError.value = ''
   emailTaken.value = false
@@ -896,6 +929,7 @@ const onSubmit = async () => {
   } catch (e) {
     emailTaken.value = e?.code === 'EMAIL_TAKEN' || e?.status === 409
     formError.value = e?.message || 'No pudimos crear tu ambiente de prueba'
+    scrollBodyToEnd()
   } finally {
     stopProvisionNarration()
     loading.value = false
@@ -1100,7 +1134,11 @@ body.body--dark .rk-spotlight {
 .register-card {
   width: 100%;
   max-width: 1100px;
+  /* Alto definido (lo necesita el scroll interno) pero nunca mayor que la
+     ventana: en pantallas bajas la tarjeta se recortaba y el botón quedaba
+     literalmente fuera del viewport, sin scroll de página que lo rescatara. */
   height: 680px;
+  max-height: calc(100vh - 3rem);
   border-radius: 24px;
   overflow: hidden;
   background: rgba(255,255,255,0.92);
@@ -1271,21 +1309,37 @@ body.body--dark .perk { color: #cbd5e1; }
 .perk .q-icon { color: #3b82f6; flex-shrink: 0; }
 
 /* ===== RIGHT ===== */
+/* Columna fija: cabecera arriba, cuerpo scrolleable al medio, navegación
+   anclada abajo. min-height:0 es lo que permite que el hijo con overflow
+   realmente scrollee en vez de estirar la tarjeta. */
 .register-right {
   padding: 2.5rem 3rem;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.form-scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Aire para que el scrollbar no se monte sobre los inputs */
+  padding-right: 0.5rem;
+  margin-right: -0.5rem;
+  scrollbar-width: thin;
 }
-.register-right::-webkit-scrollbar { width: 5px; }
-.register-right::-webkit-scrollbar-track { background: transparent; }
-.register-right::-webkit-scrollbar-thumb { background: rgba(203,213,225,0.3); border-radius: 3px; }
+.form-scroll::-webkit-scrollbar { width: 5px; }
+.form-scroll::-webkit-scrollbar-track { background: transparent; }
+.form-scroll::-webkit-scrollbar-thumb { background: rgba(203,213,225,0.5); border-radius: 3px; }
+body.body--dark .form-scroll::-webkit-scrollbar-thumb { background: rgba(71,85,105,0.6); }
 
 /* Progress */
 .top-progress {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; margin-bottom: 2rem;
+  gap: 1rem; margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 .top-progress-bar {
   flex: 1; height: 6px;
@@ -1304,7 +1358,7 @@ body.body--dark .top-progress-bar { background: rgba(51,65,85,0.4); }
 body.body--dark .top-progress-label { color: #94a3b8; }
 
 /* Header */
-.form-header { margin-bottom: 1.75rem; }
+.form-header { margin-bottom: 1.5rem; flex-shrink: 0; }
 .step-badge {
   display: inline-flex; align-items: center; gap: 0.4rem;
   padding: 0.3rem 0.75rem;
@@ -1432,8 +1486,8 @@ body.body--dark .floating-input.filled .floating-label {
   border: 1px dashed rgba(59,130,246,0.35);
   background: rgba(59,130,246,0.04);
   border-radius: 14px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
 }
 body.body--dark .included-card { background: rgba(59,130,246,0.08); }
 .included-title {
@@ -1537,8 +1591,8 @@ body.body--dark .meter-bar { background: rgba(51,65,85,0.5); }
   background: rgba(241,245,249,0.6);
   border: 1px solid rgba(203,213,225,0.3);
   border-radius: 14px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 1.125rem 1.375rem;
+  margin-bottom: 1rem;
 }
 body.body--dark .summary-card { background: rgba(15,23,42,0.5); border-color: rgba(51,65,85,0.4); }
 .summary-title {
@@ -1559,7 +1613,7 @@ body.body--dark .summary-val { color: #f1f5f9; }
 .pwd-badge { font-size: 0.7rem; font-weight: 700; color: white; padding: 0.15rem 0.5rem; border-radius: 999px; }
 
 /* ===== Options ===== */
-.form-options { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
+.form-options { display: flex; flex-direction: column; gap: 0.625rem; margin-bottom: 0.5rem; }
 .option-row {
   display: flex; align-items: center; gap: 0.75rem;
   padding: 0.75rem 1rem;
@@ -1601,11 +1655,26 @@ body.body--dark .option-label { color: #cbd5e1; }
 body.body--dark .error-banner { background: rgba(239,68,68,0.15); color: #fca5a5; }
 
 /* ===== Navigation ===== */
+/* Anclada al pie de la columna, fuera del área que scrollea. El ::before es la
+   pista visual de que arriba queda contenido por leer. */
 .form-nav {
+  position: relative;
+  flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: auto; padding-top: 1.25rem;
+  padding-top: 1.25rem;
   border-top: 1px solid rgba(203,213,225,0.2);
   gap: 0.75rem;
+}
+.form-nav::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 100%;
+  height: 28px;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  pointer-events: none;
+}
+body.body--dark .form-nav::before {
+  background: linear-gradient(to top, rgba(15,23,42,0.95), rgba(15,23,42,0));
 }
 body.body--dark .form-nav { border-top-color: rgba(51,65,85,0.3); }
 .nav-spacer { flex: 1; }
@@ -1648,7 +1717,7 @@ body.body--dark .nav-btn--back { color: #94a3b8; border-color: rgba(51,65,85,0.5
 .shake { animation: shake 0.5s cubic-bezier(0.36,0.07,0.19,0.97) both; }
 
 /* ===== Footer ===== */
-.form-footer { text-align: center; padding-top: 1rem; }
+.form-footer { text-align: center; padding-top: 0.875rem; flex-shrink: 0; }
 .footer-text { color: #64748b; font-size: 0.875rem; }
 body.body--dark .footer-text { color: #94a3b8; }
 .footer-link { color: #3b82f6; text-decoration: none; font-weight: 600; margin-left: 0.25rem; transition: color 0.2s; }
@@ -1681,7 +1750,6 @@ body.body--dark .footer-text { color: #94a3b8; }
 @media (max-width: 1024px) {
   .register-container { grid-template-columns: 1fr; }
   .register-left { display: none; }
-  .register-card { height: auto; max-height: 90vh; }
 }
 @media (max-width: 768px) {
   .register-right { padding: 2rem 1.5rem; }
@@ -1691,10 +1759,20 @@ body.body--dark .footer-text { color: #94a3b8; }
 }
 @media (max-width: 480px) {
   .rk-center { padding: 1rem; }
-  .register-card { border-radius: 16px; }
+  .register-card { border-radius: 16px; max-height: calc(100vh - 2rem); }
   .register-right { padding: 1.5rem 1rem; }
+  .nav-btn { min-width: 0; }
 }
 @media (min-height: 800px) {
   .register-card { height: 720px; }
+}
+/* En pantallas bajas se recorta la cabecera antes que el contenido del paso:
+   el título ya lo leyeron, el botón todavía no lo encuentran. */
+@media (max-height: 700px) {
+  .register-right { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+  .top-progress { margin-bottom: 1rem; }
+  .form-header { margin-bottom: 1rem; }
+  .form-title { font-size: 1.35rem; }
+  .form-subtitle { font-size: 0.85rem; }
 }
 </style>
