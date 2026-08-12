@@ -140,6 +140,26 @@
       </div>
     </div>
 
+    <!-- ===== Incumplimiento del tope diario ===== -->
+    <transition name="fade">
+      <div v-if="totals && totals.daysOverLegalCap" class="ot-callout ot-callout--danger">
+        <div class="ot-callout-icon"><q-icon name="report" size="22px" /></div>
+        <div class="ot-callout-text">
+          <div class="ot-callout-title">
+            {{ totals.daysOverLegalCap }} día(s) por sobre el tope legal de {{ hhmm(heCapMinutes) }} diarias
+          </div>
+          <div class="ot-callout-msg">
+            El Art. 31 CT no permite pactar más de {{ hhmm(heCapMinutes) }} extraordinarias al día.
+            Autorizar sólo hasta el tope regulariza el pago, no el exceso de jornada:
+            eso se corrige con dotación o turnos.
+          </div>
+        </div>
+        <button class="ot-callout-btn ot-callout-btn--danger" @click="statusFilter = 'overcap'">
+          Ver los días
+        </button>
+      </div>
+    </transition>
+
     <!-- ===== Llamado a la acción ===== -->
     <transition name="fade">
       <div v-if="pendingDays.length" class="ot-callout">
@@ -432,9 +452,20 @@
                           </template>
                         </q-tooltip>
                       </span>
-                      <q-icon v-if="d.overLegalCap" name="report" size="16px" class="ot-cap-warn">
-                        <q-tooltip>Supera el tope legal de {{ heCapMinutes }} min diarios (Art. 31 CT).</q-tooltip>
-                      </q-icon>
+                      <span v-if="d.overLegalCap" class="rk-badge ot-badge--danger ot-cap-badge">
+                        <q-icon name="report" size="14px" />
+                        Sobre el tope
+                        <q-tooltip max-width="340px">
+                          Trabajó <b>{{ hhmm(d.excessMinutes) }}</b> sobre su jornada pactada y el
+                          Art. 31 CT no permite más de {{ hhmm(heCapMinutes) }} extraordinarias al día.
+                          <template v-if="toleranceMinutes && d.excessMinutes !== d.executedMinutes">
+                            <br /><br />
+                            Se registran {{ hhmm(d.executedMinutes) }} como horas extra porque la empresa
+                            aplica {{ toleranceMinutes }} min de tolerancia, que es un criterio interno:
+                            no corre para el tope legal.
+                          </template>
+                        </q-tooltip>
+                      </span>
                     </div>
 
                     <div class="ot-day-action">
@@ -578,6 +609,10 @@ const heCapMinutes = computed(() => legalParams.value('HE_TOPE_DIARIO', 120))
 const loading = computed(() => store.loading)
 const rows = computed(() => store.rows)
 const totals = computed(() => store.totals)
+
+// Tolerancia efectivamente aplicada por el backend en este reporte. Se muestra
+// donde explica una diferencia, no como parámetro suelto.
+const toleranceMinutes = computed(() => Number(store.meta?.toleranceMinutes || 0))
 
 /* ── Formato ── */
 function hhmm(minutes) {
@@ -832,13 +867,15 @@ function sortIcon(key) {
 const enrichedRows = computed(() =>
   rows.value.map((row) => {
     const pendingDays = (row.days || []).filter(canRegularize).map((day) => ({ row, day }))
-    const visibleDays = (
-      statusFilter.value === 'pending'
-        ? (row.days || []).filter(canRegularize)
-        : statusFilter.value === 'unscheduled'
-          ? (row.days || []).filter((d) => d.status === 'SIN_JORNADA')
-          : row.days || []
-    ).map((d) => ({ ...d, _bar: dayBar(d) }))
+    const dayFilter = {
+      pending: canRegularize,
+      unscheduled: (d) => d.status === 'SIN_JORNADA',
+      overcap: (d) => d.overLegalCap,
+    }[statusFilter.value]
+    const visibleDays = (dayFilter ? (row.days || []).filter(dayFilter) : row.days || []).map((d) => ({
+      ...d,
+      _bar: dayBar(d),
+    }))
     return { ...row, _dist: distributionOf(row), _pendingDays: pendingDays, _visibleDays: visibleDays }
   })
 )
@@ -849,6 +886,7 @@ const visibleRows = computed(() => {
     if (q && !`${r.fullName} ${r.rut || ''}`.toLowerCase().includes(q)) return false
     if (statusFilter.value === 'pending') return r._pendingDays.length > 0
     if (statusFilter.value === 'unscheduled') return r.totals.daysUnscheduled > 0
+    if (statusFilter.value === 'overcap') return r.totals.daysOverLegalCap > 0
     if (statusFilter.value === 'ok') return r.totals.executedMinutes > 0 && !r._pendingDays.length
     return true
   })
@@ -879,12 +917,18 @@ const payablePct = computed(() => {
   return Math.round((t.payableMinutes / t.executedMinutes) * 100)
 })
 
-const statusFilters = computed(() => [
-  { key: 'all', label: 'Todos', count: enrichedRows.value.length, tone: 'neutral' },
-  { key: 'pending', label: 'Por autorizar', count: enrichedRows.value.filter((r) => r._pendingDays.length).length, tone: 'warn' },
-  { key: 'unscheduled', label: 'Día no pactado', count: enrichedRows.value.filter((r) => r.totals.daysUnscheduled).length, tone: 'extra' },
-  { key: 'ok', label: 'Al día', count: enrichedRows.value.filter((r) => r.totals.executedMinutes > 0 && !r._pendingDays.length).length, tone: 'ok' },
-])
+const statusFilters = computed(() => {
+  const overCap = enrichedRows.value.filter((r) => r.totals.daysOverLegalCap).length
+  return [
+    { key: 'all', label: 'Todos', count: enrichedRows.value.length, tone: 'neutral' },
+    { key: 'pending', label: 'Por autorizar', count: enrichedRows.value.filter((r) => r._pendingDays.length).length, tone: 'warn' },
+    { key: 'unscheduled', label: 'Día no pactado', count: enrichedRows.value.filter((r) => r.totals.daysUnscheduled).length, tone: 'extra' },
+    // La pestaña del tope legal sólo aparece cuando hay algo que mirar: es una
+    // infracción, no una categoría permanente del reporte.
+    ...(overCap ? [{ key: 'overcap', label: 'Sobre el tope legal', count: overCap, tone: 'danger' }] : []),
+    { key: 'ok', label: 'Al día', count: enrichedRows.value.filter((r) => r.totals.executedMinutes > 0 && !r._pendingDays.length).length, tone: 'ok' },
+  ]
+})
 
 /* ── Expansión de filas ── */
 const expanded = ref(new Set())
@@ -1262,6 +1306,25 @@ defineExpose({ reload })
   box-shadow: 0 6px 18px color-mix(in srgb, var(--rk-c-warn) 40%, transparent);
 }
 
+/* El tope legal no es un pendiente de gestión: es un incumplimiento. */
+.ot-callout--danger {
+  border-color: color-mix(in srgb, var(--rk-c-danger) 30%, transparent);
+  background: var(--rk-c-danger-soft);
+}
+
+.ot-callout--danger .ot-callout-icon {
+  background: color-mix(in srgb, var(--rk-c-danger) 18%, transparent);
+  color: var(--rk-c-danger);
+}
+
+.ot-callout-btn--danger {
+  background: var(--rk-c-danger);
+}
+
+.ot-callout-btn--danger:hover {
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--rk-c-danger) 40%, transparent);
+}
+
 /* ── Filtro por estado ── */
 .ot-statusbar {
   display: flex;
@@ -1292,6 +1355,11 @@ defineExpose({ reload })
 .ot-tab-count.ok {
   background: var(--rk-c-ok-soft);
   color: var(--rk-c-ok);
+}
+
+.ot-tab-count.danger {
+  background: var(--rk-c-danger-soft);
+  color: var(--rk-c-danger);
 }
 
 /* ── Tabla ── */
@@ -1670,8 +1738,9 @@ defineExpose({ reload })
   gap: 6px;
 }
 
-.ot-cap-warn {
-  color: var(--rk-c-danger);
+.ot-cap-badge {
+  gap: 4px;
+  cursor: help;
 }
 
 .ot-day-action {
