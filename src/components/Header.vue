@@ -3,7 +3,8 @@
     <!-- Barra del ambiente de prueba. Va DENTRO del QHeader (y no colgada del
          layout) para que Quasar incluya su alto al calcular el offset del
          contenido; fuera de aquí sumaría un scroll permanente en cada pantalla.
-         Se oculta sola cuando la sesión no es de un ambiente demo. -->
+         Se oculta sola cuando la cuenta ya no está en período de prueba (ni en
+         el ambiente de ejemplo ni en la empresa real creada durante la prueba). -->
     <DemoBanner />
 
     <!-- Main Header Bar -->

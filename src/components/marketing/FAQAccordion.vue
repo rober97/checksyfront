@@ -171,7 +171,7 @@
           </div>
           <div class="rk-banner-text">
             <h3 class="rk-banner-title">¿Listo para comenzar?</h3>
-            <p class="rk-banner-desc">Prueba gratis por 14 días. Sin tarjeta de crédito requerida.</p>
+            <p class="rk-banner-desc">Prueba gratis por 30 días. Sin tarjeta de crédito requerida.</p>
           </div>
           <q-btn
             unelevated

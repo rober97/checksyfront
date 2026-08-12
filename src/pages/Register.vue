@@ -490,7 +490,7 @@
                   <div class="option-row option-row--info">
                     <q-icon name="schedule" size="20px" color="primary" />
                     <span class="option-label">
-                      Tu ambiente queda activo <strong>14 días</strong>. Sin tarjeta, y lo eliminamos solo al vencer.
+                      Tu ambiente queda activo <strong>30 días</strong>. Sin tarjeta, y lo eliminamos solo al vencer.
                     </span>
                   </div>
                 </div>

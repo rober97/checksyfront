@@ -1,28 +1,38 @@
 <template>
   <!--
-    Barra persistente del ambiente de prueba.
+    Barra persistente del período de prueba.
 
-    Vive fuera del layout (se monta en App.vue) por dos razones: sigue visible
-    en cualquier rol —incluida la vista de trabajador impersonada, que usa otro
-    layout— y no obliga a tocar los cuatro layouts existentes.
+    Se monta dentro del QHeader compartido (components/Header.vue), así que sigue
+    visible en cualquier rol —incluida la vista de trabajador impersonada, que
+    usa otro layout— sin tocar los cuatro layouts existentes.
 
-    Se muestra siempre, sin opción de cerrarla: quien está probando necesita
-    saber en todo momento que los datos que ve son ficticios. Un banner que se
-    puede ocultar termina en confusiones del tipo "¿esto ya es mi empresa real?".
+    Cumple dos funciones y ninguna es opcional, por eso no se puede cerrar:
+    dice cuánto queda de prueba, y dice EN QUÉ EMPRESA se está parado. Desde que
+    conviven el ambiente de ejemplo y la empresa real, la segunda pesa más que la
+    primera: escribir datos verdaderos creyendo estar en la empresa real cuando
+    se está en la de ejemplo es el error que esta barra existe para evitar.
   -->
   <div
-    v-if="demo.isDemo"
+    v-if="demo.showBar"
     class="rk-demo-bar"
-    :class="{ 'rk-demo-bar--urgent': demo.urgent, 'rk-demo-bar--impersonating': demo.isImpersonating }"
+    :class="{
+      'rk-demo-bar--urgent': demo.urgent,
+      'rk-demo-bar--impersonating': demo.isImpersonating,
+      'rk-demo-bar--real': demo.inRealCompany && !demo.isImpersonating,
+      'rk-demo-bar--locked': demo.locked,
+    }"
   >
     <div class="rk-demo-bar__inner">
 
       <!-- Identidad del ambiente -->
       <div class="rk-demo-bar__id">
-        <q-icon :name="demo.isImpersonating ? 'visibility' : 'science'" size="18px" />
+        <q-icon :name="idIcon" size="18px" />
         <span class="rk-demo-bar__label">
           <template v-if="demo.isImpersonating">
             Estás viendo la app como <strong>{{ currentName }}</strong>
+          </template>
+          <template v-else-if="demo.inRealCompany">
+            Tu empresa · <strong>{{ demo.companyName }}</strong>
           </template>
           <template v-else>
             Ambiente de prueba · <strong>{{ demo.companyName }}</strong>
@@ -30,11 +40,47 @@
         </span>
       </div>
 
+      <!--
+        Cambio de ambiente.
+
+        Son dos empresas distintas, no dos vistas de la misma: la de ejemplo
+        tiene RUT inventado y datos ficticios; la real es la tuya. Se muestran
+        como un par para que en todo momento se sepa en cuál se está parado —
+        entrar datos verdaderos creyendo estar en la real, o al revés, es el
+        único error grave que esta pantalla puede provocar.
+      -->
+      <div v-if="showSwitch" class="rk-env-switch">
+        <button
+          class="rk-env-switch__opt"
+          :class="{ 'is-active': demo.isDemo }"
+          :disabled="busy || demo.isDemo"
+          @click="switchTo(demo.environments.demo.id)"
+        >
+          <q-icon name="science" size="15px" />
+          <span>Prueba</span>
+        </button>
+        <button
+          v-if="demo.hasRealCompany"
+          class="rk-env-switch__opt"
+          :class="{ 'is-active': demo.inRealCompany }"
+          :disabled="busy || demo.inRealCompany"
+          @click="switchTo(demo.environments.real.id)"
+        >
+          <q-icon name="apartment" size="15px" />
+          <span>Mi empresa</span>
+        </button>
+        <button v-else class="rk-env-switch__opt rk-env-switch__opt--new" :disabled="busy" @click="realDialogOpen = true">
+          <q-icon name="add" size="15px" />
+          <span>Crear mi empresa</span>
+        </button>
+      </div>
+
       <!-- Vigencia -->
       <div v-if="!demo.isImpersonating" class="rk-demo-bar__days">
-        <q-icon name="schedule" size="15px" />
-        <span v-if="demo.daysLeft > 0">
-          {{ demo.daysLeft }} {{ demo.daysLeft === 1 ? 'día restante' : 'días restantes' }}
+        <q-icon :name="demo.locked ? 'lock' : 'schedule'" size="15px" />
+        <span v-if="demo.locked">Prueba vencida · solo lectura</span>
+        <span v-else-if="demo.remainingDays > 0">
+          {{ demo.remainingDays }} {{ demo.remainingDays === 1 ? 'día restante' : 'días restantes' }}
         </span>
         <span v-else>Tu prueba venció</span>
       </div>
@@ -53,14 +99,17 @@
           @click="onExit"
         />
         <template v-else>
+          <!-- Los atajos del guion de la demo no existen en la empresa real:
+               ahí no hay trabajadores ficticios que mirar ni datos que reiniciar. -->
           <q-btn
+            v-if="demo.isDemo"
             dense flat no-caps
             class="rk-demo-btn"
             icon="badge"
             label="Ver como trabajador"
             @click="employeesOpen = true"
           />
-          <q-btn dense flat round icon="more_horiz" class="rk-demo-btn rk-demo-btn--icon">
+          <q-btn v-if="demo.isDemo" dense flat round icon="more_horiz" class="rk-demo-btn rk-demo-btn--icon">
             <q-menu anchor="bottom right" self="top right">
               <q-list dense style="min-width: 230px">
                 <q-item clickable v-close-popup @click="showChecklist">
@@ -104,6 +153,7 @@
 
     <DemoEmployeesDialog v-model="employeesOpen" />
     <DemoMailboxDialog v-model="mailboxOpen" />
+    <RealCompanyDialog v-model="realDialogOpen" />
 
     <!-- Reinicio: destruye lo que el visitante haya hecho, así que se confirma. -->
     <q-dialog v-model="confirmReset">
@@ -135,6 +185,7 @@ import { useDemoStore } from '@/stores/demoStore'
 import { useAuthStore } from '@/stores/authStore'
 import DemoEmployeesDialog from './DemoEmployeesDialog.vue'
 import DemoMailboxDialog from './DemoMailboxDialog.vue'
+import RealCompanyDialog from './RealCompanyDialog.vue'
 
 const demo = useDemoStore()
 const auth = useAuthStore()
@@ -143,12 +194,40 @@ const { notify } = useQuasar()
 
 const employeesOpen = ref(false)
 const mailboxOpen = ref(false)
+const realDialogOpen = ref(false)
 const confirmReset = ref(false)
 const busy = ref(false)
 
 const currentName = computed(() =>
   `${auth.user?.firstName || ''} ${auth.user?.lastName || ''}`.trim() || 'un trabajador'
 )
+
+const idIcon = computed(() => {
+  if (demo.isImpersonating) return 'visibility'
+  return demo.inRealCompany ? 'apartment' : 'science'
+})
+
+/**
+ * El cambio de ambiente no se ofrece mientras se mira la app como trabajador:
+ * esa sesión es de otra persona y saltar de empresa desde ahí no significa nada.
+ * Tampoco si ya no queda ambiente de prueba (venció y se purgó): en ese punto
+ * hay una sola empresa y no hay nada entre qué elegir.
+ */
+const showSwitch = computed(() => !demo.isImpersonating && !!demo.environments?.demo)
+
+async function switchTo(companyId) {
+  if (!companyId || busy.value) return
+  busy.value = true
+  try {
+    await demo.switchEnvironment(companyId)
+    // Media app guarda en caché datos de la empresa anterior. Recargar es más
+    // seguro que perseguir cada módulo, y es el mismo criterio del reinicio.
+    window.location.reload()
+  } catch (e) {
+    notify({ type: 'negative', message: e?.message || 'No pudimos cambiar de empresa', position: 'top' })
+    busy.value = false
+  }
+}
 
 async function onExit() {
   busy.value = true
@@ -200,6 +279,10 @@ function goToSales() {
 }
 .rk-demo-bar--urgent { background: linear-gradient(90deg, #9a3412 0%, #b45309 100%); }
 .rk-demo-bar--impersonating { background: linear-gradient(90deg, #065f46 0%, #047857 100%); }
+/* La empresa real usa otro color a propósito: es la señal de un vistazo de que
+   lo que se escriba acá va en serio. */
+.rk-demo-bar--real { background: linear-gradient(90deg, #0f766e 0%, #0e7490 100%); }
+.rk-demo-bar--locked { background: linear-gradient(90deg, #7f1d1d 0%, #9a3412 100%); }
 
 .rk-demo-bar__inner {
   display: flex;
@@ -224,6 +307,40 @@ function goToSales() {
   font-weight: 600;
 }
 
+/* ===== Cambio de ambiente ===== */
+.rk-env-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  flex-shrink: 0;
+}
+.rk-env-switch__opt {
+  display: flex; align-items: center; gap: 0.3rem;
+  padding: 0.2rem 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.rk-env-switch__opt:hover:not(:disabled) { color: #fff; background: rgba(255, 255, 255, 0.14); }
+.rk-env-switch__opt.is-active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1e293b;
+  cursor: default;
+}
+/* Deshabilitado solo por ser el activo: no debe leerse como "no disponible". */
+.rk-env-switch__opt:disabled:not(.is-active) { opacity: 0.5; cursor: default; }
+.rk-env-switch__opt--new { border: 1px dashed rgba(255, 255, 255, 0.45); }
+
 .rk-demo-bar__actions { display: flex; align-items: center; gap: 0.35rem; }
 
 .rk-demo-btn { color: #fff; font-size: 0.8125rem; border-radius: 8px; }
@@ -242,8 +359,13 @@ function goToSales() {
   .rk-demo-bar__inner { padding: 0.35rem 0.6rem; gap: 0.4rem; }
 }
 @media (max-width: 600px) {
-  /* En móvil solo caben la identidad y una acción; el resto vive en el menú. */
+  /* En móvil solo caben la identidad y una acción; el resto vive en el menú.
+     El cambio de ambiente SÍ sobrevive —reducido a los iconos— porque saber en
+     qué empresa estás no es opcional. */
   .rk-demo-bar__label { font-size: 0.75rem; }
   .rk-demo-btn:not(.rk-demo-btn--solid):not(.rk-demo-btn--icon) { display: none; }
+  .rk-env-switch__opt span { display: none; }
+  .rk-env-switch__opt { padding: 0.25rem 0.5rem; }
+  .rk-env-switch__opt--new span { display: inline; }
 }
 </style>

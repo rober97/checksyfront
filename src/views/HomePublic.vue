@@ -92,7 +92,7 @@
               unelevated no-caps size="lg"
               class="rk-btn rk-btn--primary rk-btn--lg"
               icon-right="arrow_forward"
-              label="Probar gratis 14 días"
+              label="Probar gratis 30 días"
               @click="goTo('/register')"
             />
             <q-btn
@@ -369,7 +369,7 @@
         <div class="rk-section__head">
           <span class="rk-eyebrow"><span class="rk-eyebrow__dot"></span> Planes claros</span>
           <h2 class="rk-section__title">Elige el plan ideal para tu empresa.</h2>
-          <p class="rk-section__lead">Precio por trabajador, sin permanencia. 14 días gratis y sin tarjeta.</p>
+          <p class="rk-section__lead">Precio por trabajador, sin permanencia. 30 días gratis y sin tarjeta.</p>
 
           <div class="rk-billing">
             <button type="button" class="rk-billing__opt" :class="{ active: !yearly }" @click="yearly = false">Mensual</button>
@@ -465,7 +465,7 @@
           <div class="rk-cta-card__content">
             <span class="rk-eyebrow rk-eyebrow--light"><span class="rk-eyebrow__dot rk-eyebrow__dot--light"></span> Empieza hoy</span>
             <h2 class="rk-cta-card__title">Lleva a tu equipo al siguiente nivel.</h2>
-            <p class="rk-cta-card__text">14 días gratis. Sin tarjeta. Setup en menos de 5 minutos.</p>
+            <p class="rk-cta-card__text">30 días gratis. Sin tarjeta. Setup en menos de 5 minutos.</p>
             <div class="rk-cta-card__buttons">
               <q-btn
                 unelevated no-caps size="lg"
@@ -616,7 +616,7 @@ const pricingPlans = [
 ]
 
 const faqs = [
-  { question: '¿Puedo probar Recksy sin tarjeta?',                answer: 'Sí. Tienes 14 días gratis sin necesidad de ingresar tarjeta. Al final, decides si continuar.' },
+  { question: '¿Puedo probar Recksy sin tarjeta?',                answer: 'Sí. Tienes 30 días gratis sin necesidad de ingresar tarjeta. Al final, decides si continuar.' },
   { question: '¿Cumple con la Dirección del Trabajo?',            answer: 'Sí. Generamos el Libro de Asistencia electrónico y los comprobantes según la normativa vigente, listos para fiscalización.' },
   { question: '¿Funciona en celular?',                            answer: 'Por supuesto. App móvil para colaboradores y panel web para administradores. Todo se sincroniza al instante.' },
   { question: '¿Puedo migrar desde otra plataforma?',             answer: 'Sí. Importamos tus datos desde Excel, CSV o tu sistema actual. Te acompañamos en todo el proceso.' },

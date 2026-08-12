@@ -1,5 +1,6 @@
 // src/utils/secureRequest.js
 import axios from 'axios'
+import { Notify } from 'quasar'
 import { useAuthStore } from '@/stores/authStore'
 import { API_URL } from './api'
 
@@ -125,6 +126,27 @@ secureAxios.interceptors.response.use(
         window.location.assign(`/login?redirect=${encodeURIComponent(current)}`)
         return Promise.reject(e)
       }
+    }
+
+    // --- 1.b) 402: se acabó el período de prueba ---
+    // El backend deja pasar las lecturas y bloquea las escrituras, así que esto
+    // llega justo cuando la persona intentó guardar algo. Sin un aviso explícito
+    // se lee como una falla del sistema, no como el fin de la prueba.
+    if (status === 402 && error?.response?.data?.code === 'TRIAL_EXPIRED') {
+      Notify.create({
+        type: 'warning',
+        icon: 'lock_clock',
+        position: 'top',
+        timeout: 7000,
+        message: 'Tu período de prueba terminó',
+        caption: error.response.data.message,
+        actions: [{
+          label: 'Activar plan',
+          color: 'white',
+          handler: () => window.location.assign('/contact?tipo=ventas&origen=trial'),
+        }],
+      })
+      return Promise.reject(error)
     }
 
     // --- 2) Retries para 429/5xx en métodos idempotentes ---

@@ -132,7 +132,7 @@
               />
               <div v-if="plan.popular" class="rk-trial-note">
                 <q-icon name="schedule" />
-                <span>Prueba gratis 14 días</span>
+                <span>Prueba gratis 30 días</span>
               </div>
             </div>
           </div>

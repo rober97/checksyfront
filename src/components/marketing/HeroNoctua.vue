@@ -64,7 +64,7 @@
               class="rk-btn-primary"
               @click="navigateTo('register')"
             >
-              Probar gratis 14 días
+              Probar gratis 30 días
               <q-icon name="arrow_forward" />
             </q-btn>
             <q-btn
