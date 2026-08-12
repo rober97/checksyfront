@@ -119,12 +119,12 @@ export const useAuthStore = defineStore('auth', {
        registro clásico no aplica porque esa persona todavía no pertenece a
        ninguna empresa.
     ========================= */
-    async demoSignup({ firstName, lastName, email, password, companyName }) {
+    async demoSignup({ firstName, lastName, email, password }) {
       this.loading = true
       this.error = null
       try {
         const { data } = await publicAxios.post('/demo/signup', {
-          firstName, lastName, email, password, companyName,
+          firstName, lastName, email, password,
         })
         if (!data?.success) throw new Error(data?.message || 'No se pudo crear el ambiente de prueba')
 

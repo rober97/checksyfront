@@ -30,7 +30,7 @@
           <q-spinner-orbit color="primary" size="52px" />
         </div>
         <h2 class="rk-provision__title">Estamos armando tu empresa de prueba</h2>
-        <p class="rk-provision__sub">{{ companyDisplayName }} · esto toma unos segundos</p>
+        <p class="rk-provision__sub">Empresa de ejemplo · esto toma unos segundos</p>
 
         <ul class="rk-provision__steps">
           <li
@@ -221,24 +221,14 @@
                   </div>
                 </transition>
 
-                <!-- Nombre de la empresa: da nombre al ambiente de prueba que
-                     se crea. Es opcional a propósito — pedir un dato más antes
-                     de dejar entrar es la forma más fácil de perder a alguien
-                     que solo quiere mirar. -->
-                <div class="floating-input" :class="{ filled: !!form.companyName }">
-                  <q-input v-model="form.companyName" outlined dense hide-bottom-space maxlength="60">
-                    <template #prepend>
-                      <div class="input-icon">
-                        <q-icon name="business" size="20px" />
-                      </div>
-                    </template>
-                  </q-input>
-                  <label class="floating-label">Nombre de tu empresa</label>
-                </div>
-
+                <!-- Acá NO se pide la razón social. La empresa que se crea es de
+                     ejemplo, con RUT inventado y una dotación de restaurante que
+                     no es la suya; ponerle su nombre solo confundiría. La razón
+                     social de verdad se pide después, al crear su empresa real
+                     dentro de la prueba, junto con el RUT. -->
                 <div class="field-hint field-hint--info">
                   <q-icon name="auto_awesome" size="16px" />
-                  Así se llamará tu empresa de prueba. Puedes inventarlo.
+                  Entras a una empresa de ejemplo ya armada. La tuya la creas dentro, cuando quieras.
                 </div>
 
                 <transition name="slide-down">
@@ -430,13 +420,6 @@
                         Correo
                       </div>
                       <div class="summary-val">{{ form.email }}</div>
-                    </div>
-                    <div class="summary-row">
-                      <div class="summary-key">
-                        <q-icon name="business" size="16px" />
-                        Empresa de prueba
-                      </div>
-                      <div class="summary-val">{{ companyDisplayName }}</div>
                     </div>
                     <div class="summary-row">
                       <div class="summary-key">
@@ -637,16 +620,9 @@ const form = ref({
   firstName: '',
   lastName: '',
   email: '',
-  companyName: '',
   password: '',
   passwordConfirm: ''
 })
-
-// Nombre que llevará el ambiente de prueba. Si no lo escriben, el backend
-// aplica el mismo criterio; se replica acá solo para el resumen previo.
-const companyDisplayName = computed(() =>
-  form.value.companyName.trim() || `${form.value.firstName.trim() || 'Mi'} Empresa Demo`
-)
 
 const errors = ref({
   firstName: '',
@@ -911,7 +887,6 @@ const onSubmit = async () => {
       lastName: form.value.lastName.trim(),
       email: form.value.email.trim().toLowerCase(),
       password: form.value.password,
-      companyName: form.value.companyName.trim(),
     })
 
     provisionIndex.value = provisionTasks.length
