@@ -108,6 +108,7 @@
             <li><q-icon name="gavel"/> Cumple normativa DT</li>
             <li><q-icon name="lock"/> Cifrado en tránsito y reposo</li>
             <li><q-icon name="schedule"/> Sin tarjeta · cancela cuando quieras</li>
+            <li><q-icon name="smartphone"/> App para marcar desde el teléfono</li>
           </ul>
         </div>
 
@@ -363,6 +364,91 @@
       </div>
     </section>
 
+    <!-- ======================== APP MÓVIL ========================
+         Va justo después de los 3 pasos y antes de los planes: el visitante ya
+         entendió qué hace el producto y lo siguiente que se pregunta es cómo
+         marca su gente. En el footer esto quedaba invisible, y la app no es un
+         accesorio del producto — es la terminal de marcaje.
+    -->
+    <!-- OJO: el id NO puede ser "app": Vue monta en <div id="app"> (public/index.html)
+         y el ancla del nav llevaría al inicio de la página en vez de a esta sección. -->
+    <section id="app-movil" class="rk-section rk-section--soft">
+      <div class="rk-container rk-app">
+        <div class="rk-app__copy">
+          <span class="rk-eyebrow"><span class="rk-eyebrow__dot"></span> App móvil</span>
+          <h2 class="rk-section__title rk-app__title">Tu equipo marca desde su teléfono.</h2>
+          <p class="rk-section__lead rk-app__lead">
+            Sin reloj biométrico que comprar ni computador compartido en la
+            entrada. Cada persona marca con su celular y el respaldo queda
+            listo para fiscalización.
+          </p>
+
+          <ul class="rk-app__list">
+            <li v-for="item in appHighlights" :key="item.title">
+              <span class="rk-app__ic"><q-icon :name="item.icon" size="20px"/></span>
+              <div>
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.text }}</span>
+              </div>
+            </li>
+          </ul>
+
+          <div class="rk-app__cta">
+            <q-btn
+              unelevated no-caps size="lg"
+              class="rk-btn rk-btn--primary rk-btn--lg"
+              icon="android"
+              label="Descargar en Google Play"
+              @click="goTo('/app')"
+            />
+            <span class="rk-app__soon">
+              <q-icon name="phone_iphone" size="18px"/>
+              iOS en camino · hoy los iPhone marcan desde el navegador
+            </span>
+          </div>
+        </div>
+
+        <!-- Maqueta del teléfono (pura CSS, como el preview del hero) -->
+        <div class="rk-app__visual" aria-hidden="true">
+          <div class="rk-phone">
+            <div class="rk-phone__notch"></div>
+            <div class="rk-phone__screen">
+              <div class="rk-phone__top">
+                <div class="rk-phone__avatar">JM</div>
+                <div>
+                  <div class="rk-phone__hello">Hola, Javiera</div>
+                  <div class="rk-phone__sub">Turno 09:00 – 18:00</div>
+                </div>
+              </div>
+
+              <div class="rk-phone__clock">
+                <div class="rk-phone__time">08:57</div>
+                <div class="rk-phone__date">Jueves 13 de agosto</div>
+              </div>
+
+              <div class="rk-phone__mark">
+                <q-icon name="fingerprint" size="22px"/>
+                Marcar entrada
+              </div>
+
+              <div class="rk-phone__chips">
+                <span><q-icon name="photo_camera" size="14px"/> Foto</span>
+                <span><q-icon name="place" size="14px"/> Ubicación</span>
+              </div>
+
+              <div class="rk-phone__offline">
+                <q-icon name="cloud_off" size="16px"/>
+                <div>
+                  <strong>Sin señal</strong>
+                  <span>Se guardó 08:57 y se envía sola</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ======================== PRICING ======================== -->
     <section id="planes" class="rk-section">
       <div class="rk-container">
@@ -546,6 +632,7 @@ const navLinks = [
   { label: 'Inicio',         to: '#top' },
   { label: 'Funciones',      to: '#funciones' },
   { label: 'Cómo funciona',  to: '#como-funciona' },
+  { label: 'App',            to: '#app-movil' },
   { label: 'Planes',         to: '#planes' },
   { label: 'FAQ',            to: '#faq' },
   { label: 'Contacto',       to: '#contacto' },
@@ -588,6 +675,35 @@ const features = [
   { icon: 'payments',      title: 'Liquidaciones + Previred',    text: 'Sueldos calculados desde las marcas, con indicadores Previred.', color: '#B45309', tint: '#FEF3C7' },
   { icon: 'notifications_active', title: 'Recordatorios inteligentes', text: 'Avisa entrada y salida según el patrón real de cada persona.', color: '#055E6D', tint: '#CCFBF1' },
   { icon: 'apartment',     title: 'Multi-empresa y roles',       text: 'RR.HH., trabajador y fiscalizador DT, con acceso por empresa.', color: '#0893AA', tint: '#CFFAFE' },
+]
+
+/**
+ * Cada punto describe algo que la app hace de verdad hoy (ver recksyapp):
+ * la cola offline de src/stores/outbox.ts, la foto obligatoria con
+ * geolocalización, el desbloqueo biométrico y las pantallas de historial,
+ * solicitudes y documentos. Nada de esto es una promesa a futuro.
+ */
+const appHighlights = [
+  {
+    icon: 'cloud_off',
+    title: 'Funciona sin señal',
+    text: 'En una bodega o un subterráneo la marca se guarda con la hora real y se sincroniza sola al volver la conexión.',
+  },
+  {
+    icon: 'verified_user',
+    title: 'Foto y ubicación en cada marca',
+    text: 'Cada registro se encadena con firma SHA-256 y el trabajador recibe su comprobante por correo.',
+  },
+  {
+    icon: 'fingerprint',
+    title: 'Entra con huella o Face ID',
+    text: 'Sin escribir la contraseña cada mañana frente a la fila de la entrada.',
+  },
+  {
+    icon: 'phone_iphone',
+    title: 'Sus horas y solicitudes, a mano',
+    text: 'Historial del mes, vacaciones, horas extra y liquidaciones sin pasar por RR.HH.',
+  },
 ]
 
 const steps = [
@@ -700,7 +816,7 @@ function onScroll() {
 
 let observer = null
 function setupActiveObserver() {
-  const ids = ['#top', '#funciones', '#como-funciona', '#planes', '#faq', '#contacto']
+  const ids = ['#top', '#funciones', '#como-funciona', '#app-movil', '#planes', '#faq', '#contacto']
   const els = ids.map(id => document.querySelector(id)).filter(Boolean)
   if (!els.length) return
   observer = new IntersectionObserver((entries) => {
@@ -784,7 +900,7 @@ onBeforeUnmount(() => {
   text-rendering: optimizeLegibility;
 }
 
-:deep(#top), :deep(#funciones), :deep(#como-funciona),
+:deep(#top), :deep(#funciones), :deep(#como-funciona), :deep(#app-movil),
 :deep(#planes), :deep(#faq), :deep(#contacto) {
   scroll-margin-top: 88px;
 }
@@ -1509,6 +1625,113 @@ onBeforeUnmount(() => {
 }
 
 /* ============================================================
+   APP MÓVIL
+   ============================================================ */
+.rk-app {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+.rk-app__title { text-align: left; margin-top: 14px; }
+.rk-app__lead  { text-align: left; margin-left: 0; }
+
+.rk-app__list {
+  list-style: none; padding: 0;
+  margin: 28px 0 32px;
+  display: grid; gap: 18px;
+}
+.rk-app__list li { display: flex; gap: 14px; align-items: flex-start; }
+.rk-app__ic {
+  flex: none;
+  width: 40px; height: 40px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-deep);
+}
+.rk-app__list strong {
+  display: block;
+  font-size: 0.98rem; font-weight: 700;
+  color: var(--c-text-strong);
+  margin-bottom: 2px;
+}
+.rk-app__list span { font-size: 0.9rem; line-height: 1.55; color: var(--c-text-muted); }
+
+.rk-app__cta { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.rk-app__soon {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 0.82rem; color: var(--c-text-muted);
+}
+
+/* ===== Maqueta del teléfono ===== */
+.rk-app__visual { display: flex; justify-content: center; }
+.rk-phone {
+  position: relative;
+  width: 290px;
+  border-radius: 38px;
+  padding: 12px;
+  background: linear-gradient(160deg, #1f2937, #0b1220);
+  box-shadow: var(--c-shadow-lg);
+}
+/* Sobre fondo oscuro el chasis del teléfono se funde con la página y la maqueta
+   deja de leerse como un dispositivo: el borde le devuelve el canto. */
+.rk-home.is-dark .rk-phone { border: 1px solid var(--c-border); }
+
+.rk-phone__notch {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  width: 92px; height: 20px; border-radius: 0 0 14px 14px;
+  background: #0b1220; z-index: 2;
+}
+.rk-phone__screen {
+  background: var(--c-surface);
+  border-radius: 28px;
+  padding: 34px 18px 18px;
+  display: grid; gap: 14px;
+}
+
+.rk-phone__top { display: flex; align-items: center; gap: 10px; }
+.rk-phone__avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--c-primary-soft); color: var(--c-primary-deep);
+  font-size: 0.78rem; font-weight: 800;
+}
+.rk-phone__hello { font-size: 0.85rem; font-weight: 700; color: var(--c-text-strong); }
+.rk-phone__sub   { font-size: 0.72rem; color: var(--c-text-muted); }
+
+.rk-phone__clock { text-align: center; padding: 6px 0 2px; }
+.rk-phone__time {
+  font-size: 2.4rem; font-weight: 800; line-height: 1;
+  letter-spacing: -0.02em; color: var(--c-text-strong);
+}
+.rk-phone__date { font-size: 0.74rem; color: var(--c-text-muted); margin-top: 4px; }
+
+.rk-phone__mark {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px; border-radius: 16px;
+  background: var(--c-primary); color: #fff;
+  font-size: 0.95rem; font-weight: 700;
+  box-shadow: 0 10px 22px rgba(12, 169, 196, 0.32);
+}
+
+.rk-phone__chips { display: flex; gap: 8px; justify-content: center; }
+.rk-phone__chips span {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px;
+  background: var(--c-surface-2); color: var(--c-text-muted);
+  font-size: 0.7rem; font-weight: 600;
+}
+
+.rk-phone__offline {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 14px;
+  background: var(--c-amber-soft); color: #92400E;
+}
+.rk-phone__offline strong { display: block; font-size: 0.78rem; }
+.rk-phone__offline span   { font-size: 0.7rem; opacity: 0.9; }
+.rk-home.is-dark .rk-phone__offline { color: var(--c-amber); }
+
+/* ============================================================
    TESTIMONIALS
    ============================================================ */
 .rk-quotes {
@@ -2124,6 +2347,14 @@ onBeforeUnmount(() => {
   .rk-hero__inner { grid-template-columns: 1fr; }
   .rk-hero__copy  { max-width: 100%; }
   .rk-hero__visual { order: -1; max-width: 560px; margin: 0 auto; }
+
+  /* El teléfono va arriba: es la imagen que explica la sección de un vistazo. */
+  .rk-app { grid-template-columns: 1fr; gap: 36px; }
+  .rk-app__visual { order: -1; }
+  .rk-app__title, .rk-app__lead { text-align: center; }
+  .rk-app__lead { margin-left: auto; margin-right: auto; }
+  .rk-app__cta { align-items: center; }
+  .rk-app .rk-eyebrow { margin: 0 auto; }
 
   .rk-showcase { grid-template-columns: 1fr; gap: 32px; }
   .rk-showcase--reverse .rk-showcase__copy,
