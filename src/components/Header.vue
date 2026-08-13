@@ -179,19 +179,23 @@
     <q-dialog
       v-model="commandOpen"
       persistent
-      transition-show="scale"
-      transition-hide="scale"
+      transition-show="jump-down"
+      transition-hide="jump-up"
       class="rk-command-dialog"
     >
       <div class="rk-command-palette">
-        <!-- Header -->
+        <span class="rk-command-glow" aria-hidden="true"></span>
+
+        <!-- Buscador -->
         <div class="rk-command-header">
           <div class="rk-command-search">
-            <q-icon name="search" class="rk-search-icon" />
+            <span class="rk-search-tile">
+              <q-icon name="search" />
+            </span>
             <input
               v-model="query"
               type="text"
-              placeholder="Buscar páginas, acciones, documentos..."
+              placeholder="Buscar páginas, acciones, documentos…"
               autofocus
               class="rk-search-input"
               @keydown.down.prevent="move(1)"
@@ -199,26 +203,38 @@
               @keydown.enter.prevent="activate()"
               @keydown.esc="commandOpen = false"
             />
-            <div class="rk-search-kbd">
+            <button
+              v-if="query"
+              type="button"
+              class="rk-search-clear"
+              aria-label="Limpiar búsqueda"
+              @click="query = ''"
+            >
+              <q-icon name="close" />
+            </button>
+            <div v-else class="rk-search-kbd">
               <kbd>{{ isMac ? "⌘" : "Ctrl" }}</kbd>
-              <span>+</span>
               <kbd>K</kbd>
             </div>
           </div>
         </div>
 
-        <!-- Results -->
+        <!-- Resultados -->
         <div class="rk-command-results">
           <div v-if="results.length > 0" class="rk-results-section">
-            <div class="rk-results-label">Resultados</div>
+            <div class="rk-results-label">
+              <span>{{ query ? "Coincidencias" : "Accesos rápidos" }}</span>
+              <span class="rk-results-count">{{ results.length }}</span>
+            </div>
             <div
               v-for="(opt, i) in results"
               :key="opt.key"
               class="rk-command-item"
-              :class="{ 'active': i === hi }"
+              :class="{ active: i === hi }"
               @click="exec(opt)"
               @mouseenter="hi = i"
             >
+              <span class="rk-command-bar" aria-hidden="true"></span>
               <div class="rk-command-item-icon">
                 <q-icon :name="opt.icon" />
               </div>
@@ -227,6 +243,9 @@
                 <p class="rk-command-item-desc">{{ opt.desc }}</p>
               </div>
               <kbd v-if="opt.kbd" class="rk-command-kbd">{{ opt.kbd }}</kbd>
+              <span class="rk-command-enter" aria-hidden="true">
+                <q-icon name="keyboard_return" />
+              </span>
             </div>
           </div>
 
@@ -234,12 +253,12 @@
             <div class="rk-empty-icon">
               <q-icon name="search_off" />
             </div>
-            <p class="rk-empty-text">Sin resultados para "{{ query }}"</p>
-            <p class="rk-empty-hint">Intenta con otros términos</p>
+            <p class="rk-empty-text">Sin resultados para “{{ query }}”</p>
+            <p class="rk-empty-hint">Prueba con otro término o revisa el menú lateral</p>
           </div>
         </div>
 
-        <!-- Footer -->
+        <!-- Pie -->
         <div class="rk-command-footer">
           <div class="rk-command-hints">
             <div class="rk-hint-item">
@@ -249,13 +268,14 @@
             </div>
             <div class="rk-hint-item">
               <kbd>↵</kbd>
-              <span>Seleccionar</span>
+              <span>Abrir</span>
             </div>
             <div class="rk-hint-item">
               <kbd>Esc</kbd>
               <span>Cerrar</span>
             </div>
           </div>
+          <span class="rk-command-brand">RECKSY</span>
         </div>
       </div>
     </q-dialog>
@@ -668,10 +688,22 @@ function openCommand() {
   hi.value = 0;
 }
 
+// Al filtrar, la lista se acorta: el índice resaltado debe volver al inicio
+// o quedaría apuntando fuera de rango (Enter no haría nada).
+watch(results, () => {
+  hi.value = 0;
+});
+
 function move(dir) {
   const len = results.value.length;
   if (len === 0) return;
   hi.value = (hi.value + dir + len) % len;
+  // El diálogo está teletransportado a <body>: se busca desde document.
+  nextTick(() => {
+    document
+      .querySelector(".rk-command-item.active")
+      ?.scrollIntoView({ block: "nearest" });
+  });
 }
 
 function activate() {
@@ -1220,8 +1252,7 @@ onBeforeUnmount(() => {
 }
 
 /* Empty State */
-.rk-notif-empty,
-.rk-command-empty {
+.rk-notif-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1258,198 +1289,6 @@ onBeforeUnmount(() => {
   margin: 0;
 }
 
-/* Command Palette */
-.rk-command-dialog :deep(.q-dialog__backdrop) {
-  backdrop-filter: blur(8px);
-  background: rgba(10, 14, 20, 0.7);
-}
-
-.rk-command-palette {
-  width: min(640px, 95vw);
-  background: var(--header-bg);
-  backdrop-filter: blur(20px);
-  border: 1.5px solid var(--border-1);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.rk-command-header {
-  padding: 20px;
-  border-bottom: 1.5px solid var(--border-1);
-}
-
-.rk-command-search {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.rk-search-icon {
-  font-size: 22px;
-  color: var(--color-primary-light);
-  flex-shrink: 0;
-}
-
-.rk-search-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-family: 'Sora', -apple-system, sans-serif;
-}
-
-.rk-search-input::placeholder {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.rk-search-kbd {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.rk-search-kbd kbd {
-  padding: 4px 8px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-1);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-/* Results */
-.rk-command-results {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.rk-results-section {
-  padding: 12px;
-}
-
-.rk-results-label {
-  padding: 8px 12px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.rk-command-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.rk-command-item:hover,
-.rk-command-item.active {
-  background: var(--surface-1);
-}
-
-.rk-command-item-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border-radius: 10px;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-.rk-command-item.active .rk-command-item-icon {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.3);
-}
-
-.rk-command-item-icon .q-icon {
-  font-size: 20px;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
-}
-
-.rk-command-item.active .rk-command-item-icon .q-icon {
-  color: #fff;
-}
-
-.rk-command-item-content {
-  flex: 1;
-}
-
-.rk-command-item-label {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-}
-
-.rk-command-item-desc {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.rk-command-kbd {
-  padding: 4px 10px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-1);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-/* Footer */
-.rk-command-footer {
-  padding: 14px 20px;
-  border-top: 1.5px solid var(--border-1);
-  background: var(--surface-1);
-}
-
-.rk-command-hints {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.rk-hint-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.rk-hint-item kbd {
-  padding: 3px 7px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-1);
-  border-radius: 5px;
-  font-size: 0.7rem;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
 /* Tooltip */
 .rk-tooltip {
   background: rgba(12, 169, 196, 0.95);
@@ -1475,14 +1314,6 @@ onBeforeUnmount(() => {
   }
 
   .rk-notif-panel {
-    width: 100vw;
-    max-width: 100vw;
-    border-radius: 0;
-    border: none;
-    border-top: 1.5px solid var(--border-1);
-  }
-
-  .rk-command-palette {
     width: 100vw;
     max-width: 100vw;
     border-radius: 0;
@@ -1517,54 +1348,134 @@ onBeforeUnmount(() => {
 </style>
 
 <!--
-  Estilos no-scoped para el command palette y el menú de notificaciones.
-  Quasar teletransporta q-dialog/q-menu fuera del componente, por lo que
-  los estilos `scoped` (y los CSS vars locales de .rk-header) no aplican.
-  Usamos los tokens globales de tokens.css que sí son accesibles aquí.
+  Estilos NO scoped para el command palette y el menú de notificaciones.
+  Quasar teletransporta q-dialog/q-menu a <body>: los nodos conservan el
+  atributo de scope, pero NO los CSS vars locales de `.rk-header` (se heredan
+  por cascada y ese ancestro ya no existe). Por eso aquí se redefinen las
+  variables sobre los propios paneles, a partir de los tokens globales.
 -->
 <style>
-/* ===== Command palette (q-dialog teletransportado) ===== */
+/* Variables para los paneles teletransportados (antes quedaban sin resolver
+   y el fondo se volvía transparente). */
+.rk-command-palette,
+.rk-notif-panel {
+  --rk-pop-surface: var(--card-background, #fff);
+  --rk-pop-soft: color-mix(in srgb, var(--color-primary, #0ca9c4) 8%, transparent);
+  --rk-pop-soft-strong: color-mix(in srgb, var(--color-primary, #0ca9c4) 14%, transparent);
+  --rk-pop-border: color-mix(in srgb, var(--color-primary, #0ca9c4) 18%, transparent);
+  --rk-pop-hairline: color-mix(in srgb, var(--color-primary, #0ca9c4) 12%, transparent);
+  --rk-pop-brand: linear-gradient(135deg, var(--color-primary, #0ca9c4), var(--color-accent, #0893aa));
+
+  /* Compatibilidad con las reglas scoped que aún consumen estos nombres */
+  --header-bg: var(--card-background, #fff);
+  --surface-1: color-mix(in srgb, var(--color-primary, #0ca9c4) 7%, transparent);
+  --surface-2: color-mix(in srgb, var(--color-primary, #0ca9c4) 12%, transparent);
+  --border-1: color-mix(in srgb, var(--color-primary, #0ca9c4) 18%, transparent);
+}
+
+body.body--dark .rk-command-palette,
+body.body--dark .rk-notif-panel {
+  --rk-pop-hairline: rgba(255, 255, 255, 0.08);
+  --rk-pop-border: color-mix(in srgb, var(--color-primary, #0ca9c4) 26%, transparent);
+  --border-1: color-mix(in srgb, var(--color-primary, #0ca9c4) 26%, transparent);
+}
+
+/* ===== Command palette ===== */
 .rk-command-dialog .q-dialog__backdrop {
-  backdrop-filter: blur(8px);
-  background: rgba(10, 14, 20, 0.6);
+  backdrop-filter: saturate(1.1) blur(10px);
+  background: rgba(8, 12, 18, 0.55);
+}
+
+/* Una paleta de comandos vive arriba, no centrada en la pantalla */
+.rk-command-dialog .q-dialog__inner {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
 }
 
 .rk-command-palette {
-  width: min(640px, 95vw);
-  background: var(--card-background);
-  border: 1.5px solid rgba(12, 169, 196, 0.18);
-  border-radius: 20px;
+  position: relative;
+  width: min(660px, 94vw);
+  background: var(--rk-pop-surface);
+  border: 1.5px solid var(--rk-pop-border);
+  border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 32px 80px rgba(8, 12, 18, 0.28), 0 6px 18px rgba(8, 12, 18, 0.12);
   font-family: 'Sora', -apple-system, sans-serif;
   color: var(--text-primary);
 }
 
+body.body--dark .rk-command-palette {
+  box-shadow: 0 36px 90px rgba(0, 0, 0, 0.7);
+}
+
+/* Resplandor de marca: da profundidad sin ensuciar el fondo */
+.rk-command-glow {
+  position: absolute;
+  top: -110px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 380px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--color-primary, #0ca9c4) 26%, transparent),
+    transparent 70%
+  );
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+/* ----- Buscador ----- */
 .rk-command-header {
-  padding: 18px 20px;
-  border-bottom: 1.5px solid var(--border-color);
+  position: relative;
+  padding: 14px;
+  border-bottom: 1.5px solid var(--rk-pop-hairline);
 }
 
 .rk-command-search {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 16px;
+  background: var(--rk-pop-soft);
+  border: 1.5px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.rk-command-search .rk-search-icon {
-  font-size: 22px;
-  color: var(--color-primary);
+.rk-command-search:focus-within {
+  border-color: var(--rk-pop-border);
+  box-shadow: 0 0 0 4px var(--rk-pop-soft);
+}
+
+.rk-search-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--rk-pop-brand);
+  box-shadow: 0 4px 12px rgba(12, 169, 196, 0.32);
+}
+
+.rk-search-tile .q-icon {
+  font-size: 19px;
+  color: #fff;
 }
 
 .rk-command-search .rk-search-input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   outline: none;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 600;
-  color: inherit;
+  color: var(--text-primary);
   font-family: 'Sora', -apple-system, sans-serif;
 }
 
@@ -1573,80 +1484,163 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
+.rk-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--rk-pop-soft-strong);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.rk-search-clear:hover {
+  background: var(--color-primary, #0ca9c4);
+  color: #fff;
+}
+
+.rk-search-clear .q-icon {
+  font-size: 14px;
+}
+
 .rk-command-search .rk-search-kbd {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
+  flex-shrink: 0;
 }
 
-.rk-command-search .rk-search-kbd kbd {
-  padding: 4px 8px;
-  background: var(--surface-soft);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: 'Space Mono', monospace;
+.rk-command-search .rk-search-kbd kbd,
+.rk-command-kbd,
+.rk-hint-item kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: var(--rk-pop-surface);
+  border: 1px solid var(--rk-pop-border);
+  border-bottom-width: 2px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-family: 'Space Mono', ui-monospace, monospace;
   font-weight: 700;
-  color: inherit;
+  line-height: 1;
+  color: var(--text-secondary);
 }
 
+/* ----- Resultados ----- */
 .rk-command-results {
-  max-height: 420px;
+  position: relative;
+  max-height: min(52vh, 420px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rk-command-results::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rk-command-results::-webkit-scrollbar-thumb {
+  background: var(--rk-pop-soft-strong);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .rk-results-section {
-  padding: 10px;
+  padding: 8px;
 }
 
 .rk-results-label {
-  padding: 8px 12px;
-  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 6px;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
+}
+
+.rk-results-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--rk-pop-soft-strong);
+  color: var(--color-primary, #0ca9c4);
+  font-size: 0.68rem;
+  letter-spacing: 0;
 }
 
 .rk-command-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.18s ease, transform 0.18s ease;
 }
 
-.rk-command-item:hover,
 .rk-command-item.active {
-  background: var(--color-primary-soft);
+  background: var(--rk-pop-soft);
+  transform: translateX(2px);
+}
+
+/* Barra de acento a la izquierda del elemento activo */
+.rk-command-bar {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 3px;
+  height: 22px;
+  border-radius: 99px;
+  background: var(--rk-pop-brand);
+  transform: translateY(-50%) scaleY(0);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.rk-command-item.active .rk-command-bar {
+  transform: translateY(-50%) scaleY(1);
+  opacity: 1;
 }
 
 .rk-command-item-icon {
-  width: 38px;
-  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primary-soft);
-  border-radius: 10px;
   flex-shrink: 0;
-  transition: background 0.15s ease;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--rk-pop-soft-strong);
+  transition: background 0.18s ease, box-shadow 0.18s ease;
 }
 
 .rk-command-item.active .rk-command-item-icon {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  background: var(--rk-pop-brand);
   box-shadow: 0 4px 12px rgba(12, 169, 196, 0.35);
 }
 
 .rk-command-item-icon .q-icon {
   font-size: 20px;
-  color: var(--text-secondary);
-  transition: color 0.15s ease;
+  color: var(--color-primary, #0ca9c4);
+  transition: color 0.18s ease;
 }
 
 .rk-command-item.active .rk-command-item-icon .q-icon {
@@ -1659,105 +1653,153 @@ onBeforeUnmount(() => {
 }
 
 .rk-command-item-label {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   margin: 0 0 2px 0;
-  color: inherit;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rk-command-item-desc {
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.rk-command-kbd {
-  padding: 4px 10px;
-  background: var(--surface-soft);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  color: var(--text-secondary);
+/* Pista "↵" sólo en el elemento activo */
+.rk-command-enter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--rk-pop-soft-strong);
+  color: var(--color-primary, #0ca9c4);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
+.rk-command-enter .q-icon {
+  font-size: 14px;
+}
+
+.rk-command-item.active .rk-command-enter {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ----- Vacío ----- */
 .rk-command-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 44px 24px;
+  text-align: center;
 }
 
 .rk-command-empty .rk-empty-icon {
-  width: 64px;
-  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primary-soft);
-  border-radius: 16px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 16px;
+  border-radius: 20px;
+  background: var(--rk-pop-soft);
+  border: 1.5px dashed var(--rk-pop-border);
 }
 
 .rk-command-empty .rk-empty-icon .q-icon {
-  font-size: 32px;
-  color: var(--text-muted);
+  font-size: 30px;
+  color: var(--color-primary, #0ca9c4);
+  opacity: 0.7;
 }
 
 .rk-command-empty .rk-empty-text {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin: 0 0 4px 0;
 }
 
 .rk-command-empty .rk-empty-hint {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
   margin: 0;
 }
 
+/* ----- Pie ----- */
 .rk-command-footer {
-  padding: 12px 20px;
-  border-top: 1.5px solid var(--border-color);
-  background: var(--color-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1.5px solid var(--rk-pop-hairline);
+  background: var(--rk-pop-soft);
 }
 
 .rk-command-hints {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .rk-hint-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
+  gap: 5px;
+  font-size: 0.74rem;
   color: var(--text-muted);
   font-weight: 600;
 }
 
-.rk-hint-item kbd {
-  padding: 3px 7px;
-  background: var(--surface-soft);
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  font-size: 0.7rem;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  color: var(--text-primary);
+.rk-command-brand {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: var(--rk-pop-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.75;
 }
 
 @media (max-width: 767px) {
+  .rk-command-dialog .q-dialog__inner {
+    padding-top: 0;
+  }
+
   .rk-command-palette {
     width: 100vw;
     max-width: 100vw;
     border-radius: 0;
     border: none;
+  }
+
+  .rk-command-brand {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-command-item,
+  .rk-command-bar,
+  .rk-command-enter,
+  .rk-command-item-icon {
+    transition: none;
   }
 }
 </style>
