@@ -25,6 +25,21 @@
           <div class="text-subtitle2 rk-muted">Bienvenido a <b>Recksy</b></div>
         </q-card-section>
 
+        <!-- Google -->
+        <div class="q-px-lg q-pb-sm">
+          <div ref="googleBtnRef" class="google-btn-slot"></div>
+
+          <transition name="fade">
+            <div v-if="googleError" class="text-caption text-negative text-center q-mt-sm">
+              {{ googleError }}
+            </div>
+          </transition>
+
+          <div class="google-divider q-mt-md">
+            <span>o con tu contraseña</span>
+          </div>
+        </div>
+
         <!-- Form -->
         <q-form
           @submit.prevent="handleLogin"
@@ -165,6 +180,7 @@ import { ref, computed, onMounted, nextTick, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useAuthStore } from "@/stores/authStore";
+import { renderGoogleButton } from "@/utils/googleIdentity";
 
 const { dark } = useQuasar();
 const isDark = computed(() => dark.isActive);
@@ -256,6 +272,45 @@ async function handleLogin() {
       : err?.response?.data?.message || err?.message || "Error de servidor";
   } finally {
     loading.value = false;
+  }
+}
+
+/* ===== Google ===== */
+const googleBtnRef = ref(null);
+const googleError = ref("");
+
+/**
+ * Acá Google es una puerta de entrada, no de registro: quien llega al login ya
+ * tiene cuenta. Aun así el backend puede responder con un ambiente recién
+ * creado (alguien que entró por acá sin haberse registrado nunca), y en ese
+ * caso lo tratamos igual que un login normal — la raíz enruta según el rol.
+ */
+async function onGoogleCredential(credential) {
+  if (loading.value) return;
+  googleError.value = "";
+  formError.value = "";
+  loading.value = true;
+  try {
+    await auth.googleAuth(credential);
+    await router.replace("/");
+  } catch (err) {
+    googleError.value = err?.message || "No pudimos entrar con Google";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function mountGoogleButton() {
+  try {
+    await renderGoogleButton({
+      el: googleBtnRef.value,
+      onCredential: onGoogleCredential,
+      text: "signin_with",
+      dark: isDark.value,
+    });
+  } catch (e) {
+    // El login con contraseña sigue disponible; no vale la pena un banner rojo.
+    console.warn("[Login] Google Identity:", e?.message);
   }
 }
 
@@ -462,6 +517,7 @@ onMounted(async () => {
   // focus UX
   if (!email.value) emailRef.value?.focus?.();
   else passwordRef.value?.focus?.();
+  mountGoogleButton();
 });
 onBeforeUnmount(() => {
   window.removeEventListener("resize", onResize);
@@ -597,6 +653,36 @@ body.body--dark .login-card {
 /* Muted */
 .rk-muted {
   color: var(--rk-muted, #6b7280);
+}
+
+/* Google: el iframe lo dibuja GIS con su propio ancho (200–400px), así que el
+   contenedor solo lo centra. El alto mínimo evita el salto de layout mientras
+   el SDK carga. */
+.google-btn-slot {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+.google-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--rk-muted, #9ca3af);
+}
+.google-divider::before,
+.google-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.3);
+}
+body.body--dark .google-divider::before,
+body.body--dark .google-divider::after {
+  background: rgba(148, 163, 184, 0.18);
 }
 
 /* Barra fuerza password */

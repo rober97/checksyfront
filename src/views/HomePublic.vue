@@ -626,10 +626,11 @@ const faqs = [
 
 const footerLinks = [
   { title: 'Producto',  links: [
-    { label: 'Funciones', to: '#funciones' },
-    { label: 'Planes',    to: '#planes' },
-    { label: 'Demo',      to: '/demo' },
-    { label: 'Novedades', to: '/updates' },
+    { label: 'Funciones',  to: '#funciones' },
+    { label: 'Planes',     to: '#planes' },
+    { label: 'App móvil',  to: '/app' },
+    { label: 'Demo',       to: '/demo' },
+    { label: 'Novedades',  to: '/updates' },
   ]},
   { title: 'Recursos',  links: [
     { label: 'Blog',            to: '/blog' },

@@ -112,6 +112,46 @@ export const useAuthStore = defineStore('auth', {
 
 
     /* =========================
+       GOOGLE (público)
+       Recibe el ID token de Google Identity Services y lo canjea por sesión.
+
+       Una sola acción para login y registro porque el backend decide cuál de
+       los dos es: si el correo ya tiene cuenta abre sesión, y si no, construye
+       un ambiente de prueba. El front no puede saberlo de antemano sin
+       preguntar por el correo, y preguntarlo sería filtrar quién es cliente.
+
+       Devuelve la respuesta completa; `data.created` distingue ambos casos para
+       que la pantalla sepa si mandar al dashboard o celebrar un ambiente nuevo.
+    ========================= */
+    async googleAuth(credential) {
+      this.loading = true
+      this.error = null
+      try {
+        const { data } = await publicAxios.post(
+          '/auth/google',
+          { credential },
+          // Cuando el correo es nuevo, esta llamada siembra la empresa de
+          // ejemplo entera: el timeout por defecto (10s) la cortaría a mitad.
+          { timeout: 60000 }
+        )
+        if (!data?.success) throw new Error(data?.message || 'No se pudo entrar con Google')
+
+        this._applySession(data)
+        this.fetchAvatarUrl().catch(() => {})
+        return data
+      } catch (err) {
+        const msg = err?.response?.data?.message || err?.message || 'No se pudo entrar con Google'
+        this.error = msg
+        const e = new Error(msg)
+        e.code = err?.response?.data?.code || null
+        e.status = err?.response?.status || null
+        throw e
+      } finally {
+        this.loading = false
+      }
+    },
+
+    /* =========================
        AMBIENTE DE PRUEBA (público)
        Crea una empresa demo completa (con trabajadores, asistencia, solicitudes
        y nómina ya cargados) y deja la sesión abierta como su admin de RR.HH.
@@ -123,9 +163,14 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        const { data } = await publicAxios.post('/demo/signup', {
-          firstName, lastName, email, password,
-        })
+        const { data } = await publicAxios.post(
+          '/demo/signup',
+          { firstName, lastName, email, password },
+          // Esta llamada siembra la empresa de ejemplo entera (~700 documentos):
+          // el timeout por defecto (10s) la cortaba a mitad en producción, y el
+          // visitante veía un error sobre un ambiente que sí se estaba creando.
+          { timeout: 60000 }
+        )
         if (!data?.success) throw new Error(data?.message || 'No se pudo crear el ambiente de prueba')
 
         this._applySession(data)

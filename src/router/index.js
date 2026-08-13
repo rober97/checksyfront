@@ -59,6 +59,7 @@ const VerificarComprobante = () => import(/* webpackChunkName:"public" */ '@/vie
 const Contact = () => import(/* webpackChunkName:"public" */ '@/views/Public/Contact.vue')
 const PrivacyTerms = () => import(/* webpackChunkName:"public" */ '@/views/Public/PrivacyTerms.vue')
 const OnboardingWizard = () => import(/* webpackChunkName:"public" */ '@/views/Public/OnboardingWizard.vue')
+const DescargarApp = () => import(/* webpackChunkName:"public" */ '@/views/Public/DescargarApp.vue')
 const InspectorDashboard = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Dashboard.vue')
 const InspectorAsistencias = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Asistencias.vue')
 
@@ -141,6 +142,13 @@ const routes = [
   // El link viaja por email al `personalEmail` del trabajador. La ruta NO
   // requiere sesión: el token (SHA-256 en DB) es la única autorización.
   { path: '/onboarding/:token', name: 'OnboardingWizard', component: OnboardingWizard, props: true, meta: { public: true, title: 'Activar cuenta' } },
+
+  // ===== Descarga de la app móvil (público) =====
+  // URL canónica y estable: los correos ya enviados y los QR impresos junto al
+  // reloj de marcaje apuntan acá, nunca a la tienda directamente. Cuando salga
+  // iOS solo cambia esta página. Ver utils/appDownload.js.
+  { path: '/app', name: 'DescargarApp', component: DescargarApp, meta: { public: true, title: 'Descargar la app' } },
+  { path: '/descargar', redirect: '/app' },
 
   // ===== Términos y Privacidad (público) — requerido para App Store =====
   { path: '/legal/terms', name: 'PrivacyTerms', component: PrivacyTerms, meta: { public: true, title: 'Términos y Privacidad' } },

@@ -26,10 +26,22 @@
         <div class="ow-center">
           <q-icon name="task_alt" size="56px" color="positive" />
           <h2 class="ow-success-title">¡Listo! Tu cuenta está activa.</h2>
+          <!--
+            Acá termina la activación y empieza el uso diario, que ocurre en el
+            teléfono: la app es lo primero que se ofrece, no el login. Quien
+            prefiera el navegador tiene el enlace debajo.
+          -->
           <p class="ow-success-msg">
-            Ya podés iniciar sesión y empezar a marcar tu jornada.
+            Ahora instalá la app para marcar tu jornada desde el teléfono.
+            Entrás con este mismo correo y la contraseña que elegiste.
           </p>
-          <q-btn unelevated color="primary" size="md" label="Ir a iniciar sesión" @click="goLogin" />
+          <div class="ow-success-actions">
+            <q-btn unelevated color="primary" size="md" no-caps to="/app">
+              <q-icon name="smartphone" size="20px" class="q-mr-sm" />
+              Descargar la app
+            </q-btn>
+            <q-btn flat no-caps color="primary" size="md" label="Prefiero usar el navegador" @click="goLogin" />
+          </div>
         </div>
       </template>
 
@@ -568,6 +580,10 @@ onMounted(load)
 
 .ow-success-title { font-size: 1.25rem; font-weight: 800; margin: 8px 0 0; color: #166534; }
 .ow-success-msg { color: #475569; }
+.ow-success-actions {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin-top: 4px;
+}
 
 .ow-head {
   display: flex; align-items: center; justify-content: space-between;

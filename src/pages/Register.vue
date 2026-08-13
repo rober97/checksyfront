@@ -133,6 +133,35 @@
             <transition name="step-slide" mode="out-in">
               <div v-if="currentStep === 0" key="step0" class="step-body">
 
+                <!--
+                  Google va primero y no al final: con una cuenta de Google el
+                  ambiente se crea de una vez —el nombre y el correo vienen en el
+                  token, y no hay contraseña que elegir—, así que los tres pasos
+                  del formulario son la alternativa larga, no el camino principal.
+                -->
+                <div class="google-block">
+                  <div ref="googleBtnRef" class="google-btn-slot"></div>
+
+                  <div v-if="googleError" class="field-hint field-hint--error">
+                    <q-icon name="error_outline" size="16px" />
+                    {{ googleError }}
+                  </div>
+
+                  <!-- Con Google no se pasa por el paso 3, donde vive el
+                       checkbox de términos: la aceptación tiene que quedar
+                       igualmente a la vista antes de pulsar. -->
+                  <p v-else class="google-terms">
+                    Al continuar con Google aceptas los
+                    <a href="#" class="link" @click.prevent>términos de servicio</a>
+                    y la
+                    <a href="#" class="link" @click.prevent>política de privacidad</a>.
+                  </p>
+
+                  <div class="google-divider">
+                    <span>o regístrate con tu correo</span>
+                  </div>
+                </div>
+
                 <div class="input-row">
                   <div class="input-col">
                     <div
@@ -565,10 +594,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/authStore'
+import { renderGoogleButton } from '@/utils/googleIdentity'
 
 const { dark, notify } = useQuasar()
 const isDark = computed(() => dark.isActive)
@@ -913,6 +943,77 @@ const onSubmit = async () => {
 
 onBeforeUnmount(() => stopProvisionNarration())
 
+// ===== Registro con Google =====
+const googleBtnRef = ref(null)
+const googleError = ref('')
+
+/**
+ * Canjea el ID token por una sesión.
+ *
+ * El backend decide si es un login (el correo ya tenía cuenta) o un ambiente
+ * nuevo, y en ambos casos el destino es el mismo panel; lo único que cambia es
+ * si corresponde celebrar. El relato de aprovisionamiento se muestra igual
+ * porque desde acá no se sabe cuál de los dos será hasta que responde.
+ */
+const onGoogleCredential = async (credential) => {
+  if (loading.value) return
+
+  googleError.value = ''
+  formError.value = ''
+  emailTaken.value = false
+  loading.value = true
+  startProvisionNarration()
+
+  try {
+    const data = await auth.googleAuth(credential)
+    provisionIndex.value = provisionTasks.length
+
+    notify(
+      data?.created
+        ? {
+            type: 'positive',
+            message: '¡Tu ambiente de prueba está listo!',
+            caption: 'Empieza por la guía de primeros pasos del panel',
+            icon: 'celebration',
+            position: 'top',
+            timeout: 4000,
+          }
+        : {
+            type: 'positive',
+            message: 'Sesión iniciada',
+            icon: 'check_circle',
+            position: 'top',
+            timeout: 2500,
+          }
+    )
+
+    // Quien ya tenía cuenta puede no ser admin de RR.HH.; la raíz resuelve el
+    // destino por rol, así que solo el ambiente recién creado va directo.
+    router.replace(data?.created ? '/rrhh/dashboard' : '/')
+  } catch (e) {
+    googleError.value = e?.message || 'No pudimos entrar con Google'
+  } finally {
+    stopProvisionNarration()
+    loading.value = false
+  }
+}
+
+const mountGoogleButton = async () => {
+  try {
+    await renderGoogleButton({
+      el: googleBtnRef.value,
+      onCredential: onGoogleCredential,
+      text: 'signup_with',
+      dark: isDark.value,
+    })
+  } catch (e) {
+    // Si el SDK no carga (red, bloqueador de anuncios) el formulario por correo
+    // sigue estando: se avisa sin bloquear el registro.
+    googleError.value = 'No pudimos cargar el acceso con Google. Usa tu correo.'
+    console.warn('[Register] Google Identity:', e?.message)
+  }
+}
+
 // ===== Canvas partículas =====
 const particlesRef = ref(null)
 let ctx, W, H, rafId, lastT = 0
@@ -1009,6 +1110,15 @@ onMounted(async () => {
   initCanvas()
   rafId = requestAnimationFrame(animateCanvas)
   window.addEventListener('resize', initCanvas)
+  mountGoogleButton()
+})
+
+// El paso 1 se destruye al avanzar, y con él el iframe del botón. Al volver hay
+// que pedirle a GIS que lo dibuje otra vez o el hueco queda en blanco.
+watch(currentStep, async (step) => {
+  if (step !== 0) return
+  await nextTick()
+  if (googleBtnRef.value && !googleBtnRef.value.childElementCount) mountGoogleButton()
 })
 
 onBeforeUnmount(() => {
@@ -1455,6 +1565,46 @@ body.body--dark .floating-input.filled .floating-label {
 .field-hint--error   { color: #ef4444; background: rgba(239,68,68,0.06); }
 .field-hint--success { color: #10b981; background: rgba(16,185,129,0.07); }
 .field-hint--info    { color: #3b82f6; background: rgba(59,130,246,0.07); }
+
+/* ===== Bloque de Google ===== */
+.google-block { margin-bottom: 1.25rem; }
+
+/* Contenedor del iframe que dibuja GIS. Se centra porque el botón trae su
+   propio ancho (200–400px) y no siempre coincide con el de la tarjeta. */
+.google-btn-slot {
+  display: flex; justify-content: center;
+  min-height: 44px;
+}
+
+.google-terms {
+  margin: 0.6rem 0 0;
+  font-size: 0.72rem; line-height: 1.4;
+  text-align: center; color: #64748b;
+}
+body.body--dark .google-terms { color: #94a3b8; }
+
+/* El hint de error acá no sigue a un input: sin esto la regla base lo sube
+   0.75rem y se monta sobre el botón. */
+.google-block .field-hint {
+  margin-top: 0.6rem; margin-bottom: 0;
+  justify-content: center;
+}
+
+.google-divider {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-size: 0.72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+.google-divider::before,
+.google-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: rgba(148,163,184,0.3);
+}
+body.body--dark .google-divider { color: #64748b; }
+body.body--dark .google-divider::before,
+body.body--dark .google-divider::after { background: rgba(148,163,184,0.18); }
 
 /* ===== Qué incluye el ambiente de prueba ===== */
 .included-card {
