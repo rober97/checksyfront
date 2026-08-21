@@ -19,6 +19,24 @@
       </div>
 
       <div class="row-details">
+        <!-- Res. Ex. N°38/2024, art. 41 a): toda intervención sobre el registro
+             debe quedar visible mediante un signo, símbolo o color. -->
+        <q-chip v-if="record.origin === 'SYSTEM_ESTIMATED'" dense square color="deep-orange" text-color="white" icon="smart_toy">
+          Estimada por sistema
+          <q-tooltip>Cierre por presunción: no se marcó la salida a tiempo. Podés objetarla cuando quieras.</q-tooltip>
+        </q-chip>
+        <q-chip v-if="record.modified && record.origin !== 'SYSTEM_ESTIMATED'" dense square color="warning" text-color="white" icon="edit_note">
+          Modificado
+        </q-chip>
+        <q-chip v-if="record.workerObjected && !record.objectionResolution" dense square color="negative" text-color="white" icon="gavel">
+          Objetado
+        </q-chip>
+        <q-chip v-if="record.objectionResolution === 'reverted'" dense square color="positive" text-color="white" icon="undo">
+          Objeción aceptada · revertido
+        </q-chip>
+        <q-chip v-if="record.objectionResolution === 'upheld'" dense square color="blue-grey" text-color="white" icon="verified">
+          Objeción · modificación sostenida
+        </q-chip>
         <div v-if="record.mood" :class="['mood-badge', `mood-badge--${record.mood}`]">
           <q-icon :name="getMoodIcon(record.mood)" size="16px" />
           <span>{{ getMoodLabel(record.mood) }}</span>

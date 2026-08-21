@@ -3,9 +3,12 @@
 //
 // Gestiona:
 //   - Generación y descarga de los 6 reportes DT obligatorios.
-//   - Tokens de acceso de fiscalizadores.
 //   - Verificación de comprobantes (hash SHA-256).
 //   - Consentimiento DT y personalEmail del trabajador.
+//
+// El acceso de fiscalizadores DT es self-service (portal de fiscalización,
+// ver stores/dtPortalStore.js + utils/dtPortalRequest.js) — este store ya
+// no emite ni administra tokens.
 import { defineStore } from 'pinia'
 import secureAxios from '@/utils/secureRequest'
 import publicAxios from '@/utils/publicRequest'
@@ -13,8 +16,8 @@ import publicAxios from '@/utils/publicRequest'
 export const DT_REPORT_KINDS = [
   {
     key: 'daily-attendance',
-    label: 'Asistencia diaria',
-    description: 'Listado de marcas (entradas y salidas) por trabajador y día.',
+    label: 'Asistencia',
+    description: 'Por trabajador y día: asistió sí/no, ausencia justificada/injustificada y observaciones (art. 27 a). Requiere una empresa seleccionada.',
     icon: 'fact_check',
   },
   {
@@ -26,7 +29,7 @@ export const DT_REPORT_KINDS = [
   {
     key: 'sundays-holidays',
     label: 'Domingos y festivos',
-    description: 'Marcas registradas en domingos o feriados legales.',
+    description: 'Por trabajador: domingos/feriados trabajados o que debió trabajar, justificación y sumatoria mensual/total (art. 27 c). Requiere una empresa seleccionada.',
     icon: 'event_busy',
   },
   {
@@ -60,7 +63,6 @@ export const useDtStore = defineStore('dt', {
   state: () => ({
     loading: false,
     error: null,
-    inspectorTokens: [],
     lastVerify: null,
     consent: null,
     // Opciones de los parámetros de búsqueda DT (cargos, locales, turnos)
@@ -112,28 +114,6 @@ export const useDtStore = defineStore('dt', {
         turnos: data.turnos || [],
       }
       return this.reportFilterOptions
-    },
-
-    /** Gestión de tokens de fiscalizador DT */
-    async fetchInspectorTokens() {
-      this.loading = true
-      try {
-        const { data } = await secureAxios.get('/dt/inspector-tokens')
-        this.inspectorTokens = data.rows || []
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async issueInspectorToken(payload) {
-      const { data } = await secureAxios.post('/dt/inspector-tokens', payload)
-      await this.fetchInspectorTokens()
-      return data.access
-    },
-
-    async revokeInspectorToken(id) {
-      await secureAxios.post(`/dt/inspector-tokens/${id}/revoke`)
-      await this.fetchInspectorTokens()
     },
 
     /** Verificación pública de un comprobante por hash */

@@ -33,7 +33,7 @@ export const MENU = [
     children: [
       { label: 'Reportes DT', icon: 'download', to: '/superadmin/dt/reportes' },
       { label: 'Libro de Asistencia', icon: 'menu_book', to: '/superadmin/dt/libro' },
-      { label: 'Tokens fiscalizadores', icon: 'vpn_key', to: '/superadmin/dt/tokens' },
+      { label: 'Accesos DT', icon: 'vpn_key', to: '/superadmin/dt/accesos' },
       { label: 'Auditoría global', icon: 'history', to: '/superadmin/dt/auditoria' },
     ]
   },
@@ -79,7 +79,6 @@ export const MENU = [
     children: [
       { label: 'Reportes DT', icon: 'download', to: '/rrhh/dt/reportes' },
       { label: 'Libro de Asistencia', icon: 'menu_book', to: '/rrhh/dt/libro' },
-      { label: 'Fiscalizadores DT', icon: 'badge', to: '/rrhh/dt/tokens' },
       { label: 'Bitácora', icon: 'history', to: '/rrhh/dt/auditoria' },
     ]
   },

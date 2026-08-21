@@ -543,6 +543,7 @@ const tipoOpts = [
   { label: "Vacaciones", value: "VACATION" },
   { label: "Día administrativo", value: "ADMIN_DAY" },
   { label: "Día compensatorio", value: "COMP_DAY" },
+  { label: "Cambio de turno", value: "SHIFT_CHANGE" },
   { label: "Permiso / otro", value: "OTHER" },
 ];
 
@@ -723,6 +724,7 @@ const typeLabel = (type) => {
     ADMIN_DAY: "Día administrativo",
     COMP_DAY: "Día compensatorio",
     PERMISSION: "Permiso",
+    SHIFT_CHANGE: "Cambio de turno",
     OTHER: "Permiso / otro",
   };
   return map[type] || type || "—";
@@ -733,6 +735,7 @@ const tipoColor = (t) => {
     VACATION: "primary",
     ADMIN_DAY: "info",
     COMP_DAY: "positive",
+    SHIFT_CHANGE: "purple",
     OTHER: "grey",
   };
   return colors[t] || "grey";
@@ -744,6 +747,7 @@ const tipoIcon = (t) => {
     ADMIN_DAY: "event_available",
     COMP_DAY: "autorenew",
     PERMISSION: "person",
+    SHIFT_CHANGE: "swap_horiz",
     OTHER: "more_horiz",
   };
   return icons[t] || "help";
@@ -754,6 +758,7 @@ const typeClass = (type) => {
     VACATION: "rk-type-badge--vacaciones",
     ADMIN_DAY: "rk-type-badge--familiar",
     COMP_DAY: "rk-type-badge--compensatorio",
+    SHIFT_CHANGE: "rk-type-badge--default",
     OTHER: "rk-type-badge--default",
   };
   return map[type] || "rk-type-badge--default";

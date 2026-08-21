@@ -327,7 +327,14 @@ const rows = computed(() => {
       mood: a.mood || '',
       note: a.note || '',
       ubicacion: a.ubicacion || null,
-      photo: a.photo || null
+      photo: a.photo || null,
+      // Res. Ex. N°38/2024, art. 41 a): toda intervención sobre el registro
+      // debe quedar visible con un signo/símbolo/color — también en la
+      // propia vista del trabajador, no solo en el panel de RR.HH.
+      modified: !!a.modified,
+      origin: a.origin || '',
+      workerObjected: !!a.workerObjected,
+      objectionResolution: a.objectionResolution || null
     };
   });
 

@@ -306,6 +306,9 @@ const tipos = [
   { label: "Compensatorio", value: "compensatorio", icon: "today", hint: "Día ganado" },
   { label: "Permiso", value: "permiso", icon: "event_available", hint: "Personal / trámite" },
   { label: "Licencia", value: "licencia", icon: "medical_services", hint: "Médica" },
+  // Res. Ex. N°38/2024, art. 47.2 b i): el menú de solicitudes debe incluir
+  // como mínimo esta opción, distinta de un permiso genérico.
+  { label: "Cambio de turno", value: "cambio_turno", icon: "swap_horiz", hint: "Solicitar otro turno" },
 ];
 
 /* ========== Políticas por tipo ========== */
@@ -314,6 +317,7 @@ const avisoMinDiasPorTipo = {
   compensatorio: 1,
   permiso: 0,    // puede ser mismo día
   licencia: 0,   // puede ser retroactivo
+  cambio_turno: 3,
 };
 
 const maxDiasConsecutivos = 15;

@@ -707,6 +707,7 @@ const REQ_TYPE = {
   ADMIN_DAY: { label: "Día administrativo", icon: "event" },
   PERMISSION: { label: "Permiso", icon: "badge" },
   COMP_DAY: { label: "Día compensatorio", icon: "schedule" },
+  SHIFT_CHANGE: { label: "Cambio de turno", icon: "swap_horiz" },
   OTHER: { label: "Otra solicitud", icon: "description" },
 };
 const chartReady = ref(false);

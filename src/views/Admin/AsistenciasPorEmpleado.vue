@@ -659,26 +659,42 @@
 
           <!-- Resolver objeción -->
           <template v-else-if="panelKind === 'objection' && resolveObjTarget">
-            <div class="edit-panel-note">
+            <div v-if="resolveObjIsEstimated" class="edit-panel-note">
+              Esta salida la <b>estimó el sistema</b> al cerrar una entrada sin salida: no hay un valor original al
+              que volver. Si aceptas la objeción tienes que <b>indicar la hora real</b>; si la sostienes, la hora
+              estimada queda vigente y la objeción del trabajador registrada como desacuerdo ante la DT.
+              En ambos casos se notifica al trabajador y queda en la bitácora inmutable.
+            </div>
+            <div v-else class="edit-panel-note">
               El trabajador objetó esta modificación. Decide cómo cerrar el caso: <b>revertir</b> al valor original
               (aceptas la objeción) o <b>sostener</b> la modificación (queda como desacuerdo registrado ante la DT).
               En ambos casos se notifica al trabajador y queda en la bitácora inmutable.
             </div>
-            <div v-if="resolveObjTarget.originalSnapshot?.captured" class="edit-panel-note objection-orig">
+            <div v-if="!resolveObjIsEstimated && resolveObjTarget.originalSnapshot?.captured" class="edit-panel-note objection-orig">
               Valor original: <b>{{ capitalizar(resolveObjTarget.originalSnapshot.tipo || resolveObjTarget.tipo) }}</b>
               · {{ formatFecha(resolveObjTarget.originalSnapshot.timestamp) }} {{ horaBonita(resolveObjTarget.originalSnapshot.timestamp) }}
+            </div>
+            <div v-else-if="resolveObjIsEstimated" class="edit-panel-note objection-orig">
+              Hora estimada por el sistema: <b>{{ formatFecha(resolveObjTarget.timestamp) }} {{ horaBonita(resolveObjTarget.timestamp) }}</b>
+              <template v-if="resolveObjTarget.estimate?.method">
+                · según {{ estimateSourceLabel(resolveObjTarget.estimate.method) }}
+              </template>
             </div>
             <div class="objection-actions-radio">
               <label class="obj-radio" :class="{ active: resolveObjForm.action === 'revert' }">
                 <input type="radio" value="revert" v-model="resolveObjForm.action" />
-                <q-icon name="undo" size="16px" /> Revertir al original
+                <q-icon name="undo" size="16px" /> {{ resolveObjIsEstimated ? 'Aceptar y corregir la hora' : 'Revertir al original' }}
               </label>
               <label class="obj-radio" :class="{ active: resolveObjForm.action === 'uphold' }">
                 <input type="radio" value="uphold" v-model="resolveObjForm.action" />
-                <q-icon name="verified" size="16px" /> Sostener la modificación
+                <q-icon name="verified" size="16px" /> {{ resolveObjIsEstimated ? 'Sostener la hora estimada' : 'Sostener la modificación' }}
               </label>
             </div>
             <div class="edit-grid">
+              <label v-if="resolveObjIsEstimated && resolveObjForm.action === 'revert'" class="edit-field edit-field-full">
+                <span class="filter-label">Hora real de salida *</span>
+                <input type="datetime-local" v-model="resolveObjForm.timestamp" class="rk-date-input" />
+              </label>
               <label class="edit-field edit-field-full">
                 <span class="filter-label">Comentario / justificación (opcional)</span>
                 <input type="text" v-model="resolveObjForm.note" class="rk-date-input" placeholder="Ej: Se confirmó la hora con la jefatura y el reloj control" />
@@ -898,6 +914,10 @@ async function openResolve(m) {
 function estimateSourceLabel(method) {
   if (method === 'schedule') return 'horario asignado';
   if (method === 'median') return 'histórico del trabajador';
+  // 'max': la hora la fijó el techo de jornada ordinaria diaria, no una fuente
+  // propia del trabajador. Se nombra así para que RR.HH. sepa que hay que
+  // revisarla, no darla por buena.
+  if (method === 'max') return 'el máximo de jornada diaria (sin datos suficientes)';
   return 'jornada de contrato';
 }
 
@@ -952,7 +972,13 @@ async function saveEdit() {
 /* ── Resolver objeción del trabajador (empleador) ── */
 const resolveObjTarget = ref(null);
 const resolveObjSaving = ref(false);
-const resolveObjForm = reactive({ action: '', note: '' });
+const resolveObjForm = reactive({ action: '', note: '', timestamp: '' });
+
+// Una salida cerrada por presunción no tiene original al que volver: aceptar la
+// objeción es FIJAR la hora real, no revertir. El panel cambia en consecuencia.
+const resolveObjIsEstimated = computed(
+  () => resolveObjTarget.value?.origin === 'SYSTEM_ESTIMATED'
+);
 
 function openResolveObjection(m) {
   if (!m?._id) return;
@@ -961,26 +987,40 @@ function openResolveObjection(m) {
   resolveObjTarget.value = m;
   resolveObjForm.action = '';
   resolveObjForm.note = '';
+  // Pre-carga la hora estimada como punto de partida editable.
+  resolveObjForm.timestamp = m.timestamp ? toLocalInput(new Date(m.timestamp)) : '';
   openPanel('objection');
 }
 
-const resolveObjCanSubmit = computed(
-  () => !!resolveObjTarget.value?._id && ['uphold', 'revert'].includes(resolveObjForm.action)
-);
+const resolveObjCanSubmit = computed(() => {
+  if (!resolveObjTarget.value?._id) return false;
+  if (!['uphold', 'revert'].includes(resolveObjForm.action)) return false;
+  // Acoger la objeción de una estimación exige decir cuál es la hora correcta.
+  if (resolveObjIsEstimated.value && resolveObjForm.action === 'revert') {
+    return !!resolveObjForm.timestamp;
+  }
+  return true;
+});
 
 async function saveResolveObjection() {
   if (!resolveObjCanSubmit.value) return;
   resolveObjSaving.value = true;
   try {
-    await dt.resolveObjection(resolveObjTarget.value._id, {
+    const payload = {
       action: resolveObjForm.action,
       note: resolveObjForm.note.trim(),
-    });
+    };
+    if (resolveObjIsEstimated.value && resolveObjForm.action === 'revert') {
+      payload.timestamp = new Date(resolveObjForm.timestamp).toISOString();
+    }
+    await dt.resolveObjection(resolveObjTarget.value._id, payload);
     $q.notify({
       type: 'positive',
-      message: resolveObjForm.action === 'revert'
-        ? 'Objeción aceptada: registro revertido. Se notificó al trabajador.'
-        : 'Modificación sostenida. Se notificó al trabajador.',
+      message: resolveObjForm.action !== 'revert'
+        ? 'Modificación sostenida. Se notificó al trabajador.'
+        : resolveObjIsEstimated.value
+          ? 'Objeción aceptada: hora corregida. Se notificó al trabajador.'
+          : 'Objeción aceptada: registro revertido. Se notificó al trabajador.',
       timeout: 3500,
     });
     panelOpen.value = false;

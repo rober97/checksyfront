@@ -606,7 +606,6 @@ const baseCommands = computed(() => {
       { key: "rrhh-payroll-rates", icon: "tune", label: "Config Nómina", desc: "Tarifas y conceptos", to: "/rrhh/payrollRates" },
       { key: "rrhh-dt-reportes", icon: "summarize", label: "Reportes DT", desc: "Reportes Dirección del Trabajo", to: "/rrhh/dt/reportes" },
       { key: "rrhh-dt-libro", icon: "menu_book", label: "Libro de Asistencia", desc: "Libro DT", to: "/rrhh/dt/libro" },
-      { key: "rrhh-dt-tokens", icon: "vpn_key", label: "Fiscalizadores DT", desc: "Tokens DT", to: "/rrhh/dt/tokens" },
       { key: "rrhh-dt-auditoria", icon: "history", label: "Bitácora", desc: "Auditoría de cambios", to: "/rrhh/dt/auditoria" },
     );
   } else if (role === "superadmin" || role === "admin") {
@@ -616,7 +615,7 @@ const baseCommands = computed(() => {
       { key: "sa-admins-rrhh", icon: "admin_panel_settings", label: "Administradores RR.HH.", desc: "Gestionar admins", to: "/superadmin/admins-rrhh" },
       { key: "sa-dt-reportes", icon: "summarize", label: "Reportes DT (global)", desc: "Reportes plataforma", to: "/superadmin/dt/reportes" },
       { key: "sa-dt-libro", icon: "menu_book", label: "Libro de Asistencia", desc: "Libro DT global", to: "/superadmin/dt/libro" },
-      { key: "sa-dt-tokens", icon: "vpn_key", label: "Tokens fiscalizadores", desc: "Tokens DT", to: "/superadmin/dt/tokens" },
+      { key: "sa-dt-accesos", icon: "vpn_key", label: "Accesos DT", desc: "Portal de fiscalización", to: "/superadmin/dt/accesos" },
       { key: "sa-dt-auditoria", icon: "history", label: "Auditoría global", desc: "Bitácora de plataforma", to: "/superadmin/dt/auditoria" },
     );
   } else if (role === "employee") {

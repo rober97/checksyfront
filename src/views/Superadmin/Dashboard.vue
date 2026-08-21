@@ -167,19 +167,17 @@
               <div class="sa-comp__row">
                 <div class="sa-comp__ico sa-comp__ico--ok"><q-icon name="vpn_key" /></div>
                 <div class="sa-comp__body">
-                  <div class="sa-comp__val">{{ stats.dtTokens }}</div>
-                  <div class="sa-comp__lbl">Tokens fiscalizadores activos</div>
+                  <div class="sa-comp__val">{{ stats.dtLogins7d }}</div>
+                  <div class="sa-comp__lbl">Ingresos al portal DT (7 días)</div>
                 </div>
-                <q-btn flat dense no-caps color="primary" label="Gestionar" to="/superadmin/dt/tokens" />
+                <q-btn flat dense no-caps color="primary" label="Ver accesos" to="/superadmin/dt/accesos" />
               </div>
               <q-separator spaced />
               <div class="sa-comp__row">
-                <div class="sa-comp__ico" :class="stats.dtExpiring ? 'sa-comp__ico--warn' : 'sa-comp__ico--ok'">
-                  <q-icon name="schedule" />
-                </div>
+                <div class="sa-comp__ico sa-comp__ico--ok"><q-icon name="gavel" /></div>
                 <div class="sa-comp__body">
-                  <div class="sa-comp__val">{{ stats.dtExpiring }}</div>
-                  <div class="sa-comp__lbl">Por expirar en 3 días</div>
+                  <div class="sa-comp__val">{{ stats.dtInspections30d }}</div>
+                  <div class="sa-comp__lbl">Fiscalizaciones iniciadas (30 días)</div>
                 </div>
                 <q-btn flat dense no-caps color="primary" label="Auditoría" to="/superadmin/dt/auditoria" />
               </div>
@@ -235,7 +233,7 @@ const stats = reactive({
   companies: 0, companiesInactive: 0, companiesNew: 0,
   rrhh: 0, rrhhNew: 0,
   employees: 0, employeesNew: 0, employeesPending: 0,
-  dtTokens: 0, dtExpiring: 0,
+  dtLogins7d: 0, dtInspections30d: 0,
 })
 
 const companies = ref([])
@@ -315,9 +313,9 @@ const kpiCards = computed(() => [
     deltaTone: stats.employeesNew ? 'up' : 'flat',
   },
   {
-    key: 'tokens', icon: 'gavel', tone: 'amber', label: 'Tokens DT activos',
-    value: stats.dtTokens, to: '/superadmin/dt/tokens',
-    sub: stats.dtExpiring ? `${stats.dtExpiring} por expirar` : 'sin vencimientos próximos',
+    key: 'dt-access', icon: 'gavel', tone: 'amber', label: 'Ingresos DT (7 días)',
+    value: stats.dtLogins7d, to: '/superadmin/dt/accesos',
+    sub: `${stats.dtInspections30d} fiscalizaciones iniciadas (30 días)`,
     deltaLabel: '', deltaTone: 'flat',
   },
 ])
@@ -440,22 +438,22 @@ const roleModel = [
   { role: 'employee', tag: 'el trabajador', icon: 'person', tone: 'indigo',
     desc: 'Marca asistencia, ve su historial y comprobantes DT, hace solicitudes.' },
   { role: 'dt_inspector', tag: 'fiscalizador DT', icon: 'gavel', tone: 'amber',
-    desc: 'Acceso read-only desde red oficial DT o por token externo (mín. 10 días).' },
+    desc: 'Acceso read-only, self-service desde el portal de fiscalización (correo @dt.gob.cl, clave de 5 días).' },
 ]
 
 /* ---------- load ---------- */
 onMounted(async () => {
   try {
-    const [companiesRes, usersRes, tokensRes, auditRes] = await Promise.all([
+    const [companiesRes, usersRes, dtAccessRes, auditRes] = await Promise.all([
       secureAxios.get('/companies').catch(() => ({ data: [] })),
       secureAxios.get('/users').catch(() => ({ data: [] })),
-      secureAxios.get('/dt/inspector-tokens').catch(() => ({ data: [] })),
+      secureAxios.get('/dt/portal/access-log', { params: { limit: 500 } }).catch(() => ({ data: [] })),
       secureAxios.get('/audit', { params: { limit: 20 } }).catch(() => ({ data: [] })),
     ])
 
     companies.value = pickArray(companiesRes.data, 'companies')
     users.value = pickArray(usersRes.data, 'users')
-    const tokens = pickArray(tokensRes.data, 'rows')
+    const dtAccessRows = pickArray(dtAccessRes.data, 'rows')
     auditRows.value = pickArray(auditRes.data, 'rows')
 
     const cs = companies.value
@@ -476,10 +474,14 @@ onMounted(async () => {
     ).length
 
     const now = Date.now()
-    const soon = now + 3 * 86400 * 1000
-    const activeTokens = tokens.filter((t) => !t.revoked && new Date(t.expiresAt).getTime() > now)
-    stats.dtTokens = activeTokens.length
-    stats.dtExpiring = activeTokens.filter((t) => new Date(t.expiresAt).getTime() <= soon).length
+    const last7d = now - 7 * 86400 * 1000
+    const last30d = now - 30 * 86400 * 1000
+    stats.dtLogins7d = dtAccessRows.filter(
+      (r) => r.action === 'DT_ACCESS_LOGIN' && new Date(r.createdAt).getTime() >= last7d
+    ).length
+    stats.dtInspections30d = dtAccessRows.filter(
+      (r) => r.action === 'DT_INSPECTION_STARTED' && new Date(r.createdAt).getTime() >= last30d
+    ).length
 
     // Growth chart
     const compByMonth = Object.fromEntries(buckets.map((b) => [b.key, 0]))

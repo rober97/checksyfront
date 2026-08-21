@@ -762,6 +762,7 @@ const footerLinks = [
   { title: 'Legal',     links: [
     { label: 'Términos y Privacidad', to: '/legal/terms' },
     { label: 'Verificar comprobante', to: '/verificar-comprobante' },
+    { label: 'Portal de fiscalización DT', to: '/fiscalizacion' },
   ]},
 ]
 

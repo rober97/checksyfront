@@ -8,7 +8,7 @@ import { trackPageview } from '@/utils/analytics'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import CompanyLayout from '@/layouts/EmpresaLayout.vue'
 import EmployeeLayout from '@/layouts/EmpleadoLayout.vue'
-import InspectorLayout from '@/layouts/InspectorLayout.vue'
+import FiscalizacionLayout from '@/layouts/FiscalizacionLayout.vue'
 
 // ====== Views (lazy: reduce el bundle inicial)
 const HomePublic = () => import(/* webpackChunkName:"public"    */ '@/views/HomePublic.vue')
@@ -50,7 +50,6 @@ const Profile = () => import(/* webpackChunkName:"user"      */ '@/views/Usuario
 
 // ====== DT Compliance (Res. Ex. 38/2024 — Dirección del Trabajo)
 const DtReportesDT = () => import(/* webpackChunkName:"dt" */ '@/views/DT/ReportesDT.vue')
-const DtTokensInspector = () => import(/* webpackChunkName:"dt" */ '@/views/DT/TokensInspector.vue')
 const DtAuditoria = () => import(/* webpackChunkName:"dt" */ '@/views/DT/AuditoriaDT.vue')
 const DtLibroAsistencia = () => import(/* webpackChunkName:"dt" */ '@/views/DT/LibroAsistencia.vue')
 const EmpComprobante = () => import(/* webpackChunkName:"dt" */ '@/views/Empleado/Comprobante.vue')
@@ -60,8 +59,10 @@ const Contact = () => import(/* webpackChunkName:"public" */ '@/views/Public/Con
 const PrivacyTerms = () => import(/* webpackChunkName:"public" */ '@/views/Public/PrivacyTerms.vue')
 const OnboardingWizard = () => import(/* webpackChunkName:"public" */ '@/views/Public/OnboardingWizard.vue')
 const DescargarApp = () => import(/* webpackChunkName:"public" */ '@/views/Public/DescargarApp.vue')
-const InspectorDashboard = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Dashboard.vue')
-const InspectorAsistencias = () => import(/* webpackChunkName:"inspector" */ '@/views/Inspector/Asistencias.vue')
+const FiscalizacionLogin = () => import(/* webpackChunkName:"fiscalizacion" */ '@/views/Fiscalizacion/Login.vue')
+const FiscalizacionEmpresas = () => import(/* webpackChunkName:"fiscalizacion" */ '@/views/Fiscalizacion/Empresas.vue')
+const FiscalizacionReportes = () => import(/* webpackChunkName:"fiscalizacion" */ '@/views/Fiscalizacion/Reportes.vue')
+const SuperadminAccesosDT = () => import(/* webpackChunkName:"superadmin" */ '@/views/DT/AccesosDT.vue')
 
 // ====== Superadmin (plataforma)
 const SuperadminDashboard = () => import(/* webpackChunkName:"superadmin" */ '@/views/Superadmin/Dashboard.vue')
@@ -105,13 +106,14 @@ const safeRedirectOf = (to) => {
 //   superadmin   → /superadmin/dashboard    (plataforma completa)
 //   admin_rrhh   → /rrhh/dashboard          (su empresa)
 //   employee     → /employee/dashboard      (sólo él)
-//   dt_inspector → /inspector/dashboard     (fiscalización DT)
+//   dt_inspector → /fiscalizacion           (portal self-service, ver art. 23-24 — ningún
+//                                             fiscalizador debería llegar aquí vía login normal)
 const roleHome = (role) => {
   switch (normalizeRole(role)) {
     case 'superadmin': return '/superadmin/dashboard'
     case 'admin_rrhh': return '/rrhh/dashboard'
     case 'employee': return '/employee/dashboard'
-    case 'dt_inspector': return '/inspector/dashboard'
+    case 'dt_inspector': return '/fiscalizacion'
     // Compat: si el JWT trae roles legacy los mapeamos
     case 'admin': return '/superadmin/dashboard'
     case 'empresa': return '/rrhh/dashboard'
@@ -195,7 +197,7 @@ const routes = [
       // Reportes y herramientas DT globales
       { path: 'dt/reportes', name: 'SuperadminDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT (global)' } },
       { path: 'dt/libro', name: 'SuperadminDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },
-      { path: 'dt/tokens', name: 'SuperadminDtTokens', component: DtTokensInspector, meta: { title: 'Tokens fiscalizadores' } },
+      { path: 'dt/accesos', name: 'SuperadminDtAccesos', component: SuperadminAccesosDT, meta: { title: 'Accesos DT' } },
       { path: 'dt/auditoria', name: 'SuperadminDtAuditoria', component: DtAuditoria, meta: { title: 'Auditoría global' } },
     ]
   },
@@ -234,7 +236,9 @@ const routes = [
       // DT Compliance de la empresa
       { path: 'dt/reportes', name: 'RrhhDtReportes', component: DtReportesDT, meta: { title: 'Reportes DT' } },
       { path: 'dt/libro', name: 'RrhhDtLibro', component: DtLibroAsistencia, meta: { title: 'Libro de Asistencia' } },
-      { path: 'dt/tokens', name: 'RrhhDtTokens', component: DtTokensInspector, meta: { title: 'Fiscalizadores DT' } },
+      // El acceso de fiscalizadores DT es self-service (art. 23): RR.HH. ya no
+      // emite ni administra nada. Puede ver cuándo se fiscalizó su empresa en
+      // la Bitácora (acción DT_INSPECTION_STARTED).
       { path: 'dt/auditoria', name: 'RrhhDtAuditoria', component: DtAuditoria, meta: { title: 'Bitácora' } },
     ]
   },
@@ -263,17 +267,18 @@ const routes = [
     ]
   },
 
-  // ===== Fiscalizador DT =====
+  // ===== Portal de fiscalización DT (Res. Ex. 38/2024, arts. 17, 22-24) =====
+  // Público: acceso self-service, sin login de usuario normal. Cada vista
+  // se guarda a sí misma contra dtPortalStore (no hay JWT del authStore que
+  // el guard genérico pueda validar).
   {
-    path: '/inspector',
-    component: InspectorLayout,
-    meta: { requiresAuth: true, roles: ['dt_inspector'] },
+    path: '/fiscalizacion',
+    component: FiscalizacionLayout,
+    meta: { public: true },
     children: [
-      { path: '', redirect: { name: 'InspectorDashboard' } },
-      { path: 'dashboard', name: 'InspectorDashboard', component: InspectorDashboard, meta: { title: 'Fiscalización DT' } },
-      { path: 'attendance', name: 'InspectorAttendance', component: InspectorAsistencias, meta: { title: 'Asistencias — DT' } },
-      { path: 'audit', name: 'InspectorAudit', component: DtAuditoria, meta: { title: 'Bitácora — DT' } },
-      { path: 'reports', name: 'InspectorReports', component: DtReportesDT, meta: { title: 'Reportes DT' } },
+      { path: '', name: 'FiscalizacionLogin', component: FiscalizacionLogin, meta: { title: 'Portal de fiscalización DT' } },
+      { path: 'empresas', name: 'FiscalizacionEmpresas', component: FiscalizacionEmpresas, meta: { title: 'Fiscalización — Empleadores' } },
+      { path: 'reportes', name: 'FiscalizacionReportes', component: FiscalizacionReportes, meta: { title: 'Fiscalización — Reportes' } },
     ]
   },
 

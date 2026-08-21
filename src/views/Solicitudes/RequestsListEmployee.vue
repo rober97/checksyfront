@@ -290,6 +290,7 @@ function tipoLabel(type) {
     COMP_DAY: "Compensatorio",
     PERSONAL: "Permiso personal", permiso: "Permiso",
     MEDICAL: "Licencia medica", licencia: "Licencia",
+    SHIFT_CHANGE: "Cambio de turno", cambio_turno: "Cambio de turno",
     OTHER: "Otro",
   };
   return map[type] || type || "—";
@@ -302,6 +303,7 @@ function tipoIcon(type) {
     COMP_DAY: "autorenew",
     PERSONAL: "person", permiso: "event_available",
     MEDICAL: "local_hospital", licencia: "medical_services",
+    SHIFT_CHANGE: "swap_horiz", cambio_turno: "swap_horiz",
   };
   return map[type] || "help_outline";
 }
